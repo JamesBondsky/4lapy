@@ -134,7 +134,10 @@ if (!$catalogRequest->isLanding()) { ?>
                 \compact('category', 'catalogRequest'))
             ?>
             <?php $filterToShow = $filterCollection->getFiltersToShow();
-            $filterActions = $filterCollection->getActionsFilter(); ?>
+            $filterActions = $filterCollection->getActionsFilter();
+            if($category->isFashionDogsClothes()){
+                $filterToShow = $filterToShow->sortFashionDogsClothes();
+            }?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [

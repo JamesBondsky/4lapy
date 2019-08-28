@@ -122,7 +122,7 @@ $sPopBrandsTitle = \Bitrix\Main\Localization\Loc::getMessage('MENU_BRANDS.POP_BR
                         <a class="b-popular-brand-item__link b-popular-brand-item__link--brands-menu" title="<?=$arItem['NAME']?>" href="<?=$arItem['DETAIL_PAGE_URL']?>"><?php
                             if($arItem['PRINT_PICTURE']) {
                                 $arImg = $arItem['PRINT_PICTURE'];
-                                ?><img class="b-popular-brand-item__image js-image-wrapper" src="<?=$arImg['SRC']?>" alt="<?=$arImg['ALT']?>" title="<?=$arImg['TITLE']?>"><?php
+                                ?><img class="b-popular-brand-item__image js-image-wrapper" src="/resize/98x43<?=$arImg['SRC']?>" alt="<?=$arImg['ALT']?>" title="<?=$arImg['TITLE']?>"><?php
                             }
                         ?></a>
                     </div><?php

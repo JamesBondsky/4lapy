@@ -91,11 +91,12 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                 </div>
             </div>
             <?php
-            if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 && $arResult['IS_SHOW_CAPTCHA']) {
+            if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] > 2 && $arResult['IS_SHOW_CAPTCHA']) {
                 try {
                     $recaptchaService = App::getInstance()
                         ->getContainer()
                         ->get(ReCaptchaInterface::class);
+                    echo "<script>try {grecaptcha.getResponse()} catch(err) {grecaptcha.render($('.g-recaptcha')[0], {sitekey : $('.g-recaptcha').data('sitekey')})}</script>";
                     echo $recaptchaService->getCaptcha('', true);
                 } catch (ApplicationCreateException $e) {
                 }
@@ -139,7 +140,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                 </div>
             <? } ?>
 
-            <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_AUTH); ?>
+            <? $token = $arResult['token'] ?? ProtectorHelper::generateToken(ProtectorHelper::TYPE_AUTH); ?>
 	        <input type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
         </form>
     </div>

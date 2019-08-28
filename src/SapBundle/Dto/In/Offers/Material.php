@@ -725,6 +725,20 @@ class Material
         return $this->generalArticle;
     }
 
+    public function getColorCombination()
+    {
+        $combo = $this->getProperties()->getProperty('COLOUR_COMBINATION');
+
+        if ($combo) {
+            $values = $combo->getValues()->getValues();
+
+            foreach ($values as $valueItem) {
+                return $valueItem->getCode();
+            }
+        }
+
+        return false;
+    }
     /**
      * @param string $generalArticle
      * @return Material

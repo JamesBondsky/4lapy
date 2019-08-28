@@ -3,6 +3,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use FourPaws\KioskBundle\Service\KioskService;
+
 /**
  * @global               $APPLICATION
  *
@@ -65,14 +67,16 @@ if (isset($arParams['SHOW_PRODUCTS_SALE']) && $arParams['SHOW_PRODUCTS_SALE'] ==
 /**
  * Рассказать в соцсетях
  */
-if (isset($arParams['USE_SHARE']) && $arParams['USE_SHARE'] === 'Y') {
-    $APPLICATION->IncludeFile(
-        'blocks/components/social_share.php',
-        [],
-        [
-            'SHOW_BORDER' => false,
-            'NAME'        => 'Блок Рассказать в соцсетях',
-            'MODE'        => 'php',
-        ]
-    );
+if (!KioskService::isKioskMode()) {
+    if (isset($arParams['USE_SHARE']) && $arParams['USE_SHARE'] === 'Y') {
+        $APPLICATION->IncludeFile(
+            'blocks/components/social_share.php',
+            [],
+            [
+                'SHOW_BORDER' => false,
+                'NAME' => 'Блок Рассказать в соцсетях',
+                'MODE' => 'php',
+            ]
+        );
+    }
 }

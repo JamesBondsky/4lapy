@@ -41,6 +41,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
+use FourPaws\DeliveryBundle\Service\DeliveryScheduleResultService;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\DostavistaService;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
@@ -75,6 +76,7 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Repository\OrderStatusRepository;
+use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
@@ -2061,7 +2063,8 @@ class OrderService implements LoggerAwareInterface
 
     public function getOrderFeedbackLink(Order $order): string
     {
-        return sprintf('/sale/order/interview/%d/?HASH=%s', $order->getId(), $order->getHash());
+        //return sprintf('/sale/order/interview/%d/?HASH=%s', $order->getId(), $order->getHash());
+        return '/feedback/';
     }
 
 
@@ -2318,15 +2321,21 @@ class OrderService implements LoggerAwareInterface
      * @param \DateTime $deliveryDate
      * @return mixed|null
      */
-    protected function getScheduleResultOptimal(Store $sender, Store $receiver, \DateTime $currentDate, \DateTime $deliveryDate)
+    protected function getScheduleResultOptimal(Store $sender, Store $receiver, \DateTime $currentDateOrig, \DateTime $deliveryDate)
     {
         $scheduleResultOptimal = null;
+        $currentDate = clone $currentDateOrig;
         try {
             /** @var ScheduleResultService $scheduleResultService */
             $scheduleResultService = Application::getInstance()->getContainer()->get(ScheduleResultService::class);
-            foreach ($scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver)->filterByDateActiveEqual($currentDate) as $scheduleResult) {
-                // нужно добавить срок поставки магазина, т.к. товар готов к выдаче не сразу
-                if ($receiver->isShop()) {
+
+            /** @var ScheduleResult $scheduleResult */
+            foreach ($scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver)->filterByDateActiveEqual(clone $currentDate) as $scheduleResult) {
+
+                // нужно добавить срок поставки магазина,
+                // т.к. товар готов к выдаче не сразу (кроме нерегулярок)
+                $modifier = 0;
+                if ($receiver->isShop() && !$scheduleResult->isIrregular()) {
                     $modifier = $receiver->getDeliveryTime();
                     if ($modifier < 1) {
                         $modifier = 1;
@@ -2341,7 +2350,7 @@ class OrderService implements LoggerAwareInterface
 
                 $daysDelivery = $deliveryDate->setTime(0,0,0)->diff($currentDate->setTime(0,0,0))->days;
 
-                // не спеваем доставить в срок по этому расписанию
+                // не успеваем доставить в срок по этому расписанию
                 if($daysDelivery - $daysSchedule < 0){
                     continue;
                 }
