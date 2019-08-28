@@ -100,6 +100,8 @@
                 </ul>
             </div>
         </div>
+
+        <? $APPLICATION->IncludeComponent('articul:stamps.balance', '') ?>
     </div>
 </div>
 
