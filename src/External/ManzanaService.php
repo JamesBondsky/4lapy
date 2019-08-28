@@ -50,6 +50,7 @@ use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Bitrix\Main\Application as BitrixApplication;
 
 /**
  * Class ManzanaService
@@ -862,6 +863,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function updateUserCardByClient(Client $client)
     {
         try {
+            $this->sqlHeartBeat();
             $userRepository = $this->userRepository;
 
             if ($client->phone) {
@@ -870,6 +872,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 
             /** обновим только у активного и делаем 1 запрос вместо 2-х */
             $users = $userRepository->findBy(['=PERSONAL_PHONE' => PhoneHelper::normalizePhone($client->phone), 'ACTIVE' => 'Y']);
+            $this->sqlHeartBeat();
             if (\count($users) > 1) {
                 throw new TooManyUserFoundException('Found more than one user with same raw login');
             }
@@ -878,7 +881,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             }
             $user = \current($users);
 
+            $this->sqlHeartBeat();
             $card = $this->getActiveCardByContactId($client->contactId);
+            $this->sqlHeartBeat();
 
             if($user->getDiscountCardNumber() !== (string)$card->cardNumber) {
                 $userRepository->updateDiscountCard($user->getId(), (string)$card->cardNumber);
@@ -980,5 +985,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function prepareCardNumber(string $cardNumber): string
     {
         return preg_replace('~\D~', '', $cardNumber);
+    }
+
+    private function sqlHeartBeat()
+    {
+        BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
     }
 }
