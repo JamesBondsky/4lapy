@@ -310,12 +310,15 @@ class ProductService
             throw new NotFoundProductException();
         }
         $product = $offer->getProduct();
+        $colours = $this->getColours($offer);
+        $hasColours = (bool)$colours;
 
-        $fullProduct = $this->convertToFullProduct($product, $offer, true);
+        $fullProduct = $this->convertToFullProduct($product, $offer, true, true, $hasColours);
         $fullProduct->setIsAvailable($offer->isAvailable()); // returns ShortProduct
         $fullProduct
             ->setSpecialOffer($this->getSpecialOffer($offer))           // акция
             ->setFlavours($this->getFlavours($offer))                   // вкус
+            ->setColours($colours)                                      // цвет
             ->setAvailability($offer->getAvailabilityText())            // товар под заказ
             ->setDelivery($this->getDeliveryText($offer))               // товар под заказ
             ->setPickup($this->getPickupText($offer))                   // товар под заказ
@@ -490,6 +493,7 @@ class ProductService
      * @param Offer $offer
      * @param bool $needPackingVariants
      * @param bool|null $showVariantsIfOneVariant
+     * @param bool|null $hasColours
      * @return FullProduct
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -497,7 +501,7 @@ class ProductService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true): FullProduct
+    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true, ?bool $hasColours = false): FullProduct
     {
         $offer->setColor();
         $shortProduct = $this->convertToShortProduct($product, $offer);
@@ -529,7 +533,11 @@ class ProductService
         $fullProduct->setColor($shortProduct->getColor());
 
         if ($needPackingVariants) {
-            $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // фасовки
+            if ($hasColours) {
+                $fullProduct->setColourVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // цвета
+            } else {
+                $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // фасовки
+            }
         }
 
         return $fullProduct;
@@ -701,6 +709,48 @@ class ProductService
                         ->setTitle($flavourWithWeight);
                 }
                 return $flavours;
+            }
+        }
+        return [];
+    }
+
+    /**
+     * Цвета товара
+     * @param Offer $offer
+     * @return FullProduct\Flavour[]
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getColours(Offer $offer): array
+    {
+        if (!empty($offer->getColourCombination()) && $offer->getColor()) {
+            $unionOffers = $this->getOffersByUnion('color', $offer->getColourCombinationXmlId());
+            if (!$unionOffers->isEmpty()) {
+                $unionOffersSorted = [];
+                /** @var Offer $unionOffer */
+                foreach ($unionOffers as $unionOffer) {
+                    $unionOffersSorted[$unionOffer->getColorWithSize()] = $unionOffer;
+                }
+                $this->sortService->colorWithSizeSort($unionOffersSorted);
+
+                $colours = [];
+                foreach ($unionOffersSorted as $unionOffer) {
+                    $color = $unionOffer->getColor();
+                    $fullProductColour = (new FullProduct\Colour())
+                        ->setOfferId($unionOffer->getId())
+                        ->setTitle($unionOffer->getColorWithSize());
+                    if ($color) {
+                        $hexCode = $color->getColorCode();
+                        $imageUrl = $color->getFilePath();
+
+                        $fullProductColour
+                            ->setHexCode($hexCode)
+                            ->setImageUrl($imageUrl);
+                    }
+                    $colours[] = $fullProductColour;
+                }
+                return $colours;
             }
         }
         return [];
