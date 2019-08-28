@@ -318,10 +318,10 @@ class StampService implements LoggerAwareInterface
     /**
      * @param BasketItem $basketItem
      * @param $stampLevelInfo
-     * @return int
+     * @return float
      * @throws ArgumentNullException
      */
-    public function getBasketItemDiscountPrice($basketItem, $stampLevelInfo) : int
+    public function getBasketItemDiscountPrice($basketItem, $stampLevelInfo) : float
     {
         $discountPrice = null;
 
