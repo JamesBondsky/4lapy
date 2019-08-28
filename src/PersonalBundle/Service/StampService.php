@@ -199,7 +199,7 @@ class StampService implements LoggerAwareInterface
         $maxDiscountSize = 0;
         foreach ($extendedAttributeCollection as $extendedAttribute) {
             $discount = $this->parseLevelKey($extendedAttribute->getKey());
-            if ($discountStampsNeeded = $discount['discountStamps']) {
+            if ($discountStampsNeeded = (int)$discount['discountStamps']) {
                 $discountSize = $discountStampsNeeded
                     * $extendedAttribute->getValue(); // Количество товара, на которое доступна эта скидка
 
@@ -272,6 +272,8 @@ class StampService implements LoggerAwareInterface
                     }
                 }
 
+                // для отладки марок
+                //dump($offerXmlId . ' - ' . $maxStampsLevelValue);
                 $stampLevels = $this->getBasketItemStampLevels($basketItem, $offerXmlId, $maxStampsLevelValue);
             }
         }

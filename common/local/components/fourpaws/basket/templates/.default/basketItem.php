@@ -268,7 +268,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
 //                    echo
 //                        'use: ' . ($stampInfo['USE_STAMPS'] ? 'true' : 'false')
 //	                    . PHP_EOL . '<br>can use stamps: ' . ($stampInfo['CAN_USE_STAMPS'] ? 'true' : 'false')
-//	                    . PHP_EOL . '<br>stamps could be used: ' . $stampInfo['USE_STAMP_AMOUNT']
+//	                    //. PHP_EOL . '<br>stamps could be used: ' . $stampInfo['USE_STAMP_AMOUNT']
 //	                    . PHP_EOL . '<br>stamps used: ' . $stampInfo['USED_STAMP_AMOUNT'];
 //                    echo '</div>';
                     ?>
