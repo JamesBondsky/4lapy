@@ -534,8 +534,9 @@ class Event extends BaseServiceHandler
             $template = MainTemplate::getInstance(BitrixApplication::getInstance()->getContext());
             /** выполняем только при пользовательской авторизации(это аякс), либо из письма и обратных ссылок(это personal)
              *  так же чекаем что это не страница заказа
+             *  но для регистрации надо оставить
              */
-            if (!$template->hasUserAuth()) {
+            if (!$template->hasUserAuth() && !$template->isAjaxRegister()) {
                 return;
             }
             $container = App::getInstance()->getContainer();

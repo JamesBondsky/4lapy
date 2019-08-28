@@ -12,6 +12,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\Catalog\Model\Variant;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\PersonalBundle\Service\StampService;
@@ -168,6 +169,28 @@ class CatalogElementSnippet extends CBitrixComponent
                 if ($offer->getImagesIds()) {
                     $currentOffer = $offer;
                     break;
+                }
+            }
+
+            // заранее выбранный оффер при фильтре размера
+            /** @var Category $category */
+            $category = $this->arParams['CURRENT_CATEGORY'];
+            if($category){
+                $sizeFilter = $category->getFilters()->getSizeFilter();
+                if($sizeFilter && !$sizeFilter->getCheckedVariants()->isEmpty()){
+                    $arSizeFilter = [];
+
+                    /** @var Variant $variant */
+                    foreach ($sizeFilter->getCheckedVariants() as $variant){
+                        $arSizeFilter[] = $variant->getValue();
+                    }
+                    /** @var Offer $offer */
+                    foreach ($offers as $offer) {
+                        if(in_array($offer->getClothingSize()->getXmlId(), $arSizeFilter)){
+                            $currentOffer = $offer;
+                            break;
+                        }
+                    }
                 }
             }
         }

@@ -79,7 +79,7 @@ class UserService
 
     /** @var PersonalOrderService */
     private $personalOrderService;
-    
+
     /** @var StampService */
     private $stampService;
 
@@ -127,7 +127,7 @@ class UserService
         $excludeLoginsFromCaptchaCheck = [
             '9778016362',
             '9660949453',
-            '9299821844',
+            '9299821844', // Данил
             '9007531672',
             '9007523221',
             '9991693811',
@@ -136,6 +136,13 @@ class UserService
             '9165919854',
             '9636263044',
             'a.vorobyev@articul.ru',
+            '9051552482', // Андрей
+            '9255025069',
+            '9139740008',
+            '9046656072', // Tarox25@gmail.com
+            '9600401906',
+            '9178445061',
+            '9779461734', // Сергей Боканев
             '9683618355',
             'm.balezin@articul.ru',
         ];

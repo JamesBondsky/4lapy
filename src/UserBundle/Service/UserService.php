@@ -1344,12 +1344,14 @@ class UserService implements
             $users = $this->userRepository->findBy(['ID' => $userIdByEmail]);
 
             $barcodeGenerator = new BarcodeGeneratorPNG();
-            if ($isOnlyEmail) {
-//                $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(is_int($promocode) ? intval($promocode) : $promocodeId);
-                $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
-            } else {
-                $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
-            }
+//            if ($isOnlyEmail) {
+////                $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(is_int($promocode) ? intval($promocode) : $promocodeId);
+//                $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
+//            } else {
+//                $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
+//            }
+
+            $offerFields = $this->personalOffersService->getOfferFieldsByCouponId($promocodeId);
 
             if ($offerFields->count() == 0) {
                 throw new Exception('Купон по промокоду не найден');
@@ -1358,8 +1360,14 @@ class UserService implements
             $expertSender = $container->get('expertsender.service');
 
             $couponDescription = $offerFields->get('PREVIEW_TEXT');
-            $couponDateActiveTo = $offerFields->get('DATE_ACTIVE_TO');
+            $couponDateActiveTo = $offerFields->get('PROPERTY_ACTIVE_TO_VALUE');
             $discountValue = $offerFields->get('PROPERTY_DISCOUNT_VALUE');
+
+            if ($discountValue) {
+                $discountValue .= '%';
+            } else {
+                $discountValue = $offerFields->get('PROPERTY_DISCOUNT_CURRENCY_VALUE') . ' руб';
+            }
 
             foreach ($users as $user) {
                 try {

@@ -18,6 +18,7 @@ use FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedules;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\ManualDayItem;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\WeekDayItem;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\OrderDayItem;
+use FourPaws\SapBundle\Exception\InvalidArgumentException;
 use FourPaws\SapBundle\Exception\NotFoundScheduleException;
 use FourPaws\StoreBundle\Entity\DeliverySchedule as DeliveryScheduleEntity;
 use FourPaws\StoreBundle\Exception\BitrixRuntimeException;
@@ -215,14 +216,16 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
         /** Дни заказа и поставки */
         $orderDays = $schedule->getOrderDays();
+        $arOrderDays = $this->serializer->toArray($orderDays->first());
+        $arOrderDays = array_filter($arOrderDays);
 
-        if ($orderDays->count()) {
-            $arOrderDays = $this->serializer->toArray($orderDays->first());
-            $arOrderDays = array_filter($arOrderDays);
+        if (!empty($arOrderDays)) {
             $arSupplyDays = $this->baseService->getWeeknums($arOrderDays);
 
             $entity->setOrderDays($arOrderDays);
             $entity->setSupplyDays($arSupplyDays);
+        } else if ($schedule->getScheduleType() == 1){
+            throw new InvalidArgumentException(sprintf("Не переданы дни заказа orderDays для %s -> %s", $schedule->getSenderCode(), $schedule->getRecipientCode()));
         }
 
         /** Номера недели */
