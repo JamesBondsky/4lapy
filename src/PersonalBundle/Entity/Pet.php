@@ -93,6 +93,42 @@ class Pet extends BaseEntity
      */
     protected $gender;
 
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_SIZE")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $size;
+
+    /**
+     * @var float
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("UF_CHEST")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $chest = 0.0;
+
+    /**
+     * @var float
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("UF_BACK")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $back = 0.0;
+
+    /**
+     * @var float
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("UF_NECK")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $neck = 0.0;
+
     protected $stringGender = '';
 
     protected $codeGender = '';
@@ -474,4 +510,78 @@ class Pet extends BaseEntity
     {
         $this->codeGender = $codeGender;
     }
+
+
+    /**
+     * @return int
+     */
+    public function getSize(): int
+    {
+        return $this->size;
+    }
+
+    /**
+     * @param int $size
+     * @return Pet
+     */
+    public function setSize(int $size): Pet
+    {
+        $this->size = $size;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getChest(): float
+    {
+        return $this->chest;
+    }
+
+    /**
+     * @param float $chest
+     * @return Pet
+     */
+    public function setChest(float $chest): Pet
+    {
+        $this->chest = $chest;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getBack(): float
+    {
+        return $this->back;
+    }
+
+    /**
+     * @param float $back
+     * @return Pet
+     */
+    public function setBack(float $back): Pet
+    {
+        $this->back = $back;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getNeck(): float
+    {
+        return $this->neck;
+    }
+
+    /**
+     * @param float $neck
+     * @return Pet
+     */
+    public function setNeck(float $neck): Pet
+    {
+        $this->neck = $neck;
+        return $this;
+    }
+
 }

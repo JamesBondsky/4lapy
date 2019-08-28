@@ -43,6 +43,9 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
     /** @var CurrentUserProviderInterface */
     private $currentUserProvider;
 
+    // тип питомца собаки
+    const DOG_TYPE = 'sobaki';
+
     /**
      * AutoloadingIssuesInspection constructor.
      *
@@ -106,11 +109,15 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
             ]);
 
             $this->arResult['ITEMS'] = $this->petService->getCurUserPets();
+
             /** получение пола */
             $this->setGenderVals();
 
             /** получение типов питомцев */
             $this->setPetTypes();
+
+            /** получение размеров питомца */
+            $this->setPetSizes();
 
             $this->includeComponentTemplate();
         }
@@ -149,10 +156,34 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
                 [
                     'ID',
                     'UF_NAME',
+                    'UF_CODE'
                 ]
             )->setOrder(['UF_SORT' => 'asc'])->exec();
         while ($item = $res->fetch()) {
             $this->arResult['PET_TYPES'][] = $item;
+        }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function setPetSizes(): void
+    {
+        $this->arResult['PET_SIZES'] = [];
+        $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
+            [
+                'FIELD_NAME' => 'UF_SIZE',
+                'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
+            ]
+        )->exec()->fetch()['ID'];
+        $userFieldEnum = new \CUserFieldEnum();
+        $res = $userFieldEnum->GetList([], ['USER_FIELD_ID' => $userFieldId]);
+        while ($item = $res->Fetch()) {
+            if($item['XML_ID'] == 'n'){
+                continue;
+            }
+
+            $this->arResult['PET_SIZES'][$item['XML_ID']] = $item;
         }
     }
 }

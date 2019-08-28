@@ -59,7 +59,7 @@
                     <option value="" disabled="disabled" selected="selected">Выберите вид</option>
                     <?php if (\is_array($arResult['PET_TYPES']) && !empty($arResult['PET_TYPES'])) {
                         foreach ($arResult['PET_TYPES'] as $item) {?>
-                            <option value="<?= $item['ID'] ?>"><?= $item['UF_NAME'] ?></option>
+                            <option value="<?= $item['ID'] ?>" data-code="<?=$item['UF_CODE']?>"><?= $item['UF_NAME'] ?></option>
                             <?php
                         }
                     } ?>
@@ -123,6 +123,79 @@
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
+
+            <div class="b-size-select">
+                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet">
+                    <div class="b-input-line__label-wrapper">
+                        <label class="b-input-line__label" for="size-pet">Размер</label>
+                    </div>
+                    <div class="b-input b-input--registration-form">
+                        <select class="b-select__block b-select__block--subscribe-delivery js-pet-view"
+                                id="size-pet"
+                                name="UF_SIZE">
+                            <option value="" disabled="disabled" selected="selected">Выберите размер</option>
+                            <?php if (\is_array($arResult['PET_SIZES']) && !empty($arResult['PET_SIZES'])) {
+                                foreach ($arResult['PET_SIZES'] as $item) {?>
+                                    <option value="<?= $item['ID'] ?>"><?= $item['VALUE'] ?></option>
+                                    <?php
+                                }
+                            } ?>
+                        </select>
+                        <div class="b-error"><span class="js-message"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet">
+                    <div class="b-input-line__label-wrapper">
+                        <label class="b-input-line__label" for="chest-pet">Обхват груди</label>
+                    </div>
+                    <div class="b-input b-input--registration-form">
+                        <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
+                               type="text"
+                               id="chest-pet"
+                               placeholder=""
+                               data-text="0"
+                               name="UF_CHEST" />
+                        <div class="b-error"><span class="js-message"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet">
+                    <div class="b-input-line__label-wrapper">
+                        <label class="b-input-line__label" for="back-pet">Длина спины</label>
+                    </div>
+                    <div class="b-input b-input--registration-form">
+                        <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
+                               type="text"
+                               id="back-pet"
+                               placeholder=""
+                               data-text="0"
+                               name="UF_BACK" />
+                        <div class="b-error"><span class="js-message"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet">
+                    <div class="b-input-line__label-wrapper">
+                        <label class="b-input-line__label" for="neck-pet">Обхват шеи</label>
+                    </div>
+                    <div class="b-input b-input--registration-form">
+                        <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
+                               type="text"
+                               id="neck-pet"
+                               placeholder=""
+                               data-text="0"
+                               name="UF_NECK" />
+                        <div class="b-error"><span class="js-message"></span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
             <button class="b-button b-button--subscribe-delivery">Сохранить</button>
         </form>
     </div>
