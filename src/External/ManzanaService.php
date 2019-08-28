@@ -908,7 +908,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 $this->logger->error('start update discount card ' . $user->getId());
                 $this->sqlHeartBeat();
                 $resUpd = $userRepository->updateDiscountCard($user->getId(), (string)$card->cardNumber);
-                $this->logger->error('stop update discount card ' . $resUpd);
+                $this->logger->error('stop update discount card ' . $resUpd . ' ' . $user->getDiscountCardNumber());
             }
         } catch (ManzanaCardIsNotFound $e) {
             $this->logger->info($e->getMessage());
