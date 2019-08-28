@@ -1047,6 +1047,8 @@ class OrderService
             }
             $storage->setSubscribeId($result->getData()['subscribeId']);
             $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+        } else{
+            $storage->setSubscribe(false);
         }
 
         /**
