@@ -67,47 +67,52 @@ class StampService implements LoggerAwareInterface
     ];*/
 
     public const EXCHANGE_RULES = [
-        1035430 => [
+        1035430 => [ // 1399 руб
             [
-                'title' => 'Stamps_02_trade_action_10*5*P',
-                'price' => 1097.10,
+                'title' => 'Stamps_exchange_1035430_30*5*P',
+                'price' => 979.30,
                 'stamps' => 5,
             ],
             [
-                'title' => 'Stamps_02_trade_action_20*15*P',
-                'price' => 975.20,
-                'stamps' => 15,
-            ],
-            [
-                'title' => 'Stamps_02_trade_action_30*20*P',
-                'price' => 853.30,
-                'stamps' => 20,
+                'title' => 'Stamps_exchange_1035430_50*8*P',
+                'price' => 699.50,
+                'stamps' => 8,
             ],
         ],
-        1021198 => [
+        1021198 => [ // 2599 руб
             [
-                'title' => 'Stamps_03_trade_action_10*5*P',
-                'price' => 1016.10,
-                'stamps' => 5,
+                'title' => 'Stamps_exchange_1021198_30*8*P',
+                'price' => 1819.30,
+                'stamps' => 8,
             ],
             [
-                'title' => 'Stamps_03_trade_action_20*15*P',
-                'price' => 903.20,
-                'stamps' => 15,
-            ],
-        ],
-        1035432 => [
-            [
-                'title' => 'Stamps_04_trade_action_10*5*P',
-                'price' => 2042.10,
-                'stamps' => 5,
+                'title' => 'Stamps_exchange_1021198_50*12*P',
+                'price' => 1299.50,
+                'stamps' => 12,
             ],
         ],
-        1031456 => [
+        1035432 => [ // 1199 руб
             [
-                'title' => 'Stamps_04_trade_action_10*5*P',
-                'price' => 2042.10,
+                'title' => 'Stamps_exchange_1035432_30*5*P',
+                'price' => 839.30,
                 'stamps' => 5,
+            ],
+            [
+                'title' => 'Stamps_exchange_1035432_50*8*P',
+                'price' => 599.50,
+                'stamps' => 8,
+            ],
+        ],
+        1031456 => [ // 2599 руб
+            [
+                'title' => 'Stamps_exchange_1031456_30*8*P',
+                'price' => 1819.30,
+                'stamps' => 8,
+            ],
+            [
+                'title' => 'Stamps_exchange_1031456_50*12*P',
+                'price' => 1299.50,
+                'stamps' => 12,
             ],
         ],
     ];
