@@ -878,15 +878,11 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 $client->phone = PhoneHelper::getManzanaPhone($client->phone);
             }
 
-            $this->logger->error('search by login start');
             /** обновим только у активного и делаем 1 запрос вместо 2-х */
             $users = $userRepository->findBy(['=LOGIN' => PhoneHelper::normalizePhone($client->phone), 'ACTIVE' => 'Y']);
-            $this->logger->error('search by login stop ' . count($users));
             $this->sqlHeartBeat();
             if (count($users) === 0) {
-                $this->logger->error('search by phone start');
                 $users = $userRepository->findBy(['=PERSONAL_PHONE' => PhoneHelper::normalizePhone($client->phone), 'ACTIVE' => 'Y']);
-                $this->logger->error('search by phone stop');
             }
             $this->sqlHeartBeat();
             if (\count($users) > 1) {
@@ -901,14 +897,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             $card = $this->getActiveCardByContactId($client->contactId);
             $this->sqlHeartBeat();
 
-            $this->logger->error('card ' . $card->cardNumber);
-            $this->logger->error('card in ' . $user->getDiscountCardNumber());
-
             if($user->getDiscountCardNumber() !== (string)$card->cardNumber) {
-                $this->logger->error('start update discount card ' . $user->getId());
                 $this->sqlHeartBeat();
-                $resUpd = $userRepository->updateDiscountCard($user->getId(), (string)$card->cardNumber);
-                $this->logger->error('stop update discount card ' . $resUpd . ' ' . $user->getDiscountCardNumber());
+                $userRepository->updateDiscountCard($user->getId(), (string)$card->cardNumber);
             }
         } catch (ManzanaCardIsNotFound $e) {
             $this->logger->info($e->getMessage());
