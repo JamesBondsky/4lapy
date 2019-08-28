@@ -105,6 +105,7 @@ class Event extends BaseServiceHandler
         /** Работа с паролями некоторых групп пользователей (see FRONT_OFFICE_USERS)*/
         static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'checkPasswordChange'], 'main');
         static::initHandlerCompatible('OnAfterUserAdd', [self::class, 'resetStoreUserPassword'], 'main');
+        static::initHandlerCompatible('OnAfterUserAdd', [self::class, 'refreshUserOnAuth'], 'main');
 
         /** очистка кеша пользователя */
         static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'clearUserCache'], 'main');
