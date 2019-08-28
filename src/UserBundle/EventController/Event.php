@@ -335,7 +335,7 @@ class Event extends BaseServiceHandler
 //        return true;
 //    }
 
-    public static function updateManzana($fields): bool
+    public static function updateManzana(&$fields): bool
     {
         $container = App::getInstance()->getContainer();
 
