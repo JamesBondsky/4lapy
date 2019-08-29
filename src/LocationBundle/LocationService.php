@@ -643,7 +643,7 @@ class LocationService
                 $this->locationsByCode[$code] = [];
             }
         }
-        return $this->locationsByCode[$code] ?? [];
+        return \is_array($this->locationsByCode[$code]) ? $this->locationsByCode[$code] : [];
     }
 
     /**
@@ -661,7 +661,7 @@ class LocationService
                 $this->locationsById[$id] = [];
             }
         }
-        return $this->locationsById[$id] ?? [];
+        return \is_array($this->locationsById[$id]) ? $this->locationsById[$id] : [];
     }
 
     /**
