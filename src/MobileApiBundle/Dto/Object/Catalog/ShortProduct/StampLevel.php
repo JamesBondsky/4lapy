@@ -29,6 +29,13 @@ class StampLevel
      */
     protected $stamps;
 
+    /**
+     * Будет ли применен этот уровень
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("isMaxLevel")
+     * @var bool
+     */
+    protected $isMaxLevel = false;
 
     /**
      * @return float
@@ -63,6 +70,24 @@ class StampLevel
     public function setStamps(int $stamps): StampLevel
     {
         $this->stamps = $stamps;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isMaxLevel(): bool
+    {
+        return $this->isMaxLevel;
+    }
+
+    /**
+     * @param bool $isMaxLevel
+     * @return StampLevel
+     */
+    public function setIsMaxLevel(bool $isMaxLevel): StampLevel
+    {
+        $this->isMaxLevel = $isMaxLevel;
         return $this;
     }
 }

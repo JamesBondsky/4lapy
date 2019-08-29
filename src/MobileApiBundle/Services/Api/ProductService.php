@@ -11,6 +11,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\BasketItem;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -40,6 +41,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\Manzana\Dto\ExtendedAttribute;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\ImageHelper;
@@ -560,7 +562,35 @@ class ProductService
             $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
             $stampRules = $this->stampService::EXCHANGE_RULES[$shortProduct->getXmlId()];
             $stampLevels = [];
+            $maxStampsLevelValue = false;
+
+            // ищем товар в корзизе
+            /** @var BasketItem $basketItem */
+            foreach ($this->appBasketService->getBasket()->getBasketItems() as $basketItem) {
+                if ($basketItem->getProductId() == $offer->getId()) {
+                    if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
+                        $maxStampsLevelValue = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE']);
+                    }
+                }
+            }
+
+            // если товар не нашли, то считаем сколько марок пользователь может потратить на один товар
+            if (!$maxStampsLevelValue) {
+                $extendedAttributeCollection = new ArrayCollection();
+                foreach ($stampRules as $stampRule) {
+                    $extendedAttributeCollection->add(
+                        (new ExtendedAttribute())->setKey($stampRule['title'])->setValue(1)
+                    );
+                }
+
+                $maxStampsLevelValue = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $this->stampService->getActiveStampsCount());
+            }
+
             foreach ($stampRules as $rule) {
+                if ($rule['title'] === $maxStampsLevelValue['key']) {
+                    $rule['is_max_level'] = true;
+                }
+
                 $stampLevels[] = $serializer->fromArray($rule, StampLevel::class);
             }
 
