@@ -36,8 +36,7 @@ class CFashionProductFooter extends \CBitrixComponent
 
     public function executeComponent()
     {
-        // TODO:: Прикрутить кеш
-        //if($this->startResultCache()){
+        if($this->startResultCache()){
             $filter = [
                 'IBLOCK_ID'    => $this->iblockId,
                 'ACTIVE'       => 'Y',
@@ -65,7 +64,7 @@ class CFashionProductFooter extends \CBitrixComponent
             $this->fillSections();
 
             $this->includeComponentTemplate();
-        //}
+        }
     }
 
     private function fillProducts()

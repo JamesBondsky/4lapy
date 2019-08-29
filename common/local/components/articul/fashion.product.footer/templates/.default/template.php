@@ -73,7 +73,7 @@ use FourPaws\Decorators\SvgDecorator; ?>
                 <a href="<?=$component->getSectionUrl($element['PROPERTIES']['SECTION']['VALUE']) ?>" class="item-category-fashion__title" target="_blank"><?=$element['NAME']?></a>
                 <div class="item-category-fashion__content">
                     <div class="item-category-fashion__img" style="background-image: url(<?=$arResult['IMAGES'][$element['PROPERTIES']['IMAGE']['VALUE']]?>)">
-                        <a href="#" class="item-category-fashion__more" target="_blank">
+                        <a href="<?=$component->getSectionUrl($element['PROPERTIES']['SECTION']['VALUE']) ?>" class="item-category-fashion__more" target="_blank">
                             Посмотреть все
                         </a>
                     </div>
