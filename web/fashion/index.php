@@ -55,9 +55,9 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
                 <div class="fashion-item-info fashion-item-info_full hide-xs">
                     <div class="fashion-item-info__title">бесплатная доставка и&nbsp;примерка</div>
                     <div class="fashion-item-info__descr">
-                        <span>закажи несколько размеров<br/> домой или в&nbsp;магазин</span>
+                        <span>закажите несколько размеров<br/> домой или в&nbsp;магазин</span>
                         <span class="fashion-item-info__arr"></span>
-                        <span>примерь и&nbsp;купи<br/> то, что подошло</span>
+                        <span>примерьте и&nbsp;купите<br/> то, что подошло</span>
                     </div>
                 </div>
             </div>
@@ -356,8 +356,8 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
                 <div class="fashion-free-shipping__info">
                     <div class="fashion-free-shipping__title">Бесплатная примерка</div>
                     <ul class="fashion-free-shipping__steps">
-                        <li>примерь несколько размеров</li>
-                        <li>купи только то, что подошло</li>
+                        <li>примерьте несколько размеров</li>
+                        <li>купите только то, что подошло</li>
                     </ul>
                     <div class="item-free-shipping">
                         <div class="item-free-shipping__title">домой</div>
