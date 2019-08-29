@@ -535,6 +535,7 @@ class ProductService
         if ($needPackingVariants) {
             if ($hasColours) {
                 $fullProduct->setColourVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // цвета
+                $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant, true));
             } else {
                 $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // фасовки
             }
@@ -619,15 +620,19 @@ class ProductService
     /**
      * Фасовки товара
      *
-     * @param Product     $product
+     * @param Product $product
      * @param FullProduct $currentFullProduct
-     * @param bool|null   $showVariantsIfOneVariant
+     * @param bool|null $showVariantsIfOneVariant
+     * @param bool|null $onlyCurrentOffer
      *
      * @return array
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
-    public function getPackingVariants(Product $product, FullProduct $currentFullProduct, ?bool $showVariantsIfOneVariant = true): array
+    public function getPackingVariants(Product $product, FullProduct $currentFullProduct, ?bool $showVariantsIfOneVariant = true, ?bool $onlyCurrentOffer = false): array
     {
         $offers = $product->getOffersSorted();
         // если в предложениях только текущий продукт
@@ -642,6 +647,9 @@ class ProductService
         $packingVariants = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
+            if ($onlyCurrentOffer && $offer->getId() != $currentFullProduct->getId()) {
+                continue;
+            }
             // if ($offer->getId() === $currentFullProduct->getId()) {
                 // toDo если переиспользовать $currentFullProduct - в массиве $packingVariants в итоге попадает null вместо объекта
             //    $fullProduct = clone $currentFullProduct;
