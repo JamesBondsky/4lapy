@@ -40,7 +40,12 @@ use FourPaws\Decorators\SvgDecorator; ?>
                 </div>
             </div>
         </div>
+
         <div class="b-container">
+            <div class="item-category-fashion__title fashion-category__filter-title">
+                Выберите категории
+            </div>
+
             <div class="fashion-category-filter">
                 <? foreach($arResult['ELEMENTS'] as $i => $element) { ?>
                     <div class="fashion-category-filter__item <?=($i < 3) ? 'active' : ''?>" data-type-filter-category-fashion="<?=$i?>">
@@ -50,6 +55,12 @@ use FourPaws\Decorators\SvgDecorator; ?>
                         <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true"><?=$element['NAME']?></div>
                     </div>
                 <? } ?>
+
+                <div class="fashion-category-filter__open" data-type-filter-category-fashion-open>
+                    <div class="fashion-category-filter__open-tooltip">
+                        Категория <br /> открыта ниже
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -61,7 +72,11 @@ use FourPaws\Decorators\SvgDecorator; ?>
             <div class="b-container">
                 <a href="<?=$component->getSectionUrl($element['PROPERTIES']['SECTION']['VALUE']) ?>" class="item-category-fashion__title" target="_blank"><?=$element['NAME']?></a>
                 <div class="item-category-fashion__content">
-                    <div class="item-category-fashion__img" style="background-image: url(<?=$arResult['IMAGES'][$element['PROPERTIES']['IMAGE']['VALUE']]?>)"></div>
+                    <div class="item-category-fashion__img" style="background-image: url(<?=$arResult['IMAGES'][$element['PROPERTIES']['IMAGE']['VALUE']]?>)">
+                        <a href="#" class="item-category-fashion__more" target="_blank">
+                            Посмотреть все
+                        </a>
+                    </div>
                     <div class="item-category-fashion__slider" data-slider-category-fashion="true">
                         <?php
                         foreach ($element['PROPERTIES']['PRODUCTS']['VALUE'] as $xmlId){
