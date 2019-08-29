@@ -95,7 +95,7 @@
                     <li>
                         <span style="text-transform: uppercase;">
                             <b>отслеживай марки где удобно:</b> <br />
-                            на чеке, <u>в личном кабинете</u> на сайте
+                            на чеке, <u><a href="/personal/" target="_blank">в личном кабинете</a></u> на сайте
                             и в приложении
                         </span>
                     </li>
