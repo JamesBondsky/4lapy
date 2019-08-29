@@ -432,7 +432,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
 
 <script>
     window.addEventListener('load', function() {
-        var items = document.querySelectorAll('.fashion-page .measure_dog__button.js-scroll-to-catalog, .fashion-page .b-news-item__link');
+        var items = document.querySelectorAll('.fashion-page .measure_dog__button.js-scroll-to-catalog, .fashion-page .b-news-item__link, .fashion-page .measure_dog__steps a');
 
         for (var i = 0; i < items.length; i++) {
             items[i].setAttribute('target', '_blank');
