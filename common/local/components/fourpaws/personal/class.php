@@ -4,6 +4,8 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
+use FourPaws\PersonalBundle\Service\StampService;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -28,11 +30,17 @@ class CPersonalCabinetComponent extends CBitrixComponent
             'referral'           => 'referral/',
             'subscribe'          => 'subscribe/',
             'top'                => 'top/',
-            'stamps'             => 'marki/',
+        ];
+        if (StampService::IS_STAMPS_OFFER_ACTIVE) {
+            $arDefaultUrlTemplates404 = array_merge($arDefaultUrlTemplates404, [
+                'stamps'             => 'marki/',
+            ]);
+        }
+        $arDefaultUrlTemplates404 = array_merge($arDefaultUrlTemplates404, [
             //'piggy-bank'         => 'kopi-marki/',
             //'piggy-bank-upgrade' => 'kopi-marki/upgrade/',
             'personal-offers'    => 'personal-offers/',
-        ];
+        ]);
 
         $arComponentVariables = [
             'SECTION_ID',
