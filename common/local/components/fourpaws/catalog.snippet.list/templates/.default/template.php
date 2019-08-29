@@ -8,6 +8,7 @@
  */
 
 
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Components\CatalogSaleListComponent;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
@@ -52,7 +53,14 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
         <div class="b-common-section__content b-common-section__content--sale b-common-section__content--main-sale js-popular-product">
             <?php 
             $i = 0;
+            $onlyProductsXmlIds = $arParams['ONLY_PRODUCTS_XML_ID'] ?? false;
             foreach ($component->getProductCollection() as $key => $product) {
+                if ($onlyProductsXmlIds) {
+	                $product->setOffers(
+	                    $product->getOffers()->filter(static function(Offer $item) use($onlyProductsXmlIds) {return in_array($item->getXmlId(), $onlyProductsXmlIds, false); })
+	                );
+                }
+
                 $APPLICATION->IncludeComponent(
                     'fourpaws:catalog.element.snippet',
                     'vertical',

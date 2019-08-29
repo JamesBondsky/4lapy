@@ -9,6 +9,7 @@
 namespace FourPaws\Helpers;
 
 
+use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Internals\CollectionBase;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
@@ -47,6 +48,24 @@ class BxCollection
             return $value->getField('CODE') === $code;
         });
         
+        return \current($filtered) ?: null;
+    }
+
+    /**
+     * @param CollectionBase $collection
+     * @param string $code
+     *
+     * @return BasketPropertyItem|null
+     */
+    public static function getBasketItemPropertyByCode(CollectionBase $collection, string $code): ?BasketPropertyItem
+    {
+        $filtered = self::filterCollection($collection, static function ($value) use ($code) {
+            /**
+             * @var BasketPropertyItem $value
+             */
+            return $value->getField('CODE') === $code;
+        });
+
         return \current($filtered) ?: null;
     }
 
