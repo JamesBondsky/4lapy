@@ -45,8 +45,8 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
         <div class="b-container">
             <div class="fashion-info__list">
                 <div class="fashion-item-info fashion-item-info_small">
-                    <div class="fashion-item-info__title">2&nbsp;000 товаров</div>
-                    <div class="fashion-item-info__descr">из&nbsp;новой коллекции<br/> одежды и&nbsp;обуви</div>
+                    <div class="fashion-item-info__title">Новая коллекция</div>
+                    <div class="fashion-item-info__descr">2000&nbsp;товаров одежды <br /> и&nbsp;обуви</div>
                 </div>
                 <div class="fashion-item-info">
                     <div class="fashion-item-info__title">скидки до&nbsp;15%</div>
@@ -431,7 +431,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
 </div>
 
 <script>
-    document.addEventListener('load', function() {
+    window.addEventListener('load', function() {
         var items = document.querySelectorAll('.fashion-page .measure_dog__button.js-scroll-to-catalog, .fashion-page .b-news-item__link');
 
         for (var i = 0; i < items.length; i++) {
