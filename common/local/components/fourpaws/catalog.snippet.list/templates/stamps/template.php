@@ -68,6 +68,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         'PRODUCT' => $product,
                         'OFFER_FILTER' => $arParams['OFFER_FILTER'] ?? [],
                         'COUNTER' => $i,
+                        'CACHE_TIME' => 0
                     ],
                     $component,
                     [
