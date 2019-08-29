@@ -200,13 +200,24 @@ class StampService implements LoggerAwareInterface
         foreach ($extendedAttributeCollection as $extendedAttribute) {
             $discount = $this->parseLevelKey($extendedAttribute->getKey());
             if ($discountStampsNeeded = (int)$discount['discountStamps']) {
+                $quantity = $extendedAttribute->getValue();
                 $discountSize = $discountStampsNeeded
-                    * $extendedAttribute->getValue(); // Количество товара, на которое доступна эта скидка
+                    * $quantity; // Количество товара, на которое доступна эта скидка
+
+                // если марок не хватает на всё количество единиц, на которое готова списать Manzana (возможно в кейсе, когда в корзине уже выбран обмен марок и по другим товарам тоже),
+                // то уменьшаем количество штук в расчете самого выгодного обмена
+                if ($availableStampsCount < $discountSize && $quantity > 1) {
+                    do {
+                        --$quantity;
+                        $discountSize = $discountStampsNeeded
+                            * $quantity; // Количество товара, на которое доступна эта скидка
+                    } while ($availableStampsCount < $discountSize && $quantity > 0);
+                }
 
                 if ($discountSize > $maxDiscountSize && $availableStampsCount >= $discountSize) {
                     $maxLevel = [
                         'key' => $extendedAttribute->getKey(),
-                        'value' => $extendedAttribute->getValue(),
+                        'value' => $quantity,
                     ];
                     $maxDiscountSize = $discountSize;
                 }
