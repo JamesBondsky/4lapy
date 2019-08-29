@@ -8,7 +8,12 @@ namespace FourPaws\MobileApiBundle\EventListener;
 
 use FOS\RestBundle\FOSRestBundle;
 use FOS\RestBundle\View\View;
+use FourPaws\App\Application as App;
+use FourPaws\External\ManzanaService;
 use FourPaws\MobileApiBundle\Dto\Response;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -53,6 +58,25 @@ class ViewHandler implements EventSubscriberInterface
         if (!($view instanceof Response) && !($view instanceof View)) {
             $event->setControllerResult(new Response($view));
         }
+        $this->sendMobileMark();
         return true;
+    }
+
+    private function sendMobileMark()
+    {
+        $container = App::getInstance()->getContainer();
+
+        /** @var ManzanaService $manzanaService */
+        $manzanaService = $container->get('manzana.service');
+        try {
+            /** @var UserService $userCurrentUserService */
+            $userCurrentUserService = $container->get(CurrentUserProviderInterface::class);
+            $currentUser = $userCurrentUserService->getCurrentUser();
+            $userId = $currentUser->getId();
+            $personalPhone = $currentUser->getPersonalPhone();
+
+            $manzanaService->updateContactMobileAsync(['userId' => $userId, 'personalPhone' => $personalPhone]);
+        } catch (NotAuthorizedException $e) {
+        }
     }
 }
