@@ -2,11 +2,15 @@
 
 namespace FourPaws\Components;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Main\SystemException;
+use Bitrix\Sale\BasketItem;
 use CBitrixComponent;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Category;
@@ -15,8 +19,12 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Model\Variant;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
+use FourPaws\External\Manzana\Dto\ExtendedAttribute;
+use FourPaws\External\Manzana\Exception\ExecuteErrorException;
+use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\SaleBundle\Service\BasketService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -34,6 +42,14 @@ class CatalogElementSnippet extends CBitrixComponent
      * @var RetailRocketService
      */
     private $retailRocketService;
+    /**
+     * @var BasketService
+     */
+    private $basketService;
+    /**
+     * @var StampService
+     */
+    private $stampService;
 
     /**
      * CatalogElementSnippet constructor.
@@ -49,6 +65,8 @@ class CatalogElementSnippet extends CBitrixComponent
         $container = Application::getInstance()->getContainer();
         $this->ecommerceService = $container->get(GoogleEcommerceService::class);
         $this->retailRocketService = $container->get(RetailRocketService::class);
+        $this->basketService = $container->get(BasketService::class);
+        $this->stampService = $container->get(StampService::class);
 
         parent::__construct($component);
     }
@@ -80,12 +98,14 @@ class CatalogElementSnippet extends CBitrixComponent
     /**
      * @return void
      *
-     * @throws ObjectNotFoundException
-     * @throws NotSupportedException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws SystemException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ExecuteErrorException
+     * @throws ExecuteException
      * @throws LoaderException
+     * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      */
     public function executeComponent(): void
     {
@@ -102,18 +122,7 @@ class CatalogElementSnippet extends CBitrixComponent
                 $this->arResult['CURRENT_OFFER'] = $currentOffer = $this->getCurrentOffer($product);
 
                 if (StampService::IS_STAMPS_OFFER_ACTIVE) {
-                    $exchangeRule = StampService::EXCHANGE_RULES[$product->getXmlId()] ?? false;
-
-                    if (!$exchangeRule) {
-                        $offers = $product->getOffers();
-                        foreach ($offers as $offer) {
-                            if (isset(StampService::EXCHANGE_RULES[$offer->getXmlId()])) {
-                                $exchangeRule = StampService::EXCHANGE_RULES[$offer->getXmlId()];
-                            }
-                        }
-                    }
-
-                    $this->arResult['EXCHANGE_RULE'] = $exchangeRule;
+                    $this->arResult['EXCHANGE_RULE'] = $this->getExchangeRule($currentOffer);
                 }
 
                 if ($category && $product->getIblockSectionId() !== $category->getId()) {
@@ -196,6 +205,61 @@ class CatalogElementSnippet extends CBitrixComponent
         }
 
         return $currentOffer;
+    }
+
+    /**
+     * @param Offer $currentOffer
+     * @return array
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws ExecuteErrorException
+     * @throws ExecuteException
+     */
+    protected function getExchangeRule($currentOffer)
+    {
+        $stampLevels = [];
+        $maxStampsLevelValue = false;
+
+        $exchangeRule = StampService::EXCHANGE_RULES[$currentOffer->getXmlId()] ?? false;
+
+        if (!$exchangeRule) {
+            return [];
+        }
+
+        // ищем товар в корзизе
+        /** @var BasketItem $basketItem */
+        foreach ($this->basketService->getBasket()->getBasketItems() as $basketItem) {
+            if ($basketItem->getProductId() == $currentOffer->getId()) {
+                if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
+                    $maxStampsLevelValue = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE']);
+                }
+            }
+        }
+
+        // если товар не нашли, то считаем сколько марок пользователь может потратить на один товар
+        if (!$maxStampsLevelValue) {
+            $extendedAttributeCollection = new ArrayCollection();
+            foreach ($exchangeRule as $stampRule) {
+                $extendedAttributeCollection->add(
+                    (new ExtendedAttribute())->setKey($stampRule['title'])->setValue(1)
+                );
+            }
+
+            $maxStampsLevelValue = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $this->stampService->getActiveStampsCount());
+        }
+
+        foreach ($exchangeRule as $rule) {
+            if ($rule['title'] === $maxStampsLevelValue['key']) {
+                $rule['is_max_level'] = true;
+            } else {
+                $rule['is_max_level'] = false;
+            }
+
+            $stampLevels[] = $rule;
+        }
+
+        return $stampLevels;
     }
 
     /**

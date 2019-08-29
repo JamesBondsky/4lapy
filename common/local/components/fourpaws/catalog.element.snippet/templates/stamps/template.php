@@ -262,8 +262,7 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                 <span class="b-common-item__title">С использованием марок</span>
                 <ul class="b-common-item__marks">
                     <? foreach ($arResult['EXCHANGE_RULE'] as $exchangeRule): ?>
-                        <?/* @todo выставлять класс is-active у li, в соотв. с задачей tm-35982 */?>
-                        <li class="b-common-item__item-mark">
+                        <li class="b-common-item__item-mark<?= ($exchangeRule['is_max_level']) ? ' is-active' : '' ?>">
                             <?= WordHelper::numberFormat($exchangeRule['price']) ?>
                             <span>₽</span>
                             — <?= $exchangeRule['stamps'] ?>
