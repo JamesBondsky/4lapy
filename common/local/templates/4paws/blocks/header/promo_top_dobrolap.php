@@ -1,4 +1,4 @@
-<div class="b-promo-top-full b-promo-top-full--fashion js-promo-top-full hide">
+<?/*?><div class="b-promo-top-full b-promo-top-full--fashion js-promo-top-full hide">
     <div class="b-container b-promo-top-full__fashion-container">
         <div>
             <a href="/fashion/">
@@ -10,3 +10,4 @@
         <div class="b-promo-top-full__close js-close-promo-top-full"></div>
     </div>
 </div>
+<?*/?>
