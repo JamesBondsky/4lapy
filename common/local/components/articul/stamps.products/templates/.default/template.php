@@ -70,7 +70,7 @@
                                         <button class="toys-landing-product__a2c js-basket-add" onmousedown="try { rrApi.addToBasket(<?= $offer['product_id'] ?>); } catch (e) {}" data-offerid="<?= $offer['id'] ?>" data-url="/ajax/sale/basket/add/">
                                             В корзину
                                         </button>
-                                        <a href="#" class="b-link">Покупай за марки!</a>
+                                        <a href="#" class="b-link" target="_blank">Покупай за марки!</a>
                                     </div>
                                 </div>
                             </div>
