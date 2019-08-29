@@ -2,6 +2,8 @@
 
 namespace FourPaws\External\Manzana\Dto;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -127,6 +129,16 @@ class ChequePosition
      * @var int
      */
     protected $signCharge = 1;
+
+    /**
+     * @Serializer\XmlList(inline=true)
+     * @Serializer\Type("ArrayCollection<FourPaws\External\Manzana\Dto\ExtendedAttribute>")
+     * @Serializer\SerializedName("ExtendedAttribute")
+     *
+     * @var Collection|ExtendedAttribute[]
+     */
+    protected $extendedAttribute;
+
     
     /**
      * @return int
@@ -330,5 +342,27 @@ class ChequePosition
     public function getSignCharge() : int
     {
         return $this->signCharge;
+    }
+
+    /**
+     * @return Collection|ExtendedAttribute[]
+     */
+    public function getExtendedAttribute(): Collection
+    {
+        if (!$this->extendedAttribute) {
+            $this->extendedAttribute = new ArrayCollection();
+        }
+
+        return $this->extendedAttribute;
+    }
+
+    /**
+     * @param Collection|ExtendedAttribute[] $extendedAttribute
+     * @return ChequePosition
+     */
+    public function setExtendedAttribute($extendedAttribute): ChequePosition
+    {
+        $this->extendedAttribute = $extendedAttribute;
+        return $this;
     }
 }
