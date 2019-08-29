@@ -21,101 +21,83 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
 ?>
 <div class="fashion-page">
     <section class="fashion-main-banner">
-        <!--<div class="fashion-main-banner__img"></div>-->
-        <?$filterName = 'catalogSliderFilter';
-        global ${$filterName};
-        ${$filterName} = ['PROPERTY_SECTION' => 457];
-        $APPLICATION->IncludeComponent('bitrix:news.list',
-            'index.slider',
-            [
-                'COMPONENT_TEMPLATE' => 'index.slider',
-                'IBLOCK_TYPE' => IblockType::PUBLICATION,
-                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::BANNERS),
-                'NEWS_COUNT' => '20',
-                'SORT_BY1' => 'SORT',
-                'SORT_ORDER1' => 'ASC',
-                'SORT_BY2' => 'ACTIVE_FROM',
-                'SORT_ORDER2' => 'DESC',
-                'FILTER_NAME' => $filterName,
-                'FIELD_CODE' => [
-                    0 => 'NAME',
-                    1 => 'PREVIEW_PICTURE',
-                    2 => 'DETAIL_PICTURE',
-                    3 => '',
+        <? $sectionFashion = CIBlockSection::GetList([], ['CODE' => 'fashion'], false, ['ID', 'NAME'])->Fetch();
+        if($sectionFashion){
+            $filterName = 'catalogSliderFilter';
+            global ${$filterName};
+            ${$filterName} = ['SECTION_CODE' => 'fashion'];
+            //${$filterName} = ['PROPERTY_SECTION' => 457];
+            $APPLICATION->IncludeComponent('bitrix:news.list',
+                'fashion.slider',
+                [
+                    'COMPONENT_TEMPLATE' => 'fashion.slider',
+                    'IBLOCK_TYPE' => IblockType::PUBLICATION,
+                    'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::BANNERS),
+                    'NEWS_COUNT' => '20',
+                    'SORT_BY1' => 'SORT',
+                    'SORT_ORDER1' => 'ASC',
+                    'SORT_BY2' => 'ACTIVE_FROM',
+                    'SORT_ORDER2' => 'DESC',
+                    'FILTER_NAME' => $filterName,
+                    'FIELD_CODE' => [
+                        0 => 'NAME',
+                        1 => 'PREVIEW_PICTURE',
+                        2 => 'DETAIL_PICTURE',
+                        3 => '',
+                    ],
+                    'PROPERTY_CODE' => [
+                        0 => 'LINK',
+                        1 => 'IMG_TABLET',
+                        2 => 'BACKGROUND',
+                    ],
+                    'CHECK_DATES' => 'Y',
+                    'DETAIL_URL' => '',
+                    'AJAX_MODE' => 'N',
+                    'AJAX_OPTION_JUMP' => 'N',
+                    'AJAX_OPTION_STYLE' => 'N',
+                    'AJAX_OPTION_HISTORY' => 'N',
+                    'AJAX_OPTION_ADDITIONAL' => '',
+                    'CACHE_TYPE' => 'A',
+                    'CACHE_TIME' => '36000000',
+                    'CACHE_FILTER' => 'Y',
+                    'CACHE_GROUPS' => 'N',
+                    'PREVIEW_TRUNCATE_LEN' => '',
+                    'ACTIVE_DATE_FORMAT' => '',
+                    'SET_TITLE' => 'N',
+                    'SET_BROWSER_TITLE' => 'N',
+                    'SET_META_KEYWORDS' => 'N',
+                    'SET_META_DESCRIPTION' => 'N',
+                    'SET_LAST_MODIFIED' => 'N',
+                    'INCLUDE_IBLOCK_INTO_CHAIN' => 'N',
+                    'ADD_SECTIONS_CHAIN' => 'N',
+                    'HIDE_LINK_WHEN_NO_DETAIL' => 'N',
+                    'PARENT_SECTION' => '',
+                    'PARENT_SECTION_CODE' => '',
+                    'INCLUDE_SUBSECTIONS' => 'N',
+                    'STRICT_SECTION_CHECK' => 'N',
+                    'DISPLAY_DATE' => 'N',
+                    'DISPLAY_NAME' => 'N',
+                    'DISPLAY_PICTURE' => 'N',
+                    'DISPLAY_PREVIEW_TEXT' => 'N',
+                    'PAGER_TEMPLATE' => '',
+                    'DISPLAY_TOP_PAGER' => 'N',
+                    'DISPLAY_BOTTOM_PAGER' => 'N',
+                    'PAGER_TITLE' => '',
+                    'PAGER_SHOW_ALWAYS' => 'N',
+                    'PAGER_DESC_NUMBERING' => 'N',
+                    'PAGER_DESC_NUMBERING_CACHE_TIME' => '',
+                    'PAGER_SHOW_ALL' => 'N',
+                    'PAGER_BASE_LINK_ENABLE' => 'N',
+                    'SET_STATUS_404' => 'N',
+                    'SHOW_404' => 'N',
+                    'MESSAGE_404' => '',
                 ],
-                'PROPERTY_CODE' => [
-                    0 => 'LINK',
-                    1 => 'IMG_TABLET',
-                    2 => 'BACKGROUND',
-                ],
-                'CHECK_DATES' => 'Y',
-                'DETAIL_URL' => '',
-                'AJAX_MODE' => 'N',
-                'AJAX_OPTION_JUMP' => 'N',
-                'AJAX_OPTION_STYLE' => 'N',
-                'AJAX_OPTION_HISTORY' => 'N',
-                'AJAX_OPTION_ADDITIONAL' => '',
-                'CACHE_TYPE' => 'A',
-                'CACHE_TIME' => '36000000',
-                'CACHE_FILTER' => 'Y',
-                'CACHE_GROUPS' => 'N',
-                'PREVIEW_TRUNCATE_LEN' => '',
-                'ACTIVE_DATE_FORMAT' => '',
-                'SET_TITLE' => 'N',
-                'SET_BROWSER_TITLE' => 'N',
-                'SET_META_KEYWORDS' => 'N',
-                'SET_META_DESCRIPTION' => 'N',
-                'SET_LAST_MODIFIED' => 'N',
-                'INCLUDE_IBLOCK_INTO_CHAIN' => 'N',
-                'ADD_SECTIONS_CHAIN' => 'N',
-                'HIDE_LINK_WHEN_NO_DETAIL' => 'N',
-                'PARENT_SECTION' => '',
-                'PARENT_SECTION_CODE' => '',
-                'INCLUDE_SUBSECTIONS' => 'N',
-                'STRICT_SECTION_CHECK' => 'N',
-                'DISPLAY_DATE' => 'N',
-                'DISPLAY_NAME' => 'N',
-                'DISPLAY_PICTURE' => 'N',
-                'DISPLAY_PREVIEW_TEXT' => 'N',
-                'PAGER_TEMPLATE' => '',
-                'DISPLAY_TOP_PAGER' => 'N',
-                'DISPLAY_BOTTOM_PAGER' => 'N',
-                'PAGER_TITLE' => '',
-                'PAGER_SHOW_ALWAYS' => 'N',
-                'PAGER_DESC_NUMBERING' => 'N',
-                'PAGER_DESC_NUMBERING_CACHE_TIME' => '',
-                'PAGER_SHOW_ALL' => 'N',
-                'PAGER_BASE_LINK_ENABLE' => 'N',
-                'SET_STATUS_404' => 'N',
-                'SHOW_404' => 'N',
-                'MESSAGE_404' => '',
-            ],
-            false,
-            ['HIDE_ICONS' => 'Y']);
-
+                false,
+                ['HIDE_ICONS' => 'Y']
+            );
+        }
         ?>
     </section>
-
-    <div class="fashion-main-slider">
-        <div class="b-container">
-            <div class="fashion-main-slider__slides slick-slide" data-fashion-main-slider style="display: none;">
-                <?php for($i = 0; $i < 8; $i++): ?>
-                    <div class="fashion-main-slider__item">
-                        <picture class="fashion-main-slider__image">
-                            <source srcset="/fashion/img/fashion-main-slider.png" media="(min-width: 768px)" />
-                            <source srcset="/fashion/img/fashion-main-banner_mobile.png" media="(max-width: 767px)" />
-
-                            <img src="/fashion/img/fashion-main-banner.png" />
-                        </picture>
-                    </div>
-                <?php endfor ?>
-            </div>
-        </div>
-    </div>
-
-<!--    <section class="fashion-main-banner">
-        <div class="fashion-main-banner__img"></div>
-    </section>-->
 
     <section class="fashion-info">
         <div class="b-container">
