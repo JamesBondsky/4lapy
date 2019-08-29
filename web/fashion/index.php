@@ -96,6 +96,27 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
         ?>
     </section>
 
+    <div class="fashion-main-slider">
+        <div class="b-container">
+            <div class="fashion-main-slider__slides slick-slide" data-fashion-main-slider style="display: none;">
+                <?php for($i = 0; $i < 8; $i++): ?>
+                    <div class="fashion-main-slider__item">
+                        <picture class="fashion-main-slider__image">
+                            <source srcset="/fashion/img/fashion-main-slider.png" media="(min-width: 768px)" />
+                            <source srcset="/fashion/img/fashion-main-banner_mobile.png" media="(max-width: 767px)" />
+
+                            <img src="/fashion/img/fashion-main-banner.png" />
+                        </picture>
+                    </div>
+                <?php endfor ?>
+            </div>
+        </div>
+    </div>
+
+<!--    <section class="fashion-main-banner">
+        <div class="fashion-main-banner__img"></div>
+    </section>-->
+
     <section class="fashion-info">
         <div class="b-container">
             <div class="fashion-info__list">
@@ -365,6 +386,12 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
     */?>
 
     <section class="fashion-info-banner">
+        <div class="fashion-info-banner__title">
+            <div class="b-container">
+                Профессиональная защита от влаги, ветра и холода
+            </div>
+        </div>
+
         <div class="fashion-info-banner__img">
             <picture>
                 <source media="(max-width: 767px)" srcset="/fashion/img/fashion-info-banner_mobile.jpg">
@@ -373,7 +400,9 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
         </div>
     </section>
 
-    <? $APPLICATION->IncludeComponent('articul:fashion.product.footer', '', ['SECTION_CODE' => 'rungo', 'TYPE' => 'rungo']) ?>
+    <? //$APPLICATION->IncludeComponent('articul:fashion.product.footer', '', ['SECTION_CODE' => 'rungo', 'TYPE' => 'rungo']) ?>
+
+    <? $APPLICATION->IncludeComponent('articul:fashion.product.footer', 'rungo') ?>
 
     <section class="fashion-measure-dog" data-measure-dog-fashion="true">
         <?
