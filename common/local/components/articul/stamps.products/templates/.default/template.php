@@ -70,7 +70,7 @@
                                         <button class="toys-landing-product__a2c js-basket-add" onmousedown="try { rrApi.addToBasket(<?= $offer['product_id'] ?>); } catch (e) {}" data-offerid="<?= $offer['id'] ?>" data-url="/ajax/sale/basket/add/">
                                             В корзину
                                         </button>
-                                        <a href="#" class="b-link" target="_blank">Покупай за марки!</a>
+                                        <a href="https://4lapy.ru/shares/kopi-marki-pokupay-tovary-so-skidkoy-do-50-.html" class="b-link" target="_blank">Покупай за марки!</a>
                                     </div>
                                 </div>
                             </div>
