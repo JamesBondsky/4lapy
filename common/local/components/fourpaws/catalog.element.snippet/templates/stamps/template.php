@@ -87,7 +87,7 @@ if (!$colourCombination) {
 
 $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
 ?>
-    <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>"
+    <div class="b-common-item b-common-item--stamps js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>"
          data-productid="<?= $product->getId() ?>">
         <?= MarkHelper::getMark($currentOffer, '', $arParams['SHARE_ID']) ?>
         <span class="b-common-item__image-wrap">
