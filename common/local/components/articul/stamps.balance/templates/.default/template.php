@@ -18,7 +18,11 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die; ?>
             У вас марок
 
             <div class="toys-landing__marks-cnt-number">
-                <?= $component->getActiveStampsCount() ?>
+                <? try {
+                    echo $component->getActiveStampsCount();
+                } catch (Exception $e) {
+                	echo 0;
+                } ?>
                 <img src="/upload/toys-landing/logo.png" alt="" width="19" height="19">
             </div>
         </div>
