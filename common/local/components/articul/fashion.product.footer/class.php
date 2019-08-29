@@ -29,7 +29,7 @@ class CFashionProductFooter extends \CBitrixComponent
         if (!isset($params['CACHE_TIME'])) {
             $params['CACHE_TIME'] = 86400;
         }
-        $this->arParams['TYPE'] = $params['TYPE'] ?: 'default';
+        $params['TYPE'] = $params['TYPE'] ?: 'default';
         $this->iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::FASHION_FOOTER_PRODUCTS);
         return parent::onPrepareComponentParams($params);
     }
