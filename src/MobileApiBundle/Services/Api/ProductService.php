@@ -563,6 +563,9 @@ class ProductService
             foreach ($stampRules as $rule) {
                 $stampLevels[] = $serializer->fromArray($rule, StampLevel::class);
             }
+
+            ini_set('serialize_precision', -1); // костыль, чтобы не "портились" price в StampLevel при сериализации
+
             $shortProduct->setStampLevels($stampLevels); //TODO get stampLevels from Manzana. If Manzana doesn't answer then set no levels
         }
 
