@@ -337,7 +337,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     public function addOffer(Offer $offer, ArrayCollection $collection, string $host, string $stockID = null): void
     {
         //isOfferExcluded - проверка наличия в складе DC01 и на акционные товары/новинки и прочее
-        if (empty($stockID)&& !$offer->isByRequest() && $this->isOfferExcluded($offer)) {
+        if (empty($stockID) && $this->isOfferExcluded($offer)) {
             return;
         }
 
@@ -456,7 +456,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             return true;
         }
 
-        if ($offer->getAllStocks()->filterByStore($this->getRcStock())->getTotalAmount() < self::MINIMAL_AVAILABLE_IN_RC) {
+        if ($offer->getAllStocks()->filterByStore($this->getRcStock())->getTotalAmount() < self::MINIMAL_AVAILABLE_IN_RC && !$offer->isByRequest()) {
             return true;
         }
 
