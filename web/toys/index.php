@@ -37,6 +37,25 @@
                     </div>
                 </li>
             </ul>
+
+            <div class="toys-landing__marks">
+                <!-- <div class="toys-landing__marks-cnt">
+                    У вас марок
+
+                    <div class="toys-landing__marks-cnt-number">
+                        50
+                        <img src="/upload/toys-landing/logo.png" alt="" width="19" height="19">
+                    </div>
+                </div> -->
+
+                <div class="toys-landing__marks-login">
+                    Узнайте Ваш <br /> баланс марок
+
+                    <button class="toys-landing__marks-login-btn js-open-popup js-toggle-popover-mobile-header" data-popup-id="authorization">
+                        Войти
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -353,32 +372,40 @@
             <img src="/upload/toys-landing/check.jpg" alt="" class="toys-landing-check__image" />
 
             <div class="toys-landing-check__sidebar">
-                <p class="toys-landing-check__text">
-                    <strong style="text-transform: uppercase;">Копи марки как тебе удобно</strong> <br /> <br />
-
-                    СОВЕРШАЙ ПОКУПКИ, ОТСЛЕЖИВАЙ БАЛАНС МАРОК НА ЧЕКЕ, В
-                    ЛИЧНОМ КАБИНЕТЕ НА САЙТЕ ИЛИ В МОБИЛЬНОМ ПРИЛОЖЕНИИ, ПОКУПАЙ УМНЫЕ
-                    ИГРУШКИ СО СКИДКОЙ ДО 50%.
-
-                    <span style="display: block;margin-top: 10px;">
-                        <a href="https://4lapy.ru/shares/kopi-marki-pokupay-tovary-so-skidkoy-do-50-.html" class="b-link">Подробнее</a>
-                    </span>
-                </p>
-
-                <ul class="toys-landing-check__list">
+                <ul class="toys-landing-check__sidebar-list">
                     <li>
-                        <img src="/upload/toys-landing/check--1.png" alt="" />
-                        На чеке
+                        <span style="text-transform: uppercase;">
+                            <b>
+                                делай покупки, получай марки: 1
+                                <img src="/upload/toys-landing/logo.png" width="19" height="19" style="transform: translateY(2px)" />
+                                = 400р
+                            </b>
+                        </span>
                     </li>
 
                     <li>
-                        <img src="/upload/toys-landing/check--2.png" alt="" />
-                        В приложении
+                        <span style="text-transform: uppercase;">
+                            <b>отслеживай марки где удобно:</b> <br />
+                            на чеке, <u>в личном кабинете</u> на сайте
+                            и в приложении
+                        </span>
                     </li>
 
                     <li>
-                        <img src="/upload/toys-landing/check--3.png" alt="" />
-                        На сайте
+                        <span style="text-transform: uppercase;">
+                            <b>На сайте и в приложении:</b><br />
+                            выбери игру и добавь в корзину
+                            нажми “списать марки” <br /><br />
+
+                            <b>при покупке офлайн</b> <br/>
+                            вам спишет марки кассир
+                        </span>
+                    </li>
+
+                    <li>
+                        <span style="text-transform: uppercase;">
+                            <b>Получи игру и развивай питомца</b>
+                        </span>
                     </li>
                 </ul>
             </div>
