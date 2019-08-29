@@ -152,7 +152,12 @@ class CStampsProductsComponent extends \CBitrixComponent
 
     private function getFiles()
     {
-        $rsFile = CFile::GetList(false, ['@ID' => array_unique($this->fileIds)]);
+        $fileIds = array_unique($this->fileIds);
+        if (!$fileIds) {
+            return;
+        }
+
+        $rsFile = CFile::GetList(false, ['@ID' => $fileIds]);
 
         while ($arFile = $rsFile->GetNext()) {
             $this->arResult['images'][$arFile['ID']] = CFile::GetFileSRC($arFile);
