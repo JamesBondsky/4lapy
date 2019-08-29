@@ -502,6 +502,8 @@ class ProductService
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteErrorException
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteException
      */
     public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1): ShortProduct
     {
@@ -560,38 +562,57 @@ class ProductService
         if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
             // уровни скидок за марки
             $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
-            $stampRules = $this->stampService::EXCHANGE_RULES[$shortProduct->getXmlId()];
+            $exchangeRules = $this->stampService::EXCHANGE_RULES[$shortProduct->getXmlId()];
+
+            if (!$exchangeRules) {
+                $exchangeRules = [];
+            }
+
             $stampLevels = [];
-            $maxStampsLevelValue = false;
+            $maxCanUse = 0;
+
+            // учитывание корзины
+//            $maxStampsLevelValue = false;
 
             // ищем товар в корзизе
             /** @var BasketItem $basketItem */
-            foreach ($this->appBasketService->getBasket()->getBasketItems() as $basketItem) {
-                if ($basketItem->getProductId() == $offer->getId()) {
-                    if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
-                        $maxStampsLevelValue = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE']);
-                    }
-                }
-            }
+//            foreach ($this->appBasketService->getBasket()->getBasketItems() as $basketItem) {
+//                if ($basketItem->getProductId() == $offer->getId()) {
+//                    if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
+//                        $maxStampsLevelValue = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE']);
+//                    }
+//                }
+//            }
 
             // если товар не нашли, то считаем сколько марок пользователь может потратить на один товар
-            if (!$maxStampsLevelValue) {
-                $extendedAttributeCollection = new ArrayCollection();
-                foreach ($stampRules as $stampRule) {
-                    $extendedAttributeCollection->add(
-                        (new ExtendedAttribute())->setKey($stampRule['title'])->setValue(1)
-                    );
-                }
+//            if (!$maxStampsLevelValue) {
+//                $extendedAttributeCollection = new ArrayCollection();
+//                foreach ($exchangeRules as $exchangeRule) {
+//                    $extendedAttributeCollection->add(
+//                        (new ExtendedAttribute())->setKey($exchangeRule['title'])->setValue(1)
+//                    );
+//                }
+//
+//                $maxStampsLevelValue = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $this->stampService->getActiveStampsCount());
+//            }
+//
+//            foreach ($exchangeRules as $exchangeRule) {
+//                if ($exchangeRule['title'] === $maxStampsLevelValue['key']) {
+//                    $exchangeRule['isMaxLevel'] = true;
+//                }
+//
+//                $stampLevels[] = $serializer->fromArray($exchangeRule, StampLevel::class);
+//            }
 
-                $maxStampsLevelValue = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $this->stampService->getActiveStampsCount());
+            foreach ($exchangeRules as $exchangeRule) {
+                if (($exchangeRule['stamps'] <= $this->stampService->getActiveStampsCount()) && ($exchangeRule['stamps'] > $maxCanUse)) {
+                    $maxCanUse = $exchangeRule['stamps'];
+                }
             }
 
-            foreach ($stampRules as $rule) {
-                if ($rule['title'] === $maxStampsLevelValue['key']) {
-                    $rule['is_max_level'] = true;
-                }
-
-                $stampLevels[] = $serializer->fromArray($rule, StampLevel::class);
+            foreach ($exchangeRules as $exchangeRule) {
+                $exchangeRule['isMaxLevel'] = ($exchangeRule['stamps'] == $maxCanUse);
+                $stampLevels[] = $serializer->fromArray($exchangeRule, StampLevel::class);
             }
 
             ini_set('serialize_precision', -1); // костыль, чтобы не "портились" price в StampLevel при сериализации
