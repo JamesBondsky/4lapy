@@ -43,6 +43,7 @@ use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use FourPaws\SaleBundle\Exception\BitrixProxyException;
 
 /**
  * Class BasketController
@@ -53,6 +54,7 @@ use Symfony\Component\HttpFoundation\Request;
 class BasketController extends Controller implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
+
 
     private $basketService;
     /**
@@ -555,7 +557,6 @@ class BasketController extends Controller implements LoggerAwareInterface
             $data = [
                 'basket' => $this->basketViewService->getBasketHtml(true),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
-                'fastOrder' => $isFastOrder ? $this->basketViewService->getFastOrderHtml(true) : '',
             ];
 
             $response = JsonSuccessResponse::createWithData(
@@ -565,6 +566,51 @@ class BasketController extends Controller implements LoggerAwareInterface
                 ['reload' => false]
             );
         } catch (BaseExceptionInterface | ArgumentOutOfRangeException | Exception $e) {
+            $response = JsonErrorResponse::create(
+                $e->getMessage(),
+                200,
+                [],
+                ['reload' => false]
+            );
+        }
+
+        return $response;
+    }
+
+    /**
+     * @Route("/use_stamps/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     */
+    public function useStampsAction(Request $request)
+    {
+        try {
+            $basketItemId = intval($request->get('basketId'));
+            $useStamps = boolval($request->get('useStamps'));
+
+            $basketItem = $this->basketService->getBasket()->getItemById($basketItemId);
+
+            if (!$basketItem) {
+                throw new NotFoundException();
+            }
+
+            $this->basketService->updateBasketQuantity($basketItemId, intval($basketItem->getQuantity()), $useStamps);
+
+            $data = [
+                'basket' => $this->basketViewService->getBasketHtml(true),
+                'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
+            ];
+
+            $response = JsonSuccessResponse::createWithData(
+                '',
+                $data,
+                200,
+                ['reload' => false]
+            );
+        } catch (Exception $e) {
             $response = JsonErrorResponse::create(
                 $e->getMessage(),
                 200,

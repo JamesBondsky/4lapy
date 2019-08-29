@@ -142,7 +142,8 @@ if (!$catalogRequest->isLanding()) { ?>
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
                     'filters'          => $filterToShow,
-                    'dataLayerService' => $dataLayerService
+                    'dataLayerService' => $dataLayerService,
+                    'catalogRequest'   => $catalogRequest,
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
@@ -283,6 +284,13 @@ if (!$catalogRequest->isLanding()) { ?>
                     </a>
                 </div>
             </div>
+            <?
+            // Механизм отложенных функций здесь почему-то ломает вёрстку
+            // поэтому используем глобальную переменную
+            // $APPLICATION->ShowViewContent("size_select_filter");
+            if($GLOBALS['showSizeSelectFilter']) { ?>
+                <a href="javascript:void(0)" class="b-catalog-filter__scroll-to-size-select js-scroll-to-size-select">Узнать размер собаки</a>
+            <? } ?>
             <div class="b-line b-line--sort-mobile"></div>
         </div>
     </div>

@@ -9,17 +9,24 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use CEvent;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\Response\JsonResponse;
+use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Manzana\Exception\ExecuteErrorException;
 use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\LoginExistRequest;
 use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PostUserInfoRequest;
 use FourPaws\MobileApiBundle\Dto\Request\VerificationCodeSendByEmailRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
+use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
+use FourPaws\PersonalBundle\Service\StampService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Swagger\Annotations\Parameter;
 use Swagger\Annotations\Response;
 use FourPaws\MobileApiBundle\Dto\Response\PersonalBonusResponse;
+use Symfony\Component\HttpFoundation\Request;
 
 class UserController extends BaseController
 {
@@ -27,10 +34,20 @@ class UserController extends BaseController
      * @var ApiUserService
      */
     private $apiUserService;
+    /**
+     * @var StampService
+     */
+    protected $stampService;
+    /**
+     * @var ApiProductService
+     */
+    private $apiProductService;
 
-    public function __construct(ApiUserService $apiUserService)
+    public function __construct(ApiUserService $apiUserService, StampService $stampService, ApiProductService $apiProductService)
     {
         $this->apiUserService = $apiUserService;
+        $this->stampService = $stampService;
+        $this->apiProductService = $apiProductService;
     }
 
     /**
@@ -200,5 +217,41 @@ class UserController extends BaseController
                     'N'
                 )
             ]);
+    }
+
+    /**
+     * @Rest\Get("/stamps/")
+     * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
+     *
+     * @return ApiResponse
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    public function getStampsInfoAction(): ApiResponse //TODO change Response type // см. PersonalBonus для примера
+    {
+        try {
+            $stamps = $this->stampService->getActiveStampsCount(); //TODO переделать(?) на вывод значения, сохраненного в профиле пользователя (для этого нужно его заранее асинхронно обновлять)
+        } catch (\Exception $e) {
+            $stamps = 0;
+        }
+
+        $exchangeRules = StampService::EXCHANGE_RULES;
+        $productsXmlIds = array_keys($exchangeRules);
+
+        $productsListCollection = $this->apiProductService->getListFromXmlIds($productsXmlIds, true);
+        $productsList = $productsListCollection->get(0) ?? [];
+
+        return (new ApiResponse())->setData([
+            'stamps' => [
+                'amount' => $stamps,
+                'rate_val' => StampService::MARK_RATE,
+                //IMPORTANT: В description переносы строк должны быть разделены с помощью \n\n
+                'description' => "1. Копи марки: за каждые " . StampService::MARK_RATE . " руб. в чеке получайте 1 марку."
+                    . "\n\n2. Выбирай умные игрушки: покупай со скидкой до 50%."
+                    . "\n\n3. Занимайся с питомцем: развивай любознательность, обучай и играй с удовольствием.",
+                'goods' => $productsList,
+            ],
+        ]);
     }
 }

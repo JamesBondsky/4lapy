@@ -30,6 +30,7 @@ use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Exception\TokenNotFoundException;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use FourPaws\MobileApiBundle\Services\Session\SessionHandler;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\UserBundle\Entity\User as AppUser;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
@@ -79,6 +80,9 @@ class UserService
     /** @var PersonalOrderService */
     private $personalOrderService;
 
+    /** @var StampService */
+    private $stampService;
+
     public function __construct(
         UserBundleService $userBundleService,
         UserRepository $userRepository,
@@ -88,7 +92,8 @@ class UserService
         TokenStorageInterface $tokenStorage,
         ApiCityService $apiCityService,
         AppBonusService $appBonusService,
-        PersonalOrderService $personalOrderService
+        PersonalOrderService $personalOrderService,
+        StampService $stampService
     )
     {
         $this->userBundleService = $userBundleService;
@@ -100,6 +105,7 @@ class UserService
         $this->apiCityService = $apiCityService;
         $this->appBonusService = $appBonusService;
         $this->personalOrderService = $personalOrderService;
+        $this->stampService = $stampService;
     }
 
     /**
@@ -137,6 +143,8 @@ class UserService
             '9600401906',
             '9178445061',
             '9779461734', // Сергей Боканев
+            '9683618355',
+            'm.balezin@articul.ru',
         ];
 
         try {
@@ -374,6 +382,14 @@ class UserService
             $apiUser
                 ->setLocation($userLocation)
                 ->setLocationId($userLocation->getId());
+        }
+        try {
+            $apiUser->setStampsIncome($this->stampService->getActiveStampsCount()); //TODO переделать(?) на вывод значения, сохраненного в профиле пользователя (для этого нужно его заранее асинхронно обновлять)
+        } catch (Exception $e) {
+            $logger = LoggerFactory::create('getCurrentApiUser');
+            $logger->error(sprintf('%s getActiveStampsCount exception: %s', __METHOD__, $e->getMessage()));
+
+            $apiUser->setStampsIncome(0);
         }
         return $apiUser;
     }
