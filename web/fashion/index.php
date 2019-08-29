@@ -400,9 +400,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
         </div>
     </section>
 
-    <? //$APPLICATION->IncludeComponent('articul:fashion.product.footer', '', ['SECTION_CODE' => 'rungo', 'TYPE' => 'rungo']) ?>
-
-    <? $APPLICATION->IncludeComponent('articul:fashion.product.footer', 'rungo') ?>
+    <? $APPLICATION->IncludeComponent('articul:fashion.product.footer', 'rungo', ['SECTION_CODE' => 'rungo', 'TYPE' => 'rungo']) ?>
 
     <section class="fashion-measure-dog" data-measure-dog-fashion="true">
         <?
