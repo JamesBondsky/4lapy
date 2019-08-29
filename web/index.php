@@ -194,6 +194,8 @@ try {
 	            'BUTTON_TEXT',
 	            'BUTTON_COLOR',
 	            'HIDE_LOGO_MOBILE',
+				'LEFT_SVG',
+				'HASH_LEFT_COLOR',
 	        ],
 			"SET_BROWSER_TITLE" => "N",
 			"SET_LAST_MODIFIED" => "N",
