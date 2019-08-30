@@ -127,6 +127,7 @@ echo $view->render(
 
 if ($catalogRequest->isLanding()) {
     echo '</div></div>';
+
     if ($category->isShowFitting()) {
         echo $view->render('FourPawsCatalogBundle:Catalog:landing.fitting.html.php');
     }
@@ -151,7 +152,13 @@ if ($catalogRequest->isLanding()) {
 
 } else { ?>
     </div>
-    <?php if ($category->isLanding()) {
+    <?php
+
+    if ($category->isShowFitting()) {
+        echo $view->render('FourPawsCatalogBundle:Catalog:landing.fitting.html.php');
+    }
+
+    if ($category->isLanding()) {
         echo $view->render('FourPawsCatalogBundle:Catalog:old.landing.catalog.footer.html.php', \compact('category'));
     }
 

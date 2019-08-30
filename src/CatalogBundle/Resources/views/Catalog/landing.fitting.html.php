@@ -25,9 +25,9 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
             <div class="measure_dog__info">
                 <div class="measure_dog__video">
                     <video controls="" poster="/static/build/images/inhtml/preview-size-dog.jpg">
-                        <source src="https://4lapy.ru/upload/dobrolap/4lapi_priut_14_08_2.mp4">
-                        <source src="http://4lapy.ru/upload/dobrolap/4lapi_priut_14_08_2.ogv" type="video/webm">
-                        <source src="http://4lapy.ru/upload/dobrolap/4lapi_priut_14_08_2.webm" type="video/ogg">
+                        <source src="/upload/dobrolap/measure_size.mp4">
+                        <source src="/upload/dobrolap/measure_size.ogv" type="video/webm">
+                        <source src="/upload/dobrolap/measure_size.webm" type="video/ogg">
                     </video>
                 </div>
                 <div class="measure_dog__img"></div>
