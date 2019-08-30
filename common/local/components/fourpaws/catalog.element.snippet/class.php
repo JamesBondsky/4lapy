@@ -132,8 +132,13 @@ class CatalogElementSnippet extends CBitrixComponent
                         $exchangeRules = [];
                     }
 
+                    try {
+                        $activeStampsCount = $this->stampService->getActiveStampsCount();
+                    } catch (\Exception $e) {
+                        $activeStampsCount = 0;
+                    }
                     foreach ($exchangeRules as $exchangeRule) {
-                        if (($exchangeRule['stamps'] <= $this->stampService->getActiveStampsCount()) && ($exchangeRule['stamps'] > $maxCanUse)) {
+                        if (($exchangeRule['stamps'] <= $activeStampsCount) && ($exchangeRule['stamps'] > $maxCanUse)) {
                             $maxCanUse = $exchangeRule['stamps'];
                         }
                     }
