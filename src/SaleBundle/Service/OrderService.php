@@ -2063,13 +2063,14 @@ class OrderService implements LoggerAwareInterface
     public function getOrderFeedbackLink(Order $order): string
     {
         //return sprintf('/sale/order/interview/%d/?HASH=%s', $order->getId(), $order->getHash());
-        $serverName = COption::GetOptionString('main', 'server_name', '');
+
+        $serverName = $_SERVER['SERVER_NAME'];
         if (strlen($serverName) <= 0)
-            $serverName = $_SERVER['SERVER_NAME'];
+            $serverName = COption::GetOptionString('main', 'server_name', '');
 
         $serverName = str_replace(array("https://", "http://"), '', $serverName);
         $protocol = \CMain::IsHTTPS() ? "https://" : "http://";
-        return $protocol.$serverName.'/feedback/';
+        return $protocol.$serverName.sprintf('/sale/order/interview/%d/?HASH=%s', $order->getId(), $order->getHash());
     }
 
 
