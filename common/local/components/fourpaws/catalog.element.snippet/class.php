@@ -121,7 +121,7 @@ class CatalogElementSnippet extends CBitrixComponent
                 $this->arResult['PRODUCT'] = $product = $this->arParams['PRODUCT'];
                 $this->arResult['CURRENT_OFFER'] = $currentOffer = $this->getCurrentOffer($product);
 
-                if (StampService::IS_STAMPS_OFFER_ACTIVE) {
+                if (StampService::IS_STAMPS_OFFER_ACTIVE && $currentOffer) {
 //                    $this->arResult['EXCHANGE_RULE'] = $this->getExchangeRule($currentOffer); марки с учетом корзины
                     $stampLevels = [];
                     $maxCanUse = 0;
