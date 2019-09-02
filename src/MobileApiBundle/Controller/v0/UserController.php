@@ -250,6 +250,7 @@ class UserController extends BaseController
                 'description' => "1. Копи марки: за каждые " . StampService::MARK_RATE . " руб. в чеке получайте 1 марку."
                     . "\n\n2. Выбирай умные игрушки: покупай со скидкой до 50%."
                     . "\n\n3. Занимайся с питомцем: развивай любознательность, обучай и играй с удовольствием.",
+                'second_description' => 'Описание, как работает обмен марок',
                 'goods' => $productsList,
             ],
         ]);
