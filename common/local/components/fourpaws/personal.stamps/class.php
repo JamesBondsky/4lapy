@@ -61,7 +61,7 @@ class FourPawsPersonalCabinetStampsComponent extends FourPawsComponent
 
             try {
                 $this->arResult['ACTIVE_STAMPS_COUNT'] = $this->stampService->getActiveStampsCount(); //TODO переделать(?) на вывод значения, сохраненного в профиле пользователя (для этого нужно его заранее асинхронно обновлять)
-            } catch (ExecuteErrorException $e) {
+            } catch (Exception $e) {
                 $this->arResult['ACTIVE_STAMPS_COUNT'] = 0;
             }
         } catch (NotAuthorizedException $e) {
