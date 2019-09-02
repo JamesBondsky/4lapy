@@ -6,6 +6,7 @@ use Bitrix\Iblock\IblockTable;
 use Bitrix\Main\Application;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\Helpers\HighloadHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 
 /**
  * @var \CBitrixComponentTemplate $this
@@ -93,16 +94,18 @@ $APPLICATION->IncludeComponent(
         'HIDE_ICONS' => 'Y',
     ]
 );
-
-$APPLICATION->IncludeFile(
-    'blocks/components/social_share.php',
-    [],
-    [
-        'SHOW_BORDER' => false,
-        'NAME'        => 'Блок Рассказать в соцсетях',
-        'MODE'        => 'php',
-    ]
-);?>
+if (!KioskService::isKioskMode()) {
+    $APPLICATION->IncludeFile(
+        'blocks/components/social_share.php',
+        [],
+        [
+            'SHOW_BORDER' => false,
+            'NAME' => 'Блок Рассказать в соцсетях',
+            'MODE' => 'php',
+        ]
+    );
+}
+?>
 
 <?php
 /** @noinspection PhpUnhandledExceptionInspection */

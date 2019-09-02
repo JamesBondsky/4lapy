@@ -401,7 +401,9 @@
       self.$lightbox.find('.lb-nextLink').height(newHeight);
 
       // Set focus on one of the two root nodes so keyboard events are captured.
-      self.$overlay.focus();
+      // CUSTOM
+      //self.$overlay.focus();
+      self.$lightbox.focus();
 
       self.showImage();
     }

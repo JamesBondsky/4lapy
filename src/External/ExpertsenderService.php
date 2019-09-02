@@ -143,10 +143,17 @@ class ExpertsenderService implements LoggerAwareInterface
     public const BLACK_LIST_ERROR_CODE = 400;
     public const BLACK_LIST_ERROR_MESSAGE = 'Subscriber is blacklisted.';
 
+    public const CHANGE_PASSWORD = 9641;
+
+    /**
+     * @var SmsService
+     */
+    protected $smsService;
+
     /**
      * ExpertsenderService constructor.
      */
-    public function __construct(UserSearchInterface $userSearch)
+    public function __construct(UserSearchInterface $userSearch, SmsService $smsService)
     {
         $client = new Client();
         $this->guzzleClient = $client;
@@ -155,6 +162,8 @@ class ExpertsenderService implements LoggerAwareInterface
         $this->key = $key;
         $this->url = $url;
         $this->client = new ExpertSender($url, $key, $client);
+
+        $this->smsService = $smsService;
     }
 
     /**
@@ -1251,6 +1260,24 @@ class ExpertsenderService implements LoggerAwareInterface
         return $transactionId;
     }
 
+    public function sendNewPassword(string $password, User $user)
+    {
+        $snippets[] = new Snippet('user_name', htmlspecialcharsbx($user->getLogin()));
+        $snippets[] = new Snippet('pass', $password);
+
+        $email = $user->getEmail();
+
+        if ($email) {
+            $this->sendSystemTransactional(self::CHANGE_PASSWORD, $email, $snippets);
+        } else {
+            $phone = $user->getPersonalPhone();
+            if (!$phone) {
+                $phone = $user->getLogin();
+            }
+            $this->smsService->sendSmsImmediate('Вы давно не меняли пароль, ваш пароль изменен автоматически: ' . $password, $phone);
+        }
+    }
+
     /**
      * @param int    $transactionId
      * @param string $email
@@ -1540,6 +1567,8 @@ class ExpertsenderService implements LoggerAwareInterface
             $snippets[] = new Snippet('coupon', htmlspecialcharsbx($coupon));
             $snippets[] = new Snippet('date', htmlspecialcharsbx($couponDateActiveTo));
             $snippets[] = new Snippet('url_img', $base64);
+            $snippets[] = new Snippet('description', htmlspecialcharsbx($couponDescription));
+            $snippets[] = new Snippet('user_name', $name);
             //$snippets[] = new Snippet('text', htmlspecialcharsbx());
 
             $this->sendSystemTransactional($transactionId, $email, $snippets);

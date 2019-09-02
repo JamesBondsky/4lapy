@@ -490,10 +490,88 @@ $APPLICATION->SetTitle("Добролап");
                 </div>
                 <div class="b-common-section__content b-common-section__content--sale b-common-section__content--main-sale js-popular-product">
                     <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/DSCN4338.JPG" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/2608/DSCN4338.JPG')"
+                           data-title="Корзинка «Добролап» никогда не бывает пустой">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Корзинка «Добролап» никогда не бывает пустой
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/IMG_7423-13-08-19-10-34.jpeg" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/2608/IMG_7423-13-08-19-10-34.jpeg')"
+                           data-title="Каждый день питомцы из приютов получают долгожданные подарки">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Каждый день питомцы из приютов получают долгожданные подарки
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/lyEQwzEt0aY.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/2608/lyEQwzEt0aY.jpg')"
+                           data-title="Вкусные лакомства теперь в обязательном рационе питомцев">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Вкусные лакомства теперь в обязательном рационе питомцев
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/IMG_9399.JPG" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/2608/IMG_9399.JPG')"
+                           data-title="Команда волонтеров растет с каждым днем">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Команда волонтеров растет с каждым днем
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/Skobelevskaja3.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/2608/Skobelevskaja3.jpg')"
+                           data-title="Больше всего маленьким питомцам нужны ветеринарные препараты и пеленки. Теперь все будет в порядке!">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Больше всего маленьким питомцам нужны ветеринарные препараты и пеленки. Теперь все будет в порядке!
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/IMG_9332.JPG" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/2608/IMG_9332.JPG')"
+                           data-title="В Центре «Собаки-поводыри» обучаются лабрадоры и ретриверы. Эти породы наиболее приспособлены для ответственной работы собаки-поводыря.">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                В Центре «Собаки-поводыри» обучаются лабрадоры и ретриверы. Эти породы наиболее приспособлены для ответственной работы собаки-поводыря.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="b-common-item">
                         <a href="/dobrolap/images/report/02.jpg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/02.jpg')"
                            data-title="Команда «Добролап» помогла найти Лайме и еще более 100 питомцам новую семью">
-                            <img src="/dobrolap/images/report/02.jpg" class="photos__img" />
                         </a>
                         <div class="carousel-note"><p class="mb-4">Команда «Добролап» помогла<br/>найти Лайме и еще
                                 более 100 питомцам<br/>новую семью</p></div>
@@ -501,8 +579,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/03.jpg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/03.jpg')"
                            data-title="Самые вкусные подарки привозят друзья «Добролап»">
-                            <img src="/dobrolap/images/report/03.jpg" class="photos__img" />
                         </a>
                         <div class="carousel-note"><p class="mb-4">Самые вкусные подарки<br/>привозят друзья<br/>«Добролап»
                             </p></div>
@@ -510,8 +588,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/04.jpg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/04.jpg')"
                            data-title="Большая дружба начинается с малого: более 500 ребят стали участниками акции в 2018 году">
-                            <img src="/dobrolap/images/report/04.jpg" class="photos__img" />
                         </a>
                         <div class="carousel-note"><p class="mb-4">Большая дружба начинается<br/>с малого: более 500
                                 ребят стали<br/>участниками акции в 2018 году</p></div>
@@ -519,8 +597,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/05.jpg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/05.jpg')"
                            data-title="Большая радость самому приехать к питомцам, которые очень тебя ждут">
-                            <img src="/dobrolap/images/report/05.jpg" class="photos__img" />
                         </a>
                         <div class="carousel-note"><p class="mb-4">Большая радость самому<br/>приехать к питомцам,
                                 которые<br/>очень тебя ждут</p></div>
@@ -529,8 +607,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/06.jpg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/06.jpg')"
                            data-title="Каждый день маленьких помощников ждут добрые дела">
-                            <img src="/dobrolap/images/report/06.jpg" class="photos__img" />
                         </a>
                         <div class="carousel-note"><p class="mb-4">Каждый день маленьких помощников ждут добрые дела</p></div>
                     </div>
@@ -538,8 +616,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/07.jpg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/07.jpg')"
                            data-title="Вместе с мамой ребята собрали большую посылку с лакомствами для друзей">
-                            <img src="/dobrolap/images/report/07.jpg" class="photos__img" />
                         </a>
                         <div class="carousel-note"><p class="mb-4">Вместе с мамой ребята собрали большую посылку с лакомствами для друзей</p></div>
                     </div>
@@ -547,8 +625,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/08.jpg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/08.jpg')"
                            data-title="Катя и Даша узнали про Добролап в Инстаграмм и привели родителей">
-                            <img src="/dobrolap/images/report/08.jpg" class="photos__img" />
                         </a>
                         <div class="carousel-note"><p class="mb-4">Катя и Даша узнали про Добролап в Инстаграмм и привели родителей</p></div>
                     </div>
@@ -556,8 +634,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/09.jpg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/09.jpg')"
                            data-title="Много корма не бывает! ">
-                            <img src="/dobrolap/images/report/09.jpg" class="photos__img" />
                         </a>
                         <div class="carousel-note"><p class="mb-4">Много корма не бывает!</p></div>
                     </div>
@@ -565,8 +643,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/10.jpg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/10.jpg')"
                            data-title="Маша с мамой выбирают по списку, чтобы не упустить ничего важного">
-                            <img src="/dobrolap/images/report/10.jpg" class="photos__img" />
                         </a>
                         <div class="carousel-note"><p class="mb-4">Маша с мамой выбирают по списку, чтобы не упустить ничего важного</p></div>
                     </div>
@@ -574,8 +652,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/11.jpg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/11.jpg')"
                            data-title="В приют отправились три коробочки с вкуснятиной, запас корма на месяц и уютные лежаки">
-                            <img src="/dobrolap/images/report/11.jpg" class="photos__img" />
                         </a>
                         <div class="carousel-note"><p class="mb-4">В приют отправились три коробочки с вкуснятиной, запас корма на месяц и уютные лежаки</p></div>
                     </div>
@@ -583,8 +661,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/12.jpg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/12.jpg')"
                            data-title="У Маргариты это уже третий магнитик Добролап!">
-                            <img src="/dobrolap/images/report/12.jpg" class="photos__img" />
                         </a>
                         <div class="carousel-note"><p class="mb-4">У Маргариты это уже третий магнитик Добролап!</p></div>
                     </div>
@@ -592,8 +670,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/13.jpg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/13.jpg')"
                            data-title="Долгожданная помощь отправляется в приюты каждую неделю">
-                            <img src="/dobrolap/images/report/13.jpg" class="photos__img" />
                         </a>
                         <div class="carousel-note"><p class="mb-4">Долгожданная помощь отправляется в приюты каждую неделю</p></div>
                     </div>
@@ -696,12 +774,13 @@ $APPLICATION->SetTitle("Добролап");
         </div>
         <div class="home-slider  owl-carousel">
             <div class="slider-item ">
-                <div class="overlay"></div>
                 <div class="container">
                     <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
                          data-scrollax-parent="true">
-                        <video controls poster="/dobrolap/images/raise-preview1.jpg">
-                            <source src="/upload/dobrolap/Dobrolap_06_08.mp4" type="video/mp4">
+                        <video controls poster="/dobrolap/images/raise-preview2.jpg">
+                            <source src="/upload/dobrolap/4lapi_priut_14_08_2.mp4">
+                            <source src="/upload/dobrolap/4lapi_priut_14_08_2.ogv" type="video/webm">
+                            <source src="/upload/dobrolap/4lapi_priut_14_08_2.webm" type="video/ogg">
                         </video>
                     </div>
                 </div>

@@ -4,6 +4,7 @@
 namespace FourPaws\External\Manzana\Consumer;
 
 
+use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
@@ -11,9 +12,19 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\MobileApiBundle\Tables\UserApiLastUsingTable;
 use FourPaws\UserBundle\EventController\Event;
 use PhpAmqpLib\Message\AMQPMessage;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\External\Manzana\Exception\WrongContactMessageException;
 
 class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
 {
+
+    protected $logName = 'ManzanaContactMobileUpdateConsumer';
+
     public function execute(AMQPMessage $message)
     {
         Event::disableEvents();
@@ -22,9 +33,17 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
         $userId = $userData['userId'];
         $personalPhone = $userData['personalPhone'];
 
-        $personalPhone = PhoneHelper::normalizePhone($personalPhone);
+        if (!$personalPhone || !$userId) {
+            return true;
+        }
 
-        $currentDate = new \DateTime();
+        try {
+            $personalPhone = PhoneHelper::getManzanaPhone($personalPhone);
+        } catch (\Exception $e) {
+            return true;
+        }
+
+        $currentDate = new DateTime();
         $fields = [
             'USER_ID' => $userId
         ];
@@ -38,7 +57,7 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
             }
 
             $client = new Client();
-            $client->phone = $personalPhone;
+            $client->phone = PhoneHelper::getManzanaPhone($personalPhone);
             $client->haveMobileApp = true;
             $client->lastDateUseMobileApp = $currentDate->format(\DateTime::ATOM);
 
@@ -53,7 +72,38 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
                     $client->contactId = $manzanaClient->contactId;
                 } catch (\Exception $e) {}
 
-                $manzanaService->updateContact($client);
+                try {
+                    $manzanaService->updateContact($client);
+                }  catch (ContactUpdateException | WrongContactMessageException $e) {
+                    $this->log()->error(sprintf(
+                        'Contact update error: %s',
+                        $e->getMessage()
+                    ));
+                } catch (ManzanaServiceContactSearchMoreOneException $e) {
+                    $this->log()->info(sprintf(
+                        'Too many user`s found: %s',
+                        $e->getMessage()
+                    ));
+                    /** не перезапускаем очередь */
+                } catch (ManzanaServiceException $e) {
+                    $this->log()->error(sprintf(
+                        'Manzana contact consumer error: %s, message: %s',
+                        $e->getMessage(),
+                        $message->getBody()
+                    ));
+
+                    sleep(5);
+
+                    try {
+                        $this->manzanaService->updateContactMobileAsync($userData);
+                    } catch (ApplicationCreateException | ServiceNotFoundException | ServiceCircularReferenceException $e) {
+                        $this->log()->error(sprintf(
+                            'Manzana contact consumer /service/ error: %s, message: %s',
+                            $e->getMessage(),
+                            $message->getBody()
+                        ));
+                    }
+                }
             }
         }
 

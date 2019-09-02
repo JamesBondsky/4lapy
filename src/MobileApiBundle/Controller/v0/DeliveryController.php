@@ -11,9 +11,11 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryTime;
@@ -22,6 +24,7 @@ use FourPaws\MobileApiBundle\Dto\Request\DeliveryRangeRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\DeliveryRangeResponse;
 use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
+use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 /**
  * Class DeliveryController
@@ -88,6 +91,26 @@ class DeliveryController extends BaseController
         try {
             $shelters = AnimalShelterTable::getList()->fetchAll();
             if (count($shelters)) {
+                /** @var UserCitySelectInterface $userCityProvider */
+                $userCityProvider = Application::getInstance()->getContainer()->get(UserCitySelectInterface::class);
+                $selectedCity = $userCityProvider->getSelectedCity();
+
+                $currentShelters = [];
+                $currentSheltersMO = [];
+                foreach ($shelters as $key => &$shelter) {
+                    if ($selectedCity['NAME'] == $shelter['city']) {
+                        $currentShelters[] = $shelter;
+                        unset($shelters[$key]);
+                    } elseif(strpos($shelter['city'], $selectedCity['NAME']) !== false) {
+                        $currentShelters[] = $shelter;
+                        unset($shelters[$key]);
+                    } elseif ($selectedCity['NAME'] == 'Москва' && strpos($shelter['city'], 'Московская область') !== false) {
+                        $currentSheltersMO[] = $shelter;
+                        unset($shelters[$key]);
+                    }
+                }
+                $shelters = array_merge($currentShelters, $currentSheltersMO, $shelters);
+
                 $shelters = array_map(function ($shelter) {
                     $shelter['id'] = $shelter['barcode'];
                     unset($shelter['barcode']);

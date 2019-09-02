@@ -248,6 +248,14 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
+    public function isAjaxRegister(): bool
+    {
+        return $this->isDir('/ajax/user/auth/register-r');
+    }
+
+    /**
+     * @return bool
+     */
     public function isForgotPassword(): bool
     {
         return $this->isDir('/personal/forgot-password');

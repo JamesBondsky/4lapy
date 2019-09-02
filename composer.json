@@ -117,6 +117,7 @@
     "roave/security-advisories": "dev-master",
     "ruflin/elastica": "^5.3",
     "sensio/framework-extra-bundle": "^5.0",
+    "sly/notification-pusher": "^2.3",
     "somework/composer-symlinks": "^1.1",
     "somework/expert-sender-api": "^0.6.0",
     "symfony/symfony": "3.3.*",

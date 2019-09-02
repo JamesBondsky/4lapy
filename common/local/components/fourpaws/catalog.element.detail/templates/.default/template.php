@@ -20,6 +20,7 @@ use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\KioskBundle\Service\KioskService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -600,7 +601,7 @@ $this->EndViewTarget();
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
 ?>
     <div class="b-tab-content__container active js-tab-content" data-tab-content="description">
-        <div class="b-description-tab">
+        <div class="b-description-tab <? if (KioskService::isKioskMode()) { ?>b-description-tab--description-product-detail<? } ?>">
             <div class="b-description-tab__column" itemprop="description" >
                 <div class="rc-product-detail">
                     <? if ($product->getLayoutDescription()->getText() != '' && $product->getLayoutDescription()->getText() != null) { ?>
@@ -668,42 +669,44 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
                             </div>
                         </li>
 
-                        <li class="b-characteristics-tab__item"
-                            <?= (!$val = $currentOffer->getCatalogProduct()->getWeight()) ? 'style="display:none"' : '' ?>>
-                            <div class="b-characteristics-tab__characteristics-text"><span>Вес</span>
-                                <div class="b-characteristics-tab__dots"></div>
-                            </div>
-                            <div class="b-characteristics-tab__characteristics-value">
-                                <?= WordHelper::showWeight($val, true); ?>
-                            </div>
-                        </li>
-                        <li class="b-characteristics-tab__item"
-                            <?= (!$val = $currentOffer->getCatalogProduct()->getLength()) ? 'style="display:none"' : '' ?>>
-                            <div class="b-characteristics-tab__characteristics-text"><span>Длина</span>
-                                <div class="b-characteristics-tab__dots"></div>
-                            </div>
-                            <div class="b-characteristics-tab__characteristics-value">
-                                <?= WordHelper::showLength($val); ?>
-                            </div>
-                        </li>
-                        <li class="b-characteristics-tab__item"
-                            <?= (!$val = $currentOffer->getCatalogProduct()->getWidth()) ? 'style="display:none"' : '' ?>>
-                            <div class="b-characteristics-tab__characteristics-text"><span>Ширина</span>
-                                <div class="b-characteristics-tab__dots"></div>
-                            </div>
-                            <div class="b-characteristics-tab__characteristics-value">
-                                <?= WordHelper::showLength($val); ?>
-                            </div>
-                        </li>
-                        <li class="b-characteristics-tab__item"
-                            <?= (!$val = $currentOffer->getCatalogProduct()->getHeight()) ? 'style="display:none"' : '' ?>>
-                            <div class="b-characteristics-tab__characteristics-text"><span>Высота</span>
-                                <div class="b-characteristics-tab__dots"></div>
-                            </div>
-                            <div class="b-characteristics-tab__characteristics-value">
-                                <?= WordHelper::showLength($val); ?>
-                            </div>
-                        </li>
+                        <? if(!$currentOffer->isFashionDogsCltohes()) { ?>
+                            <li class="b-characteristics-tab__item"
+                                <?= (!$val = $currentOffer->getCatalogProduct()->getWeight()) ? 'style="display:none"' : '' ?>>
+                                <div class="b-characteristics-tab__characteristics-text"><span>Вес</span>
+                                    <div class="b-characteristics-tab__dots"></div>
+                                </div>
+                                <div class="b-characteristics-tab__characteristics-value">
+                                    <?= WordHelper::showWeight($val, true); ?>
+                                </div>
+                            </li>
+                            <li class="b-characteristics-tab__item"
+                                <?= (!$val = $currentOffer->getCatalogProduct()->getLength()) ? 'style="display:none"' : '' ?>>
+                                <div class="b-characteristics-tab__characteristics-text"><span>Длина</span>
+                                    <div class="b-characteristics-tab__dots"></div>
+                                </div>
+                                <div class="b-characteristics-tab__characteristics-value">
+                                    <?= WordHelper::showLength($val); ?>
+                                </div>
+                            </li>
+                            <li class="b-characteristics-tab__item"
+                                <?= (!$val = $currentOffer->getCatalogProduct()->getWidth()) ? 'style="display:none"' : '' ?>>
+                                <div class="b-characteristics-tab__characteristics-text"><span>Ширина</span>
+                                    <div class="b-characteristics-tab__dots"></div>
+                                </div>
+                                <div class="b-characteristics-tab__characteristics-value">
+                                    <?= WordHelper::showLength($val); ?>
+                                </div>
+                            </li>
+                            <li class="b-characteristics-tab__item"
+                                <?= (!$val = $currentOffer->getCatalogProduct()->getHeight()) ? 'style="display:none"' : '' ?>>
+                                <div class="b-characteristics-tab__characteristics-text"><span>Высота</span>
+                                    <div class="b-characteristics-tab__dots"></div>
+                                </div>
+                                <div class="b-characteristics-tab__characteristics-value">
+                                    <?= WordHelper::showLength($val); ?>
+                                </div>
+                            </li>
+                        <? } ?>
 
                     </ul>
                 </div>

@@ -109,6 +109,24 @@ class OrderOffer
      * @var bool
      */
     protected $chargeBonus = 0;
+    /**
+     * Количество примененых марок
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("StampsQnt")
+     *
+     * @var int
+     */
+    protected $stampsQuantity = 0;
+    /**
+     * Название примененной скидки к товару
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("ActionNum")
+     */
+    protected $exchangeName = '';
 
     /**
      * @return int
@@ -267,6 +285,44 @@ class OrderOffer
     {
         $this->chargeBonus = $chargeBonus === true ? 1 : 0;
 
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getStampsQuantity(): int
+    {
+        return $this->stampsQuantity;
+    }
+
+    /**
+     * @param int $stampsQuantity
+     *
+     * @return OrderOffer
+     */
+    public function setStampsQuantity(int $stampsQuantity): OrderOffer
+    {
+        $this->stampsQuantity = $stampsQuantity;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getExchangeName()
+    {
+        return $this->exchangeName;
+    }
+
+    /**
+     * @param mixed $exchangeName
+     *
+     * @return OrderOffer
+     */
+    public function setExchangeName($exchangeName): OrderOffer
+    {
+        $this->exchangeName = $exchangeName;
         return $this;
     }
 }
