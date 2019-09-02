@@ -5,6 +5,7 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use Psr\Log\LoggerAwareTrait;
 
 /**
  * Created by PhpStorm.
@@ -22,6 +23,8 @@ class CFashionProductFooter extends \CBitrixComponent
     private $titleImageIds;
     private $sectionIds;
     private $sections;
+
+    use LoggerAwareTrait;
 
 
     public function onPrepareComponentParams($params): array
@@ -111,6 +114,10 @@ class CFashionProductFooter extends \CBitrixComponent
     public function getProduct($xmlId)
     {
         return $this->products->filter(function ($product) use ($xmlId) {
+            if(!($product instanceof Product)){
+                $this->logger->error(sprintf("Товар с внешнем кодом %s не найден", $xmlId));
+                return false;
+            }
             /** @var Product $product */
             return $product->getXmlId() == $xmlId;
         })->first();
