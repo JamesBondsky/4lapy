@@ -101,7 +101,7 @@ class UserPasswordService
         }
     }
 
-    public function changePassword(int $userId, ?bool $checkPolicy = false, string $link = '')
+    public function changePassword(int $userId, ?bool $checkPolicy = false, ?string $link = '', ?string $shortLink = '')
     {
         /** @var User $user */
         $user = $this->userRepository->find($userId);
@@ -112,7 +112,7 @@ class UserPasswordService
             $this->userRepository->updatePassword($userId, $password);
             $this->setChangePasswordPossibleForAll(false);
 
-            $this->expertsenderService->sendNewPassword($password, $user, $link);
+            $this->expertsenderService->sendNewPassword($password, $user, $link, $shortLink);
         }
     }
 
