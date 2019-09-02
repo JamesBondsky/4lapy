@@ -84,14 +84,17 @@ use FourPaws\Decorators\SvgDecorator; ?>
                         <?php
                         foreach ($element['PROPERTIES']['PRODUCTS']['VALUE'] as $xmlId){
                             $product = $component->getProduct($xmlId);
-                            $APPLICATION->IncludeComponent(
-                                'fourpaws:catalog.element.snippet',
-                                'fashion_slider',
-                                [
-                                    'PRODUCT'               => $product,
-                                    'GOOGLE_ECOMMERCE_TYPE' => sprintf('Модная коллекция - %s', $element['NAME'])
-                                ]
-                            );
+                            if($product){
+                                $APPLICATION->IncludeComponent(
+                                    'fourpaws:catalog.element.snippet',
+                                    'fashion_slider',
+                                    [
+                                        'PRODUCT'               => $product,
+                                        'GOOGLE_ECOMMERCE_TYPE' => sprintf('Модная коллекция - %s', $element['NAME'])
+                                    ]
+                                );
+                            }
+
                         }
                         ?>
                     </div>
