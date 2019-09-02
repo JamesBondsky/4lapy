@@ -490,6 +490,19 @@ $APPLICATION->SetTitle("Добролап");
                 </div>
                 <div class="b-common-section__content b-common-section__content--sale b-common-section__content--main-sale js-popular-product">
                     <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/1.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/0209/1.jpg')"
+                           data-title="Долгожданную помощь получил приют МУРЛЫКА, все его кошачие обитатели были очень довольны столь разнообразной и щедрой помощи">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Долгожданную помощь получил приют МУРЛЫКА, все его кошачие обитатели были очень довольны столь разнообразной и щедрой помощи
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="b-common-item">
                         <a href="/dobrolap/images/report/2608/DSCN4338.JPG" data-lightbox="photos"
                            class="photos__link"
                            style="background-image: url('/dobrolap/images/report/2608/DSCN4338.JPG')"
@@ -498,6 +511,19 @@ $APPLICATION->SetTitle("Добролап");
                         <div class="carousel-note">
                             <p class="mb-4">
                                 Корзинка «Добролап» никогда не бывает пустой
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/2.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/0209/2.jpg')"
+                           data-title="Маленький подарок для большого друга от юного участника Добролап Кости из Москвы">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Маленький подарок для большого друга от юного участника Добролап Кости из Москвы
                             </p>
                         </div>
                     </div>
@@ -516,6 +542,19 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/3.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/0209/3.jpg')"
+                           data-title="Разнообразные подарки ПОЛУЧИЛ фонд «буду рядом», ВСЕ хвостики, обитатели фонда, ОЧЕНЬ рады.">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Разнообразные подарки ПОЛУЧИЛ фонд «буду рядом», ВСЕ хвостики, обитатели фонда, ОЧЕНЬ рады.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="b-common-item">
                         <a href="/dobrolap/images/report/2608/lyEQwzEt0aY.jpg" data-lightbox="photos"
                            class="photos__link"
                            style="background-image: url('/dobrolap/images/report/2608/lyEQwzEt0aY.jpg')"
@@ -524,6 +563,19 @@ $APPLICATION->SetTitle("Добролап");
                         <div class="carousel-note">
                             <p class="mb-4">
                                 Вкусные лакомства теперь в обязательном рационе питомцев
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/4.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/0209/4.jpg')"
+                           data-title="Спасибо всем участникам за полные корзины, в каждом магазине.">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Спасибо всем участникам за полные корзины, в каждом магазине.
                             </p>
                         </div>
                     </div>
@@ -542,6 +594,19 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/5.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/0209/5.jpg')"
+                           data-title="Щедрость и отзывчивость участников добролап, не знает границ.">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Щедрость и отзывчивость участников добролап, не знает границ.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="b-common-item">
                         <a href="/dobrolap/images/report/2608/Skobelevskaja3.jpg" data-lightbox="photos"
                            class="photos__link"
                            style="background-image: url('/dobrolap/images/report/2608/Skobelevskaja3.jpg')"
@@ -550,6 +615,19 @@ $APPLICATION->SetTitle("Добролап");
                         <div class="carousel-note">
                             <p class="mb-4">
                                 Больше всего маленьким питомцам нужны ветеринарные препараты и пеленки. Теперь все будет в порядке!
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/6.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/0209/6.jpg')"
+                           data-title="Вместе мы смогли больше!">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Вместе мы смогли больше!
                             </p>
                         </div>
                     </div>
@@ -568,6 +646,19 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/7.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/0209/7.jpg')"
+                           data-title="Подарок для большого друга от юного участника Добролап Алины из Воронежа.">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Подарок для большого друга от юного участника Добролап Алины из Воронежа.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="b-common-item">
                         <a href="/dobrolap/images/report/02.jpg" data-lightbox="photos"
                            class="photos__link"
                            style="background-image: url('/dobrolap/images/report/02.jpg')"
@@ -576,6 +667,20 @@ $APPLICATION->SetTitle("Добролап");
                         <div class="carousel-note"><p class="mb-4">Команда «Добролап» помогла<br/>найти Лайме и еще
                                 более 100 питомцам<br/>новую семью</p></div>
                     </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/8.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/0209/8.jpg')"
+                           data-title="Подарок для хвостиков от Нонны, 10 лет, из Московской области с искренними пожеланиями!!!">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Подарок для хвостиков от Нонны, 10 лет, из Московской области с искренними пожеланиями!!!
+                            </p>
+                        </div>
+                    </div>
+
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/03.jpg" data-lightbox="photos"
                            class="photos__link"
@@ -585,6 +690,20 @@ $APPLICATION->SetTitle("Добролап");
                         <div class="carousel-note"><p class="mb-4">Самые вкусные подарки<br/>привозят друзья<br/>«Добролап»
                             </p></div>
                     </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/9.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/0209/9.jpg')"
+                           data-title="Небольшой подарок, со всем самым необходимым еще от одного юного участника Добролап Кирилла, из Калуги">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Небольшой подарок, со всем самым необходимым еще от одного юного участника Добролап Кирилла, из Калуги
+                            </p>
+                        </div>
+                    </div>
+
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/04.jpg" data-lightbox="photos"
                            class="photos__link"
@@ -594,6 +713,20 @@ $APPLICATION->SetTitle("Добролап");
                         <div class="carousel-note"><p class="mb-4">Большая дружба начинается<br/>с малого: более 500
                                 ребят стали<br/>участниками акции в 2018 году</p></div>
                     </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/2608/10.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/0209/10.jpg')"
+                           data-title="Фонд «Собаки которые любят», очень рад очередным подаркам.">
+                        </a>
+                        <div class="carousel-note">
+                            <p class="mb-4">
+                                Фонд «Собаки которые любят», очень рад очередным подаркам.
+                            </p>
+                        </div>
+                    </div>
+
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/05.jpg" data-lightbox="photos"
                            class="photos__link"
