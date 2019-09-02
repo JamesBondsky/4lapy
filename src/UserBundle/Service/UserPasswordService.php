@@ -106,7 +106,7 @@ class UserPasswordService
         /** @var User $user */
         $user = $this->userRepository->find($userId);
 
-        if ($user) {
+        if ($user && (strripos($user->getLogin(), '4lapy.ru') === FALSE || strripos($user->getEmail(), '4lapy.ru') === FALSE || strripos($user->getEmail(), 'personal.phone') === FALSE || strripos($user->getLogin(), 'personal.phone') === FALSE)) {
             $password = $this->generatePassword($user, $checkPolicy);
             $this->setChangePasswordPossibleForAll(true);
             $this->userRepository->updatePassword($userId, $password);
