@@ -152,7 +152,7 @@ $APPLICATION->SetTitle("Добролап");
         </div>
     </section>
 
-    <section class="ftco-section" id="how_get">
+    <?/*<section class="ftco-section" id="how_get">
         <div class="container">
             <div class="row justify-content-center pb-5">
                 <div class="col-md-12 heading-section text-center ftco-animate">
@@ -300,9 +300,9 @@ $APPLICATION->SetTitle("Добролап");
                    class="btn btn-primary-filled py-3 px-4" target="blank">ХОЧУ ПОМОЧЬ</a>
             </div>
         </div>
-    </section>
+    </section>*/?>
 
-    <section class="ftco-section" id="thanks">
+    <?/*<section class="ftco-section" id="thanks">
         <div class="container">
             <div class="row">
 
@@ -387,9 +387,9 @@ $APPLICATION->SetTitle("Добролап");
                 </div>
             </div>
         </div>
-    </section>
+    </section>*/?>
 
-    <section class="ftco-section ftco-no-pb ftco-no-pt" id="little">
+    <?/*<section class="ftco-section ftco-no-pb ftco-no-pt" id="little">
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
@@ -420,9 +420,9 @@ $APPLICATION->SetTitle("Добролап");
                 </div>
             </div>
         </div>
-    </section>
+    </section>*/?>
 
-    <section class="ftco-section" id="challenge">
+    <?/*<section class="ftco-section" id="challenge">
         <div class="col-md-12">
             <div class="row justify-content-center">
                 <div class="col-md-12 heading-section text-center ftco-animate">
@@ -472,7 +472,7 @@ $APPLICATION->SetTitle("Добролап");
         </div>-->
 
         <img src="/dobrolap/images/story.png?v=1" style="margin: 20px auto; display: block;" alt=""/>
-    </section>
+    </section>*/?>
 
     <section class="ftco-section" id="photos">
         <div class="col-md-12">
@@ -898,15 +898,26 @@ $APPLICATION->SetTitle("Добролап");
                 <div class="col-md-12 heading-section text-center ftco-animate">
                     <h2 class="">едем помогать</h2>
                     <hr/>
-                    <h5 class="mb-4">КАЖДУЮ НЕДЕЛЮ МЫ ОТПРАВЛЯЕМСЯ В ГОСТИ К НАШИМ ЧЕТВЕРОЛАПЫМ ДРУЗЬЯМ, ЧТОБЫ отвезти
-                        нужные и долгожданные подарки четверолапым друзьям из приютов.</h5>
-                    <h5 class="mb-4">Примите участие в челлендже, расскажите друзьям и присоединяйтесь к нам. Вместе мы
-                        сможем больше!</h5>
+                    <h5 class="mb-4">КАЖДУЮ НЕДЕЛЮ МЫ ОТПРАВЛЯЛИСЬ В ГОСТИ В ПРИЮТЫ К НАШИМ ЧЕТВЕРОЛАПЫМ ДРУЗЬЯМ, ЧТОБЫ ОТВЕЗТИ НУЖНЫЕ И ДОЛГОЖДАННЫЕ ПОДАРКИ.
+ВМЕСТЕ МЫ СМОГЛИ БОЛЬШЕ!</h5>
                 </div>
             </div>
         </div>
         <div class="home-slider  owl-carousel">
-            <div class="slider-item ">
+            <div class="slider-item">
+                <div class="container">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
+                         data-scrollax-parent="true">
+                        <video controls poster="/dobrolap/images/08_24_4lapy_Cats_02_1.jpg">
+                            <source src="/upload/dobrolap/08_24_4lapy_Cats_02_1.mp4">
+                            <source src="/upload/dobrolap/08_24_4lapy_Cats_02_1.ogv" type="video/webm">
+                            <source src="/upload/dobrolap/08_24_4lapy_Cats_02_1.webm" type="video/ogg">
+                        </video>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slider-item">
                 <div class="container">
                     <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
                          data-scrollax-parent="true">
