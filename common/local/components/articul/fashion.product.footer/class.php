@@ -111,16 +111,29 @@ class CFashionProductFooter extends \CBitrixComponent
         }
     }
 
+
+    /**
+     * @param $xmlId
+     * @return Product|false
+     */
     public function getProduct($xmlId)
     {
-        return $this->products->filter(function ($product) use ($xmlId) {
-            if(!($product instanceof Product)){
-                $this->logger->error(sprintf("Товар с внешнем кодом %s не найден", $xmlId));
-                return false;
-            }
-            /** @var Product $product */
-            return $product->getXmlId() == $xmlId;
-        })->first();
+        $product = false;
+
+        try {
+            $product = $this->products->filter(function ($product) use ($xmlId) {
+                if(!($product instanceof Product)){
+                    $this->logger->error(sprintf("Товар с внешнем кодом %s не найден", $xmlId));
+                    return false;
+                }
+                /** @var Product $product */
+                return $product->getXmlId() == $xmlId;
+            })->first();
+        } catch (\Throwable $e) {
+            $this->logger->error($e->getMessage());
+        }
+
+        return $product ? $product : false;
     }
 
     public function getSectionUrl($id)
