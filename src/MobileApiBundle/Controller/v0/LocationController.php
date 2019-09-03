@@ -132,8 +132,12 @@ class LocationController extends BaseController
      */
     public function getStreetListAction(StreetsListRequest $streetsListRequest)
     {
+        $streetList = [];
+        if(!empty($streetsListRequest->getStreet())){
+            $streetList = $this->apiLocationService->getStreets($streetsListRequest->getId(), $streetsListRequest->getStreet());
+        }
         return (new Response())->setData([
-            'street_list' => $this->apiLocationService->getStreets($streetsListRequest->getId(), $streetsListRequest->getStreet())
+            'street_list' => $streetList
         ]);
     }
 }

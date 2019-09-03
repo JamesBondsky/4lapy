@@ -898,9 +898,6 @@ class OrderService
                 $result['pickupRanges'] = $this->getPickupRanges($pickup, $basketProducts);
             }
         }
-        if (isset($result['dobrolap'])) {
-            $result['dobrolap']['available'] = true;
-        }
         return [
             'cartDelivery' => $result
         ];
