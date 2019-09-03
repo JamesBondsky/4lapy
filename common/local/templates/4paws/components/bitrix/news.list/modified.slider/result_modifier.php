@@ -55,7 +55,9 @@ foreach ($arResult['ITEMS'] as &$item)
 // получаем svg для левого блока
 $arResult['FILES'] = [];
 
-$rsFile = CFile::GetList(false, ['@ID' => array_unique($fileIds)]);
-while ($arFile = $rsFile->Fetch()) {
-    $arResult['FILES'][$arFile['ID']] = CFile::GetFileSRC($arFile);
+if (!empty($fileIds)) {
+    $rsFile = CFile::GetList(false, ['@ID' => array_unique($fileIds)]);
+    while ($arFile = $rsFile->Fetch()) {
+        $arResult['FILES'][$arFile['ID']] = CFile::GetFileSRC($arFile);
+    }
 }
