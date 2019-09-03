@@ -103,7 +103,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
             <div class="fashion-info__list">
                 <div class="fashion-item-info fashion-item-info_small">
                     <div class="fashion-item-info__title">Новая коллекция</div>
-                    <div class="fashion-item-info__descr">2000&nbsp;товаров одежды <br /> и&nbsp;обуви</div>
+                    <div class="fashion-item-info__descr">2000&nbsp;новинок из&nbsp;категорий <br /> одежда и&nbsp;обувь</div>
                 </div>
                 <div class="fashion-item-info">
                     <div class="fashion-item-info__title">скидки до&nbsp;15%</div>
@@ -157,7 +157,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
 
     <? $APPLICATION->IncludeComponent('articul:fashion.product.footer', 'rungo', ['SECTION_CODE' => 'rungo', 'TYPE' => 'rungo']) ?>
 
-    <section class="fashion-measure-dog" data-measure-dog-fashion="true">
+    <section class="fashion-measure-dog" data-measure-dog-fashion="true" id="fashion-measure-dog">
         <?
         $filesystemLoader = new FilesystemLoader($_SERVER['DOCUMENT_ROOT'].'/../src/CatalogBundle/Resources/views/Catalog/%name%');
         $templating = new PhpEngine(new TemplateNameParser(), $filesystemLoader);
@@ -209,6 +209,12 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
                         <div class="item-free-shipping__descr item-free-shipping__descr_delivery">
                             <p><b>доставка</b> бесплатно</p>
                             <p>продавец поможет одеть питомца, а&nbsp;в&nbsp;случае необходимости подобрать альтернативу</p>
+                        </div>
+                    </div>
+
+                    <div class="item-free-shipping">
+                        <div class="item-free-shipping__descr">
+                            <a href="/fashion/#fashion-measure-dog" data-id="fashion-measure-dog" data-fashion-scroll class="b-link">Теперь вы точно не&nbsp;ошибётесь с&nbsp;размером</a>
                         </div>
                     </div>
                 </div>
