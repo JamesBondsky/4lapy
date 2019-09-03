@@ -1260,10 +1260,13 @@ class ExpertsenderService implements LoggerAwareInterface
         return $transactionId;
     }
 
-    public function sendNewPassword(string $password, User $user)
+    public function sendNewPassword(string $password, User $user, ?string $link = '', ?string $shortLink = '')
     {
         $snippets[] = new Snippet('user_name', htmlspecialcharsbx($user->getLogin()));
         $snippets[] = new Snippet('pass', $password);
+        if ($link) {
+            $snippets[] = new Snippet('link', $link, true);
+        }
 
         $email = $user->getEmail();
 
@@ -1274,7 +1277,13 @@ class ExpertsenderService implements LoggerAwareInterface
             if (!$phone) {
                 $phone = $user->getLogin();
             }
-            $this->smsService->sendSmsImmediate('Вы давно не меняли пароль, ваш пароль изменен автоматически: ' . $password, $phone);
+            $smsText = 'Вы давно не меняли пароль, ваш пароль изменен автоматически: ' . $password . "\nДля восстановления пароля перейдите по ссылке:";
+
+            if ($shortLink) {
+                $smsText .= ' ' . $shortLink;
+            }
+
+            $this->smsService->sendSmsImmediate($smsText, $phone);
         }
     }
 

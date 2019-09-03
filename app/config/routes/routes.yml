@@ -48,3 +48,8 @@ dostavista:
     path: /dostavista/order_change/
     defaults: { _controller: 'FourPaws\External\Dostavista\Controller\DostavistaController::deliveryDostavistaOrderChangeAction' }
     methods: [POST]
+
+pass:
+    path: /pass/
+    defaults:
+        _controller: '\FourPaws\AppBundle\Controller\OldPublicationController::passRedirect'
