@@ -10,6 +10,10 @@ use InvalidArgumentException;
 
 class ImageCollection extends ObjectArrayCollection
 {
+    /**
+     * @param array $ids
+     * @return ImageCollection
+     */
     public static function createFromIds(array $ids = [])
     {
         $collection = new static();
