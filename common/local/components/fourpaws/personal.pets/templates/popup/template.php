@@ -125,12 +125,12 @@
             </div>
 
             <div class="b-size-select">
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet">
+                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-size">
                     <div class="b-input-line__label-wrapper">
                         <label class="b-input-line__label" for="size-pet">Размер</label>
                     </div>
                     <div class="b-input b-input--registration-form">
-                        <select class="b-select__block b-select__block--subscribe-delivery js-pet-view"
+                        <select class="b-select__block b-select__block--subscribe-delivery js-pet-size"
                                 id="size-pet"
                                 name="UF_SIZE">
                             <option value="" disabled="disabled" selected="selected">Выберите размер</option>
@@ -146,7 +146,7 @@
                     </div>
                 </div>
 
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet">
+                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-chest">
                     <div class="b-input-line__label-wrapper">
                         <label class="b-input-line__label" for="chest-pet">Обхват груди</label>
                     </div>
@@ -162,7 +162,7 @@
                     </div>
                 </div>
 
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet">
+                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-back">
                     <div class="b-input-line__label-wrapper">
                         <label class="b-input-line__label" for="back-pet">Длина спины</label>
                     </div>
@@ -178,7 +178,7 @@
                     </div>
                 </div>
 
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet">
+                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-neck">
                     <div class="b-input-line__label-wrapper">
                         <label class="b-input-line__label" for="neck-pet">Обхват шеи</label>
                     </div>

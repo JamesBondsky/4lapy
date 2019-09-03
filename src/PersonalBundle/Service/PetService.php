@@ -16,6 +16,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Collection\UserFieldEnumCollection;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
@@ -50,9 +51,7 @@ use FourPaws\AppBundle\Service\UserFieldEnumService;
  */
 class PetService
 {
-    /**
-     * @var PetRepository
-     */
+    /** @var PetRepository */
     private $petRepository;
 
     /** @var CurrentUserProviderInterface $currentUser */
@@ -61,10 +60,14 @@ class PetService
     /** @var ManzanaService $currentUser */
     private $manzanaService;
 
-    /**
-     * @var UserFieldEnumService
-     */
+    /** @var UserFieldEnumService */
     private $userFieldEnumService;
+
+    /** @var UserFieldEnumCollection */
+    private $genders;
+
+    /** @var UserFieldEnumCollection */
+    private $sizes;
 
     public const PETS_TYPE = [
         'koshki' => 'cat',
@@ -500,13 +503,17 @@ class PetService
      */
     public function getGenders()
     {
-        $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
-            [
-                'FIELD_NAME' => 'UF_GENDER',
-                'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
-            ]
-        )->exec()->fetch()['ID'];
-        return $this->userFieldEnumService->getEnumValueCollection($userFieldId);
+        if(null === $this->genders){
+            $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
+                [
+                    'FIELD_NAME' => 'UF_GENDER',
+                    'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
+                ]
+            )->exec()->fetch()['ID'];
+            $this->genders = $this->userFieldEnumService->getEnumValueCollection($userFieldId);
+        }
+
+        return $this->genders;
     }
 
     /**
@@ -520,6 +527,52 @@ class PetService
         return $this->getGenders()->filter(function ($gender) use($genderCode) {
             /** @var UserFieldEnumValue $gender */
             return $genderCode === $gender->getXmlId();
+        })->current();
+    }
+
+    /**
+     * @return UserFieldEnumCollection
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public function getSizes()
+    {
+        if(null === $this->sizes){
+            $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
+                [
+                    'FIELD_NAME' => 'UF_SIZE',
+                    'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
+                ]
+            )->exec()->fetch()['ID'];
+            $this->sizes = $this->userFieldEnumService->getEnumValueCollection($userFieldId);
+        }
+
+        return $this->sizes;
+    }
+
+    /**
+     * @param string $sizeCode
+     * @return UserFieldEnumValue|false
+     */
+    public function getSizeByCode(string $sizeCode)
+    {
+        return $this->getSizes()->filter(function ($size) use($sizeCode) {
+            /** @var UserFieldEnumValue $size */
+            return $sizeCode === $size->getXmlId();
+        })->current();
+    }
+
+    /**
+     * @param string $sizeId
+     * @return UserFieldEnumValue|false
+     */
+    public function getSizeById($sizeId)
+    {
+        return $this->getSizes()->filter(function ($size) use($sizeId) {
+            /** @var UserFieldEnumValue $size */
+            return (int)$sizeId === $size->getId();
         })->current();
     }
 }

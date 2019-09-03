@@ -28,6 +28,10 @@ $items = $arResult['ITEMS'];
                      echo $birthday instanceof Date ? $birthday->format('d.m.Y') : '' ?>"
                      data-male="<?= $pet->getCodeGender() === 'M' ? 1 : 0 ?>"
                      data-female="<?= $pet->getCodeGender() === 'F' ? 1 : 0 ?>"
+                     data-size="<?= $pet->getSize() ?>"
+                     data-chest="<?= $pet->getChest() ?>"
+                     data-back="<?= $pet->getBack() ?>"
+                     data-neck="<?= $pet->getNeck() ?>"
                      data-id="<?= $pet->getId() ?>">
                     <div class="b-account-border-block__content b-account-border-block__content--pet js-parent-cont">
                         <div class="b-account-border-block__image-wrap">
@@ -44,6 +48,9 @@ $items = $arResult['ITEMS'];
                             <p class="b-account-border-block__pet"><?= $pet->getBreed() ?></p>
                             <p class="b-account-border-block__pet"><?= $pet->getStringGender() ?></p>
                             <p class="b-account-border-block__pet"><?= $pet->getAgeString() ?></p>
+                            <? if($pet->getSize() > 0) { ?>
+                                <p class="b-account-border-block__pet">Размер: <?= $pet->getSizeTitle() ?></p>
+                            <? } ?>
                             ;
                         </div>
                     </div>

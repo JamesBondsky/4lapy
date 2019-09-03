@@ -240,4 +240,51 @@ class PetController extends Controller
 
         return $this->ajaxMess->getSystemError();
     }
+
+    /**
+     * @Route("/updateSize/", methods={"POST"})
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function updateSizeAction(Request $request): JsonResponse
+    {
+        if (!$this->userAuthorization->isAuthorized()) {
+            return $this->ajaxMess->getNeedAuthError();
+        }
+        $data = $request->request->all();
+        if (empty($data)) {
+            return $this->ajaxMess->getEmptyDataError();
+        }
+        if ((int)$data['ID'] < 1) {
+            return $this->ajaxMess->getNotIdError(' для обновления');
+        }
+
+        try {
+            if ($this->petService->update($data)) {
+                return JsonSuccessResponse::create(
+                    'Информация о питомце успешно обновлена',
+                    200,
+                    [],
+                    ['reload' => true]
+                );
+            }
+        } catch (SecurityException|NotFoundException $e) {
+            return $this->ajaxMess->getSecurityError();
+        } catch (BitrixRuntimeException $e) {
+            return $this->ajaxMess->getUpdateError($e->getMessage());
+        } catch (EmptyEntityClass $e) {
+            return $this->ajaxMess->getUpdateError();
+        } catch (NotAuthorizedException $e) {
+            return $this->ajaxMess->getNeedAuthError();
+        } catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException|ObjectPropertyException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+        }
+
+        return $this->ajaxMess->getSystemError();
+    }
 }

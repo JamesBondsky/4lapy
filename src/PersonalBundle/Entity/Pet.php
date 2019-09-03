@@ -8,10 +8,12 @@ namespace FourPaws\PersonalBundle\Entity;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Bitrix\Main\Type\Date;
+use FourPaws\App\Application;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\PersonalBundle\Service\PetService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -100,7 +102,7 @@ class Pet extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $size;
+    protected $size = 0;
 
     /**
      * @var float
@@ -517,7 +519,7 @@ class Pet extends BaseEntity
      */
     public function getSize(): int
     {
-        return $this->size;
+        return $this->size ?: 0;
     }
 
     /**
@@ -535,7 +537,7 @@ class Pet extends BaseEntity
      */
     public function getChest(): float
     {
-        return $this->chest;
+        return $this->chest ?: 0;
     }
 
     /**
@@ -553,7 +555,7 @@ class Pet extends BaseEntity
      */
     public function getBack(): float
     {
-        return $this->back;
+        return $this->back ?: 0;
     }
 
     /**
@@ -571,7 +573,7 @@ class Pet extends BaseEntity
      */
     public function getNeck(): float
     {
-        return $this->neck;
+        return $this->neck ?: 0;
     }
 
     /**
@@ -582,6 +584,22 @@ class Pet extends BaseEntity
     {
         $this->neck = $neck;
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSizeTitle(): string
+    {
+        /** @var PetService $petService */
+        $petService = Application::getInstance()->getContainer()->get('pet.service');
+        $petSizeId = $this->getSize();
+        if(!$petSizeId){
+            return '';
+        }
+        $petSizeEnum = $petService->getSizeById($petSizeId);
+        $sizeTitle = $petSizeEnum->getValue();
+        return $sizeTitle ?: '';
     }
 
 }
