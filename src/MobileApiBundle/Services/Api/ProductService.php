@@ -673,7 +673,7 @@ class ProductService
 
         if ($needPackingVariants) {
             if ($hasColours) {
-                $fullProduct->setColourVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // цвета
+                //$fullProduct->setColourVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // цвета colourVariants нужно только в GET /goods_list
                 $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant, true));
             } else {
                 $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // фасовки
