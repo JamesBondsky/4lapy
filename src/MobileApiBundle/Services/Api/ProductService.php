@@ -608,7 +608,13 @@ class ProductService
 //            }
 
             foreach ($exchangeRules as $exchangeRule) {
-                if (($exchangeRule['stamps'] <= $this->stampService->getActiveStampsCount()) && ($exchangeRule['stamps'] > $maxCanUse)) {
+                try {
+                    $stamps = $this->stampService->getActiveStampsCount();
+                } catch (\Exception $e) {
+                    $stamps = 0;
+                }
+
+                if (($exchangeRule['stamps'] <= $stamps) && ($exchangeRule['stamps'] > $maxCanUse)) {
                     $maxCanUse = $exchangeRule['stamps'];
                 }
             }
