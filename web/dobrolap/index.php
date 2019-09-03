@@ -490,7 +490,7 @@ $APPLICATION->SetTitle("Добролап");
                 </div>
                 <div class="b-common-section__content b-common-section__content--sale b-common-section__content--main-sale js-popular-product">
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/1.jpg" data-lightbox="photos"
+                        <a href="/dobrolap/images/report/0209/1.jpg" data-lightbox="photos"
                            class="photos__link"
                            style="background-image: url('/dobrolap/images/report/0209/1.jpg')"
                            data-title="Долгожданную помощь получил приют МУРЛЫКА, все его кошачие обитатели были очень довольны столь разнообразной и щедрой помощи">
@@ -516,7 +516,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/2.jpg" data-lightbox="photos"
+                        <a href="/dobrolap/images/report/0209/2.jpg" data-lightbox="photos"
                            class="photos__link"
                            style="background-image: url('/dobrolap/images/report/0209/2.jpg')"
                            data-title="Маленький подарок для большого друга от юного участника Добролап Кости из Москвы">
@@ -542,7 +542,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/3.jpg" data-lightbox="photos"
+                        <a href="/dobrolap/images/report/0209/3.jpg" data-lightbox="photos"
                            class="photos__link"
                            style="background-image: url('/dobrolap/images/report/0209/3.jpg')"
                            data-title="Разнообразные подарки ПОЛУЧИЛ фонд «буду рядом», ВСЕ хвостики, обитатели фонда, ОЧЕНЬ рады.">
@@ -568,7 +568,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/4.jpg" data-lightbox="photos"
+                        <a href="/dobrolap/images/report/0209/4.jpg" data-lightbox="photos"
                            class="photos__link"
                            style="background-image: url('/dobrolap/images/report/0209/4.jpg')"
                            data-title="Спасибо всем участникам за полные корзины, в каждом магазине.">
@@ -594,7 +594,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/5.jpg" data-lightbox="photos"
+                        <a href="/dobrolap/images/report/0209/5.jpg" data-lightbox="photos"
                            class="photos__link"
                            style="background-image: url('/dobrolap/images/report/0209/5.jpg')"
                            data-title="Щедрость и отзывчивость участников добролап, не знает границ.">
@@ -620,7 +620,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/6.jpg" data-lightbox="photos"
+                        <a href="/dobrolap/images/report/0209/6.jpg" data-lightbox="photos"
                            class="photos__link"
                            style="background-image: url('/dobrolap/images/report/0209/6.jpg')"
                            data-title="Вместе мы смогли больше!">
@@ -646,7 +646,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/7.jpg" data-lightbox="photos"
+                        <a href="/dobrolap/images/report/0209/7.jpg" data-lightbox="photos"
                            class="photos__link"
                            style="background-image: url('/dobrolap/images/report/0209/7.jpg')"
                            data-title="Подарок для большого друга от юного участника Добролап Алины из Воронежа.">
@@ -669,7 +669,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/8.jpg" data-lightbox="photos"
+                        <a href="/dobrolap/images/report/0209/8.jpg" data-lightbox="photos"
                            class="photos__link"
                            style="background-image: url('/dobrolap/images/report/0209/8.jpg')"
                            data-title="Подарок для хвостиков от Нонны, 10 лет, из Московской области с искренними пожеланиями!!!">
@@ -692,7 +692,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/9.jpg" data-lightbox="photos"
+                        <a href="/dobrolap/images/report/0209/9.jpg" data-lightbox="photos"
                            class="photos__link"
                            style="background-image: url('/dobrolap/images/report/0209/9.jpg')"
                            data-title="Небольшой подарок, со всем самым необходимым еще от одного юного участника Добролап Кирилла, из Калуги">
@@ -715,7 +715,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/10.jpg" data-lightbox="photos"
+                        <a href="/dobrolap/images/report/0209/10.jpg" data-lightbox="photos"
                            class="photos__link"
                            style="background-image: url('/dobrolap/images/report/0209/10.jpg')"
                            data-title="Фонд «Собаки которые любят», очень рад очередным подаркам.">
