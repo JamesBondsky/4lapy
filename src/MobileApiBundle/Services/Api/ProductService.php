@@ -11,6 +11,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\BasketItem;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -23,6 +24,7 @@ use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Catalog\Model\BundleItem;
 use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Model\Filter\ProductIdFilter;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -39,6 +41,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\Manzana\Dto\ExtendedAttribute;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\ImageHelper;
@@ -47,16 +50,19 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 use FourPaws\CatalogBundle\Helper\MarkHelper;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\StampLevel;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\Tag;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Exception\CategoryNotFoundException;
 use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Service\BasketRulesService;
 use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\SearchService;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\UserBundle\Service\UserService;
+use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 
@@ -93,6 +99,16 @@ class ProductService
     /** @var BasketRulesService */
     private $basketRulesService;
 
+    /** @var StampService */
+    private $stampService;
+
+
+    /**
+     * @var bool
+     */
+    private $forceAtLeastOnePackingVariant = false;
+
+
     public function __construct(
         CategoriesService $categoriesService,
         UserService $userService,
@@ -102,7 +118,8 @@ class ProductService
         SortService $sortService,
         SearchService $searchService,
         AppBasketService $appBasketService,
-        BasketRulesService $basketRulesService
+        BasketRulesService $basketRulesService,
+        StampService $stampService
     )
     {
         $this->categoriesService = $categoriesService;
@@ -114,6 +131,7 @@ class ProductService
         $this->searchService = $searchService;
         $this->appBasketService = $appBasketService;
         $this->basketRulesService = $basketRulesService;
+        $this->stampService = $stampService;
     }
 
     /**
@@ -232,6 +250,63 @@ class ProductService
     }
 
     /**
+     * @param int[] $ids
+     * @param bool|null $onlyPackingVariants
+     * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     */
+    public function getListFromXmlIds(array $ids, ?bool $onlyPackingVariants = false): ArrayCollection
+    {
+        $filters = new FilterCollection();
+//        $filters->add([
+//            'ID' => $ids
+//        ]);
+
+        $sort = $this->sortService->getSorts('popular')->getSelected();
+
+        $productSearchResult = $this->searchService->searchProducts($filters, $sort, new Navigation(), $ids);
+        /** @var ProductCollection $productCollection */
+        $productCollection = $productSearchResult->getProductCollection();
+
+        $this->forceAtLeastOnePackingVariant = true;
+        $productList = $productCollection
+            ->map(\Closure::fromCallable([$this, 'mapProductForList']))
+            ->map(static function(FullProduct $product) use ($ids, $onlyPackingVariants) {
+                $packingVariants = $product->getPackingVariants();
+                $packingVariants = array_filter($packingVariants, static function(FullProduct $product) use ($ids) {
+                    return in_array($product->getXmlId(), $ids, false);
+                });
+                if ($onlyPackingVariants) {
+                    return array_values($packingVariants);
+                } else {
+                    $product->setPackingVariants($packingVariants);
+
+                    return $product;
+                }
+            })
+            ->filter(static function($value) {
+                return !is_null($value);
+            })
+            ->getValues();
+        $this->forceAtLeastOnePackingVariant = false;
+
+        if ($onlyPackingVariants) {
+            $productList = array_reduce($productList, static function($carry, $productArray) {
+                foreach ($productArray as $product) {
+                    $carry[] = $product;
+                }
+
+                return $carry;
+            }, []);
+        }
+
+        return new ArrayCollection([
+            $productList
+        ]);
+    }
+
+    /**
      * Мэппинг полей товара для списка
      * @param Product $product
      * @return FullProduct|null
@@ -250,7 +325,7 @@ class ProductService
             $itemOffer->setColor();
         }
 
-        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true, false);
+        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true, $this->forceAtLeastOnePackingVariant);
 
         // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
         $fullProduct->setIsAvailable(true);
@@ -430,6 +505,8 @@ class ProductService
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteErrorException
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteException
      */
     public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1): ShortProduct
     {
@@ -485,6 +562,67 @@ class ProductService
         //Округлить до упаковки
         $shortProduct->setInPack(intval($offer->getMultiplicity()));
 
+        if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
+            // уровни скидок за марки
+            $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
+            $exchangeRules = $this->stampService::EXCHANGE_RULES[$shortProduct->getXmlId()];
+
+            if (!$exchangeRules) {
+                $exchangeRules = [];
+            }
+
+            $stampLevels = [];
+            $maxCanUse = 0;
+
+            // учитывание корзины
+//            $maxStampsLevelValue = false;
+
+            // ищем товар в корзизе
+            /** @var BasketItem $basketItem */
+//            foreach ($this->appBasketService->getBasket()->getBasketItems() as $basketItem) {
+//                if ($basketItem->getProductId() == $offer->getId()) {
+//                    if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
+//                        $maxStampsLevelValue = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE']);
+//                    }
+//                }
+//            }
+
+            // если товар не нашли, то считаем сколько марок пользователь может потратить на один товар
+//            if (!$maxStampsLevelValue) {
+//                $extendedAttributeCollection = new ArrayCollection();
+//                foreach ($exchangeRules as $exchangeRule) {
+//                    $extendedAttributeCollection->add(
+//                        (new ExtendedAttribute())->setKey($exchangeRule['title'])->setValue(1)
+//                    );
+//                }
+//
+//                $maxStampsLevelValue = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $this->stampService->getActiveStampsCount());
+//            }
+//
+//            foreach ($exchangeRules as $exchangeRule) {
+//                if ($exchangeRule['title'] === $maxStampsLevelValue['key']) {
+//                    $exchangeRule['isMaxLevel'] = true;
+//                }
+//
+//                $stampLevels[] = $serializer->fromArray($exchangeRule, StampLevel::class);
+//            }
+
+            foreach ($exchangeRules as $exchangeRule) {
+                if (($exchangeRule['stamps'] <= $this->stampService->getActiveStampsCount()) && ($exchangeRule['stamps'] > $maxCanUse)) {
+                    $maxCanUse = $exchangeRule['stamps'];
+                }
+            }
+
+            foreach ($exchangeRules as $exchangeRule) {
+                $exchangeRule['isMaxLevel'] = ($exchangeRule['stamps'] == $maxCanUse);
+                $stampLevels[] = $serializer->fromArray($exchangeRule, StampLevel::class);
+            }
+
+            ini_set('serialize_precision', -1); // костыль, чтобы не "портились" price в StampLevel при сериализации
+
+            $shortProduct->setStampLevels($stampLevels); //TODO get stampLevels from Manzana. If Manzana doesn't answer then set no levels
+        }
+
         return $shortProduct;
     }
 
@@ -529,7 +667,8 @@ class ProductService
             ->setIsByRequest($shortProduct->getIsByRequest())
             ->setIsAvailable($shortProduct->getIsAvailable())
             ->setPickupOnly($shortProduct->getPickupOnly())
-            ->setInPack($shortProduct->getInPack());
+            ->setInPack($shortProduct->getInPack())
+            ->setStampLevels($shortProduct->getStampLevels());
         $fullProduct->setColor($shortProduct->getColor());
 
         if ($needPackingVariants) {
