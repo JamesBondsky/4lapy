@@ -344,6 +344,10 @@ class Manzana implements LoggerAwareInterface
             // Расчет, сколько марок уже выбрано для обмена в $item в текущей корзине
             $availableStamps = $activeStampsCount;
             foreach ($basket as $item) {
+                $offerXmlId = explode('#', $item->getField('PRODUCT_XML_ID'))[1];
+                if (!$offerXmlId || !isset($this->stampService::EXCHANGE_RULES[$offerXmlId])) {
+                    continue;
+                }
                 $basketPropertyCollection = $item->getPropertyCollection();
                 $usedStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'USED_STAMPS_LEVEL');
                 //$maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
@@ -365,6 +369,10 @@ class Manzana implements LoggerAwareInterface
             //dump('остается марок: ' . $availableStamps);
 
             foreach ($basket as $item) {
+                $offerXmlId = explode('#', $item->getField('PRODUCT_XML_ID'))[1];
+                if (!$offerXmlId || !isset($this->stampService::EXCHANGE_RULES[$offerXmlId])) {
+                    continue;
+                }
                 $basketCode = (int)str_replace('n', '', $item->getBasketCode());
 
                 $basketPropertyCollection = $item->getPropertyCollection();
