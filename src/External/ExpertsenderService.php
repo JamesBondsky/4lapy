@@ -1277,7 +1277,7 @@ class ExpertsenderService implements LoggerAwareInterface
             if (!$phone) {
                 $phone = $user->getLogin();
             }
-            $smsText = 'Вы давно не меняли пароль, ваш пароль изменен автоматически: ' . $password;
+            $smsText = 'Вы давно не меняли пароль, ваш пароль изменен автоматически: ' . $password . "\nДля восстановления пароля перейдите по ссылке:";
 
             if ($shortLink) {
                 $smsText .= ' ' . $shortLink;
