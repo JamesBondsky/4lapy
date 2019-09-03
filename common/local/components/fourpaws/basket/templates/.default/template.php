@@ -69,6 +69,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
 ?>
     <div class="b-container js-cart-wrapper">
         <h1 class="b-title b-title--h1 b-title--shopping-cart">Корзина</h1>
+<div id="cart-basket-parent-for-aside">
         <main class="b-shopping-cart__main" role="main">
             <div class="b-panel-subscribe-cart">
                 <div class="b-panel-subscribe-cart__content">
@@ -422,6 +423,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                 </div>
             </div>
         </aside>
+</div>
 
         <? if($arResult['SUBSCRIBE_ALLOWED']){
             $mobile = true;
