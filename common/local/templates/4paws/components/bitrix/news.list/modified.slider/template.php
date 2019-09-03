@@ -25,7 +25,7 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
                 <div class="b-promo-banner-item<?= $item['MOD']['ADDITIONAL_CLASSES'] ?> <? if ($item['EXTERNAL_ID'] == 'festival') { ?>b-promo-banner-item--festival<? } ?> <?= $item['DISPLAY_PROPERTIES']['LINK']['VALUE'] ?> <?= $item['DISPLAY_PROPERTIES']['HIDE_LOGO_MOBILE']['VALUE'] ? 'b-promo-banner-item--no-mobile-logo' : '' ?><?= ($item['LEFT_COLOR']) ? ' custom-banner-item-' . $item['LEFT_COLOR'] : '' ?>">
                     <div class="b-promo-banner-item__content">
                         <div class="b-promo-banner-item__left">
-                            <div class="b-promo-banner-item__logo" <? if (!empty($item['PROPERTIES']['LEFT_SVG']['VALUE'])) { ?>style="background-image: url(<?= $arResult['FILES'][$item['PROPERTIES']['LEFT_SVG']['VALUE']] ?>) <? } ?>"></div>
+                            <div class="b-promo-banner-item__logo" <? if (!empty($item['PROPERTIES']['LEFT_SVG']['VALUE'])) { ?>style="background: url(<?= $arResult['FILES'][$item['PROPERTIES']['LEFT_SVG']['VALUE']] ?>) no-repeat center; background-size: 92%; height: 62px;<? } ?>"></div><? // костыль для баннера "новая коллекция" ?>
                             <? if ($item['LEFT_COLOR']) { ?>
                                 <style>
                                     .custom-banner-item-<?= $item['LEFT_COLOR'] ?>:before {
