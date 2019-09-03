@@ -52,7 +52,7 @@ $APPLICATION->SetTitle("Добролап");
         </div>
     </section>
 
-<? $APPLICATION->IncludeComponent('articul:dobrolap.form', '', []); ?>
+    <? /*$APPLICATION->IncludeComponent('articul:dobrolap.form', '', []);*/ ?>
 
     <section class="ftco-section" id="needs">
         <div class="container">
