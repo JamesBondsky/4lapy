@@ -166,7 +166,27 @@ class StampService implements LoggerAwareInterface
                     $this->activeStampsCount = 0;
                     return $this->activeStampsCount;
                 } else {
-                    throw new ExecuteErrorException($e->getMessage(), $e->getCode());
+
+                    //FIXME Убрать! Временный (но плохой) костыль для быстрого решения проблемы - еще два дополнительных запроса, если не получен ответ от Manzana
+                    try {
+                        $balanceResponse = $this->manzanaPosService->executeBalanceRequest((new BalanceRequest())->setCardByNumber($discountCardNumber));
+                    } catch (ExecuteErrorException $e) {
+                        if ($e->getCode() == 80241) { // Карта не найдена
+                            $this->activeStampsCount = 0;
+                            return $this->activeStampsCount;
+                        } else {
+                            try {
+                                $balanceResponse = $this->manzanaPosService->executeBalanceRequest((new BalanceRequest())->setCardByNumber($discountCardNumber));
+                            } catch (ExecuteErrorException $e) {
+                                if ($e->getCode() == 80241) { // Карта не найдена
+                                    $this->activeStampsCount = 0;
+                                    return $this->activeStampsCount;
+                                } else {
+                                    throw new ExecuteErrorException($e->getMessage(), $e->getCode());
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
