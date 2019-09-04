@@ -100,7 +100,7 @@ class CityController extends Controller
 
         $query = $content->query;
         $limit = $content->count;
-        $limit = 50;
+        $limit = 100;
         $exact = false;
         $filter = [];
 
