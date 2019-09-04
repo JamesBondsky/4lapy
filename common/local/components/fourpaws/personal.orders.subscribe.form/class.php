@@ -1802,7 +1802,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     }
 
     /**
-     * получить
      * @throws ApplicationCreateException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
