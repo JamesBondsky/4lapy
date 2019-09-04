@@ -22,6 +22,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\PersonalBundle\Service\AddressService;
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use FourPaws\MobileApiBundle\Exception\SystemException;
+use WebArch\BitrixCache\BitrixCache;
 
 class CityService implements LoggerAwareInterface
 {
@@ -251,27 +252,37 @@ class CityService implements LoggerAwareInterface
 
     public function getKladrIdByLocationsIds(array $locationsIds)
     {
-        $results = ExternalTable::query()
-            ->setSelect(['LOCATION_ID', 'XML_ID'])
-            ->setFilter([
-                'SERVICE.CODE' => LocationService::KLADR_SERVICE_CODE,
-                '=LOCATION_ID'      => $locationsIds,
-            ])
-            ->registerRuntimeField(
-                new ReferenceField(
-                    'SERVICE',
-                    ExternalServiceTable::getEntity(),
-                    ['=this.SERVICE_ID' => 'ref.ID']
+        $getData = function () use ($locationsIds) {
+            $results = ExternalTable::query()
+                ->setSelect(['LOCATION_ID', 'XML_ID'])
+                ->setFilter([
+                    'SERVICE.CODE' => LocationService::KLADR_SERVICE_CODE,
+                    '=LOCATION_ID'      => $locationsIds,
+                ])
+                ->registerRuntimeField(
+                    new ReferenceField(
+                        'SERVICE',
+                        ExternalServiceTable::getEntity(),
+                        ['=this.SERVICE_ID' => 'ref.ID']
+                    )
                 )
-            )
-            ->exec()->fetchAll();
+                ->exec()->fetchAll();
 
-        $result = [];
-        foreach ($results as $res) {
-            $result[$res['LOCATION_ID']] = $res['XML_ID'];
-        }
+            $result = [];
+            foreach ($results as $res) {
+                $result[$res['LOCATION_ID']] = $res['XML_ID'];
+            }
 
-        return $result;
+            return $result;
+        };
+
+        $dataKey = md5(implode(',', $locationsIds));
+
+        return (new BitrixCache())
+            ->withTag('location_finder')
+            ->withTime(360000)
+            ->withId(__METHOD__ . $dataKey)
+            ->resultOf($getData);
     }
 
     /**
