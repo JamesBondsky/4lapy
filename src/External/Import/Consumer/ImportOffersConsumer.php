@@ -25,6 +25,13 @@ class ImportOffersConsumer extends ImportConsumerBase
         /** @var ImportOffer $importOffer */
         $importOffer = $this->serializer->deserialize($message->getBody(), ImportOffer::class, 'json');
 
+        $currentDate = new \DateTime();
+        $dateActive = new \DateTime($importOffer->activeFrom);
+
+        if ($dateActive > $currentDate) {
+            return self::MSG_REJECT_REQUEUE;
+        }
+
         $couponId = $this->personalCouponManager::add([
             'UF_PROMO_CODE' => $importOffer->promoCode,
             'UF_OFFER' => $importOffer->offerId,
