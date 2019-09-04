@@ -41,9 +41,14 @@ $orderSubscribe = $arResult['ORDER_SUBSCRIBE'];
  * Элементы управления, выводимые на странице списка заказов
  */
 ob_start();
-if ($arResult['isActualSubscription']) {
+
+if ($arResult['BY_SUBSCRIBE']) {
     ?>
-    <a href="<?=$arParams['ORDER_SUBSCRIBE_LIST_URL']?>" class="b-accordion-order-item__subscribe">
+    <p class="b-accordion-order-item__subscribe">Заказ по подписке</p>
+    <?php
+} elseif ($arResult['isActualSubscription']) {
+    ?>
+    <a href="<?= $arParams['ORDER_SUBSCRIBE_LIST_URL'] ?>" class="b-accordion-order-item__subscribe">
         Оформлена подписка на&nbsp;доставку
     </a>
     <?php
@@ -54,7 +59,7 @@ if ($arResult['isActualSubscription']) {
         <form action="/sale/order/" method="post" class="b-common-item__price-subscribe">
             <button class="b-accordion-order-item__personal">
 
-                <? if ($arResult['SUBSCRIBE_PRICE'] && $arResult['DEFAULT_PRICE']) { ?>
+                <? if ($arResult['SUBSCRIBE_PRICE']) { ?>
                     <span class="logo-subscr"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
                     <span class="b-common-item__price js-price-subscribe-block b-accordion-order-item__personal--item_ml-3"><?= \round($arResult['SUBSCRIBE_PRICE']) ?></span>
                     <span class="b-ruble b-accordion-order-item__personal--item_ml-1">₽</span>
@@ -70,6 +75,7 @@ if ($arResult['isActualSubscription']) {
     </div>
     <?php
 }
+
 $arResult['CONTROLS_HTML']['ADD'] = ob_get_clean();
 
 if ($arParams['SHOW_SUBSCRIBE_ACTION'] === 'Y') {

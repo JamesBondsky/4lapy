@@ -67,7 +67,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     /** @var OrderSubscribeService $orderSubscribeService */
     private $orderSubscribeService;
 
-    /** @var OrderSubscribeService $orderSubscribeService */
+    /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
     private $orderSubscribeHistoryService;
 
     /** @var OrderService $orderService */
@@ -808,7 +808,11 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             // иначе форму редактирования подписки
             if(null === $this->arParams['STEP']){
                 $this->arResult['ORDER'] = $this->getOrder();
-                $this->getBasketPrices();
+
+                $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribe(false);
+                $this->isBySubscribe();
+                $this->getSubscribePrice();
+
                 $this->arResult['CURRENT_STAGE'] = 'initial';
             } else if($this->arParams['STEP'] == 1){
                 $this->initStep1();
@@ -1797,9 +1801,19 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         return $this->request;
     }
 
-    public function getBasketPrices()
+    /**
+     * получить
+     * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getSubscribePrice()
     {
-        $defaultPrice = 0;
+        // логика взята из BasketComponent::calcSubscribeFields
         $subscribePrice = 0;
 
         /** @var Basket $basket */
@@ -1822,12 +1836,31 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     $price = $priceSubscribe;
                 }
 
-                $defaultPrice += $priceDefault;
                 $subscribePrice += $price;
             }
         }
 
         $this->arResult['SUBSCRIBE_PRICE'] = $subscribePrice;
-        $this->arResult['DEFAULT_PRICE'] = $defaultPrice;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function isBySubscribe()
+    {
+        // если на этот заказ оформлена подписка, то заказ не может быть создан по подписке
+        if ($this->arResult['ORDER_SUBSCRIBE']) {
+            $this->arResult['BY_SUBSCRIBE'] = false;
+            return;
+        }
+
+        if (($this->arResult['ORDER']) && ($this->arResult['ORDER']->getId())) {
+            $this->arResult['BY_SUBSCRIBE'] = $this->getOrderSubscribeHistoryService()->hasOriginOrder($this->arResult['ORDER']->getId());
+        } else {
+            $this->arResult['BY_SUBSCRIBE'] = false;
+        }
     }
 }
