@@ -227,6 +227,7 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
             $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = '2';
         }
 
+        $filter['XML_ID'] = [1003768, 1032657, 1032734]; //TODO del
         $offerCollection = $this->getOffers($filter, $offset, $limit);
 
         $this
