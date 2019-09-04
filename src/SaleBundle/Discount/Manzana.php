@@ -275,7 +275,7 @@ class Manzana implements LoggerAwareInterface
         $this->setStampsToBeAdded($response->getChargedStatusBonus());
 
         try {
-            $activeStampsCount = $this->stampService->getActiveStampsCount(); //TODO переделать(?) на вывод значения, сохраненного в профиле пользователя (для этого нужно его заранее асинхронно обновлять)
+            $activeStampsCount = $this->stampService->getActiveStampsCount();
         } catch (\Exception $e) {
             $this->log()->error(__METHOD__ . '. getActiveStampsCount exception: ' . $e->getMessage());
             $activeStampsCount = 0;
