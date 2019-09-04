@@ -16,6 +16,7 @@ use FourPaws\App\Application as App;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\External\Manzana\Dto\ChequePosition;
 use FourPaws\External\Manzana\Dto\Coupon;
+use FourPaws\External\Manzana\Dto\ExtendedAttribute;
 use FourPaws\External\Manzana\Dto\SoftChequeResponse;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
@@ -172,7 +173,6 @@ class Manzana implements LoggerAwareInterface
                     'DISCOUNT_PRICE' => $item->getBasePrice() - $price,
                     'CUSTOM_PRICE' => 'Y'
                 ]);
-                $this->clearBasketItemStampsProperties($item);
             }
 
             if ($e instanceof ExecuteException) {
@@ -300,11 +300,31 @@ class Manzana implements LoggerAwareInterface
                     if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
                         $basketPropertyCollection = $item->getPropertyCollection();
                         $maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
+                        $stampLevelsProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'STAMP_LEVELS');
                         $extendedAttributeCollection = $position->getExtendedAttribute();
                         if ($extendedAttributeCollection->isEmpty()) { // Если атрибут пустой, значит, обмен марок невозможен
                             $this->clearBasketItemStampsProperties($item);
                         } else {
                             // указание, что можно применить марки для скидки на этот товар
+
+                            $extendedAttributeArray = $extendedAttributeCollection->map(static function (ExtendedAttribute $level) {
+                                return [
+                                    'key' => $level->getKey(),
+                                    'value' => $level->getValue(),
+                                ];
+                            })->getValues();
+                            $stampLevelsSerialized = $extendedAttributeArray ? serialize($extendedAttributeArray): false;
+                            if ($stampLevelsProperty) {
+                                $stampLevelsProperty->setField('VALUE', $stampLevelsSerialized);
+                            } else {
+                                $stampLevelsProperty = $basketPropertyCollection->createItem();
+                                $stampLevelsProperty->setFields([
+                                    'NAME' => 'STAMP_LEVELS',
+                                    'CODE' => 'STAMP_LEVELS',
+                                    'VALUE' => $stampLevelsSerialized,
+                                ]);
+                                $stampLevelsProperty->save();
+                            }
 
                             $maxAvailableLevel = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $activeStampsCount);
                             if ($maxAvailableLevel['key']) {
@@ -328,8 +348,8 @@ class Manzana implements LoggerAwareInterface
                                     ]);
                                     $maxStampsLevelProperty->save();
                                 }
-                                $basketPropertyCollection->save();
                             }
+                            $basketPropertyCollection->save();
 
                             //TODO set USE_STAMPS=false & MAX_STAMPS_LEVEL=false instead (или заменить на максимальный из тех уровней, на который хватит марок), если пользователь уже выбрал обмен марок у других товаров и на этот обмен марок не хватит
                         }
@@ -524,6 +544,7 @@ class Manzana implements LoggerAwareInterface
         $this->basketService->setBasketItemPropertyValue($item, 'USE_STAMPS', false);
         $this->basketService->setBasketItemPropertyValue($item, 'USED_STAMPS_LEVEL', false);
         $this->basketService->setBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL', false);
+        $this->basketService->setBasketItemPropertyValue($item, 'STAMP_LEVELS', false);
         $this->basketService->setBasketItemPropertyValue($item, 'CAN_USE_STAMPS', false);
     }
 }
