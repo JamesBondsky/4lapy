@@ -12,8 +12,10 @@ use FourPaws\App\Application;
 use FourPaws\External\Manzana\Dto\BalanceRequest;
 use FourPaws\External\Manzana\Dto\ExtendedAttribute;
 use FourPaws\External\Manzana\Exception\ExecuteErrorException;
+use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use Psr\Log\LoggerAwareInterface;
@@ -142,7 +144,6 @@ class StampService implements LoggerAwareInterface
     /**
      * @param bool|null $withoutCache
      * @return int
-     * @throws \FourPaws\External\Manzana\Exception\ExecuteErrorException
      * @throws \FourPaws\External\Manzana\Exception\ExecuteException
      * @throws NotAuthorizedException
      */
@@ -156,50 +157,35 @@ class StampService implements LoggerAwareInterface
         if (!$this->activeStampsCount || $withoutCache) {
             $discountCardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
 
+            $user = $this->currentUserProvider->getCurrentUser();
             if (!$discountCardNumber) {
-                return 0;
+                $this->activeStampsCount = 0;
+                $user->setActiveStamps($this->activeStampsCount);
+                Application::getInstance()->getContainer()->get(UserRepository::class)->update($user);
+                return $this->activeStampsCount;
             }
             try {
                 $balanceResponse = $this->manzanaPosService->executeBalanceRequest((new BalanceRequest())->setCardByNumber($discountCardNumber));
             } catch (ExecuteErrorException $e) {
                 if ($e->getCode() == 80241) { // Карта не найдена
                     $this->activeStampsCount = 0;
+                    $user->setActiveStamps($this->activeStampsCount);
+                    Application::getInstance()->getContainer()->get(UserRepository::class)->update($user);
                     return $this->activeStampsCount;
                 } else {
                     throw new ExecuteErrorException($e->getMessage(), $e->getCode());
                 }
-            } catch (\Exception $e) {
-                //FIXME Убрать! Временный (но плохой) костыль для быстрого решения проблемы - еще два дополнительных запроса, если не получен ответ от Manzana
-
-                try {
-                    $balanceResponse = $this->manzanaPosService->executeBalanceRequest((new BalanceRequest())->setCardByNumber($discountCardNumber));
-                } catch (ExecuteErrorException $e) {
-                    if ($e->getCode() == 80241) { // Карта не найдена
-                        $this->activeStampsCount = 0;
-                        return $this->activeStampsCount;
-                    } else {
-                        throw new ExecuteErrorException($e->getMessage(), $e->getCode());
-                    }
-                } catch (\Exception $e) {
-                    try {
-                        $balanceResponse = $this->manzanaPosService->executeBalanceRequest((new BalanceRequest())->setCardByNumber($discountCardNumber));
-                    } catch (ExecuteErrorException $e) {
-                        if ($e->getCode() == 80241) { // Карта не найдена
-                            $this->activeStampsCount = 0;
-                            return $this->activeStampsCount;
-                        } else {
-                            throw new ExecuteErrorException($e->getMessage(), $e->getCode());
-                        }
-                    } catch (\Exception $e) {
-                        throw new \Exception($e->getMessage(), $e->getCode());
-                    }
-                }
+            } catch (ExecuteException $e) {
+                $this->log()->error(__METHOD__ . ': executeBalanceRequest exception: '. $e->getMessage());
+                $this->activeStampsCount = $user->getActiveStamps();
+                return $this->activeStampsCount;
             }
 
             if (!$balanceResponse->isErrorResponse()) {
                 $this->activeStampsCount = $balanceResponse->getCardStatusActiveBalance();
 
-                //TODO save to user profile's field (to update its value asynchronously later)
+                $user->setActiveStamps($this->activeStampsCount);
+                Application::getInstance()->getContainer()->get(UserRepository::class)->update($user);
             } else {
                 $this->log()->error(__METHOD__ . '. Не удалось получить balanceResponse по карте ' . $discountCardNumber . '. Ошибка: ' . $balanceResponse->getMessage());
                 $this->activeStampsCount = 0;
