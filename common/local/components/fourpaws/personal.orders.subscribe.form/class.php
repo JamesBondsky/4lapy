@@ -808,6 +808,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             // иначе форму редактирования подписки
             if(null === $this->arParams['STEP']){
                 $this->arResult['ORDER'] = $this->getOrder();
+                $this->getBasketPrices();
                 $this->arResult['CURRENT_STAGE'] = 'initial';
             } else if($this->arParams['STEP'] == 1){
                 $this->initStep1();
@@ -1794,5 +1795,39 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     public function getRequest()
     {
         return $this->request;
+    }
+
+    public function getBasketPrices()
+    {
+        $defaultPrice = 0;
+        $subscribePrice = 0;
+
+        /** @var Basket $basket */
+        $basket = $this->arResult['ORDER']->getBitrixOrder()->getBasket();
+
+        /** @var BasketItem $basketItem */
+        $orderableBasket = $basket->getOrderableItems();
+
+        foreach ($orderableBasket as $basketItem) {
+            if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+                $offer = $this->getOffer((int)$basketItem->getProductId());
+                if (!$offer) {
+                    continue;
+                }
+
+                $priceSubscribe = $offer->getSubscribePrice() * $basketItem->getQuantity();
+                $priceDefault = $basketItem->getPrice() * $basketItem->getQuantity();
+                $price = $priceDefault;
+                if ($priceSubscribe < $priceDefault) {
+                    $price = $priceSubscribe;
+                }
+
+                $defaultPrice += $priceDefault;
+                $subscribePrice += $price;
+            }
+        }
+
+        $this->arResult['SUBSCRIBE_PRICE'] = $subscribePrice;
+        $this->arResult['DEFAULT_PRICE'] = $defaultPrice;
     }
 }

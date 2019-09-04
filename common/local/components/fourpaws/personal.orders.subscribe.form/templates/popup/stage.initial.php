@@ -49,13 +49,25 @@ if ($arResult['isActualSubscription']) {
     <?php
 } elseif ($arResult['canBeSubscribed']) {
     ?>
-    <form action="/sale/order/" method="post">
-        <button class="b-accordion-order-item__subscribe">
-            Подписаться на&nbsp;доставку
-        </button>
-        <input type="hidden" name="orderId" value="<?=$arParams['ORDER_ID']?>">
-        <input type="hidden" name="subscribe" value="true">
-    </form>
+
+    <div class="b-common-item__additional-information">
+        <form action="/sale/order/" method="post" class="b-common-item__price-subscribe">
+            <button class="b-accordion-order-item__personal">
+
+                <? if ($arResult['SUBSCRIBE_PRICE'] && $arResult['DEFAULT_PRICE']) { ?>
+                    <span class="logo-subscr"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
+                    <span class="b-common-item__price js-price-subscribe-block b-accordion-order-item__personal--item_ml-3"><?= \round($arResult['SUBSCRIBE_PRICE']) ?></span>
+                    <span class="b-ruble b-accordion-order-item__personal--item_ml-1">₽</span>
+                <? } ?>
+
+                <span class="title-subscr b-accordion-order-item__personal--item_ml-3">Подписаться</span>
+            </button>
+            <a href="/podpiska/" class="b-accordion-order-item__subscribe">Подробнее о подписке</a>
+
+            <input type="hidden" name="orderId" value="<?= $arParams['ORDER_ID'] ?>">
+            <input type="hidden" name="subscribe" value="true">
+        </form>
+    </div>
     <?php
 }
 $arResult['CONTROLS_HTML']['ADD'] = ob_get_clean();
@@ -70,34 +82,34 @@ if ($arParams['SHOW_SUBSCRIBE_ACTION'] === 'Y') {
 //ob_start();
 //if ($arResult['isActualSubscription']) {
 //    ?>
-<!--    <div class="b-accordion-order-item__subscribe-link">-->
-<!--        --><?php
+    <!--    <div class="b-accordion-order-item__subscribe-link">-->
+    <!--        --><?php
 //        if ($arResult['canBeSubscribed']) {
 //            ?>
-<!--            <a class="b-accordion-order-item__edit js-open-popup js-subscribe-delivery-edit"-->
-<!--               href="javascript:void(0);"-->
-<!--               title="Редактировать подписку"-->
-<!--               data-popup-id="--><?//= $attrPopupId ?><!--">-->
-<!--            <span class="b-icon b-icon--account-block">-->
-<!--                --><?//= new SvgDecorator('icon-edit', 23, 20) ?>
-<!--            </span>-->
-<!--                <span>Редактировать</span>-->
-<!--            </a>-->
-<!--            --><?php
+    <!--            <a class="b-accordion-order-item__edit js-open-popup js-subscribe-delivery-edit"-->
+    <!--               href="javascript:void(0);"-->
+    <!--               title="Редактировать подписку"-->
+    <!--               data-popup-id="--><?//= $attrPopupId ?><!--">-->
+    <!--            <span class="b-icon b-icon--account-block">-->
+    <!--                --><?//= new SvgDecorator('icon-edit', 23, 20) ?>
+    <!--            </span>-->
+    <!--                <span>Редактировать</span>-->
+    <!--            </a>-->
+    <!--            --><?php
 //        }
 //        ?>
-<!--        <a class="b-accordion-order-item__del-subscribe js-delete"-->
-<!--           href="javascript:void(0);"-->
-<!--           title="Удалить подписку"-->
-<!--           data-id="--><?//=$order->getId()?><!--"-->
-<!--           data-url="/ajax/personal/orderSubscribe/delete/?id=--><?//=$orderSubscribe->getId()?><!--">-->
-<!--            <span class="b-icon b-icon--account-block">-->
-<!--                --><?//= new SvgDecorator('icon-trash', 23, 20) ?>
-<!--            </span>-->
-<!--            <span>Удалить</span>-->
-<!--        </a>-->
-<!--    </div>-->
-<!--    --><?php
+    <!--        <a class="b-accordion-order-item__del-subscribe js-delete"-->
+    <!--           href="javascript:void(0);"-->
+    <!--           title="Удалить подписку"-->
+    <!--           data-id="--><?//=$order->getId()?><!--"-->
+    <!--           data-url="/ajax/personal/orderSubscribe/delete/?id=--><?//=$orderSubscribe->getId()?><!--">-->
+    <!--            <span class="b-icon b-icon--account-block">-->
+    <!--                --><?//= new SvgDecorator('icon-trash', 23, 20) ?>
+    <!--            </span>-->
+    <!--            <span>Удалить</span>-->
+    <!--        </a>-->
+    <!--    </div>-->
+    <!--    --><?php
 //}
 //$arResult['CONTROLS_HTML']['EDIT'] = ob_get_clean();
 
