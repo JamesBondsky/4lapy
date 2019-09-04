@@ -309,6 +309,10 @@ class CityService implements LoggerAwareInterface
             }
         }
 
+        usort($allowLocations, function ($a, $b) {
+            return mb_strlen($a['data']['city'], 'UTF-8') - mb_strlen($b['data']['city'], 'UTF-8');
+        });
+
         return $allowLocations;
     }
 }
