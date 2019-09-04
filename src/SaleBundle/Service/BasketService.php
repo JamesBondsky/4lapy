@@ -138,6 +138,7 @@ class BasketService implements LoggerAwareInterface
      * @param array $rewriteFields
      * @param bool $save
      * @param Basket|null $basket
+     * @param bool|null $mergeDespiteOfCustomProperties
      *
      * @throws ArgumentNullException
      * @throws ArgumentException
@@ -154,7 +155,8 @@ class BasketService implements LoggerAwareInterface
         int $quantity = 1,
         array $rewriteFields = [],
         bool $save = true,
-        ?Basket $basket = null
+        ?Basket $basket = null,
+        ?bool $mergeDespiteOfCustomProperties = false
     ): BasketItem {
         if ($offerId < 1) {
             throw new InvalidArgumentException('Неверный ID товара');
@@ -179,6 +181,34 @@ class BasketService implements LoggerAwareInterface
         /** @var BasketItem $basketItem */
         foreach ($basket->getBasketItems() as $basketItem) {
             $oldBasketCodes[] = $basketItem->getBasketCode();
+        }
+
+        if ($mergeDespiteOfCustomProperties) {
+            // Костыль, удаляющий кастомные свойства, которые не участвуют в логике общего разделения товаров, перед объединением товаров, т.к. в
+            // \Bitrix\Sale\BasketPropertiesCollectionBase::isPropertyAlreadyExists
+            // свойства добавляемого и имеющегося товара должны совпадать, чтобы произошел merge
+            $basketItems = $basket->getBasketItems();
+
+            /** @var BasketItem $item */
+            foreach ($basketItems as $item) {
+                if ($item->getProductId() == $fields['PRODUCT_ID']) {
+                    $itemPropertyCollection = $item->getPropertyCollection();
+                    /** @var BasketPropertyItem $itemProperty */
+                    foreach ($itemPropertyCollection as $itemProperty) {
+                        if (in_array($itemProperty->getField('CODE'), [
+                            'HAS_BONUS',
+                            'IS_PSEUDO_ACTION',
+                            'USE_STAMPS',
+                            'USED_STAMPS_LEVEL',
+                            'MAX_STAMPS_LEVEL',
+                            'STAMP_LEVELS',
+                            'CAN_USE_STAMPS',
+                        ], true)) {
+                            $itemPropertyCollection->deleteItem($itemProperty->getInternalIndex());
+                        }
+                    }
+                }
+            }
         }
 
         $result = \Bitrix\Catalog\Product\Basket::addProductToBasketWithPermissions(

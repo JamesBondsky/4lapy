@@ -369,6 +369,15 @@ class User implements UserInterface
      */
     protected $activeBonus = 0;
 
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_ACTIVE_STAMPS")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $activeStamps = 0;
+
     /** @var bool
      * @Serializer\Type("boolean")
      * @Serializer\SerializedName("UF_ES_SUBSCRIBED")
@@ -1449,6 +1458,25 @@ class User implements UserInterface
     public function setActiveBonus(float $activeBonus): User
     {
         $this->activeBonus = $activeBonus;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getActiveStamps(): int
+    {
+        return $this->activeStamps ?? 0;
+    }
+
+    /**
+     * @param int $activeStamps
+     * @return User
+     */
+    public function setActiveStamps(int $activeStamps): User
+    {
+        $this->activeStamps = $activeStamps;
 
         return $this;
     }
