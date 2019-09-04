@@ -228,10 +228,10 @@ class UserController extends BaseController
      * @throws ApplicationCreateException
      * @throws \Bitrix\Main\ArgumentException
      */
-    public function getStampsInfoAction(): ApiResponse //TODO change Response type // см. PersonalBonus для примера
+    public function getStampsInfoAction(): ApiResponse
     {
         try {
-            $stamps = $this->stampService->getActiveStampsCount(); //TODO переделать(?) на вывод значения, сохраненного в профиле пользователя (для этого нужно его заранее асинхронно обновлять)
+            $stamps = $this->stampService->getActiveStampsCount();
         } catch (\Exception $e) {
             $stamps = 0;
         }
