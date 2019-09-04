@@ -181,6 +181,32 @@ class BasketService implements LoggerAwareInterface
             $oldBasketCodes[] = $basketItem->getBasketCode();
         }
 
+        // Костыль, удаляющий кастомные свойства, которые не участвуют в логике общего разделения товаров, перед объединением товаров, т.к. в
+        // \Bitrix\Sale\BasketPropertiesCollectionBase::isPropertyAlreadyExists
+        // свойства добавляемого и имеющегося товара должны совпадать, чтобы произошел merge
+        $basketItems = $basket->getBasketItems();
+
+        /** @var BasketItem $item */
+        foreach ($basketItems as $item) {
+            if ($item->getProductId() == $fields['PRODUCT_ID']) {
+                $itemPropertyCollection = $item->getPropertyCollection();
+                /** @var BasketPropertyItem $itemProperty */
+                foreach ($itemPropertyCollection as $itemProperty) {
+                    if (in_array($itemProperty->getField('CODE'), [
+                        'HAS_BONUS',
+                        'IS_PSEUDO_ACTION',
+                        'USE_STAMPS',
+                        'USED_STAMPS_LEVEL',
+                        'MAX_STAMPS_LEVEL',
+                        'STAMP_LEVELS',
+                        'CAN_USE_STAMPS',
+                    ], true)) {
+                        $itemPropertyCollection->deleteItem($itemProperty->getInternalIndex());
+                    }
+                }
+            }
+        }
+        
         $result = \Bitrix\Catalog\Product\Basket::addProductToBasketWithPermissions(
             $basket,
             $fields,
