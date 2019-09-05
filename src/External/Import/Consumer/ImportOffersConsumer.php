@@ -28,7 +28,7 @@ class ImportOffersConsumer extends ImportConsumerBase
         $currentDate = new \DateTime(new \DateTimeZone('Europe/Moscow'));
         $dateActive = new \DateTime($importOffer->activeFrom);
 
-        if ($dateActive <= $currentDate) {
+        if ($dateActive > $currentDate) {
             return self::MSG_REJECT_REQUEUE;
         }
 
