@@ -29,6 +29,8 @@ class ImportOffersConsumer extends ImportConsumerBase
         $currentDate->setTimezone(new \DateTimeZone('Europe/Moscow'));
         $dateActive = new \DateTime($importOffer->activeFrom);
 
+        var_dump('$importOffer->activeFrom ' . $importOffer->activeFrom);
+
         var_dump('$currentDate - ' . $currentDate->format('d.m.Y h:i:s'));
         var_dump('$dateActive ' . $dateActive->format('d.m.Y h:i:s'));
 
