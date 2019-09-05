@@ -151,6 +151,10 @@ services:
     class: FourPaws\PersonalBundle\Service\OrderSubscribeService
     public: true
 
+  order_subscribe_next_delivery.repository:
+    class: FourPaws\PersonalBundle\Repository\OrderSubscribeNextDeliveryRepository
+    public: true
+
   kkm.service:
     class: FourPaws\KkmBundle\Service\KkmService
 

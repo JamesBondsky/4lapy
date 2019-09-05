@@ -59,9 +59,11 @@ use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyResult;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeNextDelivery;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeItemRepository;
+use FourPaws\PersonalBundle\Repository\OrderSubscribeNextDeliveryRepository;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
@@ -76,6 +78,8 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use http\Exception\InvalidArgumentException;
+use JMS\Serializer\ArrayTransformerInterface;
+use JMS\Serializer\SerializerInterface;
 use mysql_xdevapi\Exception;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -106,6 +110,12 @@ class OrderSubscribeService implements LoggerAwareInterface
 
     /** @var OrderSubscribeItemRepository $orderSubscribeRepository */
     private $orderSubscribeItemRepository;
+
+    /** @var OrderSubscribeNextDeliveryRepository $orderSubscribeNextDeliveryRepository */
+    private $orderSubscribeNextDeliveryRepository;
+
+    /** @var ArrayTransformerInterface $arrayTransformer */
+    private $arrayTransformer;
 
     /** @var CurrentUserProviderInterface $currentUser */
     private $currentUser;
@@ -168,16 +178,20 @@ class OrderSubscribeService implements LoggerAwareInterface
     public function __construct(
         OrderSubscribeRepository $orderSubscribeRepository,
         OrderSubscribeItemRepository $orderSubscribeItemRepository,
+        OrderSubscribeNextDeliveryRepository $orderSubscribeNextDeliveryRepository,
         CurrentUserProviderInterface $currentUserProvider,
         LocationService $locationService,
-        BasketService $basketService
+        BasketService $basketService,
+        SerializerInterface $arrayTransformer
     )
     {
         $this->orderSubscribeRepository = $orderSubscribeRepository;
         $this->orderSubscribeItemRepository = $orderSubscribeItemRepository;
+        $this->orderSubscribeNextDeliveryRepository = $orderSubscribeNextDeliveryRepository;
         $this->currentUser = $currentUserProvider;
         $this->locationService = $locationService;
         $this->basketService = $basketService;
+        $this->arrayTransformer = $arrayTransformer;
     }
 
 
@@ -2132,6 +2146,30 @@ class OrderSubscribeService implements LoggerAwareInterface
         }
 
         return $result;
+    }
+
+    public function createSingleNextDelivery(OrderSubscribe $orderSubscribe)
+    {
+        $singleSubscribeCollection = $this->orderSubscribeNextDeliveryRepository->findBySubscribe($orderSubscribe->getId());
+        if(!$singleSubscribeCollection->isEmpty()){
+            $singleSubscribe = $singleSubscribeCollection->first();
+            $this->orderSubscribeNextDeliveryRepository->findBySubscribe($singleSubscribe->getId());
+        }
+
+        $arOrderSubscribe = $this->arrayTransformer->toArray($orderSubscribe);
+        $items = $orderSubscribe->getItems();
+
+        /** @var OrderSubscribeItem $item */
+        foreach ($items as $item){
+            $arItems[$item->getId()] = $item->getQuantity();
+        }
+
+        $singleSubscribe = (new OrderSubscribeNextDelivery())
+            ->setSubscribeId($orderSubscribe->getId())
+            ->setData(serialize($arOrderSubscribe))
+            ->setItems(array_keys($arItems))
+            ;
+            //->set
     }
 
 }

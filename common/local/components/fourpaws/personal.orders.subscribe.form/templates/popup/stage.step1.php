@@ -65,6 +65,35 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
         </div>
     </div>
+
+    <div>
+        <div class="b-radio b-radio--tablet-big">
+            <input class="b-radio__input"
+                   type="radio"
+                   name="changeNextDelivery"
+                   id="changeNextDelivery-0"
+                   value="0"
+                   data-radio="0"
+                   checked>
+            <label class="b-radio__label b-radio__label--tablet-big"
+                   for="changeNextDelivery-0">
+                <span class="b-radio__text-label">Редактировать всю подписку</span>
+            </label>
+        </div>
+        <div class="b-radio b-radio--tablet-big">
+            <input class="b-radio__input"
+                   type="radio"
+                   name="changeNextDelivery"
+                   id="changeNextDelivery-1"
+                   value="1"
+                   data-radio="1">
+            <label class="b-radio__label b-radio__label--tablet-big"
+                   for="changeNextDelivery-1">
+                <span class="b-radio__text-label">Редактировать только следуюищй заказ по подписке</span>
+            </label>
+        </div>
+    </div>
+
     <div class="b-popup-subscribe-delivery__btns">
         <a href="javascript:void(0);"
            class="b-button b-button--next-subscribe-delivery"
