@@ -18,8 +18,8 @@
                         <? if ($imgFirst xor ($i % 2)): ?>
                             <div class="toys-landing-item__splash">
                                 <picture>
-                                    <source srcset="http://4lapy.ru<?= $arResult['images'][$product['preview_img']['desktop']] ?>" media="(min-width: 1024px)"/>
-                                    <source srcset="http://4lapy.ru<?= $arResult['images'][$product['preview_img']['mobile']] ?>" media="(max-width: 1023px)"/>
+                                    <source srcset="<?= $arResult['images'][$product['preview_img']['desktop']] ?>" media="(min-width: 1024px)"/>
+                                    <source srcset="<?= $arResult['images'][$product['preview_img']['mobile']] ?>" media="(max-width: 1023px)"/>
 
                                     <img src="/upload/toys-landing/1.png" alt="">
                                 </picture>
