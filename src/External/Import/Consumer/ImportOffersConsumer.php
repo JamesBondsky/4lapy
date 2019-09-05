@@ -25,7 +25,7 @@ class ImportOffersConsumer extends ImportConsumerBase
         /** @var ImportOffer $importOffer */
         $importOffer = $this->serializer->deserialize($message->getBody(), ImportOffer::class, 'json');
 
-        $currentDate = new \DateTime();
+        $currentDate = new \DateTime(new \DateTimeZone('Europe/Moscow'));
         $dateActive = new \DateTime($importOffer->activeFrom);
 
         if ($dateActive > $currentDate) {
