@@ -905,6 +905,58 @@ class OrderService
     }
 
     /**
+     * @return BasketProductCollection
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws OrderStorageSaveException
+     * @throws UserMessageException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getBasketWithCurrentDelivery()
+    {
+        [$courierDelivery, , , ] = $this->getDeliveryVariants();
+
+        $basketProducts = $this->apiBasketService->getBasketProducts(true);
+        if ($courierDelivery->getAvailable()) {
+            $orderStorage = $this->orderStorageService->getStorage();
+            $deliveries = $this->orderStorageService->getDeliveries($orderStorage);
+            $delivery = null;
+            foreach ($deliveries as $calculationResult) {
+                if ($this->appDeliveryService->isDelivery($calculationResult)) {
+                    $delivery = $calculationResult;
+                }
+            }
+            $selectedDelivery = $delivery;
+            $goods = $this->getDeliveryCourierDetails($selectedDelivery, $basketProducts)['goods'];
+            if ($goods) {
+                $basketItemsWithDelivery = [];
+                /** @var Product $item */
+                foreach ($goods as $item) {
+                    $basketItemsWithDelivery[] = $item->getBasketItemId();
+                }
+                $basketProducts = $basketProducts->filter(static function(Product $item) use($basketItemsWithDelivery) {
+                    return in_array($item->getBasketItemId(), $basketItemsWithDelivery, true);
+                });
+            }
+
+        }
+
+        return $basketProducts;
+    }
+
+    /**
      * @param BasketProductCollection $basketProducts
      * @return BasketProductCollection
      * @throws ApplicationCreateException

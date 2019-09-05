@@ -227,7 +227,11 @@ class BasketController extends BaseController
      */
     public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
     {
-        $basketProducts = $this->apiBasketService->getBasketProducts(true);
+        if ($userCartCalcRequest->getDeliveryType() === 'courier') {
+            $basketProducts = $this->apiOrderService->getBasketWithCurrentDelivery();
+        } else {
+            $basketProducts = $this->apiBasketService->getBasketProducts(true);
+        }
 
         // Если выбрано "Товары из наличия"
         if ($userCartCalcRequest->onlyAvailableGoods) {
