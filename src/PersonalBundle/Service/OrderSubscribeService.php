@@ -59,11 +59,11 @@ use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyResult;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
-use FourPaws\PersonalBundle\Entity\OrderSubscribeNextDelivery;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeSingle;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeItemRepository;
-use FourPaws\PersonalBundle\Repository\OrderSubscribeNextDeliveryRepository;
+use FourPaws\PersonalBundle\Repository\OrderSubscribeSingleRepository;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
@@ -111,8 +111,8 @@ class OrderSubscribeService implements LoggerAwareInterface
     /** @var OrderSubscribeItemRepository $orderSubscribeRepository */
     private $orderSubscribeItemRepository;
 
-    /** @var OrderSubscribeNextDeliveryRepository $orderSubscribeNextDeliveryRepository */
-    private $orderSubscribeNextDeliveryRepository;
+    /** @var OrderSubscribeSingleRepository $orderSubscribeSingleRepository */
+    private $orderSubscribeSingleRepository;
 
     /** @var ArrayTransformerInterface $arrayTransformer */
     private $arrayTransformer;
@@ -178,7 +178,7 @@ class OrderSubscribeService implements LoggerAwareInterface
     public function __construct(
         OrderSubscribeRepository $orderSubscribeRepository,
         OrderSubscribeItemRepository $orderSubscribeItemRepository,
-        OrderSubscribeNextDeliveryRepository $orderSubscribeNextDeliveryRepository,
+        OrderSubscribeSingleRepository $orderSubscribeSingleRepository,
         CurrentUserProviderInterface $currentUserProvider,
         LocationService $locationService,
         BasketService $basketService,
@@ -187,7 +187,7 @@ class OrderSubscribeService implements LoggerAwareInterface
     {
         $this->orderSubscribeRepository = $orderSubscribeRepository;
         $this->orderSubscribeItemRepository = $orderSubscribeItemRepository;
-        $this->orderSubscribeNextDeliveryRepository = $orderSubscribeNextDeliveryRepository;
+        $this->orderSubscribeSingleRepository = $orderSubscribeSingleRepository;
         $this->currentUser = $currentUserProvider;
         $this->locationService = $locationService;
         $this->basketService = $basketService;
@@ -2148,12 +2148,21 @@ class OrderSubscribeService implements LoggerAwareInterface
         return $result;
     }
 
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectException
+     */
     public function createSingleNextDelivery(OrderSubscribe $orderSubscribe)
     {
-        $singleSubscribeCollection = $this->orderSubscribeNextDeliveryRepository->findBySubscribe($orderSubscribe->getId());
+        $singleSubscribeCollection = $this->orderSubscribeSingleRepository->findBySubscribe($orderSubscribe->getId());
         if(!$singleSubscribeCollection->isEmpty()){
             $singleSubscribe = $singleSubscribeCollection->first();
-            $this->orderSubscribeNextDeliveryRepository->findBySubscribe($singleSubscribe->getId());
+            $this->orderSubscribeSingleRepository->delete($singleSubscribe->getId());
         }
 
         $arOrderSubscribe = $this->arrayTransformer->toArray($orderSubscribe);
@@ -2164,12 +2173,16 @@ class OrderSubscribeService implements LoggerAwareInterface
             $arItems[$item->getId()] = $item->getQuantity();
         }
 
-        $singleSubscribe = (new OrderSubscribeNextDelivery())
+        $singleSubscribe = (new OrderSubscribeSingle())
             ->setSubscribeId($orderSubscribe->getId())
             ->setData(serialize($arOrderSubscribe))
             ->setItems(array_keys($arItems))
-            ;
-            //->set
+            ->setQuantity(array_values($arItems))
+            ->setDateCreate(new DateTime())
+        ;
+
+        $result = $this->orderSubscribeSingleRepository->setEntity($singleSubscribe)->create();
+        return $result;
     }
 
 }

@@ -151,8 +151,8 @@ services:
     class: FourPaws\PersonalBundle\Service\OrderSubscribeService
     public: true
 
-  order_subscribe_next_delivery.repository:
-    class: FourPaws\PersonalBundle\Repository\OrderSubscribeNextDeliveryRepository
+  order_subscribe_single.repository:
+    class: FourPaws\PersonalBundle\Repository\OrderSubscribeSingleRepository
     public: true
 
   kkm.service:

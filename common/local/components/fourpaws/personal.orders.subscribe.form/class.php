@@ -34,7 +34,7 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
-use FourPaws\PersonalBundle\Repository\OrderSubscribeNextDeliveryRepository;
+use FourPaws\PersonalBundle\Repository\OrderSubscribeSingleRepository;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
@@ -127,8 +127,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     private $changeNextDelivery;
 
 
-    /** @var OrderSubscribeNextDeliveryRepository $orderSubscribeNextDeliveryRepository */
-    private $orderSubscribeNextDeliveryRepository;
+    /** @var OrderSubscribeSingleRepository $orderSubscribeSingleRepository */
+    private $orderSubscribeSingleRepository;
 
 
     /**
@@ -142,7 +142,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         // делаем это вручную
         $this->logName = __CLASS__;
 
-        $this->orderSubscribeNextDeliveryRepository = Application::getInstance()->getContainer()->get('order_subscribe_next_delivery.repository');
+        $this->orderSubscribeSingleRepository = Application::getInstance()->getContainer()->get('order_subscribe_single.repository');
 
         parent::__construct($component);
     }
@@ -304,7 +304,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         if(null === $this->changeNextDelivery){
             $subscribe_id = $this->getOrderSubscribe()->getId();
             if($subscribe_id > 0){
-                $this->changeNextDelivery = !$this->orderSubscribeNextDeliveryRepository->findBySubscribe($subscribe_id)->isEmpty();
+                $this->changeNextDelivery = !$this->orderSubscribeSingleRepository->findBySubscribe($subscribe_id)->isEmpty();
             } else {
                 $this->changeNextDelivery = false;
             }
@@ -981,7 +981,12 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         if($this->arParams['SUBSCRIBE_ID'] > 0){
             $this->arResult['SUBSCRIBE'] = $this->setSubscribe($this->getOrderSubscribeService()->getById($this->arParams['SUBSCRIBE_ID']));
             if($this->request->get('changeNextDelivery')){
-                $this->getOrderSubscribeService()->createSingleNextDelivery();
+                $isSuccess = $this->getOrderSubscribeService()->createSingleNextDelivery($this->getSubscribe());
+                if(!$isSuccess){
+                    $result->addError(new Error(
+                        sprintf("Не удалось создать единичную подписку на доставку: %s", $this->arParams['SUBSCRIBE_ID'])
+                    ));
+                }
             }
         }
 

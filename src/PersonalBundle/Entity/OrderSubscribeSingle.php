@@ -36,11 +36,11 @@ use FourPaws\App\Application;
 
 
 /**
- * Class OrderSubscribeNextDelivery
+ * Class OrderSubscribeSingle
  *
  * @package FourPaws\PersonalBundle\Repository
  */
-class OrderSubscribeNextDelivery extends BaseEntity
+class OrderSubscribeSingle extends BaseEntity
 {
     use UserFieldEnumTrait;
 
@@ -66,11 +66,11 @@ class OrderSubscribeNextDelivery extends BaseEntity
     /**
      * @var array
      * @Serializer\Type("array<string>")
-     * @Serializer\SerializedName("UF_OFFERS")
+     * @Serializer\SerializedName("UF_ITEMS")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $offers;
+    protected $items;
 
     /**
      * @var array
@@ -101,9 +101,9 @@ class OrderSubscribeNextDelivery extends BaseEntity
 
     /**
      * @param int $subscribeId
-     * @return OrderSubscribeNextDelivery
+     * @return OrderSubscribeSingle
      */
-    public function setSubscribeId(int $subscribeId): OrderSubscribeNextDelivery
+    public function setSubscribeId(int $subscribeId): OrderSubscribeSingle
     {
         $this->subscribeId = $subscribeId;
         return $this;
@@ -119,9 +119,9 @@ class OrderSubscribeNextDelivery extends BaseEntity
 
     /**
      * @param string $data
-     * @return OrderSubscribeNextDelivery
+     * @return OrderSubscribeSingle
      */
-    public function setData(string $data): OrderSubscribeNextDelivery
+    public function setData(string $data): OrderSubscribeSingle
     {
         $this->data = $data;
         return $this;
@@ -130,18 +130,18 @@ class OrderSubscribeNextDelivery extends BaseEntity
     /**
      * @return array
      */
-    public function getOffers(): array
+    public function getItems(): array
     {
-        return $this->offers;
+        return $this->items;
     }
 
     /**
      * @param array $offers
-     * @return OrderSubscribeNextDelivery
+     * @return OrderSubscribeSingle
      */
-    public function setOffers(array $offers): OrderSubscribeNextDelivery
+    public function setItems(array $items): OrderSubscribeSingle
     {
-        $this->offers = $offers;
+        $this->items = $items;
         return $this;
     }
 
@@ -155,9 +155,9 @@ class OrderSubscribeNextDelivery extends BaseEntity
 
     /**
      * @param array $quantity
-     * @return OrderSubscribeNextDelivery
+     * @return OrderSubscribeSingle
      */
-    public function setQuantity(array $quantity): OrderSubscribeNextDelivery
+    public function setQuantity(array $quantity): OrderSubscribeSingle
     {
         $this->quantity = $quantity;
         return $this;
@@ -173,9 +173,9 @@ class OrderSubscribeNextDelivery extends BaseEntity
 
     /**
      * @param DateTime $dateCreate
-     * @return OrderSubscribeNextDelivery
+     * @return OrderSubscribeSingle
      */
-    public function setDateCreate(DateTime $dateCreate): OrderSubscribeNextDelivery
+    public function setDateCreate(DateTime $dateCreate): OrderSubscribeSingle
     {
         $this->dateCreate = $dateCreate;
         return $this;

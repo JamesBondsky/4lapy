@@ -11,7 +11,7 @@ namespace FourPaws\PersonalBundle\Repository;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
-use FourPaws\PersonalBundle\Entity\OrderSubscribeNextDelivery;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeSingle;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\ArrayTransformerInterface;
@@ -23,14 +23,14 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  *
  * @package FourPaws\PersonalBundle\Repository
  */
-class OrderSubscribeNextDeliveryRepository extends BaseHlRepository
+class OrderSubscribeSingleRepository extends BaseHlRepository
 {
     public const HL_NAME = 'OrderSubscribeNextDelivery';
 
     /**@var UserService */
     public $curUserService;
 
-    /** @var OrderSubscribeNextDelivery $entity */
+    /** @var OrderSubscribeSingle $entity */
     protected $entity;
 
     /**
@@ -42,7 +42,7 @@ class OrderSubscribeNextDeliveryRepository extends BaseHlRepository
         ArrayTransformerInterface $arrayTransformer
     ) {
         parent::__construct($validator, $arrayTransformer);
-        $this->setEntityClass(OrderSubscribeNextDelivery::class);
+        $this->setEntityClass(OrderSubscribeSingle::class);
     }
 
     /**

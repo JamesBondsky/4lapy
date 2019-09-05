@@ -4,7 +4,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 
 <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date js-pickup-date <?=$isHidden ? 'js-no-valid' : ''?>"
         <?=$isHidden ? 'disabled' : ''?>
-        name="<?= $selectorName ?>">
+        name="<?= $selectorName ?>" data-subscribe="1">
     <option value="" disabled="disabled" <?=(!$selectedFirstDate) ? 'selected="selected"' : '' ?>>выберите</option>
     <? /** @var CalculationResultInterface $nextDelivery */
     foreach ($nextDeliveries as $i => $nextDelivery) { ?>
