@@ -223,6 +223,8 @@ class BasketController extends BaseController
      */
     public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
     {
+        $basketProducts = $this->apiOrderService->getBasketWithCurrentDelivery();
+
         if ($promoCode = $this->orderStorageService->getStorage()->getPromoCode()) {
             try {
                 /** @see \FourPaws\SaleBundle\AjaxController\BasketController::applyPromoCodeAction */
@@ -234,7 +236,6 @@ class BasketController extends BaseController
         }
 
         $bonusSubtractAmount = $userCartCalcRequest->getBonusSubtractAmount();
-        $basketProducts = $this->apiBasketService->getBasketProducts(false);
 
         [$courierDelivery, $pickupDelivery, $dostavistaDelivery] = $this->apiOrderService->getDeliveryVariants();
 
