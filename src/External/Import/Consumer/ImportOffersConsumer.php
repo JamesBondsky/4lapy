@@ -25,8 +25,8 @@ class ImportOffersConsumer extends ImportConsumerBase
         /** @var ImportOffer $importOffer */
         $importOffer = $this->serializer->deserialize($message->getBody(), ImportOffer::class, 'json');
 
-        $currentDate = new \Bitrix\Main\Type\DateTime();
-        $dateActive = new \Bitrix\Main\Type\DateTime($importOffer->activeFrom);
+        $currentDate = new \DateTime(new \DateTimeZone('Europe/Moscow'));
+        $dateActive = new \DateTime($importOffer->activeFrom);
 
         if ($dateActive > $currentDate) {
             return self::MSG_REJECT_REQUEUE;
