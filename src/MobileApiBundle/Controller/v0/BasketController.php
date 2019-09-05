@@ -7,6 +7,7 @@
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use Bitrix\Iblock\ElementTable;
+use Doctrine\Common\Collections\ArrayCollection;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\App\Application;
@@ -16,6 +17,7 @@ use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\KkmBundle\Service\KkmService;
 use FourPaws\MobileApiBundle\Controller\BaseController;
+use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryVariant;
 use FourPaws\MobileApiBundle\Dto\Request\DostavistaRequest;
@@ -34,9 +36,11 @@ use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
 use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService;
 use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService as ApiUserDeliveryAddressService;
 use FourPaws\PersonalBundle\Service\OrderService;
+use FourPaws\SaleBundle\Dto\OrderSplit\Basket\BasketSplitItem;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
+use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Service\StoreService as AppStoreService;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
@@ -223,10 +227,34 @@ class BasketController extends BaseController
      */
     public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
     {
-        if ($userCartCalcRequest->getDeliveryType() === 'courier') {
-            $basketProducts = $this->apiOrderService->getBasketWithCurrentDelivery();
-        } else {
-            $basketProducts = $this->apiBasketService->getBasketProducts(true);
+        $basketProducts = $this->apiBasketService->getBasketProducts(true);
+
+        // Если выбрано "Товары из наличия"
+        if ($userCartCalcRequest->onlyAvailableGoods) {
+            $basketProducts = $this->apiOrderService->filterPartialBasketItems($basketProducts);
+            $orderSplitService = Application::getInstance()
+                ->getContainer()
+                ->get(OrderSplitService::class);
+
+            $items = new ArrayCollection();
+            /** @var Product $basketProduct */
+            foreach ($basketProducts as $basketProduct) {
+                if ($shortProduct = $basketProduct->getShortProduct()) {
+
+                    $price = $shortProduct->getPrice()->getActual();
+                    $oldPrice = $shortProduct->getPrice()->getOld();
+                    $oldPrice = $oldPrice ?: $price;
+                    $splitItem = (new BasketSplitItem())
+                        ->setProductId($shortProduct->getId())
+                        ->setAmount($basketProduct->getQuantity())
+                        ->setPrice($price)
+                        ->setBasePrice($oldPrice)
+                    ;
+                    $items->add($splitItem);
+                }
+            }
+
+            $this->manzana->calculate(null, $orderSplitService->generateBasket($items));
         }
 
         if ($promoCode = $this->orderStorageService->getStorage()->getPromoCode()) {
