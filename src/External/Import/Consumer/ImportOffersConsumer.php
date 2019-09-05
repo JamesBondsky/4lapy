@@ -29,7 +29,10 @@ class ImportOffersConsumer extends ImportConsumerBase
         $currentDate->setTimezone(new \DateTimeZone('Europe/Moscow'));
         $dateActive = new \DateTime($importOffer->activeFrom);
 
-        if ($dateActive > $currentDate) {
+        var_dump($currentDate->format('d.m.Y h:i:s'));
+        var_dump($dateActive->format('d.m.Y h:i:s'));
+
+        if ($dateActive > $currentDate ?? !$dateActive) {
             return self::MSG_REJECT_REQUEUE;
         }
 
