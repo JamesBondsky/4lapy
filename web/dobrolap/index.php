@@ -908,11 +908,15 @@ $APPLICATION->SetTitle("Добролап");
                 <div class="container">
                     <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
                          data-scrollax-parent="true">
-                        <video controls poster="/dobrolap/images/08_24_4lapy_Cats_02_1.jpg">
+                        <?/*<video controls poster="/dobrolap/images/08_24_4lapy_Cats_02_1.jpg">
                             <source src="/upload/dobrolap/08_24_4lapy_Cats_02_1.mp4">
                             <source src="/upload/dobrolap/08_24_4lapy_Cats_02_1.ogv" type="video/webm">
                             <source src="/upload/dobrolap/08_24_4lapy_Cats_02_1.webm" type="video/ogg">
-                        </video>
+                        </video>*/?>
+
+                        <div style="position: relative; width: 100%; max-width: 916px; margin: 0 auto; height: 0; padding-bottom: 48%;">
+                          <iframe style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;" src="https://www.youtube.com/embed/J-v8Fv538V0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -921,11 +925,15 @@ $APPLICATION->SetTitle("Добролап");
                 <div class="container">
                     <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
                          data-scrollax-parent="true">
-                        <video controls poster="/dobrolap/images/raise-preview2.jpg">
+                        <?/* <video controls poster="/dobrolap/images/raise-preview2.jpg">
                             <source src="/upload/dobrolap/4lapi_priut_14_08_2.mp4">
                             <source src="/upload/dobrolap/4lapi_priut_14_08_2.ogv" type="video/webm">
                             <source src="/upload/dobrolap/4lapi_priut_14_08_2.webm" type="video/ogg">
-                        </video>
+                        </video> */?>
+
+                        <div style="position: relative; width: 100%; max-width: 916px; margin: 0 auto; height: 0; padding-bottom: 48%;">
+                          <iframe style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;" src="https://www.youtube.com/embed/UoW5HlZrw1I" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        </div>
                     </div>
                 </div>
             </div>
