@@ -305,6 +305,7 @@ class CityService implements LoggerAwareInterface
                         'region_with_type' => '',
                         'kladr_id' => $locations[$locationId]['KLADR'],
                     ],
+                    'unrestricted_value' => $locations[$locationId]['NAME'],
                 ];
             }
         }
@@ -313,6 +314,16 @@ class CityService implements LoggerAwareInterface
             return mb_strlen($a['data']['city'], 'UTF-8') - mb_strlen($b['data']['city'], 'UTF-8');
         });
 
-        return $allowLocations;
+        $uniqKey = [];
+        $allowLocationsUniq = [];
+
+        foreach ($allowLocations as $allowLocationItem) {
+            if (!in_array($allowLocationItem['data']['city'], $uniqKey)) {
+                $uniqKey[] = $allowLocationItem['data']['city'];
+                $allowLocationsUniq[] = $allowLocationItem;
+            }
+        }
+
+        return $allowLocationsUniq;
     }
 }

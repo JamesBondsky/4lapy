@@ -115,4 +115,20 @@ class CityController extends Controller
             'suggestions' => $result,
         ]);
     }
+
+    /**
+     * @Route("/suggest/address", methods={"OPTIONS"})
+     */
+    public function getAddressOption()
+    {
+        return new JsonResponse([]);
+    }
+
+    /**
+     * @Route("/status/address", methods={"GET"})
+     */
+    public function getAddressGet()
+    {
+        return new JsonResponse([]);
+    }
 }
