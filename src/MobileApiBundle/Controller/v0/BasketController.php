@@ -223,7 +223,11 @@ class BasketController extends BaseController
      */
     public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
     {
-        $basketProducts = $this->apiOrderService->getBasketWithCurrentDelivery();
+        if ($userCartCalcRequest->getDeliveryType() === 'courier') {
+            $basketProducts = $this->apiOrderService->getBasketWithCurrentDelivery();
+        } else {
+            $basketProducts = $this->apiBasketService->getBasketProducts(true);
+        }
 
         if ($promoCode = $this->orderStorageService->getStorage()->getPromoCode()) {
             try {
