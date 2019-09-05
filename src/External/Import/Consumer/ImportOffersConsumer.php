@@ -25,17 +25,14 @@ class ImportOffersConsumer extends ImportConsumerBase
         /** @var ImportOffer $importOffer */
         $importOffer = $this->serializer->deserialize($message->getBody(), ImportOffer::class, 'json');
 
-        $currentDate = new \DateTime();
-        $currentDate->setTimezone(new \DateTimeZone('Europe/Moscow'));
-        $dateActive = new \DateTime($importOffer->activeFrom);
+        if ($importOffer->activeFrom) {
+            $currentDate = new \DateTime();
+            $currentDate->setTimezone(new \DateTimeZone('Europe/Moscow'));
+            $dateActive = new \DateTime($importOffer->activeFrom);
 
-        var_dump('$importOffer->activeFrom ' . $importOffer->activeFrom);
-
-        var_dump('$currentDate - ' . $currentDate->format('d.m.Y h:i:s'));
-        var_dump('$dateActive ' . $dateActive->format('d.m.Y h:i:s'));
-
-        if ($dateActive > $currentDate ?? !$dateActive) {
-            return self::MSG_REJECT_REQUEUE;
+            if ($dateActive > $currentDate ?? !$dateActive) {
+                return self::MSG_REJECT_REQUEUE;
+            }
         }
 
         $couponId = $this->personalCouponManager::add([
