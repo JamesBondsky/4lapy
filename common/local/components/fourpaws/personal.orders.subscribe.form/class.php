@@ -1135,6 +1135,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             } elseif ($this->arParams['USER_ID'] <= 0) {
                 $this->setExecError('getOrder', 'Некорректный идентификатор пользователя', 'incorrectUserId');
             } else {
+                $this->getOrderSubscribeService()->getPersonalOrderService()->clearOrderRepositoryNav(); // выставлен, если получаем следующую страницу в личном кабинете
                 $orderSubscribeService = $this->getOrderSubscribeService();
                 /** @var Order $order */
                 $order = $orderSubscribeService->getOrderById($orderId);
