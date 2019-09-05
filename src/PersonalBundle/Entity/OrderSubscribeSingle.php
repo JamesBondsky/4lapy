@@ -181,5 +181,11 @@ class OrderSubscribeSingle extends BaseEntity
         return $this;
     }
 
-
+    /**
+     * @return mixed
+     */
+    public function getSubscribe(): array
+    {
+        return \unserialize($this->getData());
+    }
 }

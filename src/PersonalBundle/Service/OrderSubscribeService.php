@@ -413,6 +413,24 @@ class OrderSubscribeService implements LoggerAwareInterface
             case $freqs['WEEK_6']['ID']:
                 $nextDate->add("+6 week");
                 break;
+            case $freqs['WEEK_7']['ID']:
+                $nextDate->add("+7 week");
+                break;
+            case $freqs['WEEK_8']['ID']:
+                $nextDate->add("+8 week");
+                break;
+            case $freqs['WEEK_9']['ID']:
+                $nextDate->add("+9 week");
+                break;
+            case $freqs['WEEK_10']['ID']:
+                $nextDate->add("+10 week");
+                break;
+            case $freqs['WEEK_11']['ID']:
+                $nextDate->add("+11 week");
+                break;
+            case $freqs['WEEK_12']['ID']:
+                $nextDate->add("+12 week");
+                break;
             default:
                 throw new \Exception('Не найдена подходящая периодичность');
         }
@@ -452,6 +470,24 @@ class OrderSubscribeService implements LoggerAwareInterface
                 break;
             case $freqs['WEEK_6']['ID']:
                 $nextDate->add("-6 week");
+                break;
+            case $freqs['WEEK_7']['ID']:
+                $nextDate->add("-7 week");
+                break;
+            case $freqs['WEEK_8']['ID']:
+                $nextDate->add("-8 week");
+                break;
+            case $freqs['WEEK_9']['ID']:
+                $nextDate->add("-9 week");
+                break;
+            case $freqs['WEEK_10']['ID']:
+                $nextDate->add("-10 week");
+                break;
+            case $freqs['WEEK_11']['ID']:
+                $nextDate->add("-11 week");
+                break;
+            case $freqs['WEEK_12']['ID']:
+                $nextDate->add("-12 week");
                 break;
             default:
                 throw new Exception('Не найдена подходящая периодичность');
@@ -1597,6 +1633,9 @@ class OrderSubscribeService implements LoggerAwareInterface
                     $result->addErrors(
                         $data['copyResult']->getErrors()
                     );
+                } else if(!$this->orderSubscribeSingleRepository->findBySubscribe($orderSubscribe->getId())->isEmpty()) {
+                    $subscribeSingle = $this->orderSubscribeSingleRepository->findBySubscribe($orderSubscribe->getId())->first();
+                    $this->updateBySingleSubscribe($subscribeSingle);
                 }
             } catch (\Throwable $exception) {
                 $result->addError(
@@ -2183,6 +2222,41 @@ class OrderSubscribeService implements LoggerAwareInterface
 
         $result = $this->orderSubscribeSingleRepository->setEntity($singleSubscribe)->create();
         return $result;
+    }
+
+
+    /**
+     * @param OrderSubscribeSingle $singleSubscribe
+     * @return mixed
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     */
+    public function updateBySingleSubscribe(OrderSubscribeSingle $singleSubscribe)
+    {
+        $orderSubscribe = $this->arrayTransformer->fromArray($singleSubscribe->getSubscribe(), OrderSubscribe::class);
+        $items = $singleSubscribe->getItems();
+        $quantity = $singleSubscribe->getQuantity();
+
+        if(!$this->getById($orderSubscribe->getId())) {
+            throw new Exception("Подписка не найдена");
+        }
+
+        $this->deleteAllItems($orderSubscribe->getId());
+        foreach ($items as $key => $offerId){
+            $subscribeItem = (new OrderSubscribeItem())
+                ->setOfferId($offerId)
+                ->setQuantity($quantity[$key])
+                ->setSubscribeId($orderSubscribe->getId())
+            ;
+
+            $this->addSubscribeItem($orderSubscribe, $subscribeItem);
+        }
+
+        $result = $this->update($orderSubscribe);
+        return $result->isSuccess();
     }
 
 }
