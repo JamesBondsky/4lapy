@@ -586,7 +586,8 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
                 }
 
                 $priceSubscribe = $offer->getSubscribePrice() * $basketItem->getQuantity();
-                $priceDefault = $basketItem->getPrice() * $basketItem->getQuantity();
+//                $priceDefault = $basketItem->getPrice() * $basketItem->getQuantity(); сравниваем с базовой ценой, так как скидки не суммируются
+                $priceDefault = $basketItem->getBasePrice() * $basketItem->getQuantity();
                 $price = $priceDefault;
                 if($priceSubscribe < $priceDefault){
                     $price = $priceSubscribe;
