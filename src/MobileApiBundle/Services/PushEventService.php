@@ -303,6 +303,7 @@ class PushEventService
             }
 
             foreach ($response as $token => $responseItem) {
+                $pushId[$token]->setServiceResponseStatus($responseItem['token']);
                 $pushId[$token]->setSuccessExec($responseItem['token'] > 0 ? ApiPushEvent::EXEC_FAIL_CODE : ApiPushEvent::EXEC_SUCCESS_CODE);
                 $this->apiPushEventRepository->update($pushId[$token]);
             }
