@@ -68,23 +68,19 @@ use FourPaws\Decorators\SvgDecorator; ?>
 
     <div class="fashion-category-list">
         <? foreach($arResult['ELEMENTS'] as $i => $element) { ?>
-        <div class="item-category-fashion <?=($i < 3) ? 'active' : ''?>" data-item-filter-category-fashion="<?=$i?>" data-url="/ajax/catalog/product-info/">
-            <div class="b-container">
-                <a href="<?=$component->getSectionUrl($element['PROPERTIES']['SECTION']['VALUE']) ?>" class="item-category-fashion__title" target="_blank"><?=$element['NAME']?></a>
-                <div class="item-category-fashion__content">
-                    <a href="<?=$component->getSectionUrl($element['PROPERTIES']['SECTION']['VALUE'])?>" target="_blank">
-                       <div class="item-category-fashion__img" style="background-position: bottom right; background-image: url(<?=$arResult['IMAGES'][$element['PROPERTIES']['IMAGE']['VALUE']]?>)">
-                       <?/*<a href="<?=$component->getSectionUrl($element['PROPERTIES']['SECTION']['VALUE']) ?>" class="item-category-fashion__more" target="_blank">
-                             Посмотреть все
-                        </a>*/?>
+            <div class="item-category-fashion <?=($i < 3) ? 'active' : ''?>" data-item-filter-category-fashion="<?=$i?>" data-url="/ajax/catalog/product-info/">
+                <div class="b-container">
+                    <a href="<?= $component->getSectionLink($element['ID']) ?>" class="item-category-fashion__title" target="_blank"><?=$element['NAME']?></a>
+                    <div class="item-category-fashion__content">
+                        <div class="item-category-fashion__img" style="background-image: url(<?=$arResult['IMAGES'][$element['PROPERTIES']['IMAGE']['VALUE']]?>)">
+                            <a href="<?= $component->getSectionLink($element['ID']) ?>" class="item-category-fashion__more" target="_blank">
+                                Посмотреть все
+                            </a>
                         </div>
-                    </a>
-
-                    <div class="item-category-fashion__slider" data-slider-category-fashion="true">
-                        <?php
-                        foreach ($element['PROPERTIES']['PRODUCTS']['VALUE'] as $xmlId){
-                            $product = $component->getProduct($xmlId);
-                            if($product){
+                        <div class="item-category-fashion__slider" data-slider-category-fashion="true">
+                            <?php
+                            foreach ($element['PROPERTIES']['PRODUCTS']['VALUE'] as $xmlId){
+                                $product = $component->getProduct($xmlId);
                                 $APPLICATION->IncludeComponent(
                                     'fourpaws:catalog.element.snippet',
                                     'fashion_slider',
@@ -94,13 +90,11 @@ use FourPaws\Decorators\SvgDecorator; ?>
                                     ]
                                 );
                             }
-
-                        }
-                        ?>
+                            ?>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
         <? } ?>
     </div>
 

@@ -5,7 +5,6 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
-use Psr\Log\LoggerAwareTrait;
 
 /**
  * Created by PhpStorm.
@@ -23,8 +22,7 @@ class CFashionProductFooter extends \CBitrixComponent
     private $titleImageIds;
     private $sectionIds;
     private $sections;
-
-    use LoggerAwareTrait;
+    private $sectionLinks;
 
 
     public function onPrepareComponentParams($params): array
@@ -65,6 +63,7 @@ class CFashionProductFooter extends \CBitrixComponent
             $this->fillProducts();
             $this->fillImages();
             $this->fillSections();
+            $this->fillLinks();
 
             $this->includeComponentTemplate();
         }
@@ -111,33 +110,38 @@ class CFashionProductFooter extends \CBitrixComponent
         }
     }
 
+    private function fillLinks()
+    {
+        foreach ($this->arResult['ELEMENTS'] as $element) {
+            if ($element['PROPERTIES']['SECTION_LINK']['VALUE']) {
+                $this->sectionLinks[$element['ID']] = $element['PROPERTIES']['SECTION_LINK']['VALUE'];
+            } else {
+                $this->sectionLinks[$element['ID']] = $this->getSectionUrl($element['PROPERTIES']['SECTION']['VALUE']);
+            }
+        }
+    }
 
-    /**
-     * @param $xmlId
-     * @return Product|false
-     */
     public function getProduct($xmlId)
     {
-        $product = false;
-
-        try {
-            $product = $this->products->filter(function ($product) use ($xmlId) {
-                if(!($product instanceof Product)){
-                    $this->logger->error(sprintf("Товар с внешнем кодом %s не найден", $xmlId));
-                    return false;
-                }
-                /** @var Product $product */
-                return $product->getXmlId() == $xmlId;
-            })->first();
-        } catch (\Throwable $e) {
-            $this->logger->error($e->getMessage());
-        }
-
-        return $product ? $product : false;
+        return $this->products->filter(function ($product) use ($xmlId) {
+            /** @var Product $product */
+            return $product->getXmlId() == $xmlId;
+        })->first();
     }
 
     public function getSectionUrl($id)
     {
         return $this->sections[$id]['SECTION_PAGE_URL'];
+    }
+
+    /**
+     * sectionLink - строковое свойство у инфоблока
+     * никак не связанное с привязанным разделом
+     * @param $elementId
+     * @return mixed
+     */
+    public function getSectionLink($elementId)
+    {
+        return $this->sectionLinks[$elementId];
     }
 }
