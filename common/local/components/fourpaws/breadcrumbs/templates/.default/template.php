@@ -41,11 +41,24 @@ $positionContent = 0;
                 continue;
             } ?>
             <li class="b-breadcrumbs__item" itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
-                <a class="b-breadcrumbs__link"
-                   href="<?= $section['URL'] ?>"
-                   title="<?= $section['NAME'] ?>"
-                   itemtype="http://schema.org/Thing"
-                   itemprop="item"><span itemprop="name"><?= $section['NAME'] ?></span></a>
+                <? if($APPLICATION->getCurDir() == $section['URL']) { ?>
+                    <span class="b-breadcrumbs__link" itemtype="http://schema.org/Thing" itemprop="item">
+                <? } else { ?>
+                    <a class="b-breadcrumbs__link"
+                       href="<?= $section['URL'] ?>"
+                       title="<?= $section['NAME'] ?>"
+                       itemtype="http://schema.org/Thing"
+                       itemprop="item">
+                <? } ?>
+
+                <span itemprop="name"><?= $section['NAME'] ?></span>
+
+                <? if($APPLICATION->getCurDir() == $section['URL']) { ?>
+                    </span>
+                <? } else { ?>
+                    </a>
+                <? } ?>
+
                 <meta itemprop="position" content="<?= ++$positionContent ?>"/>
             </li>
         <?php } ?>
