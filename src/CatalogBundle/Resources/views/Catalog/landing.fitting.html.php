@@ -7,10 +7,12 @@ global $APPLICATION;
 
 $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [], ['HIDE_ICONS' => 'Y']);
 
+global $USER;
+
 /**
  * @var PhpEngine $view
  */ ?>
-<div class="measure_dog__wrapper js-measure-dog">
+<div class="measure_dog__wrapper js-measure-dog <?=($USER->IsAuthorized() ? 'js-measure-dog--with-lk-modal' : '')?>">
     <div class="measure_dog measure_dog--start_size">
         <div class="content_dropdown js-content-dropdown-trigger mobile_mq">
             <div class="content_dropdown__title">
@@ -30,6 +32,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
                         <source src="/upload/dobrolap/measure_size.webm" type="video/ogg">
                     </video>
                 </div>
+
                 <div class="measure_dog__img"></div>
             </div>
 
@@ -108,6 +111,89 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
         </div>
     </div>
 </div>
+
+<? if ($USER->IsAuthorized()): ?>
+    <div class="b-popup-wrapper js-popup-wrapper" data-measure-dog-lk-save-popup="wrapper">
+        <section class="b-popup-pick-city b-popup-pick-city--authorization" data-popup="authorization" data-measure-dog-lk-save-popup="step1">
+            <a class="b-popup-pick-city__close b-popup-pick-city__close--authorization" title="Закрыть" data-measure-dog-lk-save-popup="cancel"></a>
+
+            <div class="b-registration b-registration--popup-authorization">
+                <header class="b-registration__header">
+                    <div class="b-title b-title--h1 b-title--registration">
+                        Результат расчета
+                    </div>
+                </header>
+
+                <div class="b-registration__content b-registration__content--moiety b-registration__content--step b-cart-combination">
+                    <div class="b-registration__text-instruction">
+                        Скорее всего, у вашей собаки размер — <span data-measure-dog-lk-save-popup="size-txt"></span>. <br /><br /> Обновить размер вашей собаки в личном кабинете?
+                    </div>
+
+                    <div class="b-registration__form js-auth-2way" method="post">
+                        <button class="b-button b-button--social b-button--full-width b-cart-combination__btn--left" data-measure-dog-lk-save-popup="go-step2">
+                            Да
+                        </button>
+
+                        <button class="b-button b-button--social b-button--full-width b-cart-combination__btn--right" data-measure-dog-lk-save-popup="cancel">
+                            Нет
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="b-popup-pick-city b-popup-pick-city--authorization" data-popup="authorization" data-measure-dog-lk-save-popup="step2">
+            <a class="b-popup-pick-city__close b-popup-pick-city__close--authorization" title="Закрыть" data-measure-dog-lk-save-popup="cancel"></a>
+
+            <div class="b-registration b-registration--popup-authorization">
+                <header class="b-registration__header">
+                    <div class="b-title b-title--h1 b-title--registration">
+                        Результат расчета
+                    </div>
+                </header>
+
+                <div class="b-registration__content b-registration__content--moiety b-registration__content--step b-cart-combination">
+                    <div class="b-registration__form">
+                        <label class="b-registration__label b-registration__label--subscribe-delivery" for="type-pet">Выберите питомца</label>
+
+                        <div class="b-select b-select--subscribe-delivery" style="margin-bottom: 30px;">
+                            <select class="b-select__block b-select__block--subscribe-delivery" data-measure-dog-lk-save-popup="pet-select"></select>
+                        </div>
+                    </div>
+
+                    <div class="b-registration__form js-auth-2way">
+                        <button
+                            class="b-button b-button--social b-button--full-width b-cart-combination__btn--left"
+                            data-measure-dog-lk-save-popup="confirm"
+                        >
+                            Да
+                        </button>
+
+                        <button class="b-button b-button--social b-button--full-width b-cart-combination__btn--right" data-measure-dog-lk-save-popup="cancel">
+                            Нет
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <form data-url="/ajax/personal/pets/updateSize/" method="post" data-measure-dog-lk-save-popup="form" class="js-ajax-form success-valid">
+            <input type="hidden" name="pet_id" data-measure-dog-lk-save-popup="form-size-petid" />
+
+            <input type="hidden" name="back" data-measure-dog-lk-save-popup="form-size-back" />
+            <input type="hidden" name="chest" data-measure-dog-lk-save-popup="form-size-chest" />
+            <input type="hidden" name="neck" data-measure-dog-lk-save-popup="form-size-neck" />
+
+            <input type="hidden" name="size" data-measure-dog-lk-save-popup="form-size-main" />
+        </form>
+    </div>
+
+    <script>
+        // $('[data-measure-dog-lk-save-popup="wrapper"]').addClass('active');
+        // $('[data-measure-dog-lk-save-popup="step1"]').fadeIn();
+    </script>
+    
+<? endif ?>
 
 <? if(!$hide_info) { ?>
 <div class="free_fitting__wrapper">
