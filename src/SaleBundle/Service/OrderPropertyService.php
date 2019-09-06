@@ -33,6 +33,11 @@ class OrderPropertyService
 
     public const COMMUNICATION_PAYMENT_ANALYSIS_DOSTAVISTA_ERROR = '09';
 
+    // todo корректные номера (не соответсвие с задачей)
+    public const COMMUNICATION_FIRST_SUBSCRIBE_SMS = '10';
+
+    public const COMMUNICATION_FIRST_SUBSCRIBE_PHONE = '11';
+
     /**
      * @var OrderPropertyVariantRepository
      */
