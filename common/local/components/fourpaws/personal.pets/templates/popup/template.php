@@ -124,7 +124,7 @@
                 </div>
             </div>
 
-            <div class="b-size-select">
+            <div class="b-size-select" style="display: none; " data-lk-pets-breed="size-select">
                 <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-size">
                     <div class="b-input-line__label-wrapper">
                         <label class="b-input-line__label" for="size-pet">Размер</label>
@@ -193,7 +193,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
 
             <button class="b-button b-button--subscribe-delivery">Сохранить</button>
