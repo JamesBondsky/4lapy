@@ -15,6 +15,7 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -188,6 +189,48 @@ class PetController extends Controller
             return $this->ajaxMess->getSecurityError();
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getDeleteError($e->getMessage());
+        } catch (NotAuthorizedException $e) {
+            return $this->ajaxMess->getNeedAuthError();
+        } catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException|ObjectPropertyException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+        }
+
+        return $this->ajaxMess->getSystemError();
+    }
+
+    /**
+     * @Route("/get/", methods={"GET"})
+     * @param Request $request
+     */
+    public function getAction(Request $request)
+    {
+        try {
+            $pets = $this->petService->getCurUserPets();
+            if (!$pets->isEmpty()) {
+
+                /** @var Pet $pet */
+                foreach ($pets as $pet){
+                    $result[] = [
+                      'id' => $pet->getId(),
+                      'name' => $pet->getName()
+                    ];
+                }
+
+                return JsonSuccessResponse::createWithData(
+                    '',
+                    $result
+                );
+            }
+        } catch (SecurityException|NotFoundException $e) {
+            return $this->ajaxMess->getSecurityError();
+        } catch (BitrixRuntimeException $e) {
+            return $this->ajaxMess->getUpdateError($e->getMessage());
+        } catch (EmptyEntityClass $e) {
+            return $this->ajaxMess->getUpdateError();
         } catch (NotAuthorizedException $e) {
             return $this->ajaxMess->getNeedAuthError();
         } catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException|ObjectPropertyException $e) {
