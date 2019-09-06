@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Iblock\ElementTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use FOS\RestBundle\Controller\Annotations as Rest;
@@ -35,6 +36,7 @@ use FourPaws\MobileApiBundle\Services\Api\CityService;
 use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
 use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService;
 use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService as ApiUserDeliveryAddressService;
+use FourPaws\MobileApiBundle\Traits\MobileApiLoggerAwareTrait;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\SaleBundle\Dto\OrderSplit\Basket\BasketSplitItem;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
@@ -53,6 +55,8 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class BasketController extends BaseController
 {
+    use MobileApiLoggerAwareTrait;
+
     /** @var AppBasketService*/
     private $appBasketService;
 
@@ -98,6 +102,8 @@ class BasketController extends BaseController
         $this->appDeliveryService = $appDeliveryService;
         $this->orderStorageService = $orderStorageService;
         $this->apiUserDeliveryAddressService = $apiUserDeliveryAddressService;
+
+        $this->setLogger(LoggerFactory::create('BasketController', 'mobileApi'));
     }
 
     /**
@@ -227,6 +233,7 @@ class BasketController extends BaseController
      */
     public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
     {
+        $this->mobileApiLog()->info('Request: POST postUserCartCalcAction: ' . print_r($userCartCalcRequest, true));
         if ($userCartCalcRequest->getDeliveryType() === 'courier') {
             $basketProducts = $this->apiOrderService->getBasketWithCurrentDelivery();
         } else {

@@ -984,7 +984,8 @@ class OrderService
                 foreach ($priceForAmountCollection as $priceForAmount) {
                     /** @var Product $basketProduct */
                     foreach ($basketProducts as $basketProductKey => $basketProduct) {
-                        if ((int)$priceForAmount->getBasketCode() === $basketProduct->getBasketItemId()) {
+                        if (($shortProduct = $basketProduct->getShortProduct()) && $stockResult->getOffer()->getXmlId() === $shortProduct->getXmlId()) {
+                        //if ((int)$priceForAmount->getBasketCode() === $basketProduct->getBasketItemId()) {
                             $delayedQuantity = $priceForAmount->getAmount();
                             if ($delayedQuantity === $basketProduct->getQuantity()) { // если откладываются все единицы данного товара, то удаляем из коллекции
                                 $basketProducts->remove($basketProductKey);
@@ -993,10 +994,13 @@ class OrderService
                                 $prices = $basketProduct->getPrices();
                                 /** @var PriceWithQuantity $price */
                                 foreach ($prices as $priceKey => $price) {
-                                    if ($price->getQuantity() === $delayedQuantity) {
-                                        unset($prices[$priceKey]);
-                                    } else {
-                                        $price->setQuantity($price->getQuantity() - $delayedQuantity);
+                                    if ($priceForAmount->getPrice() === $price->getPrice()->getActual()) {
+                                        if ($price->getQuantity() === $delayedQuantity) {
+                                            unset($prices[$priceKey]);
+                                        } else {
+                                            $price->setQuantity($price->getQuantity() - $delayedQuantity);
+                                        }
+                                        --$delayedQuantity;
                                     }
                                 }
                                 $basketProduct->setPrices($prices);
