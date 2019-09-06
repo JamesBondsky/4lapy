@@ -9,6 +9,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\ElementTable;
+use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\EntityCollection;
 use FourPaws\App\Application;
@@ -21,16 +22,21 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\StampLevel;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
+use Bitrix\Main\Application as BitrixApplication;
 
 class BasketService
 {
@@ -58,13 +64,17 @@ class BasketService
     /** @var OrderSubscribeService */
     private $orderSubscribeService;
 
+    /** @var StampService */
+    private $stampService;
+
     public function __construct(
         AppBasketService $appBasketService,
         ApiProductService $apiProductService,
         TokenStorageInterface $tokenStorage,
         DeliveryService $deliveryService,
         AppUserService $appUserService,
-        OrderSubscribeService $orderSubscribeService
+        OrderSubscribeService $orderSubscribeService,
+        StampService $stampService
     )
     {
         $this->appBasketService = $appBasketService;
@@ -73,20 +83,30 @@ class BasketService
         $this->deliveryService = $deliveryService;
         $this->appUserService = $appUserService;
         $this->orderSubscribeService = $orderSubscribeService;
+        $this->stampService = $stampService;
     }
 
 
     /**
      * @param bool $onlyOrderable флаг запрашивать ли товары доступные для покупки или все товары (в том числе и недоступные для покупки)
      * @return BasketProductCollection
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\NotImplementedException
      * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectException
      * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
      */
     public function getBasketProducts(bool $onlyOrderable = false): BasketProductCollection
     {
+        $this->sqlHeartbeat();
         $deliveries = $this->deliveryService->getByLocation();
         $delivery = null;
         foreach ($deliveries as $calculationResult) {
@@ -139,11 +159,17 @@ class BasketService
                 }
             }
 
-            $order =  \Bitrix\Sale\Order::create(SITE_ID, $userId);
+            $this->sqlHeartbeat();
+            $order = \Bitrix\Sale\Order::create(SITE_ID, $userId);
+
+            $this->sqlHeartbeat();
             $order->setBasket($basket);
+
+            $this->sqlHeartbeat();
             // но иногда он так просто не запускается
             if (!\FourPaws\SaleBundle\Discount\Utils\Manager::isExtendCalculated()) {
                 $order->doFinalAction(true);
+                $this->sqlHeartbeat();
             }
         }
 
@@ -158,7 +184,34 @@ class BasketService
             }
 
             /** @var $basketItem BasketItem */
-            $product = $this->getBasketProduct($basketItem->getId(), $offer, $basketItem->getQuantity());
+            $useStamps = false;
+            $canUseStamps = false;
+            $canUseStampsAmount = 0;
+            if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
+                if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
+                    $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
+                }
+
+                if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
+                    $maxStampsLevelValue = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
+                    $canUseStamps = (bool)$maxStampsLevelValue;
+
+                    if ($useStamps) {
+                        if ($usedStamps = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'])['stampsUsed']) {
+                            $canUseStampsAmount = $usedStamps;
+                        }
+                    } else {
+                        $canUseStampsObj = unserialize($maxStampsLevelValue);
+                        $canUseStampsAmountKey = $canUseStampsObj ? $canUseStampsObj['key'] : false;
+                        if ($canUseStampsAmountKey) {
+                            $discount = $this->stampService->parseLevelKey($canUseStampsAmountKey);
+                            $canUseStampsAmount = $discount['discountStamps'] * $canUseStampsObj['value'];
+                        }
+                    }
+                }
+            }
+
+            $product = $this->getBasketProduct($basketItem->getId(), $offer, $basketItem->getQuantity(), $useStamps, $canUseStamps, $canUseStampsAmount);
             $shortProduct = $product->getShortProduct();
             $shortProduct->setPickupOnly(
                 $this->isPickupOnly($basketItem, $delivery, $offer)
@@ -166,6 +219,34 @@ class BasketService
             if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                 $shortProduct->setGiftDiscountId($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT']['VALUE']);
                 $shortProduct->setPrice((new Price())->setActual(0)->setOld(0));
+            }
+
+            if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
+                if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL'])) {
+                    $usedStampsLevel = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE']);
+                    if ($usedStampsLevel) {
+                        $shortProduct->setUsedStamps((int)$usedStampsLevel['stampsUsed']);
+                    }
+                }
+
+                // уровни скидок за марки
+                $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
+                $maxStampsLevelDiscount = 0;
+
+                $maxStampsLevelKey = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'])['key'];
+                if ($maxStampsLevelKey) {
+                    $maxStampsLevelDiscount = $this->stampService->parseLevelKey($maxStampsLevelKey)['discountStamps'];
+                }
+
+                $stampLevels = [];
+
+                if ($canUseStamps) {
+                    foreach ($this->stampService->getBasketItemStampLevels($basketItem, $offer->getXmlId(), $maxStampsLevelDiscount) as $stampLevel) {
+                        $stampLevels[] = $serializer->fromArray($stampLevel, StampLevel::class);
+                    }
+                }
+
+                $shortProduct->setStampLevels($stampLevels); //TODO get stampLevels from Manzana. If Manzana doesn't answer then set no levels
             }
 
             $product->setShortProduct($shortProduct);
@@ -237,11 +318,17 @@ class BasketService
      * @param int $basketItemId
      * @param Offer $offer
      * @param int $quantity
+     * @param bool|null $useStamps
+     * @param bool|null $canUseStamps
+     * @param int|null $canUseStampsAmount
      * @return Product
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    public function getBasketProduct(int $basketItemId, Offer $offer, int $quantity)
+    public function getBasketProduct(int $basketItemId, Offer $offer, int $quantity, ?bool $useStamps = false, ?bool $canUseStamps = false, ?int $canUseStampsAmount = 0)
     {
         $product = $offer->getProduct();
         $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity);
@@ -249,7 +336,11 @@ class BasketService
         return (new Product())
             ->setBasketItemId($basketItemId)
             ->setShortProduct($shortProduct)
-            ->setQuantity($quantity);
+            ->setQuantity($quantity)
+            ->setUseStamps($useStamps)
+            ->setCanUseStamps($canUseStamps)
+            ->setCanUseStampsAmount($canUseStampsAmount)
+        ;
     }
 
     /**
@@ -295,4 +386,13 @@ class BasketService
     {
         return strpos($basketItem->getBasketCode(), 'n') === 0;
     }
+
+    /**
+     * @throws SqlQueryException
+     */
+    private function sqlHeartbeat()
+    {
+        BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
+    }
+
 }

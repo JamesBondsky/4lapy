@@ -7,10 +7,14 @@ namespace FourPaws\External;
 use Sly\NotificationPusher\Collection\DeviceCollection;
 use Sly\NotificationPusher\Exception\PushException;
 use Sly\NotificationPusher\Model\PushInterface;
+use ZendService\Apple\Apns\Client\Message as ServiceClient;
 use ZendService\Apple\Apns\Response\Message as ServiceResponse;
 
 class ApplePushNotificationAdapter extends \Sly\NotificationPusher\Adapter\Apns
 {
+    /**
+     * @var ServiceClient
+     */
     protected $openedClient;
 
     protected function getOpenedServiceClient()

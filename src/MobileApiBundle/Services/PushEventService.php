@@ -290,6 +290,16 @@ class PushEventService
             try {
                 $pushManager->push();
             } catch (\Exception $adapterException) {
+                $this->log()->error('Ошибка при отправке push ios ' . $adapterException->getMessage());
+            }
+
+            $response = [];
+
+            try {
+                $response = $pushManager->getResponse()->getParsedResponses();
+            } catch (\Exception $e) {
+                $adapter->getOpenedClient()->close();
+                $this->log()->error('Ошибка при отправке push ios ' . $e->getMessage());
             }
 
             foreach ($pushManager->getResponse()->getParsedResponses() as $token => $response) {

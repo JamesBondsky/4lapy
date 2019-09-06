@@ -51,4 +51,9 @@ class IblockCode
     public const DOBROLAP_FORM = 'dobrolap_fans';
     public const DOBROLAP_NECESSARY = 'dobrolap_necessary';
     public const DOBROLAP_SHELTERS = 'dobrolap_shelters';
+
+    public const STAMPS_PRODUCTS = 'stamps_products';
+
+    public const FASHION_SLIDER_PRODUCTS = 'fashion_slider_product';
+    public const FASHION_FOOTER_PRODUCTS = 'fashion_footer_product';
 }

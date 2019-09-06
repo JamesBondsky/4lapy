@@ -158,7 +158,11 @@ class BasketController extends BaseController
                     // regular product
                     $this->appBasketService->addOfferToBasket(
                         $productQuantity->getProductId(),
-                        $productQuantity->getQuantity()
+                        $productQuantity->getQuantity(),
+                        [],
+                        true,
+                        null,
+                        true
                     );
                 }
             }
@@ -178,13 +182,13 @@ class BasketController extends BaseController
      * @return UserCartResponse
      * @throws \Exception
      */
-    public function putUserCartAction(PutUserCartRequest $putUserCartRequest)
+    public function putUserCartAction(PutUserCartRequest $putUserCartRequest) //TODO при указании флага useStamps передать это в Manzana и в зависимости от ответа изменить ответ в запросе (и снять флаг USE_STAMPS у товара в корзине, если манзана ответила, что обмен применить нельзя)
     {
         foreach ($putUserCartRequest->getGoods() as $productQuantity) {
             $quantity = $productQuantity->getQuantity();
             try {
                 if ($quantity > 0) {
-                    $this->appBasketService->updateBasketQuantity($productQuantity->getProductId(), $productQuantity->getQuantity());
+                    $this->appBasketService->updateBasketQuantity($productQuantity->getProductId(), $productQuantity->getQuantity(), $productQuantity->isUseStamps());
                 } else {
                     $this->appBasketService->deleteOfferFromBasket($productQuantity->getProductId());
                 }

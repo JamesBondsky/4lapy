@@ -77,6 +77,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 [
                     'filters' => $filterToShow,
                     'isBrand' => true,
+                    'catalogRequest' => $catalogRequest,
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">

@@ -16,23 +16,4 @@ use FourPaws\UserBundle\Service\UserService;
 
 class BaseController extends FOSRestController
 {
-    public function __destruct()
-    {
-        if (strripos($_SERVER['REQUEST_URI'], '/api/') === 0) {
-            $container = App::getInstance()->getContainer();
-
-            /** @var ManzanaService $manzanaService */
-            $manzanaService = $container->get('manzana.service');
-            try {
-                /** @var UserService $userCurrentUserService */
-                $userCurrentUserService = $container->get(CurrentUserProviderInterface::class);
-                $currentUser = $userCurrentUserService->getCurrentUser();
-                $userId = $currentUser->getId();
-                $personalPhone = $currentUser->getPersonalPhone();
-
-                $manzanaService->updateContactMobileAsync(['userId' => $userId, 'personalPhone' => $personalPhone]);
-            } catch (NotAuthorizedException $e) {
-            }
-        }
-    }
 }

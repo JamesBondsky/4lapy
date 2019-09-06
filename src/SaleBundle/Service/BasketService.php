@@ -51,6 +51,7 @@ use FourPaws\Helpers\IblockHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
@@ -94,6 +95,8 @@ class BasketService implements LoggerAwareInterface
     private $manzanaPosService;
     /** @var OrderService */
     private $orderService;
+    /** @var StampService */
+    private $stampService;
     /** @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ */
     private $promocodeDiscount = 0.0;
     private $fUserId;
@@ -106,24 +109,27 @@ class BasketService implements LoggerAwareInterface
     public const GIFT_DOBROLAP_XML_ID_ALT = '3006616';
     private $dobrolapMagnets;
 
-	/**
-	 * BasketService constructor.
-	 *
-	 * @param CurrentUserProviderInterface $currentUserProvider
-	 * @param ManzanaPosService $manzanaPosService
-	 * @param OrderService $orderService
-	 * @param ShareRepository $shareRepository
-	 */
+    /**
+     * BasketService constructor.
+     *
+     * @param CurrentUserProviderInterface $currentUserProvider
+     * @param ManzanaPosService $manzanaPosService
+     * @param OrderService $orderService
+     * @param ShareRepository $shareRepository
+     * @param StampService $stampService
+     */
     public function __construct(
         CurrentUserProviderInterface $currentUserProvider,
         ManzanaPosService $manzanaPosService,
         OrderService $orderService,
-        ShareRepository $shareRepository
+        ShareRepository $shareRepository,
+        StampService $stampService
     ) {
         $this->currentUserProvider = $currentUserProvider;
         $this->manzanaPosService = $manzanaPosService;
         $this->orderService = $orderService;
         $this->shareRepository = $shareRepository;
+        $this->stampService = $stampService;
     }
 
     /**
@@ -132,6 +138,7 @@ class BasketService implements LoggerAwareInterface
      * @param array $rewriteFields
      * @param bool $save
      * @param Basket|null $basket
+     * @param bool|null $mergeDespiteOfCustomProperties
      *
      * @throws ArgumentNullException
      * @throws ArgumentException
@@ -148,7 +155,8 @@ class BasketService implements LoggerAwareInterface
         int $quantity = 1,
         array $rewriteFields = [],
         bool $save = true,
-        ?Basket $basket = null
+        ?Basket $basket = null,
+        ?bool $mergeDespiteOfCustomProperties = false
     ): BasketItem {
         if ($offerId < 1) {
             throw new InvalidArgumentException('Неверный ID товара');
@@ -173,6 +181,34 @@ class BasketService implements LoggerAwareInterface
         /** @var BasketItem $basketItem */
         foreach ($basket->getBasketItems() as $basketItem) {
             $oldBasketCodes[] = $basketItem->getBasketCode();
+        }
+
+        if ($mergeDespiteOfCustomProperties) {
+            // Костыль, удаляющий кастомные свойства, которые не участвуют в логике общего разделения товаров, перед объединением товаров, т.к. в
+            // \Bitrix\Sale\BasketPropertiesCollectionBase::isPropertyAlreadyExists
+            // свойства добавляемого и имеющегося товара должны совпадать, чтобы произошел merge
+            $basketItems = $basket->getBasketItems();
+
+            /** @var BasketItem $item */
+            foreach ($basketItems as $item) {
+                if ($item->getProductId() == $fields['PRODUCT_ID']) {
+                    $itemPropertyCollection = $item->getPropertyCollection();
+                    /** @var BasketPropertyItem $itemProperty */
+                    foreach ($itemPropertyCollection as $itemProperty) {
+                        if (in_array($itemProperty->getField('CODE'), [
+                            'HAS_BONUS',
+                            'IS_PSEUDO_ACTION',
+                            'USE_STAMPS',
+                            'USED_STAMPS_LEVEL',
+                            'MAX_STAMPS_LEVEL',
+                            'STAMP_LEVELS',
+                            'CAN_USE_STAMPS',
+                        ], true)) {
+                            $itemPropertyCollection->deleteItem($itemProperty->getInternalIndex());
+                        }
+                    }
+                }
+            }
         }
 
         $result = \Bitrix\Catalog\Product\Basket::addProductToBasketWithPermissions(
@@ -262,6 +298,7 @@ class BasketService implements LoggerAwareInterface
     /**
      * @param int $basketId
      * @param int|null $quantity
+     * @param bool|null $useStamps
      *
      * @throws Exception
      * @throws BitrixProxyException
@@ -271,7 +308,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @return bool
      */
-    public function updateBasketQuantity(int $basketId, ?int $quantity = null): bool
+    public function updateBasketQuantity(int $basketId, ?int $quantity = null, ?bool $useStamps = false): bool
     {
         if ($quantity < 1) {
             throw new InvalidArgumentException('Wrong $quantity');
@@ -286,6 +323,15 @@ class BasketService implements LoggerAwareInterface
             throw new NotFoundException('BasketItem');
         }
 
+        //$basketPropertyCollection = $basketItem->getPropertyCollection();
+        //TODO использовать это поле и на сайте
+
+        //$this->setBasketItemPropertyValue($basketItem, 'MAX_STAMPS_LEVEL', (string)'test3');
+        //$basketPropertyCollection->save();
+        //$basketItem->setPropertyCollection($basketPropertyCollection);
+        //$basketPropertyCollection->setBasketItem($basketItem);
+        //$basketPropertyCollection->save();
+
         $result = $basketItem->setField('QUANTITY', $quantity);
         if (!$result->isSuccess()) {
             // проверяем не специально ли было запорото
@@ -299,6 +345,30 @@ class BasketService implements LoggerAwareInterface
                 throw new BitrixProxyException($result);
             }
         }
+
+        $this->setBasketItemPropertyValue($basketItem, 'USE_STAMPS', (string)$useStamps);
+
+        if ($useStamps) {
+            $maxStampsLevelProp = $this->getBasketItemPropertyValue($basketItem, 'MAX_STAMPS_LEVEL');
+            if ($maxStampsLevelProp) {
+                $maxStampsLevelPropValue = unserialize($maxStampsLevelProp);
+                $maxStampsLevelKey = $maxStampsLevelPropValue['key'];
+                if ($maxStampsLevelKey) {
+                    $parsedStampsLevelKey = $this->stampService->parseLevelKey($maxStampsLevelKey);
+                    $stampsUsed = $parsedStampsLevelKey['discountStamps'] * $maxStampsLevelPropValue['value'];
+                    $usedStampsInfo = [
+                        'stampsUsed' => $stampsUsed,
+                        'discountValue' => $parsedStampsLevelKey['discountValue'],
+                        'discountType' => $parsedStampsLevelKey['discountType'],
+                        'productQuantity' => $maxStampsLevelPropValue['value'],
+                    ];
+                    $this->setBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL', serialize($usedStampsInfo));
+                }
+            }
+        } else {
+            $this->setBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL', (string)false);
+        }
+
         if ($this->getBasket()->getOrder()) {
             $updateResult = BasketTable::update($basketItem->getId(), ['QUANTITY' => $quantity]);
             if (!$updateResult->isSuccess()) {
@@ -376,6 +446,16 @@ class BasketService implements LoggerAwareInterface
     public function getBasket(bool $reload = null, int $fUserId = 0): Basket
     {
         if (null === $this->basket || $reload) {
+            if ($this->basket && $reload) {
+                $basketItems = $this->basket->getBasketItems();
+
+                $propertyCollections = [];
+                /** @var BasketItem $basketItem */
+                foreach ($basketItems as $basketItem) {
+                    $propertyCollections[$basketItem->getId()] = $basketItem->getPropertyCollection();
+                }
+            }
+
             /** @var Basket $basket */
             /** @noinspection PhpInternalEntityUsedInspection */
             DiscountCompatibility::stopUsageCompatible();
@@ -386,6 +466,17 @@ class BasketService implements LoggerAwareInterface
 
             //всегда перегружаем из-за подарков
             $this->setBasketIds();
+
+            if ($this->basket && $reload) {
+                $basketItems = $this->basket->getBasketItems();
+                foreach ($basketItems as $key => $basketItem) {
+                    if (isset($propertyCollections[$basketItem->getId()])) {
+                        $basketItem->setPropertyCollection($propertyCollections[$basketItem->getId()]); // Костыль для сохранения propertyCollection при релоаде корзины
+                    }
+                }
+                $this->basket->save();
+            }
+
             try {
                 $this->refreshAvailability($this->basket);
             } catch (\Exception $e) {
