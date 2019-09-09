@@ -14,6 +14,7 @@ use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\ActionsFilter;
 use FourPaws\Catalog\Model\Filter\BrandFilter;
 use FourPaws\Catalog\Model\Filter\DeliveryAvailabilityFilter;
+use FourPaws\Catalog\Model\Filter\ClothingSizeFilter;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Model\Filter\InternalFilter;
 use FourPaws\Catalog\Model\Filter\PriceFilter;
@@ -67,6 +68,22 @@ class FilterCollection extends ObjectArrayCollection
         }
 
         return false;
+    }
+
+
+    /**
+     * @return FilterInterface|null
+     */
+    public function getSizeFilter(): ?FilterInterface
+    {
+        /** @var FilterInterface $filter */
+        foreach ($this as $filter) {
+            //Категория особый фильтр, который, кроме особых случаев, выбран.
+            if ($filter instanceof ClothingSizeFilter) {
+                return $filter;
+            }
+        }
+        return null;
     }
 
     /**
@@ -143,6 +160,31 @@ class FilterCollection extends ObjectArrayCollection
                 }
                 return $filter instanceof FilterBase;
             });
+    }
+
+    /**
+     * @return FilterCollection
+     */
+    public function sortFashionDogsClothes()
+    {
+        $sortMapping = ['ClothingSizeFilter', 'PriceFilter', 'PetSizeFilter', 'DeliveryAvailabilityFilter', 'PetGenderFilter', 'BrandFilter'];
+        $sortedFilters = [];
+        $otherFilters = [];
+
+        /** @var FilterInterface $filter */
+        foreach($this as $filter){
+            $className = (new \ReflectionClass($filter))->getShortName();
+            $index = array_search($className, $sortMapping);
+            if($index !== false){
+                $sortedFilters[$index] = $filter;
+            } else {
+                $otherFilters[] = $filter;
+            }
+        }
+
+        ksort($sortedFilters);
+        $allFilters = array_merge($sortedFilters, $otherFilters);
+        return new FilterCollection($allFilters);
     }
 
     /**

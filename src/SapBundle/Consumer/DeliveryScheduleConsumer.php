@@ -6,6 +6,8 @@
 
 namespace FourPaws\SapBundle\Consumer;
 
+use FourPaws\App\Application;
+use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedules;
 use FourPaws\SapBundle\Service\DeliverySchedule\DeliveryScheduleService;
 use RuntimeException;
@@ -52,13 +54,13 @@ class DeliveryScheduleConsumer extends SapConsumerBase
             $this->deliveryScheduleService->processSchedules($scheduleInfo);
         } catch (\Exception $e) {
             $success = false;
+            $message = sprintf("При импорте расписания возникла ошибка: %s", $e->getMessage());
 
-            $this->log()->critical(
-                \sprintf(
-                    'Ошибка импорта расписания погрузок: %s',
-                    $e->getMessage()
-                )
-            );
+            $this->log()->critical($message);
+
+            /** @var NotificationService $notificationService */
+            $notificationService = Application::getInstance()->getContainer()->get(NotificationService::class);
+            $notificationService->sendErrorMessageToAdmin("Ошибка импорта расписания", $message);
         }
 
         return $success;

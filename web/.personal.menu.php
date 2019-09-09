@@ -5,6 +5,7 @@ global $optId;
 use Bitrix\Main\GroupTable;
 use FourPaws\App\Application;
 use FourPaws\Enum\UserGroup;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 
 global $optId, $isAuth, $isAvatarAuth, $USER;
@@ -65,6 +66,19 @@ $aMenuLinks = [
         ['icon' => 'icon-profile'],
         "\$GLOBALS['isAuth']",
     ],
+];
+if (StampService::IS_STAMPS_OFFER_ACTIVE) {
+    $aMenuLinks = array_merge($aMenuLinks, [
+        [
+            'Марки',
+            '/personal/marki/',
+            [],
+            ['icon' => 'icon-piggy-bank'], //TODO change icon?
+            "\$GLOBALS['isAuth']",
+        ],
+    ]);
+}
+$aMenuLinks = array_merge($aMenuLinks, [
     /*[
         'Копи марки',
         '/personal/kopi-marki/',
@@ -100,4 +114,4 @@ $aMenuLinks = [
         ['icon' => 'icon-exit'],
         "\$GLOBALS['isAuth'] && \$GLOBALS['isAvatarAuth']",
     ]
-];
+]);

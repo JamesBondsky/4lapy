@@ -145,4 +145,9 @@ class OldPublicationController extends Controller
 
         return $this->render('FourPawsCatalogBundle:Catalog:oldItem.html.php');
     }
+
+    public function passRedirect()
+    {
+        return $this->redirect('/personal/forgot-password/?backurl=/');
+    }
 }

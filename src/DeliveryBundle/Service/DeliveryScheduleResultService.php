@@ -115,4 +115,25 @@ class DeliveryScheduleResultService
 
         return $results;
     }
+
+    /**
+     * @param DeliveryScheduleResultCollection $collection
+     * @param \DateTime $from
+     * @return bool
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     */
+    public function isIrregularTypeCollection(DeliveryScheduleResultCollection $collection, \DateTime $from): bool
+    {
+        if($collection->isEmpty()){
+            return false;
+        }
+        $regularityId = $collection->getRegularity($from);
+        $regularityIrregular = $this->scheduleResultService->getRegularityEnumByXmlId(ScheduleResultService::FAST_DELIV);
+        return $regularityIrregular->getId() == $regularityId;
+    }
+
 }

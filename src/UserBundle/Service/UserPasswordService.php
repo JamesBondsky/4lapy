@@ -15,6 +15,7 @@ use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Mail\Event;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -51,15 +52,22 @@ class UserPasswordService
     private $cUser;
 
     /**
+     * @var ExpertsenderService
+     */
+    private $expertsenderService;
+
+    /**
      * UserPasswordService constructor.
      *
      * @param UserRepository $userRepository
      */
-    public function __construct(UserRepository $userRepository)
+    public function __construct(UserRepository $userRepository, ExpertsenderService $expertsenderService)
     {
         $this->userRepository = $userRepository;
         $this->chars = implode('', \array_merge(\range(0, 9), \range('a', 'z'), \range('A', 'Z')));
         $this->cUser = new \CUser(); // ничего страшного, просто еще один пустой объект
+
+        $this->expertsenderService = $expertsenderService;
     }
 
     /**
@@ -93,18 +101,36 @@ class UserPasswordService
         }
     }
 
-    /**
-     *
-     * @param User $user
-     *
-     * @return string
-     */
-    public function generatePassword(User $user): string
+    public function changePassword(int $userId, ?bool $checkPolicy = false, ?string $link = '', ?string $shortLink = '')
     {
+        /** @var User $user */
+        $user = $this->userRepository->find($userId);
+
+        if ($user && (strripos($user->getLogin(), '4lapy.ru') === FALSE || strripos($user->getEmail(), '4lapy.ru') === FALSE || strripos($user->getLogin(), 'register.phone') === FALSE)) {
+            $password = $this->generatePassword($user, $checkPolicy);
+            $this->setChangePasswordPossibleForAll(true);
+            $this->userRepository->updatePassword($userId, $password);
+            $this->setChangePasswordPossibleForAll(false);
+
+            $this->expertsenderService->sendNewPassword($password, $user, $link, $shortLink);
+        }
+    }
+
+    /**
+     * @param User $user
+     * @param bool|null $checkPolicy
+     * @return string
+     * @throws \Exception
+     */
+    public function generatePassword(User $user, ?bool $checkPolicy = true): string
+    {
+        if ($checkPolicy) {
+            $this->chars .= '~!@#$%^&*()_+=-{}|<>';
+        }
         $policy = \CUser::GetGroupPolicy($user->getGroupsIds());
         do {
             $password = randString($policy['PASSWORD_LENGTH'] + \random_int(1, 3), $this->chars);
-        } while (!empty($this->cUser->CheckPasswordAgainstPolicy($password, $policy)));
+        } while (!empty($this->cUser->CheckPasswordAgainstPolicy($password, $policy)) && $checkPolicy);
 
         return $password;
     }

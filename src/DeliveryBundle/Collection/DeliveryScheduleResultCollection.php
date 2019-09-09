@@ -8,6 +8,7 @@ namespace FourPaws\DeliveryBundle\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
+use FourPaws\StoreBundle\Entity\DeliverySchedule;
 use FourPaws\StoreBundle\Entity\Store;
 
 class DeliveryScheduleResultCollection extends ArrayCollection
@@ -51,6 +52,40 @@ class DeliveryScheduleResultCollection extends ArrayCollection
         }
 
         return max($days);
+    }
+
+    /**
+     * @param \DateTime $from
+     * @return int
+     * @throws \Exception
+     */
+    public function getRegularity(\DateTime $from): int
+    {
+        $regularity = 0;
+        $schedule = null;
+        /** @var DeliveryScheduleResult $item */
+        foreach ($this->getIterator() as $item) {
+            /** @var DeliveryScheduleResult $schedule */
+            if(!$schedule){
+                $schedule = $item;
+                continue;
+            }
+
+            if($item->getScheduleResult()->getDays($from) < $schedule->getScheduleResult()->getDays($from)){
+                $schedule = $item;
+                continue;
+            }
+
+            if($item->getScheduleResult()->getRegularitySort() < $item->getScheduleResult()->getRegularitySort()){
+                $schedule = $item;
+                continue;
+            }
+        }
+        if($schedule){
+            $regularity = $schedule->getScheduleResult()->getRegularity();
+        }
+
+        return $regularity;
     }
 
     /**

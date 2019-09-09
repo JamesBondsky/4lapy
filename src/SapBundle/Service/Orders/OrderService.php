@@ -43,6 +43,7 @@ use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
@@ -129,6 +130,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @var BasketService
      */
     private $basketService;
+    /**
+     * @var StampService
+     */
+    private $stampService;
 
     /**
      * @var int
@@ -143,14 +148,15 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     /**
      * OrderService constructor.
      *
-     * @param DeliveryService     $deliveryService
-     * @param LocationService     $locationService
+     * @param DeliveryService $deliveryService
+     * @param LocationService $locationService
      * @param SerializerInterface $serializer
-     * @param Filesystem          $filesystem
-     * @param UserRepository      $userRepository
-     * @param IntervalService     $intervalService
-     * @param StatusService       $statusService
-     * @param BasketService       $basketService
+     * @param Filesystem $filesystem
+     * @param UserRepository $userRepository
+     * @param IntervalService $intervalService
+     * @param StatusService $statusService
+     * @param BasketService $basketService
+     * @param StampService $stampService
      */
     public function __construct(
         DeliveryService $deliveryService,
@@ -160,7 +166,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         UserRepository $userRepository,
         IntervalService $intervalService,
         StatusService $statusService,
-        BasketService $basketService
+        BasketService $basketService,
+        StampService $stampService
     )
     {
         $this->serializer = $serializer;
@@ -172,6 +179,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
         $this->setFilesystem($filesystem);
         $this->basketService = $basketService;
+        $this->stampService = $stampService;
     }
 
     /**
@@ -564,6 +572,20 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 ->setDeliveryShipmentPoint($this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE'))
                 ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
 
+            if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
+                $useStamps = $this->getBasketPropertyValueByCode($basketItem, 'USE_STAMPS');
+                $discountStamps = 0;
+                if ($useStamps) {
+                    $maxStampsLevel = $this->getBasketPropertyValueByCode($basketItem, 'MAX_STAMPS_LEVEL');
+                    if ($maxStampsLevelArr = unserialize($maxStampsLevel)) {
+                        $offer->setExchangeName($maxStampsLevelArr['key']);
+                        $discountStamps = $this->stampService->parseLevelKey($maxStampsLevelArr['key'])['discountStamps'];
+                    } else {
+                        $useStamps = false;
+                    }
+                }
+            }
+
             $hasBonus = $this->getBasketPropertyValueByCode($basketItem, 'HAS_BONUS');
             $quantity = $basketItem->getQuantity();
             if ($hasBonus && $hasBonus < $quantity) {
@@ -573,9 +595,19 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     ->setQuantity($hasBonus)
                     ->setChargeBonus((bool)$hasBonus)
                     ->setPosition($position);
+
+                if ($this->stampService::IS_STAMPS_OFFER_ACTIVE && $useStamps) {
+                    $detachedOffer->setStampsQuantity($hasBonus * $discountStamps);
+                }
+
                 $collection->add($detachedOffer);
                 $hasBonus = 0;
                 $position++;
+            }
+
+            if ($this->stampService::IS_STAMPS_OFFER_ACTIVE && $useStamps) {
+                // $offer->setStampsQuantity($maxStampsLevelArr['value']); todo проблематично использовать, так как есть разделение по бонусам
+                $offer->setStampsQuantity($quantity * $discountStamps);
             }
 
             $offer->setQuantity($quantity);

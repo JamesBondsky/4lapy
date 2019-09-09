@@ -34,6 +34,6 @@ Asset::getInstance()->addJs(DOBROLAP_FOLDER . 'js/aos.js');
 Asset::getInstance()->addJs(DOBROLAP_FOLDER . 'js/jquery.animateNumber.min.js');
 Asset::getInstance()->addJs(DOBROLAP_FOLDER . 'js/scrollax.min.js');
 Asset::getInstance()->addJs(DOBROLAP_FOLDER . 'js/dom-locky.js');
-Asset::getInstance()->addJs(DOBROLAP_FOLDER . 'js/lightbox.min.js');
+Asset::getInstance()->addJs(DOBROLAP_FOLDER . 'js/lightbox_custom.js');
 //Asset::getInstance()->addJs(DOBROLAP_FOLDER . 'js/lightbox-plus-jquery.min.js');
 Asset::getInstance()->addJs(DOBROLAP_FOLDER . 'js/main.js');
