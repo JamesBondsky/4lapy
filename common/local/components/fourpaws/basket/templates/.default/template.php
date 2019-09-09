@@ -400,23 +400,48 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                           <div class="b-cart-aside-subscription__title">
                             Подключите
 
-                            <span class="b-cart-aside-subscription__title-highlight">
-                              <span class="b-cart-aside-subscription__title-icon"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
-                              Подписку
-                            </span>
+                            <div class="b-cart-aside-subscription__tooltip">
+                                <button type="button" class="b-cart-aside-subscription__tooltip-toggle">
+                                    <span class="b-cart-aside-subscription__title-icon"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
+                                    Подписку
+                                </button>
+
+                                <div class="b-cart-aside-subscription__tooltip-content">
+                                    <ul class="b-cart-aside-subscription__features">
+                                        <li class="b-cart-aside-subscription__features-item">
+                                            <span class="b-cart-aside-subscription__features-icon">
+                                                <?= new SvgDecorator('icon-calendar', 24, 24) ?>
+                                            </span>
+                                            Установите удобное расписание доставок
+                                        </li>
+                                        <li class="b-cart-aside-subscription__features-item">
+                                            <span class="b-cart-aside-subscription__features-icon">
+                                                <?= new SvgDecorator('icon-cancel', 24, 24) ?>
+                                            </span>
+                                            Переносите или отменяйте доставку в&nbsp;любое время
+                                        </li>
+                                        <li class="b-cart-aside-subscription__features-item">
+                                            <span class="b-cart-aside-subscription__features-icon">
+                                                <?= new SvgDecorator('icon-price', 24, 24) ?>
+                                            </span>
+                                            Наслаждайтесь экономией денег и времени
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
 
                             <?php if ($subscribePriceDiff > 0): ?>
                               и&nbsp;получите
 
-                              <nobr>
+                              <nobr class="b-cart-aside-subscription__title-highlight">
                                 скидку
 
-                                <span class="b-cart-aside-subscription__title-discount b-cart-aside-subscription__title-highlight">
+                                <span class="b-cart-aside-subscription__title-discount">
                                  <?= WordHelper::numberFormat($subscribePriceDiff, 2) ?> <span class="b-ruble">₽</span>
                                 </span>
                               </nobr>
                             <?php else: ?>
-                              <nobr>и&nbsp;получите скидку</nobr>
+                              <nobr>и&nbsp;получите <span class="b-cart-aside-subscription__title-highlight">скидку</span></nobr>
                             <?php endif ?>
                           </div>
 
@@ -468,11 +493,6 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                               </div>
                             </label>
                           </div>
-
-                          <ul class="b-cart-aside-subscription__features">
-                            <li class="b-cart-aside-subscription__features-item">Регулярная доставка товаров с&nbsp;указанной периодичностью</li>
-                            <li class="b-cart-aside-subscription__features-item">Отключить Автозаказ можно бесплатно в&nbsp;любое время</li>
-                          </ul>
                         </div>
                       <?php endif ?>
 
