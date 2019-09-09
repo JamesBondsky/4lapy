@@ -130,10 +130,11 @@
                         <label class="b-input-line__label" for="size-pet">Размер</label>
                     </div>
                     <div class="b-input b-input--registration-form">
+                        <span>Выберите из списка:</span>
                         <select class="b-select__block b-select__block--subscribe-delivery js-pet-size"
                                 id="size-pet"
                                 name="UF_SIZE">
-                            <option value="" disabled="disabled" selected="selected">Выберите размер</option>
+                            <option value="" disabled="disabled" selected="selected">Выберите из списка</option>
                             <?php if (\is_array($arResult['PET_SIZES']) && !empty($arResult['PET_SIZES'])) {
                                 foreach ($arResult['PET_SIZES'] as $item) {?>
                                     <option value="<?= $item['ID'] ?>"><?= $item['VALUE'] ?></option>
@@ -146,9 +147,13 @@
                     </div>
                 </div>
 
+                <div style="text-align: center">или</div>
+
+                <div class="measure_dog__img"></div>
+
                 <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-chest">
                     <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="chest-pet">Обхват груди</label>
+                        <label class="b-input-line__label" for="chest-pet">Обхват груди, см</label>
                     </div>
                     <div class="b-input b-input--registration-form">
                         <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
@@ -164,7 +169,7 @@
 
                 <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-back">
                     <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="back-pet">Длина спины</label>
+                        <label class="b-input-line__label" for="back-pet">Длина спины, см</label>
                     </div>
                     <div class="b-input b-input--registration-form">
                         <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
@@ -180,7 +185,7 @@
 
                 <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-neck">
                     <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="neck-pet">Обхват шеи</label>
+                        <label class="b-input-line__label" for="neck-pet">Обхват шеи, см</label>
                     </div>
                     <div class="b-input b-input--registration-form">
                         <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"

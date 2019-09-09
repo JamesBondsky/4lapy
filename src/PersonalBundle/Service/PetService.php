@@ -69,6 +69,9 @@ class PetService
     /** @var UserFieldEnumCollection */
     private $sizes;
 
+    /**
+     *
+     */
     public const PETS_TYPE = [
         'koshki' => 'cat',
         'sobaki' => 'dog',
@@ -126,6 +129,11 @@ class PetService
         }
         /** @var Pet $entity */
         $entity = $this->petRepository->dataToEntity($data, Pet::class);
+
+        if(!$this->isDogType($entity)){
+            $entity->deleteSizeInfo();
+        }
+
         $this->petRepository->setEntity($entity);
         return $this->petRepository->create();
     }
@@ -330,7 +338,23 @@ class PetService
             $entity->setUserId($updateEntity->getUserId());
         }
 
+        if(!$this->isDogType($updateEntity)){
+            $entity->deleteSizeInfo();
+        }
+
         return $this->petRepository->setEntity($entity)->update();
+    }
+
+    /**
+     * @param Pet $pet
+     * @return bool
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function isDogType(Pet $pet){
+        $petType = array_pop($this->getPetTypes(['ID' => $pet->getType()]));
+        return $petType['UF_NAME'] == 'Собаки';
     }
 
     /**

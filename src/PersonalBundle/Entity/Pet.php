@@ -602,4 +602,12 @@ class Pet extends BaseEntity
         return $sizeTitle ?: '';
     }
 
+    public function deleteSizeInfo()
+    {
+        $this->setSize(0)
+            ->setBack(0)
+            ->setChest(0)
+            ->setNeck(0);
+    }
+
 }

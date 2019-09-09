@@ -214,6 +214,10 @@ class PetController extends Controller
 
                 /** @var Pet $pet */
                 foreach ($pets as $pet){
+                    if($request->get('type') == 'Собаки' && !$this->petService->isDogType($pet)){
+                        continue;
+                    }
+
                     $result[] = [
                       'id' => $pet->getId(),
                       'name' => $pet->getName()
@@ -299,8 +303,26 @@ class PetController extends Controller
         if (empty($data)) {
             return $this->ajaxMess->getEmptyDataError();
         }
-        if ((int)$data['ID'] < 1) {
+        if ((int)$data['pet_id'] < 1) {
             return $this->ajaxMess->getNotIdError(' для обновления');
+        }
+
+        $map = [
+          'pet_id' => 'ID',
+          'back' => 'UF_BACK',
+          'chest' => 'UF_CHEST',
+          'neck' => 'UF_NECK',
+          'size' => 'UF_SIZE',
+        ];
+
+        foreach($map as $realKey => $key){
+            $data[$key] = $data[$realKey];
+            unset($data[$realKey]);
+        }
+
+        $size = $this->petService->getSizeByCode($data['UF_SIZE']);
+        if($size){
+            $data['UF_SIZE'] = $size->getId();
         }
 
         try {
@@ -309,7 +331,7 @@ class PetController extends Controller
                     'Информация о питомце успешно обновлена',
                     200,
                     [],
-                    ['reload' => true]
+                    ['reload' => false]
                 );
             }
         } catch (SecurityException|NotFoundException $e) {
