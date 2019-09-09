@@ -39,10 +39,13 @@ $positionContent = 0;
         foreach ($arResult['SECTIONS'] as $k => $section) {
             if (!$k && $arParams['IS_LANDING']) {
                 continue;
-            } ?>
+            }
+            $hideLink = !$arParams['IS_CATALOG_DETAIL'] && !($arResult['SECTIONS'][$k+1]) && $APPLICATION->getCurDir() == $section['URL'];
+            ?>
+
             <li class="b-breadcrumbs__item" itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
 
-                <? if(!($arResult['SECTIONS'][$k+1]) && $APPLICATION->getCurDir() == $section['URL']) { ?>
+                <? if($hideLink) { ?>
                     <span class="b-breadcrumbs__link" itemtype="http://schema.org/Thing" itemprop="item">
                 <? } else { ?>
                     <a class="b-breadcrumbs__link"
@@ -54,7 +57,7 @@ $positionContent = 0;
 
                 <span itemprop="name"><?= $section['NAME'] ?></span>
 
-                <? if(!($arResult['SECTIONS'][$k+1]) && $APPLICATION->getCurDir() == $section['URL']) { ?>
+                <? if($hideLink) { ?>
                     </span>
                 <? } else { ?>
                     </a>
