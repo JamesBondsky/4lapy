@@ -483,6 +483,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                                 type="radio"
                                 name="subscribe"
                                 value="0"
+                                checked
                                 class="b-radio-button__input"
                               />
 
