@@ -141,60 +141,69 @@
                                     <?php
                                 }
                             } ?>
+                            <option value="UNKNOWN">не знаю</option>
                         </select>
                         <div class="b-error"><span class="js-message"></span>
                         </div>
                     </div>
                 </div>
 
-                <div style="text-align: center">или</div>
-
-                <div class="measure_dog__img"></div>
-
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-chest">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="chest-pet">Обхват груди, см</label>
-                    </div>
-                    <div class="b-input b-input--registration-form">
-                        <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
-                               type="text"
-                               id="chest-pet"
-                               placeholder=""
-                               data-text="0"
-                               name="UF_CHEST" />
-                        <div class="b-error"><span class="js-message"></span>
+                <div style="display: none;" data-lk-pets-breed="size-select-measure">
+                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-date js-date-valid">
+                        <div class="b-input-line__label-wrapper">
+                            <div class="b-input-line__label">
+                                Измерьте свою собаку и укажите параметры:
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-back">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="back-pet">Длина спины, см</label>
-                    </div>
-                    <div class="b-input b-input--registration-form">
-                        <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
-                               type="text"
-                               id="back-pet"
-                               placeholder=""
-                               data-text="0"
-                               name="UF_BACK" />
-                        <div class="b-error"><span class="js-message"></span>
+                    <img src="/static/build/images/inhtml/icons/size-dog_violet.svg" style="display: block; margin: 0 auto 20px auto; max-width: 200px;" />
+
+                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-back">
+                        <div class="b-input-line__label-wrapper">
+                            <label class="b-input-line__label" for="back-pet">1. Длина спины, см</label>
+                        </div>
+                        <div class="b-input b-input--registration-form">
+                            <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
+                                type="text"
+                                id="back-pet"
+                                placeholder=""
+                                data-text="0"
+                                name="UF_BACK" />
+                            <div class="b-error"><span class="js-message"></span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-neck">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="neck-pet">Обхват шеи, см</label>
+                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-chest">
+                        <div class="b-input-line__label-wrapper">
+                            <label class="b-input-line__label" for="chest-pet">2. Обхват груди, см</label>
+                        </div>
+                        <div class="b-input b-input--registration-form">
+                            <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
+                                type="text"
+                                id="chest-pet"
+                                placeholder=""
+                                data-text="0"
+                                name="UF_CHEST" />
+                            <div class="b-error"><span class="js-message"></span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="b-input b-input--registration-form">
-                        <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
-                               type="text"
-                               id="neck-pet"
-                               placeholder=""
-                               data-text="0"
-                               name="UF_NECK" />
-                        <div class="b-error"><span class="js-message"></span>
+
+                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-neck">
+                        <div class="b-input-line__label-wrapper">
+                            <label class="b-input-line__label" for="neck-pet">3. Обхват шеи, см</label>
+                        </div>
+                        <div class="b-input b-input--registration-form">
+                            <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
+                                type="text"
+                                id="neck-pet"
+                                placeholder=""
+                                data-text="0"
+                                name="UF_NECK" />
+                            <div class="b-error"><span class="js-message"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
