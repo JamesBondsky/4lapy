@@ -101,18 +101,18 @@ class UserPasswordService
         }
     }
 
-    public function changePassword(int $userId, ?bool $checkPolicy = false)
+    public function changePassword(int $userId, ?bool $checkPolicy = false, ?string $link = '', ?string $shortLink = '')
     {
         /** @var User $user */
         $user = $this->userRepository->find($userId);
 
-        if ($user) {
+        if ($user && (strripos($user->getLogin(), '4lapy.ru') === FALSE || strripos($user->getEmail(), '4lapy.ru') === FALSE || strripos($user->getLogin(), 'register.phone') === FALSE)) {
             $password = $this->generatePassword($user, $checkPolicy);
             $this->setChangePasswordPossibleForAll(true);
             $this->userRepository->updatePassword($userId, $password);
             $this->setChangePasswordPossibleForAll(false);
 
-            $this->expertsenderService->sendNewPassword($password, $user);
+            $this->expertsenderService->sendNewPassword($password, $user, $link, $shortLink);
         }
     }
 

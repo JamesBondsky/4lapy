@@ -11,6 +11,7 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Catalog\Product\Basket as BitrixBasket;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
@@ -609,7 +610,11 @@ class Offer extends IblockElement
             return $this->images;
         }
 
-        $this->images = ImageCollection::createFromIds($this->getImagesIds());
+        try {
+            $this->images = ImageCollection::createFromIds($this->getImagesIds());
+        } catch (SqlQueryException $e) {
+            $this->images = ImageCollection::createNoImageCollection();
+        }
 
         if ($this->images->count() < 1) {
             $this->images = ImageCollection::createNoImageCollection();

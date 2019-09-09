@@ -228,10 +228,10 @@ class UserController extends BaseController
      * @throws ApplicationCreateException
      * @throws \Bitrix\Main\ArgumentException
      */
-    public function getStampsInfoAction(): ApiResponse //TODO change Response type // см. PersonalBonus для примера
+    public function getStampsInfoAction(): ApiResponse
     {
         try {
-            $stamps = $this->stampService->getActiveStampsCount(); //TODO переделать(?) на вывод значения, сохраненного в профиле пользователя (для этого нужно его заранее асинхронно обновлять)
+            $stamps = $this->stampService->getActiveStampsCount();
         } catch (\Exception $e) {
             $stamps = 0;
         }
@@ -247,9 +247,11 @@ class UserController extends BaseController
                 'amount' => $stamps,
                 'rate_val' => StampService::MARK_RATE,
                 //IMPORTANT: В description переносы строк должны быть разделены с помощью \n\n
-                'description' => "1. Копи марки: за каждые " . StampService::MARK_RATE . " руб. в чеке получайте 1 марку."
-                    . "\n\n2. Выбирай умные игрушки: покупай со скидкой до 50%."
-                    . "\n\n3. Занимайся с питомцем: развивай любознательность, обучай и играй с удовольствием.",
+                'description' => 'Наступает осенняя пора, дети идут в школу, начинаются учебные будни. Вы можете вместе с питомцем тоже начать учиться',
+                'second_description' => '1. Делай покупки, получай марки: 1 марка  = ' . StampService::MARK_RATE . ' руб.;'
+                    . "\n\n2. Отслеживай марки где удобно: на чеке, в личном кабинете на сайте и в приложении;"
+                    . "\n\n3. Выбери игру и добавь в корзину, нажми \"списать марки\";"
+                    . "\n\n4. Получи игру со скидкой и развивай питомца!",
                 'goods' => $productsList,
             ],
         ]);

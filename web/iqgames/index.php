@@ -1,5 +1,5 @@
 <?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php'; ?>
-<?php $APPLICATION->SetTitle('Марки'); ?>
+<?php $APPLICATION->SetTitle('КОПИ МАРКИ - ВЫБИРАЙ УМНЫЕ ИГРУШКИ'); ?>
 
 <div class="toys-landing">
     <div class="toys-landing__header">
@@ -95,7 +95,7 @@
                     <li>
                         <span style="text-transform: uppercase;">
                             <b>отслеживай марки где удобно:</b> <br />
-                            на чеке, <u><a href="/personal/" target="_blank">в личном кабинете</a></u> на сайте
+                            на чеке, <u><a href="/personal/marki/" target="_blank">в личном кабинете</a></u> на сайте
                             и в приложении
                         </span>
                     </li>
@@ -103,17 +103,17 @@
                     <li>
                         <span style="text-transform: uppercase;">
                             <b>На сайте и в приложении:</b><br />
-                            выбери игру и добавь в корзину
+                            выбери игру и добавь в корзину,
                             нажми “списать марки” <br /><br />
 
-                            <b>при покупке офлайн</b> <br/>
-                            вам спишет марки кассир
+                            <b>при покупке в магазине</b> <br/>
+                            марки спишет продавец на кассе
                         </span>
                     </li>
 
                     <li>
                         <span style="text-transform: uppercase;">
-                            <b>Получи игру и развивай питомца</b>
+                            <b>Получи игру со скидкой и развивай питомца</b>
                         </span>
                     </li>
                 </ul>

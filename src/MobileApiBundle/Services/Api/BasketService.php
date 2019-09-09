@@ -9,6 +9,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\ElementTable;
+use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\EntityCollection;
 use FourPaws\App\Application;
@@ -35,6 +36,7 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
+use Bitrix\Main\Application as BitrixApplication;
 
 class BasketService
 {
@@ -104,6 +106,7 @@ class BasketService
      */
     public function getBasketProducts(bool $onlyOrderable = false): BasketProductCollection
     {
+        $this->sqlHeartbeat();
         $deliveries = $this->deliveryService->getByLocation();
         $delivery = null;
         foreach ($deliveries as $calculationResult) {
@@ -156,11 +159,17 @@ class BasketService
                 }
             }
 
-            $order =  \Bitrix\Sale\Order::create(SITE_ID, $userId);
+            $this->sqlHeartbeat();
+            $order = \Bitrix\Sale\Order::create(SITE_ID, $userId);
+
+            $this->sqlHeartbeat();
             $order->setBasket($basket);
+
+            $this->sqlHeartbeat();
             // но иногда он так просто не запускается
             if (!\FourPaws\SaleBundle\Discount\Utils\Manager::isExtendCalculated()) {
                 $order->doFinalAction(true);
+                $this->sqlHeartbeat();
             }
         }
 
@@ -185,7 +194,7 @@ class BasketService
 
                 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
                     $maxStampsLevelValue = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
-                    $canUseStamps = (bool)$maxStampsLevelValue; //FIXME если нужно отображать размер скидки в рублях, процент скидки, то можно посчитать их здесь
+                    $canUseStamps = (bool)$maxStampsLevelValue;
 
                     if ($useStamps) {
                         if ($usedStamps = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'])['stampsUsed']) {
@@ -196,7 +205,7 @@ class BasketService
                         $canUseStampsAmountKey = $canUseStampsObj ? $canUseStampsObj['key'] : false;
                         if ($canUseStampsAmountKey) {
                             $discount = $this->stampService->parseLevelKey($canUseStampsAmountKey);
-                            $canUseStampsAmount = $discount['discountStamps'] * $canUseStampsObj['value']; //TODO не будет ли бага, когда манзана присылает больше единиц, чем у пользователя в корзине?
+                            $canUseStampsAmount = $discount['discountStamps'] * $canUseStampsObj['value'];
                         }
                     }
                 }
@@ -377,4 +386,13 @@ class BasketService
     {
         return strpos($basketItem->getBasketCode(), 'n') === 0;
     }
+
+    /**
+     * @throws SqlQueryException
+     */
+    private function sqlHeartbeat()
+    {
+        BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
+    }
+
 }
