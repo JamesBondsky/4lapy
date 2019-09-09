@@ -41,7 +41,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
 
                 <div class="measure_dog__video">
                     <div class="measure_dog__video-iframe">
-                      <iframe src="https://www.youtube.com/embed/86kMvxhIRMY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                      <iframe src="https://www.youtube.com/embed/BxWcZ6uN7mQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"></iframe>
                     </div>
 
                     <?/*<video controls="" poster="/static/build/images/inhtml/preview-size-dog.jpg">
