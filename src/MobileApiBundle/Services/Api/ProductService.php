@@ -332,7 +332,20 @@ class ProductService
         $hasColours = (bool)$this->getColours($currentOffer)
             && (bool)$currentOffer->getColor();
 
-        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true, $this->forceAtLeastOnePackingVariant, $hasColours);
+        $clothingSizes = [];
+        foreach ($product->getOffers() as $itemOffer) {
+            $clothingSize = $itemOffer->getClothingSize();
+            if ($clothingSize) {
+                $clothingSizes[] = $clothingSize->getId();
+            }
+        }
+        $hasOnlyColourCombinations = false;
+        if ($hasColours && count($clothingSizes) <= 1) { // есть деление по цветам, но нет деления по размерам
+            $hasOnlyColourCombinations = true;
+        }
+
+
+        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true, $this->forceAtLeastOnePackingVariant, $hasOnlyColourCombinations);
 
         // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
         $fullProduct->setIsAvailable(true);
@@ -644,15 +657,17 @@ class ProductService
      * @param Offer $offer
      * @param bool $needPackingVariants
      * @param bool|null $showVariantsIfOneVariant
-     * @param bool|null $hasColours
+     * @param bool|null $hasOnlyColourCombinations
      * @return FullProduct
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws SystemException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteErrorException
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteException
      */
-    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true, ?bool $hasColours = false): FullProduct
+    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true, ?bool $hasOnlyColourCombinations = false): FullProduct
     {
         $offer->setColor();
         $shortProduct = $this->convertToShortProduct($product, $offer);
@@ -685,7 +700,7 @@ class ProductService
         $fullProduct->setColor($shortProduct->getColor());
 
         if ($needPackingVariants) {
-            if ($hasColours) {
+            if ($hasOnlyColourCombinations) {
                 $fullProduct->setColourVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // цвета
                 $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant, true));
             } else {
@@ -792,7 +807,9 @@ class ProductService
         if ($hasOnlyCurrentOffer && $showVariantsIfOneVariant) {
             return [$fullProduct = $this->convertToFullProduct($product, $offers->current())];
         }
-        if (empty($offers) || ($hasOnlyCurrentOffer && !$showVariantsIfOneVariant)) {
+        if (empty($offers) || ($hasOnlyCurrentOffer && !$showVariantsIfOneVariant)
+            || ($onlyCurrentOffer && !$showVariantsIfOneVariant)
+        ) {
             return [];
         }
 
