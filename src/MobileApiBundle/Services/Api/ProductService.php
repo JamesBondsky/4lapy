@@ -408,7 +408,19 @@ class ProductService
         $colours = $this->getColours($offer);
         $hasColours = (bool)$colours;
 
-        $fullProduct = $this->convertToFullProduct($product, $offer, true, true, $hasColours);
+        $clothingSizes = [];
+        foreach ($product->getOffers() as $itemOffer) {
+            $clothingSize = $itemOffer->getClothingSize();
+            if ($clothingSize) {
+                $clothingSizes[] = $clothingSize->getId();
+            }
+        }
+        $hasOnlyColourCombinations = false;
+        if ($hasColours && count($clothingSizes) <= 1) { // есть деление по цветам, но нет деления по размерам
+            $hasOnlyColourCombinations = true;
+        }
+
+        $fullProduct = $this->convertToFullProduct($product, $offer, true, true, $hasOnlyColourCombinations);
         $fullProduct->setIsAvailable($offer->isAvailable()); // returns ShortProduct
         $fullProduct
             ->setSpecialOffer($this->getSpecialOffer($offer))           // акция
