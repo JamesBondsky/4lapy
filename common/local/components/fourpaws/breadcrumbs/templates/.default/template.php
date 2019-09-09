@@ -41,7 +41,8 @@ $positionContent = 0;
                 continue;
             } ?>
             <li class="b-breadcrumbs__item" itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
-                <? if($APPLICATION->getCurDir() == $section['URL']) { ?>
+
+                <? if(!($arResult['SECTIONS'][$k]) && $APPLICATION->getCurDir() == $section['URL']) { ?>
                     <span class="b-breadcrumbs__link" itemtype="http://schema.org/Thing" itemprop="item">
                 <? } else { ?>
                     <a class="b-breadcrumbs__link"
@@ -53,7 +54,7 @@ $positionContent = 0;
 
                 <span itemprop="name"><?= $section['NAME'] ?></span>
 
-                <? if($APPLICATION->getCurDir() == $section['URL']) { ?>
+                <? if(!($arResult['SECTIONS'][$k]) && $APPLICATION->getCurDir() == $section['URL']) { ?>
                     </span>
                 <? } else { ?>
                     </a>
