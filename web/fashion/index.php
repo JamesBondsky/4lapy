@@ -211,12 +211,6 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
                             <p>продавец поможет одеть питомца, а&nbsp;в&nbsp;случае необходимости подобрать альтернативу</p>
                         </div>
                     </div>
-
-                    <div class="item-free-shipping">
-                        <div class="item-free-shipping__descr">
-                            <a href="/fashion/#fashion-measure-dog" data-id="fashion-measure-dog" data-fashion-scroll class="b-link">Теперь вы точно не&nbsp;ошибётесь с&nbsp;размером</a>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
