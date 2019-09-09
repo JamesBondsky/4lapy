@@ -22,10 +22,10 @@ if (0 === $component->getProductCollection()->count()) {
 if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
     echo $arResult['ECOMMERCE_VIEW_SCRIPT'];
 } ?>
-
+<div class="b-container">
     <section class="b-common-section" data-url="/ajax/catalog/product-info/">
         <div class="b-common-section__title-box b-common-section__title-box--sale">
-            <h2 class="b-title b-title--sale"><?= $arParams['TITLE'] ?></h2>
+            <h2 class="toys-landing__check-header"><?= $arParams['TITLE'] ?></h2>
             <?php
             /**
              * Ссылка "Показать все" потребуется в случае добавления отдельной страницы с распродажей
@@ -51,7 +51,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
             <?endif;?>
         </div>
         <div class="b-common-section__content b-common-section__content--sale b-common-section__content--main-sale js-popular-product">
-            <?php
+            <?php 
             $i = 0;
             $onlyProductsXmlIds = $arParams['ONLY_PRODUCTS_XML_ID'] ?? false;
             foreach ($component->getProductCollection() as $key => $product) {
@@ -80,3 +80,4 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
             ?>
         </div>
     </section>
+</div>

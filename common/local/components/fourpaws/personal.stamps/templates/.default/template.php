@@ -51,7 +51,6 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
             'OFFER_FILTER' => [
                 '=XML_ID' => $arParams['PRODUCTS_XML_ID'],
             ],
-            'COUNT' => 4,
             'TITLE' => 'Товары, участвующие в акции',
 	        'CACHE_TIME' => 0,
 	        'ONLY_PRODUCTS_XML_ID' => $arParams['PRODUCTS_XML_ID'], // показывать только указанные ТП, а не все в родительских товарах
