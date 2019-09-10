@@ -139,7 +139,7 @@ if(!empty($arResult['ERROR'])){
                     <span class="b-link__text b-link__text--change-subscribe-delivery">Остановить <span>подписку</span></span>
                 </a>
             <?php } else { ?>
-                <a class="b-link b-link--repeat-order b-link--repeat-order"
+                <a class="b-link b-link--repeat-order b-link--repeat-order b-link--renew-subcribe-delivery"
                    href="javascript:void(0);"
                    title="Возобновить подписку"
                    data-subscribe-id="<?=$orderSubscribe->getId()?>"

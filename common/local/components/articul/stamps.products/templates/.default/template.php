@@ -33,17 +33,21 @@
                             </div>
                         <? else: ?>
                             <div class="toys-landing-item__product toys-landing-product">
-                                <video class="toys-landing-product__video" poster="<?= $arResult['images'][$product['video']['preview']] ?>" controls>
-                                    <? if ($product['video']['links']['mp4']): ?>
-                                        <source src="<?= $product['video']['links']['mp4'] ?>">
-                                    <? endif; ?>
-                                    <? if ($product['video']['links']['ogv']): ?>
-                                        <source src="<?= $product['video']['links']['ogv'] ?>" type="video/ogg">
-                                    <? endif; ?>
-                                    <? if ($product['video']['links']['webm']): ?>
-                                        <source src="<?= $product['video']['links']['webm'] ?>" type="video/webm">
-                                    <? endif; ?>
-                                </video>
+                                <? if ($product['video']['links']['yt']): ?>
+                                  <iframe src="<?= $product['video']['links']['yt'] ?>" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="toys-landing-product__video"></iframe>
+                                <? else: ?>
+                                  <video class="toys-landing-product__video" poster="<?= $arResult['images'][$product['video']['preview']] ?>" controls>
+                                      <? if ($product['video']['links']['mp4']): ?>
+                                          <source src="<?= $product['video']['links']['mp4'] ?>">
+                                      <? endif; ?>
+                                      <? if ($product['video']['links']['ogv']): ?>
+                                          <source src="<?= $product['video']['links']['ogv'] ?>" type="video/ogg">
+                                      <? endif; ?>
+                                      <? if ($product['video']['links']['webm']): ?>
+                                          <source src="<?= $product['video']['links']['webm'] ?>" type="video/webm">
+                                      <? endif; ?>
+                                  </video>
+                                <? endif; ?>
 
                                 <div class="toys-landing-product__footer">
                                     <div class="toys-landing-product__footer-info">

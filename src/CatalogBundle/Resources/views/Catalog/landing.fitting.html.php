@@ -25,12 +25,32 @@ global $USER;
         <div class="content_dropdown__content js-content-dropdown-content">
             <div class="measure_dog__title tablet_up_mq">Как узнать размер собаки</div>
             <div class="measure_dog__info">
+                <style>
+                  .measure_dog__video-iframe {
+                    position: relative;
+                    padding-bottom: 56.25%;
+                    height: 0;
+                  }
+
+                  .measure_dog__video-iframe iframe {
+                  	position: absolute;
+                  	top: 0;
+                  	left: 0;
+                  	width: 100%;
+                  	height: 100%;
+                  }
+                </style>
+
                 <div class="measure_dog__video">
-                    <video controls="" poster="/static/build/images/inhtml/preview-size-dog.jpg">
+                    <div class="measure_dog__video-iframe">
+                      <iframe src="https://www.youtube.com/embed/BxWcZ6uN7mQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                    </div>
+
+                    <?/*<video controls="" poster="/static/build/images/inhtml/preview-size-dog.jpg">
                         <source src="/upload/dobrolap/measure_size.mp4">
                         <source src="/upload/dobrolap/measure_size.ogv" type="video/webm">
                         <source src="/upload/dobrolap/measure_size.webm" type="video/ogg">
-                    </video>
+                    </video>*/?>
                 </div>
 
                 <div class="measure_dog__img"></div>
