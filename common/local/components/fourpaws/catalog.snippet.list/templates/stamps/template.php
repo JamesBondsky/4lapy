@@ -10,6 +10,7 @@
 
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Components\CatalogSaleListComponent;
+use FourPaws\PersonalBundle\Service\StampService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -54,8 +55,15 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
         <?php
         $i = 0;
         $onlyProductsXmlIds = $arParams['ONLY_PRODUCTS_XML_ID'] ?? false;
-        foreach ($component->getProductCollection() as $key => $product) {
-            if (\in_array($product->getXmlId(), ['99545', '99543', '1021198', '90308']) ) {
+        foreach ($component->getProductCollection() as $key => $product) { // todo разделение на два блока
+            $isFirstProducts = (\in_array($product->getXmlId(), StampService::FIRST_PRODUCT_XML_ID));
+            foreach ($product->getOffers() as $offer) {
+                if (\in_array($offer->getXmlId(), StampService::FIRST_PRODUCT_XML_ID)) {
+                    $isFirstProducts = true;
+                }
+            }
+
+            if ($isFirstProducts) {
                 if ($onlyProductsXmlIds) {
                     $product->setOffers(
                         $product->getOffers()->filter(static function (Offer $item) use ($onlyProductsXmlIds) {
@@ -83,7 +91,13 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
         }
 
         foreach ($component->getProductCollection() as $key => $product) {
-            if (!\in_array($product->getXmlId(), ['99545', '99543', '1021198', '90308'])) {
+            $isLastProducts = (!\in_array($product->getXmlId(), StampService::FIRST_PRODUCT_XML_ID));
+            foreach ($product->getOffers() as $offer) {
+                if (!\in_array($offer->getXmlId(), StampService::FIRST_PRODUCT_XML_ID)) {
+                    $isLastProducts = true;
+                }
+            }
+            if ($isLastProducts) {
                 if ($onlyProductsXmlIds) {
                     $product->setOffers(
                         $product->getOffers()->filter(static function (Offer $item) use ($onlyProductsXmlIds) {

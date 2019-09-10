@@ -68,6 +68,14 @@ class StampService implements LoggerAwareInterface
         ],
     ];*/
 
+    // todo первые 4 товара в личном кабинете и 4 товара, которых не должно быть в карусели на лендинге
+    public const FIRST_PRODUCT_XML_ID = [
+      '1035430',
+      '1021198',
+      '1035432',
+      '1031456',
+    ];
+
     public const EXCHANGE_RULES = [
         1035430 => [ // 1399 руб
             [
