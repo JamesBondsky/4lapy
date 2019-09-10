@@ -131,7 +131,7 @@
                     </div>
                     <div class="b-input b-input--registration-form">
                         <span>Выберите из списка:</span>
-                        <select class="b-select__block b-select__block--subscribe-delivery js-pet-size"
+                        <select class="b-select__block b-select__block--subscribe-delivery js-pet-size js-no-valid"
                                 id="size-pet"
                                 name="UF_SIZE">
                             <option value="" disabled="disabled" selected="selected">Выберите из списка</option>
