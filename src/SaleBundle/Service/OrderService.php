@@ -626,10 +626,10 @@ class OrderService implements LoggerAwareInterface
                 ]
             );
         } elseif (!($selectedDelivery->getStockResult()->getDelayed()->isEmpty() &&
-            (
-                ($this->deliveryService->isInnerDelivery($selectedDelivery) && $selectedDelivery->getSelectedStore()->isShop()) ||
-                $this->deliveryService->isInnerPickup($selectedDelivery)
-            )) ||
+                (
+                    ($this->deliveryService->isInnerDelivery($selectedDelivery) && $selectedDelivery->getSelectedStore()->isShop()) ||
+                    $this->deliveryService->isInnerPickup($selectedDelivery)
+                )) ||
             mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
         ) {
             /**
@@ -1859,8 +1859,23 @@ class OrderService implements LoggerAwareInterface
                     $value = OrderPropertyService::COMMUNICATION_ONE_CLICK;
                     break;
                 case $this->isSubscribe($order):
-                    $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
+
+                    $propCopyOrderId = $this->getOrderPropertyByCode($order, 'COPY_ORDER_ID');
+                    $isFirsSubscribeOrder = ($propCopyOrderId) ? !\boolval($propCopyOrderId->getValue()) : true;
+
+                    switch (true) {
+                        case ($isFirsSubscribeOrder && ($value == OrderPropertyService::COMMUNICATION_SMS)):
+                            $value = OrderPropertyService::COMMUNICATION_FIRST_SUBSCRIBE_SMS;
+                            break;
+                        case ($isFirsSubscribeOrder && ($value == OrderPropertyService::COMMUNICATION_PHONE)):
+                            $value = OrderPropertyService::COMMUNICATION_FIRST_SUBSCRIBE_PHONE;
+                            break;
+                        default:
+                            $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
+                            break;
+                    }
                     break;
+
                 case $this->deliveryService->isDelivery($delivery) && $address && !$address->isValid():
                     $value = OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS;
                     break;
@@ -1872,10 +1887,8 @@ class OrderService implements LoggerAwareInterface
                 // способ получения 04
                 case $this->deliveryService->isInnerPickup($delivery) && $stockResult->getDelayed()->isEmpty():
                     // способ получения 06
-                case $deliveryFromShop && $stockResult->getDelayed()->isEmpty():
-                    $value = OrderPropertyService::COMMUNICATION_SMS;
-                    break;
                 case $this->deliveryService->isDostavistaDelivery($delivery):
+                case $deliveryFromShop && $stockResult->getDelayed()->isEmpty():
                     $value = OrderPropertyService::COMMUNICATION_SMS;
                     break;
             }
