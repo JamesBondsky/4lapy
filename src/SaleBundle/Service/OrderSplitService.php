@@ -482,7 +482,7 @@ class OrderSplitService implements LoggerAwareInterface
      * @throws SystemException
      * @throws \RuntimeException
      */
-    protected function generateBasket(ArrayCollection $items, $recalculateDiscounts = false): Basket
+    public function generateBasket(ArrayCollection $items, $recalculateDiscounts = false): Basket
     {
         /** @var Basket $basket */
         $basket = Basket::create(SITE_ID);

@@ -20,6 +20,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
@@ -901,6 +902,117 @@ class OrderService
         return [
             'cartDelivery' => $result
         ];
+    }
+
+    /**
+     * @return BasketProductCollection
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws OrderStorageSaveException
+     * @throws UserMessageException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getBasketWithCurrentDelivery()
+    {
+        [$courierDelivery, , , ] = $this->getDeliveryVariants();
+
+        $basketProducts = $this->apiBasketService->getBasketProducts(true);
+        if ($courierDelivery->getAvailable()) {
+            $orderStorage = $this->orderStorageService->getStorage();
+            $deliveries = $this->orderStorageService->getDeliveries($orderStorage);
+            $delivery = null;
+            foreach ($deliveries as $calculationResult) {
+                if ($this->appDeliveryService->isDelivery($calculationResult)) {
+                    $delivery = $calculationResult;
+                }
+            }
+            $selectedDelivery = $delivery;
+            $goods = $this->getDeliveryCourierDetails($selectedDelivery, $basketProducts)['goods'];
+            if ($goods) {
+                $basketItemsWithDelivery = [];
+                /** @var Product $item */
+                foreach ($goods as $item) {
+                    $basketItemsWithDelivery[] = $item->getBasketItemId();
+                }
+                $basketProducts = $basketProducts->filter(static function(Product $item) use($basketItemsWithDelivery) {
+                    return in_array($item->getBasketItemId(), $basketItemsWithDelivery, true);
+                });
+            }
+
+        }
+
+        return $basketProducts;
+    }
+
+    /**
+     * @param BasketProductCollection $basketProducts
+     * @return BasketProductCollection
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws OrderStorageSaveException
+     * @throws UserMessageException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function filterPartialBasketItems(BasketProductCollection $basketProducts): BasketProductCollection
+    {
+        $storage = $this->orderStorageService->getStorage();
+        //[$splitResult1, $splitResult2] = $this->orderSplitService->splitOrder($storage);
+        $delivery = clone $this->orderStorageService->getSelectedDelivery($storage);
+        //$available = $delivery->getStockResult()->getAvailable();
+        $delayed = $delivery->getStockResult()->getDelayed();
+
+        if (!$delayed->isEmpty()) {
+            /** @var StockResult $stockResult */
+            foreach ($delayed as $stockResult) {
+                $priceForAmountCollection = $stockResult->getPriceForAmount();
+                /** @var PriceForAmount $priceForAmount */
+                foreach ($priceForAmountCollection as $priceForAmount) {
+                    /** @var Product $basketProduct */
+                    foreach ($basketProducts as $basketProductKey => $basketProduct) {
+                        if (($shortProduct = $basketProduct->getShortProduct()) && $stockResult->getOffer()->getXmlId() === $shortProduct->getXmlId()) {
+                        //if ((int)$priceForAmount->getBasketCode() === $basketProduct->getBasketItemId()) {
+                            $delayedQuantity = $priceForAmount->getAmount();
+                            if ($delayedQuantity === $basketProduct->getQuantity()) { // если откладываются все единицы данного товара, то удаляем из коллекции
+                                $basketProducts->remove($basketProductKey);
+                            } else { // иначе уменьшаем его количество
+                                $basketProduct->setQuantity($basketProduct->getQuantity() - $delayedQuantity);
+                                $prices = $basketProduct->getPrices();
+                                /** @var PriceWithQuantity $price */
+                                foreach ($prices as $priceKey => $price) {
+                                    if ($priceForAmount->getPrice() === $price->getPrice()->getActual()) {
+                                        if ($price->getQuantity() === $delayedQuantity) {
+                                            unset($prices[$priceKey]);
+                                        } else {
+                                            $price->setQuantity($price->getQuantity() - $delayedQuantity);
+                                        }
+                                        --$delayedQuantity;
+                                    }
+                                }
+                                $basketProduct->setPrices($prices);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $basketProducts;
     }
 
     public function getSubscribeFrequencies()

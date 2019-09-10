@@ -391,7 +391,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     ->getDetailText()
                     ->getText()), 0, 2990))
                 ->setManufacturerWarranty(true)
-                ->setAvailable((!empty($stockID) && $tpz) ? false : $offer->isAvailable())
+                ->setAvailable((!empty($stockID) && $tpz) ? false : ($offer->isAvailable() && !$offer->isByRequest()) )
                 ->setCurrencyId('RUB')
                 ->setPrice($offer->getPrice())
                 ->setPicture($currentImage)
@@ -456,7 +456,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             return true;
         }
 
-        if ($offer->getAllStocks()->filterByStore($this->getRcStock())->getTotalAmount() < self::MINIMAL_AVAILABLE_IN_RC) {
+        if ($offer->getAllStocks()->filterByStore($this->getRcStock())->getTotalAmount() < self::MINIMAL_AVAILABLE_IN_RC && !$offer->isByRequest()) {
             return true;
         }
 
