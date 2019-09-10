@@ -371,7 +371,11 @@ class PetService
             $entity->setUserId($updateEntity->getUserId());
         }
 
-        if(!$this->isDogType($updateEntity)){
+        if(
+            (!$entity->getType() && !$this->isDogType($updateEntity))
+            ||
+            ($entity->getType() > 0 && !$this->isDogType($entity))
+        ){
             $entity->deleteSizeInfo();
         }
 
