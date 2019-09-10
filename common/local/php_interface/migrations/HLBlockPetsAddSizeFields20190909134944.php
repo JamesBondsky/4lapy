@@ -67,32 +67,60 @@ class HLBlockPetsAddSizeFields20190909134944 extends \Adv\Bitrixtools\Migration\
             ],
             'ENUMS' => [
                 'n1' => [
-                    'XML_ID' => 'Monday',
-                    'VALUE' => 'Понедельник',
+                    'XML_ID' => 'XXS',
+                    'VALUE' => 'XXS',
                 ],
                 'n2' => [
-                    'XML_ID' => 'Tuesday',
-                    'VALUE' => 'Вторник',
+                    'XML_ID' => 'XS',
+                    'VALUE' => 'XS',
                 ],
                 'n3' => [
-                    'XML_ID' => 'Wednesday',
-                    'VALUE' => 'Среда',
+                    'XML_ID' => 'S',
+                    'VALUE' => 'S',
                 ],
                 'n4' => [
-                    'XML_ID' => 'Thursday',
-                    'VALUE' => 'Четверг',
+                    'XML_ID' => 'M',
+                    'VALUE' => 'M',
                 ],
                 'n5' => [
-                    'XML_ID' => 'Friday',
-                    'VALUE' => 'Пятница',
+                    'XML_ID' => 'L',
+                    'VALUE' => 'L',
                 ],
                 'n6' => [
-                    'XML_ID' => 'Saturday',
-                    'VALUE' => 'Суббота',
+                    'XML_ID' => 'XL',
+                    'VALUE' => 'XL',
                 ],
                 'n7' => [
-                    'XML_ID' => 'Sunday',
-                    'VALUE' => 'Воскресенье',
+                    'XML_ID' => '2XL',
+                    'VALUE' => '2XL',
+                ],
+                'n8' => [
+                    'XML_ID' => '3XL',
+                    'VALUE' => '3XL',
+                ],
+                'n9' => [
+                    'XML_ID' => '4XL',
+                    'VALUE' => '4XL',
+                ],
+                'n10' => [
+                    'XML_ID' => '5XL',
+                    'VALUE' => '5XL',
+                ],
+                'n11' => [
+                    'XML_ID' => '6XL',
+                    'VALUE' => '6XL',
+                ],
+                'n12' => [
+                    'XML_ID' => '7XL',
+                    'VALUE' => '7XL',
+                ],
+                'n13' => [
+                    'XML_ID' => '8XL',
+                    'VALUE' => '8XL',
+                ],
+                'n14' => [
+                    'XML_ID' => 'n',
+                    'VALUE' => 'нестандартный',
                 ],
             ],
         ];
