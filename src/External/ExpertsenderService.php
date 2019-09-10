@@ -1603,4 +1603,52 @@ class ExpertsenderService implements LoggerAwareInterface
 
         return (isset($propertyValue) && $propertyValue) ? ($propertyValue->getValue() ?? '') : '';
     }
+
+    /**
+     * @param User $user
+     * @param bool $newPetId
+     * @param bool $oldPetId
+     * @param array $params
+     * @return bool
+     * @throws ExpertsenderServiceException
+     * @throws ArgumentNullException
+     */
+    public function sendAfterPetUpdate(User $user, $newPetId = null, $oldPetId = null, array $params = []): bool
+    {
+        if (!$newPetId && !$oldPetId) {
+            throw new ArgumentNullException('Отсутвует Id питомца');
+        }
+
+        if ($user->hasEmail()) {
+            $addUserToList = new AddUserToList();
+            $addUserToList->setForce(true);
+            $addUserToList->setMode(static::MAIN_LIST_MODE);
+            $addUserToList->setListId(static::MAIN_LIST_ID);
+            $addUserToList->setEmail($user->getEmail());
+
+            if ($newPetId) {
+                $addUserToList->addProperty(new Property($newPetId, 'integer', 1));
+            }
+
+            if ($oldPetId) {
+                $addUserToList->addProperty(new Property($oldPetId, 'integer', 0));
+            }
+
+            try {
+                /** хеш строка для подтверждения мыла */
+                /** @var ConfirmCodeService $confirmService */
+                $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                $confirmService::setGeneratedHash($user->getEmail());
+                $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_HASH_ID, 'string', $confirmService::getGeneratedCode()));
+                unset($generatedHash, $confirmService);
+
+                $this->addUserToList($addUserToList);
+                return true;
+            } catch (Exception $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+            }
+        }
+
+        return false;
+    }
 }

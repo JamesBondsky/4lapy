@@ -14,13 +14,11 @@ use FourPaws\Decorators\SvgDecorator;
             <div class="b-container">
                 <a href="<?= $component->getSectionLink($element['ID']) ?>" class="item-category-fashion__title" target="_blank"><?=$element['NAME']?></a>
                 <div class="item-category-fashion__content">
-                    <a href="<?= $component->getSectionLink($element['ID']) ?>" target="_blank">
-                        <div class="item-category-fashion__img" style="background-position: bottom right; background-image: url(<?=$arResult['IMAGES'][$element['PROPERTIES']['IMAGE']['VALUE']]?>)">
-                            <?/*<a href="<?=$component->getSectionUrl($element['PROPERTIES']['SECTION']['VALUE']) ?>" class="item-category-fashion__more" target="_blank">
-                             В категорию
-                            </a>*/?>
-                        </div>
-                    </a>
+                    <div class="item-category-fashion__img" style="background-image: url(<?=$arResult['IMAGES'][$element['PROPERTIES']['IMAGE']['VALUE']]?>)">
+                        <a href="<?= $component->getSectionLink($element['ID']) ?>" class="item-category-fashion__more" target="_blank">
+                            В категорию
+                        </a>
+                    </div>
 
                     <div class="item-category-fashion__slider" data-slider-category-fashion="true">
                         <?php
