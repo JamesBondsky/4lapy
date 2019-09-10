@@ -291,39 +291,42 @@ class CityService implements LoggerAwareInterface
      */
     public function convertInDadataFormat(array $locations)
     {
-        $locationsIds = array_keys($locations);
-        $kladrIds = $this->getKladrIdByLocationsIds($locationsIds);
-
         $allowLocations = [];
 
-        foreach ($kladrIds as $locationId => $kladrId) {
-            if (isset($locations[$locationId])) {
-                $locations[$locationId]['KLADR'] = $kladrId;
-                $allowLocations[] = [
-                    'data' => [
-                        'city' => $locations[$locationId]['NAME'],
-                        'region_with_type' => '',
-                        'kladr_id' => $locations[$locationId]['KLADR'],
-                    ],
-                    'unrestricted_value' => $locations[$locationId]['NAME'],
-                ];
+        $ignoreTypes = ['COUNTRY_DISTRICT', 'COUNTRY'];
+
+        foreach ($locations as $locationItem) {
+            //$locationItem
+            $regionWithType = '';
+            if ($locationItem['PATH']) {
+                $region = [];
+
+                foreach ($locationItem['PATH'] as $pathItem) {
+                    if (!in_array($pathItem['TYPE']['CODE'], $ignoreTypes)) {
+                        $region[] = $pathItem['NAME'];
+                    }
+                }
+
+                if ($region) {
+                    $regionWithType = implode(',', $region);
+                }
             }
+
+            $allowLocations[] = [
+                'data' => [
+                    'city' => $locationItem['NAME'],
+                    'region_with_type' => $regionWithType,
+                    'kladr_id' => $locationItem['CODE'],
+                    'code' => $locationItem['CODE'],
+                ],
+                'unrestricted_value' => $locationItem['NAME'],
+            ];
         }
 
         usort($allowLocations, function ($a, $b) {
             return mb_strlen($a['data']['city'], 'UTF-8') - mb_strlen($b['data']['city'], 'UTF-8');
         });
 
-        $uniqKey = [];
-        $allowLocationsUniq = [];
-
-        foreach ($allowLocations as $allowLocationItem) {
-            if (!in_array($allowLocationItem['data']['city'], $uniqKey)) {
-                $uniqKey[] = $allowLocationItem['data']['city'];
-                $allowLocationsUniq[] = $allowLocationItem;
-            }
-        }
-
-        return $allowLocationsUniq;
+        return $allowLocations;
     }
 }
