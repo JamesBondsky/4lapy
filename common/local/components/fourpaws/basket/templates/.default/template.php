@@ -274,10 +274,10 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                     </section>
                 <?php } ?>
 
-                <? if($arResult['SUBSCRIBE_ALLOWED']){
-                    include('include/subscribe_promo.php');
-                } ?>
-            </main>
+	            <? /*if($arResult['SUBSCRIBE_ALLOWED']){
+	                include('include/subscribe_promo.php');
+	            }*/ ?>
+	        </main>
 
             <aside class="b-shopping-cart__aside" data-shopping-cart-sticky-aside="aside">
                 <div class="b-information-order">
@@ -396,40 +396,145 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
 
                         <div class="b-information-order__order-discounts" data-basket-coupons-discount-list></div>
 
-                        <div class="b-information-order__order b-information-order__order--total">
-                            <div class="b-information-order__order-price">Итого без учета доставки</div>
-                            <div class="b-price b-price--information-order b-price--total-price">
-                                <span class="b-price__current" data-basket-total-price>
-                                    <?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?>
-                                </span><span class="b-ruble">₽</span>
-                            </div>
-                        </div>
-                        <form action="/sale/order/" method="post">
-                            <button class="b-button b-button--start-order <?= $sViewportCookie === null ? 'b-button--bottom-indent' : '' ?>"
-                            title="Начать оформление" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
-                                Начать оформление
-                            </button>
-                            <input type="hidden" name="default" value="1">
-                        </form>
-                        <?php if ($arResult['SHOW_FAST_ORDER']) { ?>
-                            <div class="b-information-order__one-click">
-                                <a class="b-link b-link--one-click <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' js-open-popup js-open-popup--one-click' ?>"
-                                href="javascript:void(0)" title="Купить в 1 клик"
-                                    <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"' ?>
-                                    <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
-                                    <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
-                                </a>
-                            </div>
-                        <?php } ?>
-                    </div>
-                </div>
-            </aside>
-        </div>
+	                    <form action="/sale/order/" method="post">
+	                      <?php if ($arResult['SUBSCRIBE_ALLOWED']): ?>
+	                        <div class="b-cart-aside-subscription">
+	                          <div class="b-cart-aside-subscription__title">
+	                            Подключите
 
-        <? if($arResult['SUBSCRIBE_ALLOWED']){
+	                            <div class="b-cart-aside-subscription__tooltip">
+	                                <button type="button" class="b-cart-aside-subscription__tooltip-toggle">
+	                                    <span class="b-cart-aside-subscription__title-icon"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
+	                                    Подписку
+	                                </button>
+
+	                                <div class="b-cart-aside-subscription__tooltip-content">
+	                                    <ul class="b-cart-aside-subscription__features">
+	                                        <li class="b-cart-aside-subscription__features-item">
+	                                            <span class="b-cart-aside-subscription__features-icon">
+	                                                <?= new SvgDecorator('icon-calendar', 24, 24) ?>
+	                                            </span>
+	                                            Установите удобное расписание доставок
+	                                        </li>
+	                                        <li class="b-cart-aside-subscription__features-item">
+	                                            <span class="b-cart-aside-subscription__features-icon">
+	                                                <?= new SvgDecorator('icon-cancel', 24, 24) ?>
+	                                            </span>
+	                                            Переносите или отменяйте доставку в&nbsp;любое время
+	                                        </li>
+	                                        <li class="b-cart-aside-subscription__features-item">
+	                                            <span class="b-cart-aside-subscription__features-icon">
+	                                                <?= new SvgDecorator('icon-price', 24, 24) ?>
+	                                            </span>
+	                                            Наслаждайтесь экономией денег и времени
+	                                        </li>
+	                                    </ul>
+	                                </div>
+	                            </div>
+
+	                            <?php if ($subscribePriceDiff > 0): ?>
+	                              и&nbsp;получите
+
+	                              <nobr class="b-cart-aside-subscription__title-highlight">
+	                                скидку
+
+	                                <span class="b-cart-aside-subscription__title-discount">
+	                                 <?= WordHelper::numberFormat($subscribePriceDiff, 2) ?> <span class="b-ruble">₽</span>
+	                                </span>
+	                              </nobr>
+	                            <?php else: ?>
+	                              <nobr>и&nbsp;получите <span class="b-cart-aside-subscription__title-highlight">скидку</span></nobr>
+	                            <?php endif ?>
+	                          </div>
+
+	                          <div class="b-cart-aside-subscription__toggles">
+	                            <?php if ($user): ?>
+	                              <label class="b-radio-button">
+	                                <input
+	                                  type="radio"
+	                                  value="1"
+	                                  name="subscribe"
+	                                  class="b-radio-button__input"
+	                                />
+
+	                                <div class="b-radio-button__fake"></div>
+
+	                                <div class="b-radio-button__content">
+	                                  Да, подключить
+	                                </div>
+	                              </label>
+	                            <?php else: ?>
+	                              <div class="b-radio-button js-open-popup" data-popup-id="authorization" data-btn-subscribe-delivery-cart="true">
+	                                <input
+	                                  type="radio"
+	                                  value="1"
+	                                  name="subscribe"
+	                                  class="b-radio-button__input"
+	                                />
+
+	                                <div class="b-radio-button__fake"></div>
+
+	                                <div class="b-radio-button__content">
+	                                  Да, подключить
+	                                </div>
+	                              </div>
+	                            <?php endif ?>
+
+	                            <label class="b-radio-button">
+	                              <input
+	                                type="radio"
+	                                name="subscribe"
+	                                value="0"
+	                                checked
+	                                class="b-radio-button__input"
+	                              />
+
+	                              <div class="b-radio-button__fake"></div>
+
+	                              <div class="b-radio-button__content">
+	                                Нет, спасибо
+	                              </div>
+	                            </label>
+	                          </div>
+	                        </div>
+	                      <?php endif ?>
+
+	                      <div class="b-information-order__order b-information-order__order--total">
+	                          <div class="b-information-order__order-price">Итого без учета доставки</div>
+	                          <div class="b-price b-price--information-order b-price--total-price">
+	                              <span class="b-price__current" data-basket-total-price>
+	                                  <?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?>
+	                              </span>
+
+	                              <span class="b-ruble">₽</span>
+	                          </div>
+	                      </div>
+
+	                      <button class="b-button b-button--start-order <?= $sViewportCookie === null ? 'b-button--bottom-indent' : '' ?>"
+	                         title="Начать оформление" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
+	                          Начать оформление
+	                      </button>
+	                    </form>
+
+	                    <?php if ($arResult['SHOW_FAST_ORDER']) { ?>
+	                        <div class="b-information-order__one-click">
+	                            <a class="b-link b-link--one-click <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' js-open-popup js-open-popup--one-click' ?>"
+	                               href="javascript:void(0)" title="Купить в 1 клик"
+	                                <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"' ?>
+	                                <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
+	                                <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
+	                            </a>
+	                        </div>
+	                    <?php } ?>
+	                </div>
+	            </div>
+	        </aside>
+	    </div>
+
+        <? /*if($arResult['SUBSCRIBE_ALLOWED']){
             $mobile = true;
             include('include/subscribe_promo.php');
-        } ?>
+        }*/ ?>
 
         <script id="gtag-cart">
             let offers = [];
