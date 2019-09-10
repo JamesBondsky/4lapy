@@ -4,15 +4,36 @@ namespace Sprint\Migration;
 
 
 use CUserFieldEnum;
+use Sprint\Migration\Helpers\HlblockHelper;
+use Sprint\Migration\Helpers\UserTypeEntityHelper;
 
 class HLBlockPetsAddSizeFields20190909134944 extends \Adv\Bitrixtools\Migration\SprintMigrationBase {
 
     protected $description = "Добавляет поля о размере питомца в HL-блок \"Питомцы\"";
 
+    /**
+     * @var UserTypeEntityHelper
+     */
+    protected $userTypeEntityHelper;
+
+    /**
+     * @var HlblockHelper
+     */
+    protected $hlBlockHelper;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->userTypeEntityHelper = $this->getHelper()->UserTypeEntity();
+        $this->hlBlockHelper = $this->getHelper()->Hlblock();
+    }
+
     public function up(){
         $helper = new HelperManager();
 
-        $field = [
+        $entityId  = 'HLBLOCK_'.$helper->Hlblock()->getHlblockId('Pet');
+
+        $fields[] = [
             "FIELD_NAME" => "UF_SIZE",
             "USER_TYPE_ID" => "enumeration",
             "XML_ID" => "",
@@ -76,15 +97,121 @@ class HLBlockPetsAddSizeFields20190909134944 extends \Adv\Bitrixtools\Migration\
             ],
         ];
 
-        $entityId  = 'HLBLOCK_'.$helper->Hlblock()->getHlblockId('Pet');
+        $fields[] = [
+            "FIELD_NAME" => "UF_CHEST",
+            "USER_TYPE_ID" => "double",
+            "XML_ID" => "",
+            "SORT" => "100",
+            "MULTIPLE" => "N",
+            "MANDATORY" => "N",
+            "SHOW_FILTER" => "S",
+            "SHOW_IN_LIST" => "Y",
+            "EDIT_IN_LIST" => "Y",
+            "IS_SEARCHABLE" => "N",
+            "SETTINGS" => [
+                "PRECISION" => 4,
+                "SIZE" => 20,
+                "MIN_VALUE" => 0.0,
+                "MAX_VALUE" => 0.0,
+                "DEFAULT_VALUE" => "",
+            ],
+            "EDIT_FORM_LABEL" => [
+                "ru" => "Обхват груди"
+            ],
+            "LIST_COLUMN_LABEL" => [
+                "ru" => "Обхват груди"
+            ],
+            "LIST_FILTER_LABEL" => [
+                "ru" => "Обхват груди"
+            ],
+            "ERROR_MESSAGE" => [
+                "ru" => ""
+            ],
+            "HELP_MESSAGE" => [
+                "ru" => ""
+            ]
+        ];
 
-        $helper->UserTypeEntity()->addField($entityId, $field);
+        $fields[] = [
+            "FIELD_NAME" => "UF_BACK",
+            "USER_TYPE_ID" => "double",
+            "XML_ID" => "",
+            "SORT" => "100",
+            "MULTIPLE" => "N",
+            "MANDATORY" => "N",
+            "SHOW_FILTER" => "N",
+            "SHOW_IN_LIST" => "Y",
+            "EDIT_IN_LIST" => "Y",
+            "IS_SEARCHABLE" => "N",
+            "SETTINGS" => [
+                "PRECISION" => 4,
+                "SIZE" => 20,
+                "MIN_VALUE" => 0.0,
+                "MAX_VALUE" => 0.0,
+                "DEFAULT_VALUE" => "",
+            ],
+            "EDIT_FORM_LABEL" => [
+                "ru" => "Длина спины"
+            ],
+            "LIST_COLUMN_LABEL" => [
+                "ru" => "Длина спины"
+            ],
+            "LIST_FILTER_LABEL" => [
+                "ru" => "Длина спины"
+            ],
+            "ERROR_MESSAGE" => [
+                "ru" => ""
+            ],
+            "HELP_MESSAGE" => [
+                "ru" => ""
+            ]
+        ];
 
+        $fields[] = [
+            "FIELD_NAME" => "UF_NECK",
+            "USER_TYPE_ID" => "double",
+            "XML_ID" => "",
+            "SORT" => "100",
+            "MULTIPLE" => "N",
+            "MANDATORY" => "N",
+            "SHOW_FILTER" => "N",
+            "SHOW_IN_LIST" => "Y",
+            "EDIT_IN_LIST" => "Y",
+            "IS_SEARCHABLE" => "N",
+            "SETTINGS" => [
+                "PRECISION" => 4,
+                "SIZE" => 20,
+                "MIN_VALUE" => 0.0,
+                "MAX_VALUE" => 0.0,
+                "DEFAULT_VALUE" => "",
+            ],
+            "EDIT_FORM_LABEL" => [
+                "ru" => "Обхват шеи"
+            ],
+            "LIST_COLUMN_LABEL" => [
+                "ru" => "Обхват шеи"
+            ],
+            "LIST_FILTER_LABEL" => [
+                "ru" => "Обхват шеи"
+            ],
+            "ERROR_MESSAGE" => [
+                "ru" => ""
+            ],
+            "HELP_MESSAGE" => [
+                "ru" => ""
+            ]
+        ];
+
+        foreach ($fields as $field){
+            $helper->UserTypeEntity()->addField($entityId, $field);
+        }
+        
+        return true;
     }
 
     public function down(){
         $helper = new HelperManager();
-
+        return true;
     }
 
     /**
