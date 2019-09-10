@@ -1104,7 +1104,7 @@ class ProductService
         $images = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
-            if ($offerImages = $offer->getImages()) {
+            if ($offerImages = $offer->getResizeImages(2000, 2000)) {
                 foreach ($offerImages as $image) {
                     $images[] = $image;
                 }
