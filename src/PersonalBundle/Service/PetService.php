@@ -21,6 +21,7 @@ use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\HighloadHelper;
@@ -66,6 +67,11 @@ class PetService
      */
     private $userFieldEnumService;
 
+    /**
+     * @var ExpertsenderService
+     */
+    private $expertSenderService;
+
     public const PETS_TYPE = [
         'koshki' => 'cat',
         'sobaki' => 'dog',
@@ -87,12 +93,14 @@ class PetService
         PetRepository $petRepository,
         CurrentUserProviderInterface $currentUserProvider,
         ManzanaService $manzanaService,
-        UserFieldEnumService $userFieldEnumService
+        UserFieldEnumService $userFieldEnumService,
+        ExpertsenderService $expertsenderService
     ) {
         $this->petRepository = $petRepository;
         $this->currentUser = $currentUserProvider;
         $this->manzanaService = $manzanaService;
         $this->userFieldEnumService = $userFieldEnumService;
+        $this->expertSenderService = $expertsenderService;
     }
 
     /**
@@ -123,6 +131,18 @@ class PetService
         }
         /** @var Pet $entity */
         $entity = $this->petRepository->dataToEntity($data, Pet::class);
+
+        $res = HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()->setFilter(['ID' => $entity->getType()])->setSelect(
+            [
+                'ID',
+                'UF_EXPERT_SENDER_ID',
+            ]
+        )->setOrder(['UF_SORT' => 'asc'])->exec();
+
+        if (($petType = $res->Fetch()) && ($petType['UF_EXPERT_SENDER_ID'])) {
+            $this->expertSenderService->sendAfterPetUpdate($this->currentUser->getCurrentUser(), $petType['UF_EXPERT_SENDER_ID']);
+        }
+
         $this->petRepository->setEntity($entity);
         return $this->petRepository->create();
     }
@@ -319,9 +339,25 @@ class PetService
         $entity = $this->petRepository->dataToEntity($data, Pet::class);
 
         $updateEntity = $this->getById($entity->getId());
+
         if ($updateEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
+
+        $expertSenderPetIds = [];
+
+        $res = HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()->setFilter(['ID' => [$entity->getType(), $updateEntity->getType()]])->setSelect(
+            [
+                'ID',
+                'UF_EXPERT_SENDER_ID',
+            ]
+        )->setOrder(['UF_SORT' => 'asc'])->exec();
+
+        while ($petType = $res->Fetch()) {
+            $expertSenderPetIds[$petType['ID']] = $petType['UF_EXPERT_SENDER_ID'];
+        }
+
+        $this->expertSenderService->sendAfterPetUpdate($this->currentUser->getCurrentUser(), $expertSenderPetIds[$entity->getType()], $expertSenderPetIds[$updateEntity->getType()]);
 
         if ($entity->getUserId() === 0) {
             $entity->setUserId($updateEntity->getUserId());
@@ -349,8 +385,21 @@ class PetService
     public function delete(int $id): bool
     {
         $deleteEntity = $this->getById($id);
+
+
         if ($deleteEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
+        }
+
+        $res = HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()->setFilter(['ID' => $deleteEntity->getType()])->setSelect(
+            [
+                'ID',
+                'UF_EXPERT_SENDER_ID',
+            ]
+        )->setOrder(['UF_SORT' => 'asc'])->exec();
+
+        if (($petType = $res->Fetch()) && ($petType['UF_EXPERT_SENDER_ID'])) {
+            $this->expertSenderService->sendAfterPetUpdate($this->currentUser->getCurrentUser(), null, $petType['UF_EXPERT_SENDER_ID']);
         }
 
         return $this->petRepository->delete($id);
