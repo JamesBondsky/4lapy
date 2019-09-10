@@ -203,7 +203,7 @@ class HLBlockPetsAddSizeFields20190909134944 extends \Adv\Bitrixtools\Migration\
         ];
 
         foreach ($fields as $field){
-            $helper->UserTypeEntity()->addField($entityId, $field);
+            $this->addField($entityId, $field);
         }
         
         return true;
