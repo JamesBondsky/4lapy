@@ -100,6 +100,7 @@ class Manzana implements LoggerAwareInterface
 
     /**
      * @param Order|null $order
+     * @param Basket|null $basket
      *
      * @throws ArgumentOutOfRangeException
      * @throws ManzanaPromocodeUnavailableException
@@ -108,11 +109,11 @@ class Manzana implements LoggerAwareInterface
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    public function calculate(?Order $order = null): void
+    public function calculate(?Order $order = null, ?Basket $basket = null): void
     {
         if ($order) {
             $basket = $order->getBasket();
-        } else {
+        } elseif (!$basket) {
             $basket = $this->basketService->getBasket();
         }
         /** @var Basket $basket */
