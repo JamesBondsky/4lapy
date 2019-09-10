@@ -52,7 +52,7 @@
                 </div>
             </div>
             <label class="b-registration__label b-registration__label--subscribe-delivery" for="type-pet">Вид животного</label>
-            <div class="b-select b-select--subscribe-delivery js-pet-view">
+            <div class="b-select b-select--subscribe-delivery">
                 <select class="b-select__block b-select__block--subscribe-delivery js-pet-view"
                         id="type-pet"
                         name="UF_TYPE">
@@ -213,3 +213,7 @@
         </form>
     </div>
 </section>
+
+<script data-skip-moving="true">
+    window.clothingSizeSelection = <?= CUtil::PhpToJSObject($arResult['JS_SIZES']) ?>;
+</script>

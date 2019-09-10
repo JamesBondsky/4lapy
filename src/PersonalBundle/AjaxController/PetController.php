@@ -132,6 +132,14 @@ class PetController extends Controller
             unset($data['UF_PHOTO']);
         }
 
+        // нестандартный размер
+        if($data['UF_SIZE'] == "UNKNOWN" && !empty($data['UF_BACK']) && !empty($data['UF_CHEST']) && !empty($data['UF_NECK'])){
+            $sizeNotStd = $this->petService->getSizeByCode('n');
+            if($sizeNotStd){
+                $data['UF_SIZE'] = $sizeNotStd->getId();
+            }
+        }
+
         try {
             if ($this->petService->update($data)) {
                 return JsonSuccessResponse::create(
