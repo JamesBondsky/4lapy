@@ -38,8 +38,8 @@ $arResult['isActualSubscription'] = $orderSubscribe && $orderSubscribe->isActive
 
 // следует учитывать ситуацию, когда заказ может быть подписан,
 // но подписка на него по новым условиям уже может быть недоступна
-$arResult['canBeSubscribed'] = $component->getOrderSubscribeService()->canBeSubscribed($order);
-if (!$arResult['canBeSubscribed'] && !$arResult['isActualSubscription']) {
+$arResult['canBeSubscribed'] = $component->getOrderSubscribeService()->canBeSubscribed($order) && !$arResult['BY_SUBSCRIBE'];
+if (!$arResult['canBeSubscribed'] && !$arResult['isActualSubscription'] && !$arResult['BY_SUBSCRIBE']) {
     $arResult['isCorrect'] = false;
     return;
 }

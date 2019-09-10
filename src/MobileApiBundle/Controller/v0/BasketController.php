@@ -158,7 +158,11 @@ class BasketController extends BaseController
                     // regular product
                     $this->appBasketService->addOfferToBasket(
                         $productQuantity->getProductId(),
-                        $productQuantity->getQuantity()
+                        $productQuantity->getQuantity(),
+                        [],
+                        true,
+                        null,
+                        true
                     );
                 }
             }

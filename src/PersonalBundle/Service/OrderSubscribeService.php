@@ -152,7 +152,7 @@ class OrderSubscribeService implements LoggerAwareInterface
         'DELIVERY_DATE', 'DELIVERY_INTERVAL', 'COM_WAY',
         'IS_SUBSCRIBE', 'COPY_ORDER_ID',
         // [LP22-37] информация об операторах, создавших заказ
-        'OPERATOR_EMAIL', 'OPERATOR_SHOP',
+//        'OPERATOR_EMAIL', 'OPERATOR_SHOP',
     ];
 
 
