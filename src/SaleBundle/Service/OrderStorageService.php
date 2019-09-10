@@ -315,6 +315,12 @@ class OrderStorageService
                 break;
         }
 
+        $currentUser = $this->currentUserProvider->getCurrentUser();
+
+        if ($currentUser && $storage->getUserId() !== $currentUser->getId()) {
+            return $storage;
+        }
+
         foreach ($data as $name => $value) {
             if (null === $value) {
                 continue;
