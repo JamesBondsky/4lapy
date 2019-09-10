@@ -397,4 +397,28 @@ class OrderSubscribeHistoryService
         }
         return $results;
     }
+
+    /**
+     * @param $orderId
+     * @return bool
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function hasOriginOrder($orderId) : bool
+    {
+        $params = [
+            'select' => [
+                'ID'
+            ],
+            'filter' => [
+                '=UF_NEW_ORDER_ID' => $orderId,
+                '!=UF_ORIGIN_ORDER_ID' => $orderId,
+            ],
+        ];
+
+        $dbres = $this->findBy($params);
+
+        return  ($dbres->fetch()) ? true : false;
+    }
 }
