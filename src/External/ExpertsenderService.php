@@ -678,6 +678,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 } else {
                     $transactionId = self::NEW_ORDER_NOT_REG_PAY_LIST_ID_ROYAL_CANIN;
                 }
+                return false;
             } else {
                 // оплата при получении
                 if (!$royalCaninAction) {
