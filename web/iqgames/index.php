@@ -55,6 +55,7 @@ use Bitrix\Main\Grid\Declension;
             'OFFER_FILTER' => [
                 '=XML_ID' => array_keys(\FourPaws\PersonalBundle\Service\StampService::EXCHANGE_RULES),
             ],
+            'COUNT' => 500,
             'TITLE' => 'Еще больше развивающих игрушек со&nbsp;скидкой -30% за 4&nbsp;марки',
             'CACHE_TIME' => 0,
             'ONLY_PRODUCTS_XML_ID' => array_keys(\FourPaws\PersonalBundle\Service\StampService::EXCHANGE_RULES), // показывать только указанные ТП, а не все в родительских товарах
