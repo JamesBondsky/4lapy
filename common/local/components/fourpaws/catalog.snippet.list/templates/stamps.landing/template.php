@@ -55,27 +55,31 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
             $i = 0;
             $onlyProductsXmlIds = $arParams['ONLY_PRODUCTS_XML_ID'] ?? false;
             foreach ($component->getProductCollection() as $key => $product) {
-                if ($onlyProductsXmlIds) {
-	                $product->setOffers(
-	                    $product->getOffers()->filter(static function(Offer $item) use($onlyProductsXmlIds) {return in_array($item->getXmlId(), $onlyProductsXmlIds, false); })
-	                );
-                }
+                if (!\in_array($product->getXmlId(), ['99545', '99543', '1021198', '90308'])) { //todo в карусели на лендинге не должно быть товаров с лендинга
+                    if ($onlyProductsXmlIds) {
+                        $product->setOffers(
+                            $product->getOffers()->filter(static function (Offer $item) use ($onlyProductsXmlIds) {
+                                return in_array($item->getXmlId(), $onlyProductsXmlIds, false);
+                            })
+                        );
+                    }
 
-                $APPLICATION->IncludeComponent(
-                    'fourpaws:catalog.element.snippet',
-                    'stamps',
-                    [
-                        'PRODUCT' => $product,
-                        'OFFER_FILTER' => $arParams['OFFER_FILTER'] ?? [],
-                        'COUNTER' => $i,
-                        'CACHE_TIME' => 0
-                    ],
-                    $component,
-                    [
-                        'HIDE_ICONS' => 'Y',
-                    ]
-                );
-                $i++;
+                    $APPLICATION->IncludeComponent(
+                        'fourpaws:catalog.element.snippet',
+                        'stamps',
+                        [
+                            'PRODUCT' => $product,
+                            'OFFER_FILTER' => $arParams['OFFER_FILTER'] ?? [],
+                            'COUNTER' => $i,
+                            'CACHE_TIME' => 0
+                        ],
+                        $component,
+                        [
+                            'HIDE_ICONS' => 'Y',
+                        ]
+                    );
+                    $i++;
+                }
             }
             ?>
         </div>
