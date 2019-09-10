@@ -22,6 +22,7 @@ class CFashionProductFooter extends \CBitrixComponent
     private $titleImageIds;
     private $sectionIds;
     private $sections;
+    private $sectionLinks;
 
 
     public function onPrepareComponentParams($params): array
@@ -62,6 +63,7 @@ class CFashionProductFooter extends \CBitrixComponent
             $this->fillProducts();
             $this->fillImages();
             $this->fillSections();
+            $this->fillLinks();
 
             $this->includeComponentTemplate();
         }
@@ -108,6 +110,17 @@ class CFashionProductFooter extends \CBitrixComponent
         }
     }
 
+    private function fillLinks()
+    {
+        foreach ($this->arResult['ELEMENTS'] as $element) {
+            if ($element['PROPERTIES']['SECTION_LINK']['VALUE']) {
+                $this->sectionLinks[$element['ID']] = $element['PROPERTIES']['SECTION_LINK']['VALUE'];
+            } else {
+                $this->sectionLinks[$element['ID']] = $this->getSectionUrl($element['PROPERTIES']['SECTION']['VALUE']);
+            }
+        }
+    }
+
     public function getProduct($xmlId)
     {
         return $this->products->filter(function ($product) use ($xmlId) {
@@ -119,5 +132,16 @@ class CFashionProductFooter extends \CBitrixComponent
     public function getSectionUrl($id)
     {
         return $this->sections[$id]['SECTION_PAGE_URL'];
+    }
+
+    /**
+     * sectionLink - строковое свойство у инфоблока
+     * никак не связанное с привязанным разделом
+     * @param $elementId
+     * @return mixed
+     */
+    public function getSectionLink($elementId)
+    {
+        return $this->sectionLinks[$elementId];
     }
 }

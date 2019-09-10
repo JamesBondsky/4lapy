@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Grid\Declension;
+use FourPaws\PersonalBundle\Service\StampService;
 
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
@@ -31,11 +32,15 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
             </div>
         </div>
         <div class="b-kopilka__info">
-            <h3>Условия акции</h3>
-            <p>1. Копи марки: за каждые 400 руб. в чеке получайте 1 марку.</p>
-	        <p>2. Выбирай умные игрушки: покупай со скидкой до 50%.</p>
-	        <p>3. Занимайся с питомцем: развивай любознательность, обучай и играй с удовольствием.</p>
-            <a href="https://4lapy.ru/shares/kopi-marki-pokupay-tovary-so-skidkoy-do-50-.html">Подробные условия акции</a>
+	        <h3>Вместе за парту!</h3>
+	        <p>Наступает осенняя пора, дети идут в школу, начинаются учебные будни. Вы можете вместе с питомцем тоже начать учиться</p>
+	        <h3>Условия акции</h3>
+	        <p>1. Делай покупки, получай марки: 1 марка  = <?= StampService::MARK_RATE ?> руб.;</p>
+	        <p>2. Отслеживай марки где удобно:<br>
+		        на чеке, в личном кабинете на сайте и в приложении;</p>
+	        <p>3. Выбери игру и добавь в корзину, нажми "списать марки";</p>
+	        <p>4. Получи игру со скидкой и развивай питомца!</p>
+	        <a href="/iqgames/">Подробные условия акции</a>
         </div>
     </div>
 
@@ -46,9 +51,9 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
             'OFFER_FILTER' => [
                 '=XML_ID' => $arParams['PRODUCTS_XML_ID'],
             ],
-            'COUNT' => 4,
+            'COUNT' => 500,
             'TITLE' => 'Товары, участвующие в акции',
-	        'CACHE_TIME' => 0,
+	        'CACHE_TIME' => 3600000,
 	        'ONLY_PRODUCTS_XML_ID' => $arParams['PRODUCTS_XML_ID'], // показывать только указанные ТП, а не все в родительских товарах
         ), $this->getComponent());
 

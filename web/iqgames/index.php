@@ -1,9 +1,15 @@
 <?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php'; ?>
-<?php $APPLICATION->SetTitle('Марки'); ?>
+<?php $APPLICATION->SetTitle('КОПИ МАРКИ - ВЫБИРАЙ УМНЫЕ ИГРУШКИ'); ?>
 
+<?php
+use Bitrix\Main\Grid\Declension;
+?>
 <div class="toys-landing">
     <div class="toys-landing__header">
-        <img src="/upload/toys-landing/header.jpg" alt="" />
+        <picture>
+            <source media="(max-width: 1023px)" srcset="/upload/toys-landing/header_mobile.jpg">
+            <img src="/upload/toys-landing/header.jpg?v=2" alt="">
+        </picture>
     </div>
 
     <div class="toys-landing__steps">
@@ -32,7 +38,7 @@
 
                     <div>
                         <p class="toys-landing__steps-title">Занимайся с питомцем</p>
-                        <p class="toys-landing__steps-description">Развивай любознательность, обучай и играй с удовольствием</p>
+                        <p class="toys-landing__steps-description">Развивай, обучай и играй</p>
                     </div>
                 </li>
             </ul>
@@ -42,6 +48,20 @@
     </div>
 
     <? $APPLICATION->IncludeComponent('articul:stamps.products', '') ?>
+
+    <div class="toys-landing-promotional-items">
+        <?php
+        $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', 'stamps.landing', array(
+            'OFFER_FILTER' => [
+                '=XML_ID' => array_keys(\FourPaws\PersonalBundle\Service\StampService::EXCHANGE_RULES),
+            ],
+            'TITLE' => 'Ещё больше развивающих игрушек со&nbsp;скидкой -30% за 4&nbsp;марки',
+            'COUNT' => 500,
+            'CACHE_TIME' => 0,
+            'ONLY_PRODUCTS_XML_ID' => array_keys(\FourPaws\PersonalBundle\Service\StampService::EXCHANGE_RULES), // показывать только указанные ТП, а не все в родительских товарах
+        ));
+        ?>
+    </div>
 
     <div class="b-container">
         <ul class="toys-landing-benefits">
@@ -95,7 +115,7 @@
                     <li>
                         <span style="text-transform: uppercase;">
                             <b>отслеживай марки где удобно:</b> <br />
-                            на чеке, <u><a href="/personal/" target="_blank">в личном кабинете</a></u> на сайте
+                            на чеке, <u><a href="/personal/marki/" target="_blank">в личном кабинете</a></u> на сайте
                             и в приложении
                         </span>
                     </li>
@@ -103,17 +123,17 @@
                     <li>
                         <span style="text-transform: uppercase;">
                             <b>На сайте и в приложении:</b><br />
-                            выбери игру и добавь в корзину
+                            выбери игру и добавь в корзину,
                             нажми “списать марки” <br /><br />
 
-                            <b>при покупке офлайн</b> <br/>
-                            вам спишет марки кассир
+                            <b>при покупке в магазине</b> <br/>
+                            марки спишет продавец на кассе
                         </span>
                     </li>
 
                     <li>
                         <span style="text-transform: uppercase;">
-                            <b>Получи игру и развивай питомца</b>
+                            <b>Получи игру со скидкой и развивай питомца</b>
                         </span>
                     </li>
                 </ul>

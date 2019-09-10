@@ -101,36 +101,39 @@ class UserPasswordService
         }
     }
 
-    public function changePassword(int $userId, ?bool $checkPolicy = false)
+    public function changePassword(int $userId, ?bool $checkPolicy = false, ?string $link = '', ?string $shortLink = '', ?int $passwordLength = 0)
     {
         /** @var User $user */
         $user = $this->userRepository->find($userId);
 
-        if ($user) {
-            $password = $this->generatePassword($user, $checkPolicy);
+        if ($user && (strripos($user->getLogin(), '4lapy.ru') === FALSE || strripos($user->getEmail(), '4lapy.ru') === FALSE || strripos($user->getLogin(), 'register.phone') === FALSE)) {
+            $password = $this->generatePassword($user, $checkPolicy, $passwordLength);
             $this->setChangePasswordPossibleForAll(true);
             $this->userRepository->updatePassword($userId, $password);
             $this->setChangePasswordPossibleForAll(false);
 
-            $this->expertsenderService->sendNewPassword($password, $user);
+            $this->expertsenderService->sendNewPassword($password, $user, $link, $shortLink);
         }
     }
 
     /**
      * @param User $user
      * @param bool|null $checkPolicy
+     * @param int|null $passLength
      * @return string
      * @throws \Exception
      */
-    public function generatePassword(User $user, ?bool $checkPolicy = true): string
+    public function generatePassword(User $user, ?bool $checkPolicy = true, ?int $passLength = 0): string
     {
-        if ($checkPolicy) {
-            $this->chars .= '~!@#$%^&*()_+=-{}|<>';
-        }
         $policy = \CUser::GetGroupPolicy($user->getGroupsIds());
+        if ($passLength) {
+            $passwordLength = $passLength;
+        } else {
+            $passwordLength = $policy['PASSWORD_LENGTH'] + \random_int(1, 3);
+        }
         do {
-            $password = randString($policy['PASSWORD_LENGTH'] + \random_int(1, 3), $this->chars);
-        } while (!empty($this->cUser->CheckPasswordAgainstPolicy($password, $policy)) && $checkPolicy);
+            $password = randString($passwordLength, $this->chars);
+        } while (!empty($this->cUser->CheckPasswordAgainstPolicy($password, $policy)) && $checkPolicy && (int)filter_var($password, FILTER_SANITIZE_NUMBER_INT));
 
         return $password;
     }

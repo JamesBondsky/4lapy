@@ -11,6 +11,7 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Catalog\Product\Basket as BitrixBasket;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
@@ -48,6 +49,7 @@ use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Service\BrandService;
 use FourPaws\CatalogBundle\Service\CatalogGroupService;
 use FourPaws\CatalogBundle\Service\SubscribeDiscountService;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
@@ -609,7 +611,11 @@ class Offer extends IblockElement
             return $this->images;
         }
 
-        $this->images = ImageCollection::createFromIds($this->getImagesIds());
+        try {
+            $this->images = ImageCollection::createFromIds($this->getImagesIds());
+        } catch (SqlQueryException $e) {
+            $this->images = ImageCollection::createNoImageCollection();
+        }
 
         if ($this->images->count() < 1) {
             $this->images = ImageCollection::createNoImageCollection();
@@ -1488,7 +1494,13 @@ class Offer extends IblockElement
         }
         if ($this->colour) {
             $this->color->setName($this->colour->getName());
-            $this->color->setImageUrl($this->colour->getFilePath());
+            $filePath = $this->colour->getFilePath();
+            if ($filePath) {
+                try {
+                    $this->color->setImageUrl((new FullHrefDecorator($filePath))->getFullPublicPath());
+                } catch (SystemException $e) {
+                }
+            }
             $this->color->setHexCode($this->colour->getColorCode());
         }
     }
