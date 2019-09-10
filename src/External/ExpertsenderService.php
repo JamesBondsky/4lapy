@@ -1620,6 +1620,10 @@ class ExpertsenderService implements LoggerAwareInterface
             throw new ArgumentNullException('Отсутвует Id питомца');
         }
 
+        if ($newPetId == $oldPetId) {
+            return true;
+        }
+
         if ($user->hasEmail()) {
             $addUserToList = new AddUserToList();
             $addUserToList->setForce(true);
