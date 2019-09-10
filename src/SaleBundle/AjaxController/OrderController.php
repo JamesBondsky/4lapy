@@ -760,7 +760,6 @@ class OrderController extends Controller implements LoggerAwareInterface
             $deliveryDates[$i] = [
                 'value'     => FormatDate('l, Y-m-d', $deliveryTimestamp),
                 'text'     => FormatDate('l, d.m.Y', $deliveryTimestamp),
-                'date'     => FormatDate('d.m.Y', $deliveryTimestamp),
                 'selected' => ($i === 0) ? 'selected' : ''
             ];
         }
