@@ -87,6 +87,7 @@ class CStampsProductsComponent extends \CBitrixComponent
             'PROPERTY_VIDEO_LINK_MP4',
             'PROPERTY_VIDEO_LINK_OGV',
             'PROPERTY_VIDEO_LINK_WEBM',
+            'PROPERTY_VIDEO_LINK_YT',
             'PROPERTY_VIDEO_PREVIEW',
             'PROPERTY_OFFER_XML_ID',
             'PROPERTY_PREVIEW_PICTURE_MOBILE',
@@ -124,6 +125,7 @@ class CStampsProductsComponent extends \CBitrixComponent
                         'mp4' => (!empty($arElement['PROPERTY_VIDEO_LINK_MP4_VALUE'])) ? $arElement['PROPERTY_VIDEO_LINK_MP4_VALUE'] : null,
                         'ogv' => (!empty($arElement['PROPERTY_VIDEO_LINK_OGV_VALUE'])) ? $arElement['PROPERTY_VIDEO_LINK_OGV_VALUE'] : null,
                         'webm' => (!empty($arElement['PROPERTY_VIDEO_LINK_WEBM_VALUE'])) ? $arElement['PROPERTY_VIDEO_LINK_WEBM_VALUE'] : null,
+                        'yt' => (!empty($arElement['PROPERTY_VIDEO_LINK_YT_VALUE']) ? $arElement['PROPERTY_VIDEO_LINK_YT_VALUE'] : null),
                     ]
                 ],
                 'offer_xml_id' => $arElement['PROPERTY_OFFER_XML_ID_VALUE'],
