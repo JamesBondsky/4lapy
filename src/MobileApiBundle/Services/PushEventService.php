@@ -303,12 +303,25 @@ class PushEventService
                 $this->log()->error('Ошибка при отправке push ios ' . $e->getMessage());
             }
 
-            foreach ($pushManager->getResponse()->getParsedResponses() as $token => $response) {
-                if (is_null($response['id'])) {
-                    if (isset($pushId[$token])) {
-                        $pushId[$token]->setSuccessExec(ApiPushEvent::EXEC_SUCCESS_CODE);
+            $haveThrow = false;
+
+            foreach ($response as $responseItem) {
+                if ($responseItem['token'] != 0) {
+                    $haveThrow = true;
+                }
+            }
+
+            foreach ($response as $token => $responseItem) {
+                if ($haveThrow) {
+                    if ($responseItem['token'] != 0) {
+                        $pushId[$token]->setServiceResponseStatus($responseItem['token']);
+                        $pushId[$token]->setSuccessExec($responseItem['token'] > 0 ? ApiPushEvent::EXEC_FAIL_CODE : ApiPushEvent::EXEC_SUCCESS_CODE);
                         $this->apiPushEventRepository->update($pushId[$token]);
                     }
+                } else {
+                    $pushId[$token]->setServiceResponseStatus($responseItem['token']);
+                    $pushId[$token]->setSuccessExec($responseItem['token'] > 0 ? ApiPushEvent::EXEC_FAIL_CODE : ApiPushEvent::EXEC_SUCCESS_CODE);
+                    $this->apiPushEventRepository->update($pushId[$token]);
                 }
             }
         }
