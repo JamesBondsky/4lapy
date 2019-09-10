@@ -93,8 +93,8 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
         foreach ($component->getProductCollection() as $key => $product) {
             $isLastProducts = (!\in_array($product->getXmlId(), StampService::FIRST_PRODUCT_XML_ID));
             foreach ($product->getOffers() as $offer) {
-                if (!\in_array($offer->getXmlId(), StampService::FIRST_PRODUCT_XML_ID)) {
-                    $isLastProducts = true;
+                if (\in_array($offer->getXmlId(), StampService::FIRST_PRODUCT_XML_ID)) {
+                    $isLastProducts = false;
                 }
             }
             if ($isLastProducts) {

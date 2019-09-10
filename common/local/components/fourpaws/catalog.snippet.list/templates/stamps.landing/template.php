@@ -60,7 +60,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
 
                 foreach ($product->getOffers() as $offer) {
                     if (\in_array($offer->getXmlId(), StampService::FIRST_PRODUCT_XML_ID)) {
-                        $show = true;
+                        $show = false;
                     }
                 }
 
