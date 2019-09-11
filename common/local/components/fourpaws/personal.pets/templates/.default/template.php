@@ -23,7 +23,7 @@ $items = $arResult['ITEMS'];
                      data-image="<?= $pet->getResizePopupImgPath() ?>"
                      data-name-pet="<?= $pet->getName() ?>"
                      data-type="<?= $pet->getType() ?>"
-                     data-breed="<?= $pet->getBreed() ?>"
+                     data-breed="<?= $pet->getBreedId() ?>"
                      data-data="<?php $birthday = $pet->getBirthday();
                      echo $birthday instanceof Date ? $birthday->format('d.m.Y') : '' ?>"
                      data-male="<?= $pet->getCodeGender() === 'M' ? 1 : 0 ?>"
