@@ -130,7 +130,6 @@
                         <label class="b-input-line__label" for="size-pet">Размер</label>
                     </div>
                     <div class="b-input b-input--registration-form">
-                        <span>Выберите из списка:</span>
                         <select class="b-select__block b-select__block--subscribe-delivery js-pet-size js-no-valid"
                                 id="size-pet"
                                 name="UF_SIZE">
@@ -203,6 +202,14 @@
                                 data-text="0"
                                 name="UF_NECK" />
                             <div class="b-error"><span class="js-message"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet" style="display: none;" data-lk-pets-breed="size-select-measure-concrete-block">
+                        <div class="b-input-line__label-wrapper">
+                            <div class="b-input-line__label" style="font-weight: 400;">
+                                Скорее всего, у Вашего питомца <b data-lk-pets-breed="size-select-measure-concrete-size"></b> размер.
                             </div>
                         </div>
                     </div>

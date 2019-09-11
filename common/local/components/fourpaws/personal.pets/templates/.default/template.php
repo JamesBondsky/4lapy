@@ -28,7 +28,7 @@ $items = $arResult['ITEMS'];
                      echo $birthday instanceof Date ? $birthday->format('d.m.Y') : '' ?>"
                      data-male="<?= $pet->getCodeGender() === 'M' ? 1 : 0 ?>"
                      data-female="<?= $pet->getCodeGender() === 'F' ? 1 : 0 ?>"
-                     data-size="<?= $pet->getSize() ?>"
+                     data-size="<?= $pet->getSizeTitle() === 'нестандартный' ? 'UNKNOWN' : $pet->getSize() ?>"
                      data-chest="<?= $pet->getChest() ?>"
                      data-back="<?= $pet->getBack() ?>"
                      data-neck="<?= $pet->getNeck() ?>"
