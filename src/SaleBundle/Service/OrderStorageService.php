@@ -26,6 +26,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
+use FourPaws\DeliveryBundle\Exception\RuntimeException;
 use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
@@ -232,6 +233,17 @@ class OrderStorageService
             case OrderStorageEnum::DELIVERY_STEP:
                 try {
                     $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
+
+                    // проверка на случай, когда текущая дата больше даты доставки
+                    if ($selectedDelivery = $this->getSelectedDelivery($storage)) {
+                        $deliveryDate = $selectedDelivery->getDeliveryDate();
+                        $date = new \DateTime();
+
+                        if ($deliveryDate->getTimestamp() < $date->getTimestamp()) {
+                            throw new RuntimeException('Дата доставки выбрана меньше, чем текущая дата');
+                        }
+                    }
+
                     if (\in_array($deliveryCode, array_merge(DeliveryService::DELIVERY_CODES, [DeliveryService::DELIVERY_DOSTAVISTA_CODE]), true)) {
                         switch ($data['delyveryType']) {
                             case 'twoDeliveries':

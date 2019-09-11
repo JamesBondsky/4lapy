@@ -42,6 +42,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
+use FourPaws\DeliveryBundle\Exception\RuntimeException;
 use FourPaws\DeliveryBundle\Service\DeliveryScheduleResultService;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\DostavistaService;
@@ -311,8 +312,8 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @param OrderStorage                    $storage
-     * @param Basket|null                     $basket
+     * @param OrderStorage $storage
+     * @param Basket|null $basket
      * @param CalculationResultInterface|null $selectedDelivery
      *
      * @return Order
@@ -324,12 +325,14 @@ class OrderService implements LoggerAwareInterface
      * @throws DeliveryNotAvailableException
      * @throws DeliveryNotFoundException
      * @throws LoaderException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
      * @throws OrderCreateException
      * @throws StoreNotFoundException
      * @throws UserMessageException
+     * @throws \Bitrix\Main\ObjectException
      */
     public function initOrder(
         OrderStorage $storage,
@@ -543,6 +546,10 @@ class OrderService implements LoggerAwareInterface
                     $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
                     break;
                 case 'DELIVERY_DATE':
+                    if ($selectedDelivery->getDeliveryDate()->getTimestamp() < (new \DateTime())->getTimestamp()) {
+                        throw new RuntimeException('Дата доставки выбрана меньше, чем текущая дата');
+                    }
+
                     $value = $selectedDelivery->getDeliveryDate()->format('d.m.Y');
                     break;
                 case 'DELIVERY_INTERVAL':
