@@ -593,16 +593,19 @@ class OrderService
             $priceSubscribe = $basketPriceSubscribe;
             $discount = $basketProducts->getDiscount();
             try {
+                $currentDelivery = null;
+
                 if ($isCourierDelivery) {
                     $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
                     foreach ($deliveries as $calculationResult) {
                         if ($this->appDeliveryService->isDelivery($calculationResult)) {
-                            $delivery = $calculationResult;
-                            $deliveryPrice = $delivery->getPrice();
+                            $currentDelivery = $calculationResult;
+                            $deliveryPrice = $currentDelivery->getPrice();
                         }
                     }
                 }
 
+                // TODO: этот код не работает, $deliveryCode отличаются от тех что в битрксе
                 if ($deliveryCode) {
                     if (!$deliveries) {
                         $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
@@ -610,7 +613,8 @@ class OrderService
 
                     foreach ($deliveries as $delivery) {
                         if ($delivery->getDeliveryCode() == $deliveryCode) {
-                            $deliveryPrice = $delivery->getDeliveryPrice();
+                            $currentDelivery = $delivery;
+                            $deliveryPrice = $currentDelivery->getDeliveryPrice();
                             break;
                         }
                     }
@@ -701,6 +705,11 @@ class OrderService
             ])
             ->setTotalPrice(
                 $totalPrice
+            )
+            ->setIsPhoneCallAvailable(
+                $deliveryCode != 'pickup'
+                && $deliveryCode != 'dostavista'
+                && ($currentDelivery && $currentDelivery->getStockResult()->getDelayed()->isEmpty())
             );
 
         if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
