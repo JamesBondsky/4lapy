@@ -75,7 +75,7 @@ class OrderParameter
      * Тип доставки
      * @Serializer\SerializedName("deliveryType")
      * @Serializer\Type("string")
-     * @Assert\Choice({"courier", "pickup"})
+     * @Assert\Choice({"courier", "pickup", "dostavista", "dobrolap"})
      * @var string
      */
     protected $deliveryType = '';
@@ -253,6 +253,63 @@ class OrderParameter
      * @var string
      */
     protected $promoCode = '';
+
+    /**
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("isSubscribe")
+     * @var int
+     */
+    protected $isSubscribe = false;
+
+    /**
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("subscribeFrequency")
+     * @var int
+     */
+    protected $subscribeFrequency;
+
+    /**
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("payWithBonus")
+     * @var int
+     */
+    protected $payWithBonus = false;
+
+    /**
+     * Штрих-код приюта для доставки Добролап
+     *
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("shelter")
+     * @var string
+     */
+    protected $shelter = '';
+
+    /**
+     * Текст для страницы спасибо
+     *
+     * @Serializer\Type("array")
+     * @Serializer\SerializedName("text")
+     * @var array
+     */
+    protected $text = [];
+
+    /**
+     * Флаг отвечает за активность акции добролап
+     *
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("activeDobrolap")
+     * @var bool
+     */
+    protected $activeDobrolap = false;
+
+    /**
+     * Иконки
+     *
+     * @Serializer\Type("array")
+     * @Serializer\SerializedName("icons")
+     * @var array
+     */
+    protected $icons = [];
 
     /**
      * @return Product[]
@@ -644,6 +701,126 @@ class OrderParameter
     public function setGoodsInfo(string $goodsInfo): OrderParameter
     {
         $this->goodsInfo = $goodsInfo;
+        return $this;
+    }
+
+    /**
+     * @param bool $subscribe
+     * @return OrderParameter
+     */
+    public function setSubscribe(int $subscribe): OrderParameter
+    {
+        $this->isSubscribe = $subscribe;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSubscribe(): int
+    {
+        return $this->isSubscribe;
+    }
+
+    /**
+     * @param bool $payWithBonus
+     * @return OrderParameter
+     */
+    public function setPayWithBonus(int $payWithBonus): OrderParameter
+    {
+        $this->payWithBonus = $payWithBonus;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPayWithBonus(): int
+    {
+        return $this->payWithBonus;
+    }
+
+    /**
+     * @param int $subscribeFrequency
+     * @return OrderParameter
+     */
+    public function setSubscribeFrequency(int $subscribeFrequency): OrderParameter
+    {
+        $this->subscribeFrequency = $subscribeFrequency;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSubscribeFrequency(): int
+    {
+        return $this->subscribeFrequency;
+    }
+
+    /**
+     * @return string
+     */
+    public function getShelter(): string
+    {
+        return $this->shelter;
+    }
+
+    /**
+     * @param string $shelter
+     *
+     * @return OrderParameter
+     */
+    public function setShelter(string $shelter): OrderParameter
+    {
+        $this->shelter = $shelter;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getText(): array
+    {
+        return $this->text;
+    }
+
+    /**
+     * @param array $text
+     * @return OrderParameter
+     */
+    public function setText(array $text): OrderParameter
+    {
+        $this->text = $text;
+        return $this;
+    }
+
+    public function setActiveDobrolap(bool $flag): OrderParameter
+    {
+        $this->activeDobrolap = $flag;
+        return $this;
+    }
+
+    public function getActiveDobrolap(): bool
+    {
+        return $this->activeDobrolap;
+    }
+
+    /**
+     * @return array
+     */
+    public function getIcons(): array
+    {
+        return $this->icons;
+    }
+
+    /**
+     * @param array $icons
+     * @return OrderParameter
+     */
+    public function setIcons(array $icons): OrderParameter
+    {
+        $this->icons = $icons;
         return $this;
     }
 }

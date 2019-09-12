@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace FourPaws\Components;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
@@ -19,18 +22,22 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
+use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\KioskBundle\Service\KioskService;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Discount\Utils\Detach\Adder;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
@@ -44,6 +51,9 @@ use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -56,8 +66,10 @@ use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
  * Class BasketComponent
  * @package FourPaws\Components
  */
-class BasketComponent extends CBitrixComponent
+class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+
     /**
      * @var BasketService
      */
@@ -79,6 +91,10 @@ class BasketComponent extends CBitrixComponent
      */
     private $couponsStorage;
     /**
+     * @var StampService
+     */
+    private $stampService;
+    /**
      * @var GoogleEcommerceService
      */
     private $ecommerceService;
@@ -92,6 +108,10 @@ class BasketComponent extends CBitrixComponent
     private $ecommerceSalePreset;
     private $promoDescriptions = [];
     private $offer2promoMap = [];
+    /**
+     * @var Manzana
+     */
+    private $manzana;
 
     /**
      * BasketComponent constructor.
@@ -114,6 +134,10 @@ class BasketComponent extends CBitrixComponent
         $this->ecommerceService = $container->get(GoogleEcommerceService::class);
         $this->ecommerceSalePreset = $container->get(SalePreset::class);
         $this->orderStorageService = $container->get(OrderStorageService::class);
+        $this->stampService = $container->get(StampService::class);
+        $this->manzana = $container->get(Manzana::class);
+
+        $this->setLogger(LoggerFactory::create('fourpaws_basket', 'manzana'));
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
@@ -141,7 +165,6 @@ class BasketComponent extends CBitrixComponent
         if (null === $basket || !\is_object($basket) || !($basket instanceof Basket)) {
             $basket = $this->basketService->getBasket();
         }
-
 
         $this->arResult['BASKET'] = $basket;
 
@@ -213,6 +236,56 @@ class BasketComponent extends CBitrixComponent
             $this->ecommerceSalePreset->createEcommerceToCheckoutFromBasket($basket, 1, 'Просмотр корзины'),
             true
         );
+        $this->arResult['IS_STAMPS_OFFER_ACTIVE'] = false;
+        if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
+            $this->arResult['IS_STAMPS_OFFER_ACTIVE'] = true;
+            /**  информация о марках */
+            try {
+                $activeStampsCount = $this->stampService->getActiveStampsCount();
+            } catch (Exception $e) {
+                $activeStampsCount = 0;
+                $this->log()->error(__METHOD__ . '. getActiveStampsCount exception: ' . $e->getMessage());
+            }
+            $this->arResult['MARKS_TO_BE_ADDED'] = $this->manzana->getStampsToBeAdded();
+            $this->arResult['ACTIVE_STAMPS_COUNT'] = $activeStampsCount;
+
+            foreach ($this->arResult['BASKET'] as $basketItem) {
+                $offer = $this->getOffer((int)$basketItem->getProductId());
+
+                if ($this->arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()]) {
+                    continue;
+                }
+
+                $this->arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()] = $this->stampService->getBasketItemStampsInfo($basketItem, $offer->getXmlId(), $activeStampsCount);
+            }
+        }
+
+        /** если авторизирован добавляем магнит */
+        if ($user) { // костыль, если магнитик не добавился сразу после оплаты исходного заказа)
+            $needAddDobrolapMagnet = $user->getGiftDobrolap();
+            /** Если пользователю должны магнит */
+            if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {
+                $magnetID = $this->basketService->getDobrolapMagnet()['ID'];
+                /** если магнит найден как оффер */
+                if ($magnetID) {
+                    $basketItem = $this->basketService->addOfferToBasket(
+                        (int)$magnetID,
+                        1,
+                        [],
+                        true,
+                        $basket
+                    );
+                    /** если магнит успешно добавлен в корзину */
+                    if ($basketItem->getId()) {
+                        $userDB = new \CUser;
+                        $fields = [
+                            'UF_GIFT_DOBROLAP' => false
+                        ];
+                        $userDB->Update($userId, $fields);
+                    }
+                }
+            }
+        }
 
         $this->includeComponentTemplate($this->getPage());
     }
@@ -226,11 +299,14 @@ class BasketComponent extends CBitrixComponent
     }
 
     /**
-     *
      * @param BasketItem $basketItem
      * @param bool $onlyApplied
-     *
      * @return array
+     * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
      */
     public function getPromoLink(BasketItem $basketItem, bool $onlyApplied = false): array
     {
@@ -253,6 +329,9 @@ class BasketComponent extends CBitrixComponent
         if ($basketDiscounts) {
             /** @noinspection ForeachSourceInspection */
             foreach (\array_column($basketDiscounts, 'DISCOUNT_ID') as $fakeId) {
+                if (\in_array($fakeId, Adder::getExcludedDiscountsFakeIds(), true)) {
+                    continue;
+                }
                 if ($onlyApplied && \in_array($fakeId, Adder::getSkippedDiscountsFakeIds(), true)) {
                     continue;
                 }
@@ -268,6 +347,9 @@ class BasketComponent extends CBitrixComponent
             $discountIds = $this->offer2promoMap[$this->getOffer((int)$basketItem->getProductId())->getXmlId()]
         ) {
             foreach ($discountIds as $id) {
+                if (\in_array($id, Adder::getExcludedDiscountsIds(), true)) {
+                    continue;
+                }
                 if (!$result[$id]) {
                     $result[$id] = $this->promoDescriptions[$id];
                 }
@@ -638,5 +720,13 @@ class BasketComponent extends CBitrixComponent
     {
         $this->arResult['COUPON'] = $this->couponsStorage->getApplicableCoupon() ?? '';
         $this->arResult['COUPON_DISCOUNT'] = !empty($this->arResult['COUPON']) ? $this->basketService->getPromocodeDiscount() : 0;
+    }
+
+    /**
+     * @return LoggerInterface
+     */
+    protected function log(): LoggerInterface
+    {
+        return $this->logger;
     }
 }

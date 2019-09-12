@@ -13,6 +13,7 @@ use Bitrix\Main\SystemException;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\AppBundle\Exception\NotFoundException;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\CityNearestRequest;
 use FourPaws\MobileApiBundle\Dto\Request\CitySearchRequest;
 use FourPaws\MobileApiBundle\Dto\Request\MetroStationsRequest;
@@ -23,7 +24,7 @@ use FourPaws\MobileApiBundle\Exception\NoneMetroInCityException;
 use FourPaws\MobileApiBundle\Services\Api\CityService as ApiCityService;
 use FourPaws\MobileApiBundle\Services\Api\LocationService as ApiLocationService;
 
-class LocationController extends FOSRestController
+class LocationController extends BaseController
 {
     /** @var ApiLocationService */
     private $apiLocationService;
@@ -131,8 +132,12 @@ class LocationController extends FOSRestController
      */
     public function getStreetListAction(StreetsListRequest $streetsListRequest)
     {
+        $streetList = [];
+        if(!empty($streetsListRequest->getStreet())){
+            $streetList = $this->apiLocationService->getStreets($streetsListRequest->getId(), $streetsListRequest->getStreet());
+        }
         return (new Response())->setData([
-            'street_list' => $this->apiLocationService->getStreets($streetsListRequest->getId(), $streetsListRequest->getStreet())
+            'street_list' => $streetList
         ]);
     }
 }

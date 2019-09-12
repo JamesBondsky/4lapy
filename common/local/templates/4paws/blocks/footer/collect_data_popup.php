@@ -92,7 +92,7 @@ if($USER->IsAuthorized()) {
                 clearInterval(timer);
                 $('#data_collect').trigger('click');
 
-                if(<?= $modal_number === 4 ?>) {
+                if(<?= $modal_number === 4 ? '1' : '0'?>) {
                     Coupon.showPersonPopup();
                 }
 

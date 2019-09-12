@@ -50,6 +50,7 @@ use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Bitrix\Main\Application as BitrixApplication;
 
 /**
  * Class ManzanaService
@@ -157,32 +158,65 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             ];
 
             $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
-
-            $result = $result->ExecuteResult->Value;
         } catch (Exception $e) {
-            unset($this->sessionId);
-
             try {
                 /** @noinspection PhpUndefinedFieldInspection */
+                $detailCode = $e->detail->details->code;
                 $detail = $e->detail->details->description;
             } catch (\Throwable $e) {
                 $detail = 'none';
             }
 
-            $this->logger->error(
-                sprintf(
-                    'Manzana execute error with contract id %s: %s, detail: %s, parameters: %s',
-                    $contract,
-                    $e->getMessage(),
-                    $detail,
-                    var_export($parameters, true)
-                )
-            );
+            if (isset($detailCode) && in_array($detailCode, [100880, 100881, 100260], false)) { // сессия не найдена или истекла
+                unset($detailCode);
+                unset($detail);
+                try {
+                    unset($this->sessionId);
+                    \COption::SetOptionString('main', 'manzanaSessionId', '');
+                    $sessionId = $this->authenticate();
+                    $arguments['sessionId'] = $sessionId;
+                    $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
+                } catch (Exception $e) {
+                    try {
+                        /** @noinspection PhpUndefinedFieldInspection */
+                        $detailCode = $e->detail->details->code;
+                        $detail = $e->detail->details->description;
+                    } catch (\Throwable $e) {
+                        $detail = 'none';
+                    }
 
-            throw new ExecuteException(
-                sprintf('Execute error: %s, detail: %s', $e->getMessage(), $detail), $e->getCode(), $e
-            );
+                    $this->logger->error(
+                        sprintf(
+                            'Manzana second execute error with contract id %s: %s, detail: %s, parameters: %s',
+                            $contract,
+                            $e->getMessage(),
+                            $detail,
+                            var_export($parameters, true)
+                        )
+                    );
+
+                    throw new ExecuteException(
+                        sprintf('Second execute error: %s, detail: %s', $e->getMessage(), $detail), $e->getCode(), $e
+                    );
+                }
+            } else {
+                $this->logger->error(
+                    sprintf(
+                        'Manzana execute error with contract id %s: %s, detail: %s, parameters: %s',
+                        $contract,
+                        $e->getMessage(),
+                        $detail,
+                        var_export($parameters, true)
+                    )
+                );
+
+                throw new ExecuteException(
+                    sprintf('Execute error: %s, detail: %s', $e->getMessage(), $detail), $e->getCode(), $e
+                );
+            }
         }
+
+        $result = $result->ExecuteResult->Value;
 
         return $result;
     }
@@ -198,6 +232,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if ($this->sessionId) {
             return $this->sessionId;
         }
+        if ($manzanaSessionId = \COption::GetOptionString('main', 'manzanaSessionId', '')) {
+            $this->sessionId = $manzanaSessionId;
+            return $manzanaSessionId;
+        }
 
         $arguments = [
             'login' => $this->parameters['login'],
@@ -210,6 +248,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 self::METHOD_AUTHENTICATE,
                 ['request_options' => $arguments]
             )->AuthenticateResult->SessionId;
+
+            \COption::SetOptionString('main', 'manzanaSessionId', $this->sessionId);
         } catch (Exception $e) {
             throw new AuthenticationException(sprintf('Auth error: %s', $e->getMessage()), $e->getCode(), $e);
         }
@@ -251,6 +291,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 }
             }
         }
+        if ($contact->phone) {
+            $contact->phone = PhoneHelper::getManzanaPhone($contact->phone);
+        }
         $data = $this->serializer->toArray($contact);
         /** на обновление это поле ненужно */
         if(isset($data['HasChildrenCode'])) {
@@ -290,12 +333,15 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getContactByUser(User $user = null): Client
     {
+        $this->sqlHeartBeat();
         if (!($user instanceof User)) {
             $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
         }
+        $this->sqlHeartBeat();
         if(empty($user->getManzanaNormalizePersonalPhone())){
             throw new ManzanaServiceContactSearchNullException('телефон не задан');
         }
+        $this->sqlHeartBeat();
 
         return $this->getContactByPhone(
             $user->getManzanaNormalizePersonalPhone()
@@ -503,6 +549,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if(empty($phone)){
             throw new ManzanaServiceContactSearchNullException('не указан телефон');
         }
+        if ($phone) {
+            $phone = PhoneHelper::getManzanaPhone($phone);
+        }
         return (string)$this->getContactByPhone($phone)->contactId;
     }
 
@@ -647,12 +696,17 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getCardsByContactId($contactId): array
     {
+        $this->sqlHeartBeat();
         if (!empty($this->cards[$contactId])) {
             $cards = $this->cards[$contactId];
         } else {
+            $this->sqlHeartBeat();
             $bag = new ParameterBag(['contact_id' => $contactId]);
+            $this->sqlHeartBeat();
             try {
+                $this->sqlHeartBeat();
                 $result = $this->execute(self::CONTRACT_CARDS, $bag->getParameters());
+                $this->sqlHeartBeat();
                 /** @var CardsByContractCards $cards */
                 $this->cards[$contactId] =
                 $cards = $this->serializer->deserialize($result, CardsByContractCards::class, 'xml')->cards->toArray();
@@ -755,9 +809,26 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function updateContactAsync(Client $contact)
     {
+        if ($contact->phone) {
+            $contact->phone = PhoneHelper::getManzanaPhone($contact->phone);
+        }
         /** @noinspection MissingService */
         $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_update_producer');
         $producer->publish($this->serializer->serialize($contact, 'json'));
+    }
+
+    /**
+     * Обновление/создание контакта. Отдельная очередь в rabbit для обновления параметров в манзане(последнее использование апи).
+     *
+     * @param array $data
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     */
+    public function updateContactMobileAsync(array $data)
+    {
+        /** @noinspection MissingService */
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_mobile_update_producer');
+        $producer->publish($this->serializer->serialize($data, 'json'));
     }
 
     /**
@@ -783,7 +854,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 $manzanaOrdersImportUserRepository->addUser($userId);
             } catch (Exception $e)
             {
-                $this->logger->critical(__METHOD__ . '. Не удалось добавить пользователя в manzanaOrdersImportUserRepository. userId: ' . $userId . '. Exception: ' . $e->getMessage());
+                $this->logger->error(__METHOD__ . '. Не удалось добавить пользователя в manzanaOrdersImportUserRepository. userId: ' . $userId . '. Exception: ' . $e->getMessage());
             }
         };
     }
@@ -800,10 +871,20 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function updateUserCardByClient(Client $client)
     {
         try {
+            $this->sqlHeartBeat();
             $userRepository = $this->userRepository;
 
+            if ($client->phone) {
+                $client->phone = PhoneHelper::getManzanaPhone($client->phone);
+            }
+
             /** обновим только у активного и делаем 1 запрос вместо 2-х */
-            $users = $userRepository->findBy(['=PERSONAL_PHONE' => PhoneHelper::normalizePhone($client->phone), 'ACTIVE' => 'Y']);
+            $users = $userRepository->findBy(['=LOGIN' => PhoneHelper::normalizePhone($client->phone), 'ACTIVE' => 'Y']);
+            $this->sqlHeartBeat();
+            if (count($users) === 0) {
+                $users = $userRepository->findBy(['=PERSONAL_PHONE' => PhoneHelper::normalizePhone($client->phone), 'ACTIVE' => 'Y']);
+            }
+            $this->sqlHeartBeat();
             if (\count($users) > 1) {
                 throw new TooManyUserFoundException('Found more than one user with same raw login');
             }
@@ -812,9 +893,12 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             }
             $user = \current($users);
 
+            $this->sqlHeartBeat();
             $card = $this->getActiveCardByContactId($client->contactId);
+            $this->sqlHeartBeat();
 
             if($user->getDiscountCardNumber() !== (string)$card->cardNumber) {
+                $this->sqlHeartBeat();
                 $userRepository->updateDiscountCard($user->getId(), (string)$card->cardNumber);
             }
         } catch (ManzanaCardIsNotFound $e) {
@@ -836,6 +920,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     private function getActiveCardByContactId(string $contactId): CardByContractCards
     {
+        $this->sqlHeartBeat();
         $cards = $this->getCardsByContactId($contactId);
         $activeCards = array_filter($cards, function (CardByContractCards $card) {
             return $card->isActive();
@@ -914,5 +999,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function prepareCardNumber(string $cardNumber): string
     {
         return preg_replace('~\D~', '', $cardNumber);
+    }
+
+    private function sqlHeartBeat()
+    {
+        BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
     }
 }

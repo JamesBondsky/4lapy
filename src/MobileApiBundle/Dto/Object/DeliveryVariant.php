@@ -20,6 +20,27 @@ class DeliveryVariant
      */
     protected $date = '';
 
+    /**
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("price")
+     * @var float
+     */
+    protected $price = 0.0;
+
+    /**
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("shortDate")
+     * @var string
+     */
+    protected $shortDate = '';
+
+    /**
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("courierPrice")
+     * @var float
+     */
+    protected $courierPrice = 0.0;
+
 
     /**
      * @return bool
@@ -54,6 +75,52 @@ class DeliveryVariant
     public function setDate(string $date): DeliveryVariant
     {
         $this->date = $date;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getPrice(): float
+    {
+        return $this->price;
+    }
+
+    /**
+     * @param float $price
+     * @return DeliveryVariant
+     */
+    public function setPrice(float $price): DeliveryVariant
+    {
+        $this->price = $price;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getShortDate(): string
+    {
+        return $this->shortDate;
+    }
+
+    /**
+     * @param string $shortDate
+     * @return DeliveryVariant
+     */
+    public function setShortDate(string $shortDate): DeliveryVariant
+    {
+        $this->shortDate = $shortDate;
+        return $this;
+    }
+
+    /**
+     * @param float $price
+     * @return DeliveryVariant
+     */
+    public function setCourierPrice(float $price): DeliveryVariant
+    {
+        $this->courierPrice = $price;
         return $this;
     }
 }

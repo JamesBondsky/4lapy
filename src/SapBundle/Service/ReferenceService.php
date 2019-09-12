@@ -156,6 +156,8 @@ class ReferenceService implements LoggerAwareInterface
      * @throws NotFoundDataManagerException
      * @throws LogicException
      * @throws CantCreateReferenceItem
+     *
+     * @deprecated use \FourPaws\SapBundle\Service\ReferenceService::fillFromMaterials instead
      */
     public function fillFromMaterial(Material $material): void
     {
@@ -177,6 +179,97 @@ class ReferenceService implements LoggerAwareInterface
                 $material->getCountryOfOriginCode(),
                 $material->getCountryOfOriginName()
             );
+        }
+    }
+
+    /**
+     * @param ArrayCollection $materials
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function fillFromMaterials(ArrayCollection $materials): void
+    {
+        $properties = $this->getPropertiesFromMaterials($materials);
+
+        foreach ($properties as $propertyCode => $propertyValues) {
+            if (!$this->referenceStorage->getReferenceRepositoryRegistry()->has($propertyCode)) {
+                unset($properties[$propertyCode]);
+            }
+        }
+
+        if ($properties) {
+            $this->createIfNotExistMultiple($properties);
+        }
+
+        unset($properties);
+
+
+        /**
+         * create or update country
+         */
+        /** @var Material $material */
+        $countries = [];
+        foreach ($materials as $material) {
+            if ($this->referenceStorage->getReferenceRepositoryRegistry()->has(SapProductField::COUNTRY)) {
+                $isSetCountry = $material->getCountryOfOriginCode() &&
+                    $material->getCountryOfOriginName();
+
+                if ($isSetCountry) {
+                    $countries[$material->getCountryOfOriginCode()] = (new PropertyValue())
+                        ->setCode($material->getCountryOfOriginCode())
+                        ->setName($material->getCountryOfOriginName());
+                }
+            }
+        }
+        if ($countries) {
+            $this->createIfNotExistMultiple([SapProductField::COUNTRY => $countries]);
+        }
+    }
+
+    /**
+     * @param ArrayCollection $materials
+     * @return array
+     */
+    private function getPropertiesFromMaterials(ArrayCollection $materials): array
+    {
+        $properties = [];
+        /** @var Material $material */
+        foreach ($materials as $material) {
+            foreach ($material->getProperties()->getProperties() as $property) {
+                $propertyValues = $property->getValues();
+                foreach ($propertyValues as $propertyValue) {
+                    if (trim($propertyValue->getName())) {
+                        $properties[$property->getCode()][$propertyValue->getCode()] = $propertyValue;
+                    }
+                }
+            }
+        }
+
+        return $properties;
+    }
+
+    /**
+     * @param array $properties
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    private function createIfNotExistMultiple(array $properties): void
+    {
+        foreach ($properties as $propertyCode => $propertyValues) {
+            $propertyValuesXmlIds = array_keys($propertyValues);
+            if ($propertyValuesXmlIds) {
+                $notExistingValuesXmlIds = $this->referenceStorage->getNotExistingXmlIdList($propertyCode, $propertyValuesXmlIds);
+
+                foreach ($notExistingValuesXmlIds as $valueXmlId) {
+                    $result = $this->create($propertyCode, $valueXmlId, $propertyValues[$valueXmlId]->getName());
+
+                    if (!$result) {
+                        throw new LogicException('For some reason created item was not created. $propertyCode: ' . $propertyCode . '. $valueXmlId: ' . $valueXmlId);
+                    }
+                }
+            }
         }
     }
 

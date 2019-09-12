@@ -7,6 +7,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -29,6 +30,7 @@ use FourPaws\External\Exception\ExpertsenderServiceBlackListException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\ExpertSender\Dto\ForgotBasket;
 use FourPaws\External\ExpertSender\Dto\PetBirthDay;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\Pet;
@@ -37,6 +39,7 @@ use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item;
+use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\PaymentService;
@@ -122,10 +125,14 @@ class ExpertsenderService implements LoggerAwareInterface
     public const NEW_CHECK_REG_LIST_ID = 8906;
     public const CHANGE_BONUS_CARD = 8026;
     public const PIGGY_BANK_SEND_EMAIL = 9006;
-    public const PERSONAL_OFFER_COUPON_SEND_EMAIL = 9234;
+    public const PERSONAL_OFFER_COUPON_SEND_EMAIL = 9607;
     public const GRANDIN_NEW_CHECK_REG_LIST_ID = 8906;
     public const ROYAL_CANIN_NEW_CHECK_REG_LIST_ID = 9195;
     public const FESTIVAL_NEW_USER_REG_LIST_ID = 9233;
+    public const MEALFEEL_NEW_CHECK_REG_LIST_ID = 8919;
+    public const PERSONAL_OFFER_COUPON_START_SEND_EMAIL = 9607;
+    public const PERSONAL_OFFER_COUPON_END_SEND_EMAIL = 9608;
+    public const COMPLETE_ORDER_DOBROLAP_LIST_ID = 9609;
     /**
      * BirthDay mail ids
      */
@@ -136,10 +143,17 @@ class ExpertsenderService implements LoggerAwareInterface
     public const BLACK_LIST_ERROR_CODE = 400;
     public const BLACK_LIST_ERROR_MESSAGE = 'Subscriber is blacklisted.';
 
+    public const CHANGE_PASSWORD = 9641;
+
+    /**
+     * @var SmsService
+     */
+    protected $smsService;
+
     /**
      * ExpertsenderService constructor.
      */
-    public function __construct(UserSearchInterface $userSearch)
+    public function __construct(UserSearchInterface $userSearch, SmsService $smsService)
     {
         $client = new Client();
         $this->guzzleClient = $client;
@@ -148,6 +162,8 @@ class ExpertsenderService implements LoggerAwareInterface
         $this->key = $key;
         $this->url = $url;
         $this->client = new ExpertSender($url, $key, $client);
+
+        $this->smsService = $smsService;
     }
 
     /**
@@ -242,6 +258,7 @@ class ExpertsenderService implements LoggerAwareInterface
     /**
      * @param User $user
      * @param string $backUrl
+     * @param string|null $hash
      *
      * @return bool
      * @throws ApplicationCreateException
@@ -253,7 +270,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
      * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      */
-    public function sendForgotPassword(User $user, string $backUrl = ''): bool
+    public function sendForgotPassword(User $user, string $backUrl = '', ?string $hash = ''): bool
     {
         if ($user->hasEmail()) {
             try {
@@ -264,12 +281,12 @@ class ExpertsenderService implements LoggerAwareInterface
                 $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
                 $email = $user->getEmail();
                 $userId = $user->getId();
-                $confirmService::setGeneratedHash($email, 'email_forgot');
+                $confirmService::setGeneratedHash($email, 'email_forgot', 0, $hash);
                 $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl . '&user_id=' . $userId : '';
                 $snippets = [
                     new Snippet('user_name', $user->getName() ?: $user->getFullName(), true),
                     new Snippet('link',
-                        (new FullHrefDecorator('/personal/forgot-password/?hash=' . $confirmService::getGeneratedCode('email_forgot') . '&email=' . $email . $backUrlText))->getFullPublicPath(),
+                        (new FullHrefDecorator('/personal/forgot-password/?hash=' . $confirmService::getGeneratedCode('email_forgot') . '&email=' . $email . $backUrlText . '&emailHash=' . $hash))->getFullPublicPath(),
                         true),
                 ];
 
@@ -629,7 +646,14 @@ class ExpertsenderService implements LoggerAwareInterface
             // зарегистрированный пользователь
             if ($isOnlinePayment) {
                 // онлайн-оплата
-                if (!$royalCaninAction) {
+                if ($orderService->getOrderDeliveryCode($order) === DeliveryService::DOBROLAP_DELIVERY_CODE) {
+                    $transactionId = self::COMPLETE_ORDER_DOBROLAP_LIST_ID;
+                    $shelterBarcode = $this->getPropertyValueByCode($order, 'DOBROLAP_SHELTER');
+                    $shelter = AnimalShelterTable::getByBarcode($shelterBarcode);
+                    if ($shelter) {
+                        $snippets[] = new Snippet('delivery_address', $shelter['name'] . ', ' . $shelter['city']);
+                    }
+                } elseif (!$royalCaninAction) {
                     $transactionId = self::NEW_ORDER_PAY_LIST_ID;
                 } else {
                     $transactionId = self::NEW_ORDER_PAY_LIST_ID_ROYAL_CANIN;
@@ -654,6 +678,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 } else {
                     $transactionId = self::NEW_ORDER_NOT_REG_PAY_LIST_ID_ROYAL_CANIN;
                 }
+                return false;
             } else {
                 // оплата при получении
                 if (!$royalCaninAction) {
@@ -880,7 +905,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws \InvalidArgumentException
      * @throws ExpertSenderOfferNotFoundException
      */
-    protected function getAltProductsItemsByBasket(Basket $basket): array
+    protected function getAltProductsItemsByBasket(?Basket $basket): array
     {
         $items = [];
         /** @var BasketItem $basketItem */
@@ -1236,6 +1261,33 @@ class ExpertsenderService implements LoggerAwareInterface
         return $transactionId;
     }
 
+    public function sendNewPassword(string $password, User $user, ?string $link = '', ?string $shortLink = '')
+    {
+        $snippets[] = new Snippet('user_name', htmlspecialcharsbx($user->getLogin()));
+        $snippets[] = new Snippet('pass', $password);
+        if ($link) {
+            $snippets[] = new Snippet('link', $link, true);
+        }
+
+        $email = $user->getEmail();
+
+        if ($email) {
+            $this->sendSystemTransactional(self::CHANGE_PASSWORD, $email, $snippets);
+        } else {
+            $phone = $user->getPersonalPhone();
+            if (!$phone) {
+                $phone = $user->getLogin();
+            }
+            $smsText = 'Вы давно не меняли пароль, ваш пароль изменен автоматически: ' . $password . "\nДля восстановления пароля перейдите по ссылке:";
+
+            if ($shortLink) {
+                $smsText .= ' ' . $shortLink;
+            }
+
+            $this->smsService->sendSmsImmediate($smsText, $phone);
+        }
+    }
+
     /**
      * @param int    $transactionId
      * @param string $email
@@ -1368,6 +1420,9 @@ class ExpertsenderService implements LoggerAwareInterface
                 case LandingController::$royalCaninLanding:
                     $transactionId = self::ROYAL_CANIN_NEW_CHECK_REG_LIST_ID;
                     break;
+                case LandingController::$mealfeelLanding:
+                    $transactionId = self::MEALFEEL_NEW_CHECK_REG_LIST_ID;
+                    break;
                 default:
                     $transactionId = self::GRANDIN_NEW_CHECK_REG_LIST_ID;
             }
@@ -1479,23 +1534,28 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param int $userId
-     * @param string $name
-     * @param string $email
-     * @param string $coupon
-     * @param string $base64
-     * @param string $couponDescription
-     * @param string $couponDateActiveTo
-     * @param string $discountValue
+     * @param $userId
+     * @param $name
+     * @param $email
+     * @param $coupon
+     * @param $base64
+     * @param $couponDescription
+     * @param $couponDateActiveTo
+     * @param $discountValue
+     * @param int|null $customTransactionId
      * @return bool
      * @throws ExpertSenderException
      * @throws ExpertsenderServiceApiException
      * @throws ExpertsenderServiceException
      */
-    public function sendPersonalOfferCouponEmail($userId, $name, $email, $coupon, $base64, $couponDescription, $couponDateActiveTo, $discountValue): bool
+    public function sendPersonalOfferCouponEmail($userId, $name, $email, $coupon, $base64, $couponDescription, $couponDateActiveTo, $discountValue, ?int $customTransactionId = 0): bool
     {
         if ($email) {
-            $transactionId = self::PERSONAL_OFFER_COUPON_SEND_EMAIL;
+            if ($customTransactionId) {
+                $transactionId = $customTransactionId;
+            } else {
+                $transactionId = self::PERSONAL_OFFER_COUPON_SEND_EMAIL;
+            }
 
             $this->log()->info(
                 __FUNCTION__,
@@ -1517,10 +1577,81 @@ class ExpertsenderService implements LoggerAwareInterface
             $snippets[] = new Snippet('coupon', htmlspecialcharsbx($coupon));
             $snippets[] = new Snippet('date', htmlspecialcharsbx($couponDateActiveTo));
             $snippets[] = new Snippet('url_img', $base64);
+            $snippets[] = new Snippet('description', htmlspecialcharsbx($couponDescription));
+            $snippets[] = new Snippet('user_name', $name);
             //$snippets[] = new Snippet('text', htmlspecialcharsbx());
 
             $this->sendSystemTransactional($transactionId, $email, $snippets);
             return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param Order  $order
+     * @param string $code
+     *
+     * @return string
+     */
+    public function getPropertyValueByCode(Order $order, string $code): string
+    {
+        try {
+            $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
+        } catch (ArgumentException $e) {
+        } catch (NotImplementedException $e) {
+        }
+
+        return (isset($propertyValue) && $propertyValue) ? ($propertyValue->getValue() ?? '') : '';
+    }
+
+    /**
+     * @param User $user
+     * @param bool $newPetId
+     * @param bool $oldPetId
+     * @param array $params
+     * @return bool
+     * @throws ExpertsenderServiceException
+     * @throws ArgumentNullException
+     */
+    public function sendAfterPetUpdate(User $user, $newPetId = null, $oldPetId = null, array $params = []): bool
+    {
+        if (!$newPetId && !$oldPetId) {
+            throw new ArgumentNullException('Отсутвует Id питомца');
+        }
+
+        if ($newPetId == $oldPetId) {
+            return true;
+        }
+
+        if ($user->hasEmail()) {
+            $addUserToList = new AddUserToList();
+            $addUserToList->setForce(true);
+            $addUserToList->setMode(static::MAIN_LIST_MODE);
+            $addUserToList->setListId(static::MAIN_LIST_ID);
+            $addUserToList->setEmail($user->getEmail());
+
+            if ($newPetId) {
+                $addUserToList->addProperty(new Property($newPetId, 'integer', 1));
+            }
+
+            if ($oldPetId) {
+                $addUserToList->addProperty(new Property($oldPetId, 'integer', 0));
+            }
+
+            try {
+                /** хеш строка для подтверждения мыла */
+                /** @var ConfirmCodeService $confirmService */
+                $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                $confirmService::setGeneratedHash($user->getEmail());
+                $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_HASH_ID, 'string', $confirmService::getGeneratedCode()));
+                unset($generatedHash, $confirmService);
+
+                $this->addUserToList($addUserToList);
+                return true;
+            } catch (Exception $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+            }
         }
 
         return false;

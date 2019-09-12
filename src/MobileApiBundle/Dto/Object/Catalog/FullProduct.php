@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Dto\Object\Catalog;
 
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\Bundle;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\Colour;
 use FourPaws\MobileApiBundle\Dto\Object\CatalogCategory;
 use JMS\Serializer\Annotation as Serializer;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\PackingVariant;
@@ -55,6 +56,13 @@ class FullProduct extends ShortProduct
     protected $packingVariants = [];
 
     /**
+     * @var FullProduct[]
+     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct>")
+     * @Serializer\SerializedName("colourVariants")
+     */
+    protected $colourVariants = [];
+
+    /**
      * @var SpecialOffer|null
      * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\SpecialOffer")
      * @Serializer\SerializedName("specialOffer")
@@ -67,6 +75,13 @@ class FullProduct extends ShortProduct
      * @Serializer\SerializedName("flavours")
      */
     protected $flavours;
+
+    /**
+     * @var Colour[]
+     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\Colour>")
+     * @Serializer\SerializedName("colours")
+     */
+    protected $colours = [];
 
     /**
      * @var string
@@ -145,6 +160,15 @@ class FullProduct extends ShortProduct
      * @Serializer\SerializedName("hasSpecialOffer")
      */
     protected $hasSpecialOffer = false;
+
+    /**
+     * ОбъектЦвет
+     *
+     * @var \FourPaws\MobileApiBundle\Dto\Object\Color
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Color")
+     * @Serializer\SerializedName("color")
+     */
+    protected $color;
 
     /**
      * @return CatalogCategory
@@ -226,6 +250,25 @@ class FullProduct extends ShortProduct
     }
 
     /**
+     * @return FullProduct[]
+     */
+    public function getColourVariants(): array
+    {
+        return $this->colourVariants ?? [];
+    }
+
+    /**
+     * @param FullProduct[] $colourVariants
+     *
+     * @return FullProduct
+     */
+    public function setColourVariants(array $colourVariants): FullProduct
+    {
+        $this->colourVariants = $colourVariants;
+        return $this;
+    }
+
+    /**
      * @return SpecialOffer
      */
     public function getSpecialOffer()
@@ -260,6 +303,25 @@ class FullProduct extends ShortProduct
     public function setFlavours(array $flavours): FullProduct
     {
         $this->flavours = $flavours;
+        return $this;
+    }
+
+    /**
+     * @return Colour[]
+     */
+    public function getColours(): array
+    {
+        return $this->colours;
+    }
+
+    /**
+     * @param Colour[] $colours
+     *
+     * @return FullProduct
+     */
+    public function setColours(array $colours): FullProduct
+    {
+        $this->colours = $colours;
         return $this;
     }
 

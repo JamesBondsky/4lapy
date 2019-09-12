@@ -57,7 +57,7 @@ class ApiPushEventRepository implements ApiPushEventRepositoryInterface
             '=PLATFORM' => static::PLATFORM_ANDROID,
             '<=DATE_TIME_EXEC' => new \Bitrix\Main\Type\DateTime(),
             '=SUCCESS_EXEC' => ApiPushEvent::EXEC_PENDING_CODE
-        ]);
+        ], [], 2000);
     }
 
     public function findForIos()
@@ -66,7 +66,7 @@ class ApiPushEventRepository implements ApiPushEventRepositoryInterface
             '=PLATFORM' => static::PLATFORM_IOS,
             '<=DATE_TIME_EXEC' => new \Bitrix\Main\Type\DateTime(),
             '=SUCCESS_EXEC' => ApiPushEvent::EXEC_PENDING_CODE
-        ]);
+        ], [], 100);
     }
 
     /**

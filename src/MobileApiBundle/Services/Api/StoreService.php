@@ -63,6 +63,11 @@ class StoreService
     /** @var DeliveryService */
     private $deliveryService;
 
+    /** @var array */
+    private $products = [];
+    /** @var array */
+    private $offers = [];
+
     public function __construct(
         AppStoreService $appStoreService,
         ApiProductService $apiProductService,
@@ -425,8 +430,21 @@ class StoreService
                 if ((int) $shopListOffer->getId() !== (int) $basketItem->getProductId()) {
                     continue;
                 }
-                $offer = OfferQuery::getById($shopListOffer->getId());
-                $product = $offer->getProduct();
+
+                if ($this->offers[$shopListOffer->getId()] == null) {
+                    $offer = OfferQuery::getById($shopListOffer->getId());
+                    $this->offers[$shopListOffer->getId()] = $offer;
+                } else {
+                    $offer = $this->offers[$shopListOffer->getId()];
+                }
+
+                if ($this->products[$offer->getId()] == null) {
+                    $product = $offer->getProduct();
+                    $this->products[$offer->getId()] = $product;
+                } else {
+                    $product = $this->products[$offer->getId()];
+                }
+
                 $quantity = $shopListOffer->getQuantity();
                 $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity);
                 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {

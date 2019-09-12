@@ -50,7 +50,7 @@ class StreetsListRequest implements SimpleUnserializeRequest, GetRequest
     /**
      * @return string
      */
-    public function getStreet(): string
+    public function getStreet(): ?string
     {
         return $this->street;
     }

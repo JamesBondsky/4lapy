@@ -5,6 +5,7 @@
  */
 
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
+use FourPaws\KioskBundle\Service\KioskService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -26,11 +27,21 @@ foreach ($arResult['ITEMS'] as $key => &$item) {
     }
     if ($image instanceof CropImageDecorator) {
         if ($key === 0) {
-            $cropWidth  = 630;
-            $cropHeight = 210;
+            if (KioskService::isKioskMode()) {
+                $cropWidth  = 480;
+                $cropHeight = 220;
+            }else {
+                $cropWidth = 630;
+                $cropHeight = 210;
+            }
         } else {
-            $cropWidth  = 305;
-            $cropHeight = 120;
+            if (KioskService::isKioskMode()) {
+                $cropWidth  = 230;
+                $cropHeight = 105;
+            }else {
+                $cropWidth  = 305;
+                $cropHeight = 120;
+            }
         }
         $item['PREVIEW_PICTURE']['SRC'] = $image->setCropWidth($cropWidth)->setCropHeight($cropHeight)->getSrc();
     }

@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Bitrix\Main\ObjectPropertyException;
 use CUser;
 use Exception;
 use Bitrix\Main\LoaderException;
@@ -184,5 +185,30 @@ class PersonalOffersService
 
         return $result;
 
+    }
+
+    /**
+     * @param string $orderID
+     *
+     * @return array|null
+     */
+    public function bindUnreservedDobrolapCoupon(string $orderID = ''): ?array
+    {
+        if(!$orderID){
+            return [
+                'success' => false,
+                'message' => 'Номер заказа не передан'
+            ];
+        }
+        $session = $this->apiUserSessionRepository->findByToken($this->tokenStorage->getToken()->getCredentials());
+        $userId = $session->getUserId();
+        try {
+            return $this->personalOffersService->bindDobrolapRandomCoupon($userId, $orderID, false, false);
+        } catch (IblockNotFoundException |ObjectPropertyException| ArgumentException |LoaderException |SystemException $e) {
+            return [
+                'success' => false,
+                'message' => $e->getMessage() . ' [' . $e->getCode() . ']'
+            ];
+        }
     }
 }

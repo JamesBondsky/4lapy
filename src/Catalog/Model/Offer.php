@@ -7,9 +7,11 @@
 namespace FourPaws\Catalog\Model;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Catalog\Product\Basket as BitrixBasket;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
@@ -30,6 +32,7 @@ use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Collection\ShareCollection;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
+use FourPaws\BitrixOrm\Model\ColorReferenceItem;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\Image;
@@ -37,6 +40,7 @@ use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
+use FourPaws\BitrixOrm\Query\HlbColorQuery;
 use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Collection\PriceCollection;
@@ -45,10 +49,14 @@ use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Service\BrandService;
 use FourPaws\CatalogBundle\Service\CatalogGroupService;
 use FourPaws\CatalogBundle\Service\SubscribeDiscountService;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\MobileApiBundle\Dto\Object\Color;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Helper\PriceHelper;
@@ -71,6 +79,7 @@ use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\EventDispatcher\Tests\SubscriberService;
+use WebArch\BitrixCache\BitrixCache;
 
 /**
  * Class Offer
@@ -89,6 +98,8 @@ class Offer extends IblockElement
     public const PACKAGE_LABEL_TYPE_SIZE = 'SIZE';
 
     public const PACKAGE_LABEL_TYPE_VOLUME = 'VOLUME';
+
+    public const PACKAGE_LABEL_TYPE_COLOUR = 'COLOUR';
 
     public const PACKAGE_LABEL_TYPE_WEIGHT = 'WEIGHT';
 
@@ -174,7 +185,7 @@ class Offer extends IblockElement
     protected $PROPERTY_COLOUR = '';
 
     /**
-     * @var HlbReferenceItem
+     * @var ColorReferenceItem
      */
     protected $colour;
 
@@ -268,8 +279,15 @@ class Offer extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_COLOUR_COMBINATION = '';
+
+    /**
+     * @var HlbReferenceItem
+     */
+    protected $colourCombination;
 
     /**
      * @var string
@@ -488,6 +506,20 @@ class Offer extends IblockElement
     protected $catalogGroupId;
 
     /**
+     * @var string
+     */
+    protected $regionCode;
+
+
+    /**
+     * @var \FourPaws\MobileApiBundle\Dto\Object\Color
+     * @Type("FourPaws\MobileApiBundle\Dto\Object\Color")
+     * @Accessor(getter="getPrices")
+     * @Groups({"elastic"})
+     */
+    protected $color = null;
+
+    /**
      * Offer constructor.
      *
      * @param array $fields
@@ -579,7 +611,11 @@ class Offer extends IblockElement
             return $this->images;
         }
 
-        $this->images = ImageCollection::createFromIds($this->getImagesIds());
+        try {
+            $this->images = ImageCollection::createFromIds($this->getImagesIds());
+        } catch (SqlQueryException $e) {
+            $this->images = ImageCollection::createNoImageCollection();
+        }
 
         if ($this->images->count() < 1) {
             $this->images = ImageCollection::createNoImageCollection();
@@ -624,19 +660,25 @@ class Offer extends IblockElement
     }
 
     /**
-     * @throws ServiceNotFoundException
+     * @return null|ColorReferenceItem
      * @throws ApplicationCreateException
-     * @throws RuntimeException
-     * @throws ServiceCircularReferenceException
-     * @return null|HlbReferenceItem
+     * @throws ArgumentException
+     * @throws SystemException
      */
-    public function getColor(): ?HlbReferenceItem
+    public function getColor(): ?ColorReferenceItem
     {
         if ((null === $this->colour) && $this->PROPERTY_COLOUR) {
-            $this->colour = ReferenceUtils::getReference(
-                Application::getHlBlockDataManager('bx.hlblock.colour'),
-                $this->PROPERTY_COLOUR
-            );
+            $colourDataManager = Application::getHlBlockDataManager('bx.hlblock.colour');
+            $color = (new HlbColorQuery($colourDataManager::query()))
+                ->withFilter(['=UF_XML_ID' => $this->PROPERTY_COLOUR])
+                ->exec()
+                ->current();
+
+            if ($color instanceof ColorReferenceItem) {
+                $this->colour = $color;
+            } else {
+                $this->colour = new ColorReferenceItem();
+            }
         }
 
         return $this->colour;
@@ -958,11 +1000,42 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return null|HlbReferenceItem
+     * @throws ApplicationCreateException
+     */
+    public function getColourCombination(): ?HlbReferenceItem
+    {
+        if ((null === $this->colourCombination) && $this->PROPERTY_COLOUR_COMBINATION) {
+            $this->colourCombination = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.colour'),
+                $this->PROPERTY_COLOUR_COMBINATION
+            );
+        }
+
+        return $this->colourCombination;
+    }
+
+    /**
      * @return string
      */
-    public function getColourCombination(): string
+    public function getColourCombinationXmlId(): string
     {
-        return (string)$this->PROPERTY_COLOUR_COMBINATION;
+        $this->PROPERTY_COLOUR_COMBINATION = $this->PROPERTY_COLOUR_COMBINATION ?: '';
+
+        return $this->PROPERTY_COLOUR_COMBINATION;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withColourCombinationXmlId(string $xmlId): self
+    {
+        $this->colourCombination = null;
+        $this->PROPERTY_COLOUR_COMBINATION = $xmlId;
+
+        return $this;
     }
 
     /**
@@ -1292,12 +1365,13 @@ class Offer extends IblockElement
      *
      * @param int $percent
      * @param int $quantity
+     * @param bool $orderSubscribePrice - кол-во бонусов по подписке на доставку
      *
      * @throws NotAuthorizedException
      *
      * @return float
      */
-    public function getBonusCount(int $percent, int $quantity = 1): float
+    public function getBonusCount(int $percent, int $quantity = 1, $orderSubscribePrice = false): float
     {
         $result = 0;
 
@@ -1324,10 +1398,15 @@ class Offer extends IblockElement
 
         if (
             !$this->isBonusExclude()
-            && !$this->isShare()
+            && !$this->isShare(true)
             && !$this->isRegionPrice()
         ) {
-            $result = $this->getPrice() * $quantity * $percent / 100;
+            $price = $this->getPrice();
+            if($orderSubscribePrice){
+                $price = $this->getSubscribePrice();
+            }
+
+            $result = $price * $quantity * $percent / 100;
         }
 
         return $result;
@@ -1340,11 +1419,11 @@ class Offer extends IblockElement
      *
      * @return string
      */
-    public function getBonusFormattedText(int $percent = 3, int $quantity = 1, int $precision = 2): string
+    public function getBonusFormattedText(int $percent = 3, int $quantity = 1, $orderSubscribePrice = false): string
     {
         $bonusText = '';
 
-        $bonus = floor($this->getBonusCount($percent, $quantity));
+        $bonus = floor($this->getBonusCount($percent, $quantity, $orderSubscribePrice));
         if ($bonus > 0) {
             $bonusText = \sprintf(
                 '+ %s %s',
@@ -1405,6 +1484,30 @@ class Offer extends IblockElement
         }
 
         $this->product = $product;
+    }
+
+    public function setColor()
+    {
+        $this->getColor();
+        if ($this->color == null) {
+            $this->color = new Color();
+        }
+        if ($this->colour) {
+            $this->color->setName($this->colour->getName());
+            $filePath = $this->colour->getFilePath();
+            if ($filePath) {
+                try {
+                    $this->color->setImageUrl((new FullHrefDecorator($filePath))->getFullPublicPath());
+                } catch (SystemException $e) {
+                }
+            }
+            $this->color->setHexCode($this->colour->getColorCode());
+        }
+    }
+
+    public function getColorProp()
+    {
+        return $this->color;
     }
 
     /**
@@ -1656,13 +1759,24 @@ class Offer extends IblockElement
     /**
      * @return bool
      */
-    public function isShare(): bool
+    public function isShare($excludePseudo = false): bool
     {
-        return !$this->getShare()->isEmpty();
+        $shareCollection = $this->getShare();
+
+        // псевдоакции
+        if($excludePseudo){
+            $shareCollection = $shareCollection->filter(function($share){
+                /** @var Share $share */
+                return !$share->getPropertySigncharge();
+            });
+        }
+
+        return !$shareCollection->isEmpty();
     }
 
     /**
      * @return ShareCollection
+     * @throws ApplicationCreateException
      */
     public function getShare(): ShareCollection
     {
@@ -1676,12 +1790,19 @@ class Offer extends IblockElement
                     'ACTIVE'            => 'Y',
                     'ACTIVE_DATE'       => 'Y',
                     'PROPERTY_PRODUCTS' => $this->getXmlId(),
+                    "LOGIC" => "AND",
+                    [
+                        "LOGIC" => "OR",
+                        ['PROPERTY_REGION' => false],
+                        ['PROPERTY_REGION' => $this->getRegionCode()],
+                    ]
                 ])
                 ->withSelect([
                     'ID',
                     'NAME',
                     'IBLOCK_ID',
                     'PREVIEW_PICTURE',
+                    'DETAIL_PICTURE',
                     'PREVIEW_TEXT',
                     'DATE_ACTIVE_FROM',
                     'DATE_ACTIVE_TO',
@@ -1770,6 +1891,46 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return string
+     * @throws ApplicationCreateException
+     */
+    public function getColorWithSize(): string
+    {
+        $result = [];
+
+        $color = $this->getColor();
+        if ($color) {
+            $colorName = $color->getName();
+            $result[] = $colorName;
+        }
+
+        $clothingSize = $this->getClothingSize();
+        if ($clothingSize) {
+            $clothingSizeName = $clothingSize->getName();
+            $result[] = $clothingSizeName;
+        }
+
+        return implode(', ', $result);
+    }
+
+    /**
+     * @return string
+     * @throws ApplicationCreateException
+     */
+    public function getOfferWithColor(): string
+    {
+        $clothingSize = $this->getClothingSize();
+        $color = $this->getColor();
+        if (!isset($clothingSize) || !isset($color)) {
+            return '';
+        }
+
+        $offerName = $clothingSize->getName();
+
+        return \sprintf('%s, %s', $offerName, $color->getName());
+    }
+
+    /**
      * Возвращает тип подписи упаковки
      *
      * @return string Одна из констант \FourPaws\Catalog\Model\Offer::PACKAGE_LABEL_TYPE_*
@@ -1785,8 +1946,11 @@ class Offer extends IblockElement
         }
 
         if ($this->getVolumeReference()) {
-
             return self::PACKAGE_LABEL_TYPE_VOLUME;
+        }
+
+        if ($this->getColourCombination() && $this->getColor()) {
+            return self::PACKAGE_LABEL_TYPE_COLOUR;
         }
 
         return self::PACKAGE_LABEL_TYPE_WEIGHT;
@@ -1919,6 +2083,29 @@ class Offer extends IblockElement
     {
         $this->prices = $prices;
         return $this;
+    }
+
+    /**
+     * @param string $regionCode
+     * @return Offer
+     */
+    public function setRegionCode(string $regionCode): Offer
+    {
+        $this->regionCode = $regionCode;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRegionCode(): string
+    {
+        if(null === $this->regionCode){
+            /** @var LocationService $locationService */
+            $locationService = Application::getInstance()->getContainer()->get('location.service');
+            $this->regionCode = $locationService->getCurrentRegionCode();
+        }
+        return $this->regionCode;
     }
 
     /**
@@ -2389,6 +2576,41 @@ class Offer extends IblockElement
     {
         $this->NAME = $newName;
         return $this;
+    }
+
+    /**
+     * При проверки наличия такие товары считаются всегда доступными
+     * @return bool
+     */
+    public function isIgnoreStocks()
+    {
+        return substr($this->getXmlId(), 0, 1) === '3';
+    }
+
+    public function isFashionDogsCltohes()
+    {
+        $getSections = function () {
+            $sectiondIds = [];
+            $iblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
+            $dbres = \CIBlockSection::GetList([], ["IBLOCK_ID" => $iblockId, "CODE" => 'odezhda-i-obuv'], false, ['ID', 'NAME']);
+            if(!$rootSection = $dbres->Fetch()){
+                throw new \Exception("На найден раздел Одежда и обувь для собак");
+            }
+            $sectiondIds[] = $rootSection['ID'];
+            $dbres = \CIBlockSection::GetList([], ["IBLOCK_ID" => $iblockId, "SECTION_ID" => $rootSection['ID'], "INCLUDE_SUBSECTIONS" => "Y"], false, ['ID', 'NAME']);
+            while($section = $dbres->Fetch()){
+                $sectiondIds[] = $section['ID'];
+            }
+            return $sectiondIds;
+        };
+
+        $sectiondIds = (new BitrixCache())
+            ->withId(__METHOD__)
+            ->withIblockTag(IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS))
+            ->withTime(84600 * 356)
+            ->resultOf($getSections);
+
+        return in_array($this->getProduct()->getIblockSectionId(), $sectiondIds);
     }
 
 }

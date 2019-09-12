@@ -1,4 +1,4 @@
-# 4 лапы
+﻿# 4 лапы
 
 ## Отключение почты:
 
@@ -28,11 +28,13 @@ https://api.esv2.com - валидный адрес
 ## Запуск консьюмеров для rabbit'а
 
 ```
-- ./bin/symfony_console r:c manzana_update # обработка очереди передачи контактов в ML
-- ./bin/symfony_console r:c catalog_sync   # обработка очереди изменения элементов каталога для изменения индекса elastic 
-- ./bin/symfony_console r:c callback_set   # обработка очереди отправки сообщений о запросе обратного звонка на АТС
-- ./bin/symfony_console r:c manzana_referral_add   # обработка очереди передачи рефералов в ML
-- ./bin/symfony_console r:c manzana_orders_import # обработка очереди запроса заказов пользователей в ML
+- ./bin/symfony_console rabbitmq:consumer manzana_update # обработка очереди передачи контактов в ML
+- ./bin/symfony_console rabbitmq:consumer catalog_sync   # обработка очереди изменения элементов каталога для изменения индекса elastic 
+- ./bin/symfony_console rabbitmq:consumer callback_set   # обработка очереди отправки сообщений о запросе обратного звонка на АТС
+- ./bin/symfony_console rabbitmq:consumer manzana_referral_add   # обработка очереди передачи рефералов в ML
+- ./bin/symfony_console rabbitmq:consumer manzana_orders_import # обработка очереди запроса заказов пользователей в ML
+- ./bin/symfony_console rabbitmq:consumer import_offers # обработка очереди импорта промокодов
+- ./bin/symfony_console rabbitmq:consumer manzana_mobile_update # обработка очереди обновления параметров пользователя в манзане
 ```
 
 ## Перезапуск консьюмеров манзаны по расписанию
@@ -46,11 +48,11 @@ https://api.esv2.com - валидный адрес
 ## Запуск импорта из SAP 
 
 ```
-- ./bin/symfony_console f:s:i catalog #Каталог (товары -> цены (+ простые акции) -> остатки на складах -> остатки в магазинах)
-- ./bin/symfony_console f:s:i order_status #Статусы заказа (заказы из SAP)
-- ./bin/symfony_console f:s:i payment # Задания на списание оплаты
-- ./bin/symfony_console f:s:i delivery_schedule # Расписания поставок
-- ./bin/symfony_console f:s:i bonus_buy # Сложные скидки из SAPBB 
+- ./bin/symfony_console fourpaws:sap:import catalog #Каталог (товары -> цены (+ простые акции) -> остатки на складах -> остатки в магазинах)
+- ./bin/symfony_console fourpaws:sap:import order_status #Статусы заказа (заказы из SAP)
+- ./bin/symfony_console fourpaws:sap:import payment # Задания на списание оплаты
+- ./bin/symfony_console fourpaws:sap:import delivery_schedule # Расписания поставок
+- ./bin/symfony_console fourpaws:sap:import bonus_buy # Сложные скидки из SAPBB 
 ```
 ```
 -f|--force - для сброса блокировки
@@ -59,8 +61,8 @@ https://api.esv2.com - валидный адрес
 ## Запуск пересчета графиков доставок
 
 ```
-- ./bin/symfony_console f:s:s # на завтрашний день
-- ./bin/symfony_console f:s:s --date="2000.01.01" # на конкретную дату
+- ./bin/symfony_console fourpaws:store:schedulescalculate # на завтрашний день
+- ./bin/symfony_console fourpaws:store:schedulescalculate --date="2000-01-01" # на конкретную дату (сгенерируется на следующий день после указанного)
 ```
 
 ## Запуск импорта местоположений DPD
@@ -102,10 +104,16 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console bitrix:mobileApi:push:queue
 ```
 
+## Рассылка персональных предложений на почту
+
+```
+- ./bin/symfony_console fourpaws:popup:notification
+```
+
 ## Фабрика фидов
 
 ```
-- ./bin/symfony_console b:f:f %id% --type %type% # id - ид профиля выгрузки, type - тип фида (yandex-market; google-merchant; retail-rocket; expert-sender)
+- ./bin/symfony_console bitrix:feed:factory %id% --type %type% # id - ид профиля выгрузки, type - тип фида (yandex-market; google-merchant; retail-rocket; expert-sender)
 ```
 
 ## Сервисы вагранта
@@ -121,8 +129,8 @@ password: guest
 
 ## Запуск переиндексации
 ```
-- ./bin/symfony_console f:i:r 
-- ./bin/symfony_console f:i:r -f # С пересозданием индекса 
+- ./bin/symfony_console fourpaws:indexer:reindex 
+- ./bin/symfony_console fourpaws:indexer:reindex -f # С пересозданием индекса 
 ```
 
 ## Сбросить пароль для пользователей группы FRONT_OFFICE_USERS
@@ -135,7 +143,7 @@ password: guest
 При первом запуске выполнить: 
 ```
 # Необходим поисковый индекс для тестового окружения
-- ./bin/symfony_console --env=test f:i:r
+- ./bin/symfony_console --env=test fourpaws:indexer:reindex
 
 # Билдим исходники для codeception 
 - .php vendor/bin/codecept build 

@@ -68,6 +68,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                 [
                     'filters'          => $filterToShow,
                     'dataLayerService' => $dataLayerService,
+                    'catalogRequest'   => $catalogRequest,
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">

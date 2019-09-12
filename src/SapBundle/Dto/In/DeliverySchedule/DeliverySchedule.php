@@ -146,6 +146,21 @@ class DeliverySchedule
     protected $manualDays;
 
     /**
+     * Регулярность расписания
+     * Z1 - регулярное
+     * Z2 - нерегулярное
+     * Z3 - ТПЗ
+     * Z9 - Исключения
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("ShedType")
+     *
+     * @var string
+     */
+    protected $regular;
+
+    /**
      * @return string
      */
     public function getXmlId(): string
@@ -153,9 +168,10 @@ class DeliverySchedule
         if (null === $this->xmlId) {
             $this->xmlId = \md5(
                 \sprintf(
-                    '%s|%s',
+                    '%s|%s|%s',
                     $this->getSenderCode(),
-                    $this->getRecipientCode()
+                    $this->getRecipientCode(),
+                    $this->getRegular()
                 )
             );
         }
@@ -351,5 +367,23 @@ class DeliverySchedule
         $this->manualDays = $manualDays;
 
         return $this;
+    }
+
+    /**
+     * @param string $regular
+     * @return DeliverySchedule
+     */
+    public function setRegular(string $regular): DeliverySchedule
+    {
+        $this->regular = $regular;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRegular(): string
+    {
+        return $this->regular;
     }
 }

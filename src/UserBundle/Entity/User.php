@@ -369,6 +369,15 @@ class User implements UserInterface
      */
     protected $activeBonus = 0;
 
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_ACTIVE_STAMPS")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $activeStamps = 0;
+
     /** @var bool
      * @Serializer\Type("boolean")
      * @Serializer\SerializedName("UF_ES_SUBSCRIBED")
@@ -376,6 +385,14 @@ class User implements UserInterface
      * @Serializer\SkipWhenEmpty()
      */
     protected $esSubscribed = false;
+
+    /** @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_GIFT_DOBROLAP")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $giftDobrolap = false;
 
     /**
      * @var bool
@@ -1468,6 +1485,45 @@ class User implements UserInterface
     public function setActiveBonus(float $activeBonus): User
     {
         $this->activeBonus = $activeBonus;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getActiveStamps(): int
+    {
+        return $this->activeStamps ?? 0;
+    }
+
+    /**
+     * @param int $activeStamps
+     * @return User
+     */
+    public function setActiveStamps(int $activeStamps): User
+    {
+        $this->activeStamps = $activeStamps;
+
+        return $this;
+    }
+
+    /**
+     * @return bool|null
+     */
+    public function getGiftDobrolap(): ?bool
+    {
+        return $this->giftDobrolap;
+    }
+
+    /**
+     * @param bool $giftDobrolap
+     *
+     * @return User
+     */
+    public function setGiftDobrolap(bool $giftDobrolap): User
+    {
+        $this->giftDobrolap = $giftDobrolap;
 
         return $this;
     }

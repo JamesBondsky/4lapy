@@ -204,10 +204,10 @@ class PickupResult extends BaseResult implements PickupResultInterface
         $schedule = $store->getSchedule();
         $hour = (int)$date->format('G') + 1;
         if ($hour <= $schedule->getFrom()) {
-            $date->setTime($schedule->getFrom() + 1, 0);
+            $date->setTime($schedule->getFrom() + 1, (int)$schedule->getFromMinutes());
         } elseif ($schedule->getTo() && $hour >= ($schedule->getTo() - 1)) {
             $date->modify('+1 day');
-            $date->setTime($schedule->getFrom() + 1, 0);
+            $date->setTime($schedule->getFrom() + 1, (int)$schedule->getFromMinutes());
         } else {
             $date->modify('+1 hour');
         }

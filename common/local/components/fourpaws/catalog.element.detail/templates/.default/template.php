@@ -15,11 +15,13 @@ use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\CatalogBundle\Service\SortService;
 use FourPaws\Components\CatalogElementDetailComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\KioskBundle\Service\KioskService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -29,6 +31,7 @@ global $APPLICATION;
 
 /** @var LocationService $locationService */
 $locationService = Application::getInstance()->getContainer()->get('location.service');
+$sortService = Application::getInstance()->getContainer()->get(SortService::class);
 
 /**
  * @todo Разворачивать всю цепочку нужных элементов в result_modifier
@@ -158,24 +161,103 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
     <div class="b-product-card__option-product js-weight-default">
         <?php //&& $product->isFood()
         if ($offers->count() > 0) {
-            /** @noinspection PhpUnhandledExceptionInspection */
-            if ($currentOffer->getPackageLabelType() === Offer::PACKAGE_LABEL_TYPE_SIZE) { ?>
-                <div class="b-product-card__weight">Размеры</div>
-            <?php } else { ?>
-                <div class="b-product-card__weight">Варианты фасовки</div>
-            <?php } ?>
+            $packageLabelType = $currentOffer->getPackageLabelType();
+            // Плашки с цветами вместо выпадающего списка поля "Цвет", если у товара только один размер
+            if ($packageLabelType === Offer::PACKAGE_LABEL_TYPE_SIZE && !empty($currentOffer->getColourCombination())) {
+	            $offersSizes = [];
+	            foreach ($offers as $offer) {
+		            if ($clothingSize = $offer->getClothingSize()) {
+	                    $offersSizes[$clothingSize->getId()] = $clothingSize->getId();
+		            }
+		            unset($clothingSize);
+	            }
+		        if (count($offersSizes) <= 1) {
+                    $packageLabelType = Offer::PACKAGE_LABEL_TYPE_COLOUR;
+		        }
+	            unset($offersSizes);
+            }
+            switch ($packageLabelType) {
+                case Offer::PACKAGE_LABEL_TYPE_SIZE:
+                    echo '<div class="b-product-card__weight">Размеры</div>';
+                    break;
+                case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+                    echo '<div class="b-product-card__weight">Варианты цветов</div>';
+                    break;
+                default:
+                    echo '<div class="b-product-card__weight">Варианты фасовки</div>';
+            }
+            ?>
             <div class="b-weight-container b-weight-container--product">
                 <ul class="b-weight-container__list b-weight-container__list--product">
                     <?php
-                    $isCurrentOffer = false;
+                    /*$isCurrentOffer = false;
+                    if ($packageLabelType === Offer::PACKAGE_LABEL_TYPE_SIZE) {
+                        $sizeOffersToShow = [];
+                        foreach ($offers as $offer) {
+                            $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
 
+                            $clothingSize = $offer->getClothingSize();
+
+                            if (isset($clothingSize)) {
+	                            if ($isCurrentOffer) {
+	                                $sizeOffersToShow[$clothingSize->getName()] = [
+                                        'id' => $offer->getId(),
+		                                'current' => true,
+                                        'available' => $offer->isAvailable()
+	                                ];
+	                            } else {
+		                            if (!array_key_exists($clothingSize->getName(), $sizeOffersToShow)
+			                            || (!$sizeOffersToShow[$clothingSize->getName()]['current'] && !$sizeOffersToShow[$clothingSize->getName()]['available'])
+		                            ) {
+                                        $sizeOffersToShow[$clothingSize->getName()] = [
+                                            'id' => $offer->getId(),
+	                                        'available' => $offer->isAvailable()
+                                        ];
+		                            }
+	                            }
+                            }
+                    	}
+                    }
+                    if ($sizeOffersToShow) {
+                        $sizeOffersToShowIds = array_column($sizeOffersToShow, 'id');
+                    }*/
+
+                    $isCurrentOffer = false;
                     foreach ($offers as $offer) {
+                        if ($packageLabelType === Offer::PACKAGE_LABEL_TYPE_SIZE) {
+	                        $currentColor = $currentOffer->getColor();
+	                        if ($currentColor) {
+	                            if ((!$offerColor = $offer->getColor())
+	                                || $offerColor->getId() !== $currentColor->getId()
+	                            ) {
+	                                continue;
+	                            }
+	                        }
+	                        unset ($currentColor);
+                        }
+                    	/*if ($sizeOffersToShowIds && !in_array($offer->getId(), $sizeOffersToShowIds)) {
+		                    continue;
+	                    }*/
                         $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
                         /** @noinspection PhpUnhandledExceptionInspection */
-                        $value = $offer->getPackageLabel(false, 0);
+                        $colourCombination = false;
+                        switch ($packageLabelType) {
+                            case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+                                $color = $offer->getColor();
+                                if ($color) {
+                                    $value = $color->getName();
+                                    $image = $color->getFilePath();
+                                    $colorHexCode = $color->getColorCode();
+                                    $colourCombination = true;
+                                }
+                                break;
+                        }
+                        if (!$colourCombination) {
+                            $value = $offer->getPackageLabel(false, 0);
+                        }
                         ?>
-                        <li class="b -weight-container__item b-weight-container__item--product<?= $isCurrentOffer ? ' active' : '' ?>">
-                            <a class="b-weight-container__link b-weight-container__link--product js-offer-link-<?= $offer->getId() ?> js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
+                        <li class="b-weight-container__item b-weight-container__item--product <? if ($colourCombination) { ?>b-weight-container__item--color<? } ?> <?= $isCurrentOffer ? ' active' : '' ?>">
+                            <a class="b-weight-container__link b-weight-container__link--product <? if ($colourCombination) { ?>b-weight-container__link--color<? } ?> js-offer-link-<?= $offer->getId() ?> js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
                                href="<?= $offer->getLink() ?>"
                                data-weight=" <?= $value ?>"
                                data-price=""
@@ -208,6 +290,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                                 <span class="b-weight-container__line" style="display: none" data-not-available>
                                     <span class="b-weight-container__not">Нет в наличии</span>
                                 </span>
+                                <? if ($colourCombination) { ?>
+                                    <div class="b-weight-container__color" style="background: <?= $image ? 'url(' . $image . ')' : '#' . $colorHexCode ?>;"></div>
+                                <? } ?>
                             </a>
                         </li>
                     <?php } ?>
@@ -225,6 +310,10 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
     <div class="b-product-card__info js-preloader-fix">
         <div class="b-product-information">
             <ul class="b-product-information__list">
+	            <?
+	            //$showClothingSizeSelect = $packageLabelType === Offer::PACKAGE_LABEL_TYPE_COLOUR && !empty($currentOffer->getClothingSize());
+	            $showColorSelect = $packageLabelType === Offer::PACKAGE_LABEL_TYPE_SIZE && !empty($currentOffer->getColourCombination());
+	            ?>
                 <?php if ($currentOffer->getClothingSize()) {
                     ?>
                     <li class="b-product-information__item">
@@ -250,6 +339,15 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         </div>
                     </li>
                     <?php
+                }
+                if (!$showColorSelect && ($currentOfferColor = $currentOffer->getColor())) {
+                	?>
+	                <li class="b-product-information__item">
+		                <div class="b-product-information__title-info js-info-product">Цвет</div>
+		                <div class="b-product-information__value"><?= $currentOfferColor
+                                ->getName() ?></div>
+	                </li>
+	                <?
                 } ?>
                 <li class="b-product-information__item">
                     <div class="b-product-information__title-info b-product-information__title-info--price">Цена</div>
@@ -269,46 +367,70 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 <li class="b-product-information__item b-product-information__item--subscribe js-subscribe-price-block">
                     <div class="b-product-information__title-info b-product-information__title-info--subscribe">По подписке</div>
                     <div class="b-product-information__value b-product-information__value--subscribe">
-                        <span class="b-product-information__price js-subscribe-price"></span>
-                        <span class="b-ruble b-ruble--product-information"> ₽</span>
-                        <span class="b-product-information__icon-subscribe">
-                            <span class="b-icon b-icon--info-contour">
-                                <?= new SvgDecorator('icon-info-contour', 15, 15) ?>
-                            </span>
-                            <span class="b-icon b-icon--info-fill">
-                                <?= new SvgDecorator('icon-info-fill', 15, 15) ?>
-                            </span>
-                        </span>
-                        <div class="info-subscribe-product">
-                            <div class="info-subscribe-product__item">
-                                <div class="info-subscribe-product__icon">
-                                    <?= new SvgDecorator('icon-retime', 24, 24) ?>
+                        <div class="b-product-information__value-subscribe">
+                            <span class="logo-subscr"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
+                            <span class="b-product-information__price js-subscribe-price"></span>
+                            <span class="b-ruble b-ruble--product-information"> ₽</span>
+                            <div class="info-subscribe-product">
+                                <div class="info-subscribe-product__item">
+                                    <div class="info-subscribe-product__icon">
+                                        <?= new SvgDecorator('icon-calendar', 24, 24) ?>
+                                    </div>
+                                    <div class="info-subscribe-product__text">Установите удобное расписание доставок</div>
                                 </div>
-                                <div class="info-subscribe-product__text">Регулярная доставка необходимых товаров в&nbsp;удобное для вас время.</div>
-                            </div>
-                            <div class="info-subscribe-product__item">
-                                <div class="info-subscribe-product__icon">
-                                    <?= new SvgDecorator('icon-price', 24, 24) ?>
+                                <div class="info-subscribe-product__item">
+                                    <div class="info-subscribe-product__icon">
+                                        <?= new SvgDecorator('icon-cancel', 24, 24) ?>
+                                    </div>
+                                    <div class="info-subscribe-product__text">Переносите или&nbsp;отменяйте доставку в&nbsp;любое время</div>
                                 </div>
-                                <div class="info-subscribe-product__text">Получайте специальную цену на&nbsp;некоторые товары.</div>
-                            </div>
-                            <div class="info-subscribe-product__item">
-                                <div class="info-subscribe-product__icon">
-                                    <?= new SvgDecorator('icon-calendar', 24, 24) ?>
+                                <div class="info-subscribe-product__item">
+                                    <div class="info-subscribe-product__icon">
+                                        <?= new SvgDecorator('icon-price', 24, 24) ?>
+                                    </div>
+                                    <div class="info-subscribe-product__text">Наслаждайтесь экономией денег и&nbsp;времени</div>
                                 </div>
-                                <div class="info-subscribe-product__text">Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;двух месяцев.</div>
-                            </div>
-                            <div class="info-subscribe-product__item">
-                                <div class="info-subscribe-product__icon">
-                                    <?= new SvgDecorator('icon-cancel', 24, 24) ?>
-                                </div>
-                                <div class="info-subscribe-product__text">Вы&nbsp;можете отказаться от&nbsp;подписки в&nbsp;любое время.</div>
+
+                                <div class="info-subscribe-product__primary">Перейдите в&nbsp;корзину для&nbsp;оформления подписки!</div>
                             </div>
                         </div>
+                        <span class="b-product-information__bonus b-product-information__bonus--subscribe js-bonus-subscribe-<?= $currentOffer->getId() ?>"></span>
+
                     </div>
                 </li>
 
 
+	            <?/*php if ($showClothingSizeSelect) {
+                    //$unionOffers = $component->getOffersByUnion('colour', $currentOffer->getFlavourCombination());
+		            $unionOffers = $offers;
+                    if (!$unionOffers->isEmpty()) {
+
+                        $unionOffersSort = [];
+                        foreach ($unionOffers as $unionOffer) {
+                            $unionOffersSort[$unionOffer->getOfferWithColor()] = $unionOffer;
+                        }
+                        ksort($unionOffersSort);
+
+                        ?>
+                        <li class="b-product-information__item">
+                            <div class="b-product-information__title-info">Размер</div>
+                            <div class="b-product-information__value b-product-information__value--select">
+                                <div class="b-select b-select--product">
+                                    <select class="b-select__block b-select__block--product js-select-link">
+                                        <?php /** @var Offer $unionOffer */
+                                        /*foreach ($unionOffersSort as $unionOffer) {
+                                            ?>
+                                            <option value="<?= $unionOffer->getDetailPageUrl() ?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
+                                                <?= $unionOffer->getOfferWithColor()?>
+                                            </option>
+                                            <?php
+                                        } ?>
+                                    </select>
+                                </div>
+                            </div>
+                        </li>
+                    <?php }
+                }*/ ?>
 
                 <?php if (!empty($currentOffer->getFlavourCombination())) {
                     $unionOffers = $component->getOffersByUnion('flavour', $currentOffer->getFlavourCombination());
@@ -340,21 +462,20 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         </li>
                     <?php }
                 } ?>
-                <?php if (!empty($currentOffer->getColourCombination())) {
+                <?php if ($showColorSelect) {
                     $continue = true;
                     if (trim($currentOffer->getFlavourCombination()) === trim($currentOffer->getColourCombination())) {
                         $continue = false;
                     }
                     if ($continue) {
-                        $unionOffers = $component->getOffersByUnion('color', $currentOffer->getColourCombination());
+                        $unionOffers = $component->getOffersByUnion('color', $currentOffer->getColourCombinationXmlId());
                         if (!$unionOffers->isEmpty()) {
 
                             $unionOffersSort = [];
                             foreach ($unionOffers as $unionOffer) {
-                                $unionOffersSort[$unionOffer->getName()] = $unionOffer;
+                                $unionOffersSort[$unionOffer->getColorWithSize()] = $unionOffer;
                             }
-                            ksort($unionOffersSort);
-
+                            $sortService->colorWithSizeSort($unionOffersSorted);
                             ?>
                             <li class="b-product-information__item">
                                 <div class="b-product-information__title-info">Цвет
@@ -366,7 +487,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                                             foreach ($unionOffersSort as $unionOffer) {
                                                 ?>
                                                 <option value="<?= $unionOffer->getDetailPageUrl() ?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
-                                                    <?= $unionOffer->getName() ?>
+                                                    <?= $unionOffer->getColorWithSize() ?>
                                                 </option>
                                                 <?php
                                             } ?>
@@ -429,32 +550,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 </a>
             <?php } ?>
             <hr class="b-counter-basket__hr">
-            <?php if ($currentOffer->isShare()) {
-                /** @var IblockElement $share */
-                foreach ($currentOffer->getShare() as $share) {
-                    $activeFrom = $share->getDateActiveFrom();
-                    $activeTo = $share->getDateActiveTo(); ?>
-                    <a href="<?= $share->getDetailPageUrl() ?>" title="<?= $share->getName() ?>" <?= $arParams['IS_POPUP'] ? 'target="_blank"' : ''?>>
-                        <p class="b-counter-basket__text b-counter-basket__text--red">
-                            <?= $share->getName() ?>
-                        </p>
-                    </a>
-                    <?php if (!empty($share->getPreviewText()->getText())) { ?>
-                        <p class="b-counter-basket__text"><?= $share->getPreviewText()->getText() ?></p>
-                    <?php } ?>
-                    <p class="b-counter-basket__text">
-                        <?php if ($activeFrom && $activeTo) { ?>
-                            <?= DateHelper::replaceRuMonth($activeFrom->format('d #n#')) ?>
-                            —
-                            <?= DateHelper::replaceRuMonth($activeTo->format('d #n# Y')) ?>
-                        <?php } elseif ($activeFrom) { ?>
-                            С <?= DateHelper::replaceRuMonth($activeFrom->format('d #n#')) ?>
-                        <?php } elseif ($activeTo) { ?>
-                            По <?= DateHelper::replaceRuMonth($activeTo->format('d #n# Y')) ?>
-                        <?php } ?>
-                    </p>
-                <?php }
-            } ?>
+            <div class="js-dynaminc-content" data-id="shares"></div>
         </div>
         <div class="b-preloader">
             <div class="b-preloader__spinner">
@@ -481,7 +577,7 @@ $this->EndViewTarget();
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
 ?>
     <div class="b-tab-content__container active js-tab-content" data-tab-content="description">
-        <div class="b-description-tab">
+        <div class="b-description-tab <? if (KioskService::isKioskMode()) { ?>b-description-tab--description-product-detail<? } ?>">
             <div class="b-description-tab__column" itemprop="description" >
                 <div class="rc-product-detail">
                     <? if ($product->getLayoutDescription()->getText() != '' && $product->getLayoutDescription()->getText() != null) { ?>
@@ -549,42 +645,44 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
                             </div>
                         </li>
 
-                        <li class="b-characteristics-tab__item"
-                            <?= (!$val = $currentOffer->getCatalogProduct()->getWeight()) ? 'style="display:none"' : '' ?>>
-                            <div class="b-characteristics-tab__characteristics-text"><span>Вес</span>
-                                <div class="b-characteristics-tab__dots"></div>
-                            </div>
-                            <div class="b-characteristics-tab__characteristics-value">
-                                <?= WordHelper::showWeight($val, true); ?>
-                            </div>
-                        </li>
-                        <li class="b-characteristics-tab__item"
-                            <?= (!$val = $currentOffer->getCatalogProduct()->getLength()) ? 'style="display:none"' : '' ?>>
-                            <div class="b-characteristics-tab__characteristics-text"><span>Длина</span>
-                                <div class="b-characteristics-tab__dots"></div>
-                            </div>
-                            <div class="b-characteristics-tab__characteristics-value">
-                                <?= WordHelper::showLength($val); ?>
-                            </div>
-                        </li>
-                        <li class="b-characteristics-tab__item"
-                            <?= (!$val = $currentOffer->getCatalogProduct()->getWidth()) ? 'style="display:none"' : '' ?>>
-                            <div class="b-characteristics-tab__characteristics-text"><span>Ширина</span>
-                                <div class="b-characteristics-tab__dots"></div>
-                            </div>
-                            <div class="b-characteristics-tab__characteristics-value">
-                                <?= WordHelper::showLength($val); ?>
-                            </div>
-                        </li>
-                        <li class="b-characteristics-tab__item"
-                            <?= (!$val = $currentOffer->getCatalogProduct()->getHeight()) ? 'style="display:none"' : '' ?>>
-                            <div class="b-characteristics-tab__characteristics-text"><span>Высота</span>
-                                <div class="b-characteristics-tab__dots"></div>
-                            </div>
-                            <div class="b-characteristics-tab__characteristics-value">
-                                <?= WordHelper::showLength($val); ?>
-                            </div>
-                        </li>
+                        <? if(!$currentOffer->isFashionDogsCltohes()) { ?>
+                            <li class="b-characteristics-tab__item"
+                                <?= (!$val = $currentOffer->getCatalogProduct()->getWeight()) ? 'style="display:none"' : '' ?>>
+                                <div class="b-characteristics-tab__characteristics-text"><span>Вес</span>
+                                    <div class="b-characteristics-tab__dots"></div>
+                                </div>
+                                <div class="b-characteristics-tab__characteristics-value">
+                                    <?= WordHelper::showWeight($val, true); ?>
+                                </div>
+                            </li>
+                            <li class="b-characteristics-tab__item"
+                                <?= (!$val = $currentOffer->getCatalogProduct()->getLength()) ? 'style="display:none"' : '' ?>>
+                                <div class="b-characteristics-tab__characteristics-text"><span>Длина</span>
+                                    <div class="b-characteristics-tab__dots"></div>
+                                </div>
+                                <div class="b-characteristics-tab__characteristics-value">
+                                    <?= WordHelper::showLength($val); ?>
+                                </div>
+                            </li>
+                            <li class="b-characteristics-tab__item"
+                                <?= (!$val = $currentOffer->getCatalogProduct()->getWidth()) ? 'style="display:none"' : '' ?>>
+                                <div class="b-characteristics-tab__characteristics-text"><span>Ширина</span>
+                                    <div class="b-characteristics-tab__dots"></div>
+                                </div>
+                                <div class="b-characteristics-tab__characteristics-value">
+                                    <?= WordHelper::showLength($val); ?>
+                                </div>
+                            </li>
+                            <li class="b-characteristics-tab__item"
+                                <?= (!$val = $currentOffer->getCatalogProduct()->getHeight()) ? 'style="display:none"' : '' ?>>
+                                <div class="b-characteristics-tab__characteristics-text"><span>Высота</span>
+                                    <div class="b-characteristics-tab__dots"></div>
+                                </div>
+                                <div class="b-characteristics-tab__characteristics-value">
+                                    <?= WordHelper::showLength($val); ?>
+                                </div>
+                            </li>
+                        <? } ?>
 
                     </ul>
                 </div>

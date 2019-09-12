@@ -22,6 +22,7 @@ use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\UserBundle\Repository\FestivalUsersTable;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use FourPaws\UserBundle\Service\UserService;
+use phpDocumentor\Reflection\Types\Self_;
 use Picqer\Barcode\BarcodeGenerator;
 use Picqer\Barcode\BarcodeGeneratorPNG;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -44,11 +45,12 @@ class LandingController extends Controller
         'otherDog' => 'Собака средней или крупной породы',
     ];
 
-    static $landingSites = ['s2', 's3', 's4'];
+    static $landingSites = ['s2', 's3', 's4', 's5'];
 
     static $grandinLanding = 'grandin';
     static $royalCaninLanding = 'royal_canin';
     static $festivalLanding = 'festival';
+    static $mealfeelLanding = 'mealfeel';
 
     /** @var AjaxMess */
     private $ajaxMess;
@@ -82,7 +84,7 @@ class LandingController extends Controller
             $arFields = [$request->get('date'), $request->get('sum'), $request->get('surname'), $request->get('name'), $request->get('phone'), $request->get('email'), $request->get('rules')];
             $landingType = $request->get('landingType');
 
-            if ($landingType == self::$grandinLanding) {
+            if ($landingType == self::$grandinLanding || $landingType == self::$mealfeelLanding) {
                 $arFields[] = $request->get('petType');
             }
 
@@ -98,7 +100,7 @@ class LandingController extends Controller
                 throw new JsonResponseException($this->ajaxMess->getWrongDataError());
             }
 
-            if ($landingType == self::$grandinLanding && $request->get('sum') < 1800 || $landingType == self::$royalCaninLanding && $request->get('sum') < 1000) {
+            if ($landingType == self::$grandinLanding && $request->get('sum') < 1800 || $landingType == self::$royalCaninLanding && $request->get('sum') < 1000 || $landingType == self::$mealfeelLanding && $request->get('sum') < 1500) {
                 throw new JsonResponseException($this->ajaxMess->getWrongDataError());
             }
 
@@ -106,7 +108,7 @@ class LandingController extends Controller
             $userId = $USER->GetID();
 
             $requestIblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::GRANDIN_REQUEST);
-            if (in_array($landingType, array_keys([self::$royalCaninLanding, self::$grandinLanding]))) {
+            if (in_array($landingType, array_keys([self::$royalCaninLanding, self::$grandinLanding])) || in_array($landingType, array_keys([self::$royalCaninLanding, self::$mealfeelLanding]))) {
                 $filter = [
                     'IBLOCK_ID' => $requestIblockId,
                     'CHECK_PERMISSIONS' => 'N',

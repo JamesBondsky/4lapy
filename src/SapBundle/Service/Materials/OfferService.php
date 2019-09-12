@@ -195,15 +195,21 @@ class OfferService implements LoggerAwareInterface
      */
     protected function fillProperties(Offer $offer, Material $material): void
     {
-        /**
-         * @todo пока нет объединения по цвету
-         * $offer->withColourCombination(
-         * (string)$material->getProperties()->getPropertyValues(
-         * SapOfferProperty::COLOUR_COMBINATION,
-         * ['']
-         * )->first()
-         * );
-         */
+        $colorCombination = $material->getColorCombination();
+
+        if ($material->getMatType2() === '01') {
+            $offer->withColourCombination(
+                $material->getOfferXmlId()
+            );
+        } else {
+            $generalArticle = $material->getGeneralArticle();
+            if (!$generalArticle && $colorCombination) {
+                $generalArticle = $colorCombination;
+            }
+            $offer->withColourCombination(
+                $generalArticle
+            );
+        }
         $offer->withFlavourCombination(
             (string)$material->getProperties()->getPropertyValues(
                 SapOfferProperty::FLAVOUR_COMBINATION,

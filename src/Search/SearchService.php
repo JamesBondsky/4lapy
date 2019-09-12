@@ -9,6 +9,7 @@ use Elastica\Exception\InvalidException;
 use Elastica\Query;
 use Elastica\Query\AbstractQuery;
 use Elastica\Query\BoolQuery;
+use Elastica\Query\Ids;
 use Elastica\QueryBuilder;
 use Elastica\Search;
 use Elastica\Suggest;
@@ -109,20 +110,26 @@ class SearchService implements LoggerAwareInterface
         FilterCollection $filters,
         Sorting $sorting,
         Navigation $navigation,
-        string $searchString = ''
+        $queryTerm = ''
     ): ProductSearchResult
     {
         $search = $this->getIndexHelper()->createProductSearch();
 
-        if ($searchString !== '') {
-            $search->getQuery()->setMinScore(0.9);
+        // модификация для поиска сразу по id товаров
+        if(is_array($queryTerm)){
+            $queryRule = $this->getIdsQueryRule($filters, $queryTerm);
+        } else {
+            $queryRule = $this->getFullQueryRule($filters, $queryTerm);
+            if ($queryTerm !== '') {
+                $search->getQuery()->setMinScore(0.9);
+            }
         }
 
         $search->getQuery()
             ->setFrom($navigation->getFrom())
             ->setSize($navigation->getSize())
             ->setSort($sorting->getRule())
-            ->setParam('query', $this->getFullQueryRule($filters, $searchString))
+            ->setParam('query', $queryRule)
             ->setHighlight(['fields' => ['offers.XML_ID' => (object)[]]]);
 
         $this->getAggsHelper()->setAggs($search->getQuery(), $filters);
@@ -130,11 +137,11 @@ class SearchService implements LoggerAwareInterface
         $resultSet = $search->search();
 
         // если задана строка поиска и не найдено совпадений, то пробуем в другой раскладке
-        if ($searchString && !$resultSet->getTotalHits()) {
-            $from = preg_match('/[ЁёА-я]/u', $searchString) ? 'ru' : 'en';
+        if ($queryTerm && !is_array($queryTerm) && !$resultSet->getTotalHits()) {
+            $from = preg_match('/[ЁёА-я]/u', $queryTerm) ? 'ru' : 'en';
             $to = $from === 'ru' ? 'en' : 'ru';
-            $searchString = \CSearchLanguage::ConvertKeyboardLayout($searchString, $from, $to);
-            $search->getQuery()->setParam('query', $this->getFullQueryRule($filters, $searchString));
+            $queryTerm = \CSearchLanguage::ConvertKeyboardLayout($queryTerm, $from, $to);
+            $search->getQuery()->setParam('query', $this->getFullQueryRule($filters, $queryTerm));
             $newResultSet = $search->search();
             if ($newResultSet->getTotalHits()) {
                 $resultSet = $newResultSet;
@@ -151,7 +158,7 @@ class SearchService implements LoggerAwareInterface
             $this->getAggsHelper()->collapseFilters($filters, $resultSet);
         }
 
-        return new ProductSearchResult($resultSet, $navigation, $searchString);
+        return new ProductSearchResult($resultSet, $navigation, $queryTerm);
     }
 
     /**
@@ -728,6 +735,41 @@ class SearchService implements LoggerAwareInterface
         if ('' === $searchString) {
             $searchQuery->setBoostMode('sum');
         }
+
+        return $searchQuery;
+    }
+
+    /**
+     * @param FilterCollection $filters
+     * @param string           $searchString
+     *
+     * @return AbstractQuery
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws InvalidException
+     */
+    public function getIdsQueryRule(FilterCollection $filters, array $ids): AbstractQuery
+    {
+        $searchQuery = new Query\FunctionScore();
+
+        $queryBuilder = new QueryBuilder();
+        $boolQuery = $queryBuilder->query()->bool();
+        $boolQuery->addMust(
+            $queryBuilder->query()->nested()
+                ->setPath('offers')
+                ->setQuery(
+                    $queryBuilder->query()->terms('offers.XML_ID', $ids)
+                )
+        );
+        $searchQuery->setQuery($boolQuery);
+
+        /** @var AbstractQuery[] $filterSet */
+        $filterSet = $this->getFilterRule($filters);
+        foreach ($filterSet as $filterQuery) {
+            $boolQuery->addParam('filter', $filterQuery);
+        }
+
+        $this->addWeightFunctions($searchQuery);
 
         return $searchQuery;
     }

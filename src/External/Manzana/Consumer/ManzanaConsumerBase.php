@@ -15,31 +15,33 @@ use Psr\Log\LoggerInterface;
 abstract class ManzanaConsumerBase implements ConsumerInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
-    
+
     /**
      * @var Serializer
      */
     protected $serializer;
-    
+
     /**
      * @var ManzanaService
      */
     protected $manzanaService;
-    
+
+    protected $logName = 'ManzanaConsumer';
+
     public function __construct(Serializer $serializer, ManzanaService $manzanaService)
     {
         Application::includeBitrix();
-        
+
         $this->serializer     = $serializer;
         $this->manzanaService = $manzanaService;
-        $this->setLogger(LoggerFactory::create('ManzanaConsumer', 'manzana'));
+        $this->setLogger(LoggerFactory::create($this->logName, 'manzana'));
     }
-    
+
     /**
      * @inheritdoc
      */
     abstract public function execute(AMQPMessage $message);
-    
+
     /**
      * @return LoggerInterface
      */
@@ -47,5 +49,5 @@ abstract class ManzanaConsumerBase implements ConsumerInterface, LoggerAwareInte
     {
         return $this->logger;
     }
-    
+
 }

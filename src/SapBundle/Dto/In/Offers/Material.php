@@ -234,6 +234,30 @@ class Material
     protected $vat = '';
 
     /**
+     * Ставка НДС
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("MatType2")
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     *
+     * @var string
+     */
+    protected $matType2 = '';
+
+    /**
+     * Ставка НДС
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("GeneralArticle")
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     *
+     * @var string
+     */
+    protected $generalArticle = '';
+
+    /**
      * Единицы измерения
      *
      * @Serializer\XmlList(inline=true, entry="UOM")
@@ -670,6 +694,58 @@ class Material
     public function setVat(string $vat): Material
     {
         $this->vat = $vat;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMatType2(): string
+    {
+        return $this->matType2;
+    }
+
+    /**
+     * @param string $matType2
+     * @return Material
+     */
+    public function setMatType2(string $matType2): Material
+    {
+        $this->matType2 = $matType2;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getGeneralArticle(): string
+    {
+        return $this->generalArticle;
+    }
+
+    public function getColorCombination()
+    {
+        $combo = $this->getProperties()->getProperty('COLOUR_COMBINATION');
+
+        if ($combo) {
+            $values = $combo->getValues()->getValues();
+
+            foreach ($values as $valueItem) {
+                return $valueItem->getCode();
+            }
+        }
+
+        return false;
+    }
+    /**
+     * @param string $generalArticle
+     * @return Material
+     */
+    public function setGeneralArticle(string $generalArticle): Material
+    {
+        $this->generalArticle = $generalArticle;
 
         return $this;
     }

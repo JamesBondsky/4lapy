@@ -51,6 +51,10 @@ services:
         class: FourPaws\PersonalBundle\Service\PiggyBankService
         public: true
 
+    stamp.service:
+        class: FourPaws\PersonalBundle\Service\StampService
+        public: true
+
     personal_offers.service:
         class: FourPaws\PersonalBundle\Service\PersonalOffersService
         public: true

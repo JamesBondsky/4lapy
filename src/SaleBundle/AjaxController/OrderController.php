@@ -43,12 +43,14 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
+use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\ShopInfoService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\ShopInfoService as StoreShopInfoService;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Protobuf\Exception;
 use Psr\Log\LoggerAwareInterface;
@@ -180,6 +182,24 @@ class OrderController extends Controller implements LoggerAwareInterface
     }
 
     /**
+     * @Route("/shelter-search/", methods={"GET"})
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function shelterSearchAction(): JsonResponse
+    {
+        $shelters = AnimalShelterTable::getList()->fetchAll();
+        return JsonSuccessResponse::createWithData(
+            'Подгрузка успешна',
+            $shelters
+        );
+    }
+
+    /**
      * @Route("/store-search-by-items/", methods={"POST"})
      *
      * @throws SystemException
@@ -272,12 +292,49 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @throws ApplicationCreateException
      * @throws NotFoundException
      * @throws StoreNotFoundException
+     * @throws OrderStorageValidationException
+     * @throws SystemException
      */
     public function deliveryIntervalsAction(Request $request): JsonResponse
     {
         $result = [];
         $date = (int)$request->get('deliveryDate', 0);
-        $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
+        $currentStep = OrderStorageEnum::NOVALIDATE_STEP;
+        $okato = (int)$request->get('okato', 0);
+        $storage = $this->orderStorageService->getStorage();
+
+        if ($okato > 0) {
+            /**
+             * Ищем зону по ОКАТО
+             */
+            $okato = substr($okato, 0, 8);
+            $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+            if (count($locations)) {
+                /**
+                 * Обновляем storage, записываем зону
+                 */
+                $location = current($locations);
+                $defaultCity = $storage->getCity();
+                $defaultCityCode = $storage->getCityCode();
+                $storage->setCity($location['NAME']);
+                $storage->setCityCode($location['CODE']);
+                $storage->setMoscowDistrictCode($location['CODE']);
+                $this->orderStorageService->updateStorage($storage, $currentStep);
+
+                /**
+                 * Получаем цену доставки в этой зоне
+                 */
+                $innerDelivery = $this->orderStorageService->getInnerDelivery($storage);
+
+                if (!$innerDelivery) {
+                    $storage->setCity($defaultCity);
+                    $storage->setCityCode($defaultCityCode);
+                    $this->orderStorageService->updateStorage($storage, $currentStep);
+                }
+            }
+        }
+
+        $deliveries = $this->orderStorageService->getDeliveries($storage);
         $delivery = null;
         foreach ($deliveries as $deliveryItem) {
             if (!$this->deliveryService->isDelivery($deliveryItem)) {
@@ -489,6 +546,13 @@ class OrderController extends Controller implements LoggerAwareInterface
             ]);
 
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заказа']]);
+        } catch (BitrixRuntimeException $e) {
+            if (strpos($e->getMessage(), 'Пользователь с таким e-mail') !== false) {
+                return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Пользователь с таким e-mail уже существует']]);
+            } else {
+                $this->log()->error(__METHOD__ . '. Не удалось создать заказ. ', $e->getMessage());
+                throw new BitrixRuntimeException($e->getMessage(), $e->getCode());
+            }
         }
 
         $url = new Uri('/sale/order/' . $this->getNextStep($currentStep) . '/' . $order->getId() . '/');
@@ -663,11 +727,19 @@ class OrderController extends Controller implements LoggerAwareInterface
             $innerDelivery = $this->orderStorageService->getInnerDelivery($storage);
         }
 
-        $deliveryPrice = floatval(CurrencyHelper::formatPrice($innerDelivery->getPrice(), false));
+        if ($innerDelivery == null) {
+            $storage->setMoscowDistrictCode('');
+            $storage->setCity(DeliveryService::MOSCOW_LOCATION_NAME);
+            $storage->setCityCode(DeliveryService::MOSCOW_LOCATION_CODE);
+            $this->orderStorageService->updateStorage($storage, $currentStep);
+            return JsonErrorResponse::createWithData();
+        }
+
+        $deliveryPrice = $innerDelivery->getPrice();
         /** @var BasketService $basketService */
         $basketService = App::getInstance()->getContainer()->get(BasketService::class);
         $basket = $basketService->getBasket();
-        $basketPrice = floatval(CurrencyHelper::formatPrice($basket->getPrice(), false));
+        $basketPrice = $basket->getPrice();
         /**
          * интервалы
          */
@@ -684,8 +756,11 @@ class OrderController extends Controller implements LoggerAwareInterface
         $nextDeliveries = $this->deliveryService->getNextDeliveries($innerDelivery, 10);
         $deliveryDates = [];
         foreach ($nextDeliveries as $i => $nextDelivery) {
+            $deliveryTimestamp = $nextDelivery->getDeliveryDate()->getTimestamp();
             $deliveryDates[$i] = [
-                'text'     => FormatDate('l, d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp()),
+                'value'     => FormatDate('l, Y-m-d', $deliveryTimestamp),
+                'text'     => FormatDate('l, d.m.Y', $deliveryTimestamp),
+                'date'     => FormatDate('d.m.Y', $deliveryTimestamp),
                 'selected' => ($i === 0) ? 'selected' : ''
             ];
         }
@@ -693,10 +768,10 @@ class OrderController extends Controller implements LoggerAwareInterface
         return JsonSuccessResponse::createWithData(
             '',
             [
-                'delivery_price'     => $deliveryPrice,
-                'price_full'         => $basketPrice,
-                'price_total'        => $basketPrice + $deliveryPrice,
-                'deliver_date_price' => DeliveryTimeHelper::showTime($innerDelivery) . ', <span class="js-delivery--price">' . $deliveryPrice . '</span>',
+                'delivery_price'     => CurrencyHelper::formatPrice($deliveryPrice, false),
+                'price_full'         => CurrencyHelper::formatPrice($basketPrice, false),
+                'price_total'        => CurrencyHelper::formatPrice($basketPrice + $deliveryPrice, false),
+                'deliver_date_price' => DeliveryTimeHelper::showTime($innerDelivery) . ', <span class="js-delivery--price">' . $deliveryPrice . '</span> ₽',
                 'intervals'          => $intervals,
                 'delivery_dates'     => $deliveryDates
             ]

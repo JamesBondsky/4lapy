@@ -207,10 +207,19 @@ class Client
     public function addOrder($data): array
     {
         //фикс времени начала доставки для доставкисты
-        $curDate = (new \DateTime)->modify('+30 minutes');
-        $requireTimeStart = $curDate->format('c');
-        $data['points'][0]['required_start_datetime'] = $requireTimeStart;
-        $data['points'][1]['required_start_datetime'] = $requireTimeStart;
+        //$curDate = (new \DateTimeImmutable())->modify('+30 minutes');
+        //$requireTimeStart = $curDate;
+        //$requireTimeStart = $curDate->format('c');
+        //$data['points'][0]['required_start_datetime'] = $requireTimeStart;
+        //$data['points'][1]['required_start_datetime'] = $requireTimeStart;
+
+        $timeDelivery = (new \DateTime());
+
+        $data['points'][0]['required_start_datetime'] = $timeDelivery->format('c');
+        $data['points'][0]['required_finish_datetime'] = $timeDelivery->add(new \DateInterval('PT2H'))->format('c');
+
+        $data['points'][1]['required_start_datetime'] = $data['points'][0]['required_finish_datetime'];
+        $data['points'][1]['required_finish_datetime'] = $timeDelivery->add(new \DateInterval('PT1H'))->format('c');
 
         //проверка заполненности обязательных полей
         if (count($resCheck = $this->checkOrderFields($data)) > 0) {

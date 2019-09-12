@@ -162,7 +162,7 @@ class OrderDeliveryValidator extends ConstraintValidator
             if ($entity->isSplit()) {
                 $checkDate($entity->getSecondDeliveryDate(), $entity->getSecondDeliveryInterval(), $delivery);
             }
-        } elseif ($this->deliveryService->isDostavistaDelivery($delivery)) {
+        } elseif ($this->deliveryService->isDostavistaDelivery($delivery) || $this->deliveryService->isDobrolapDelivery($delivery)) {
         } else {
             /** @var PickupResultInterface $delivery */
             try {

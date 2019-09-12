@@ -641,6 +641,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      */
     public function ajaxGet($request): JsonResponse
     {
+        if (isset($_SESSION['COUNT_REGISTER_CONFIRM_CODE']) && $_SESSION['COUNT_REGISTER_CONFIRM_CODE'] > 3) {
+            $_SESSION['COUNT_REGISTER_CONFIRM_CODE'] = 0;
+        }
+
         $step = $request->get('step', '');
         $phone = $request->get('phone', '');
         if (!empty($phone)) {
@@ -845,7 +849,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
 
         if (!$checkedCaptcha) {
-            return $this->ajaxMess->getFailCaptchaCheckError();
+            return $this->ajaxMess->getFailCaptchaCheckError()->extendData(['gcaptcha' => true]);
         }
 
         try {
@@ -867,7 +871,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                         ]
                     );
 
-                    return $this->ajaxMess->getWrongConfirmCode(['html' => $html]);
+                    return $this->ajaxMess->getWrongConfirmCode(['html' => $html])->extendData(['gcaptcha' => true]);
                 }
 
                 return $this->ajaxMess->getWrongConfirmCode();
@@ -883,7 +887,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                     ]
                 );
 
-                return $this->ajaxMess->getExpiredConfirmCodeException(['html' => $html]);
+                return $this->ajaxMess->getExpiredConfirmCodeException(['html' => $html])->extendData(['gcaptcha' => true]);
             }
 
             return $this->ajaxMess->getExpiredConfirmCodeException();
@@ -900,10 +904,14 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                     ]
                 );
 
-                return $this->ajaxMess->getNotFoundConfirmedCodeException(['html' => $html]);
+                return $this->ajaxMess->getNotFoundConfirmedCodeException(['html' => $html])->extendData(['gcaptcha' => true]);
             }
 
-            return $this->ajaxMess->getNotFoundConfirmedCodeException();
+            if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] > 3) {
+                return $this->ajaxMess->getNotFoundConfirmedCodeException()->extendData(['gcaptcha' => true]);
+            } else {
+                return $this->ajaxMess->getNotFoundConfirmedCodeException();
+            }
         } catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
             try {
                 $logger = LoggerFactory::create('system');

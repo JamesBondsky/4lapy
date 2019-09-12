@@ -21,22 +21,27 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Enum\CrudGroups;
 use FourPaws\Enum\UserGroup;
 use FourPaws\External\Exception\ManzanaCardIsNotFound;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\TooManyActiveCardFound;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\MobileApiBundle\Entity\ApiPushMessage;
+use FourPaws\MobileApiBundle\Tables\ApiUserSessionTable;
 use FourPaws\PersonalBundle\Entity\UserBonus;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\PersonalBundle\Service\OrderService;
-use FourPaws\PersonalBundle\Service\PersonalOffersService;
+use FourPaws\PersonalBundle\Service\PersonalOffersService as PersonalBundlePersonalOffersService;
 use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Enum\UserLocationEnum;
@@ -58,10 +63,15 @@ use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\ManzanaOrdersImportUserRepository;
 use FourPaws\UserBundle\Repository\UserRepository;
+use JMS\Serializer\ArrayTransformerInterface;
+use JMS\Serializer\SerializationContext;
+use Picqer\Barcode\BarcodeGenerator;
+use Picqer\Barcode\BarcodeGeneratorPNG;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use WebArch\BitrixCache\BitrixCache;
+use Bitrix\Main\Application as BitrixApplication;
 
 /**
  * Class UserService
@@ -100,6 +110,15 @@ class UserService implements
      * @var ArrayCollection
      */
     private $userCollection;
+    /**
+     * @var ArrayTransformerInterface
+     */
+    private $transformer;
+
+    /**
+     * @var PersonalBundlePersonalOffersService $personalOffersService
+     */
+    private $personalOffersService;
 
     /**
      * UserService constructor.
@@ -111,14 +130,15 @@ class UserService implements
     public function __construct(
         UserRepository $userRepository,
         LocationService $locationService,
-        ManzanaOrdersImportUserRepository $manzanaOrdersImportUserRepository
+        ManzanaOrdersImportUserRepository $manzanaOrdersImportUserRepository,
+        ArrayTransformerInterface $transformer
     )
     {
         /**
          * todo move to factory service
          */
         global $USER;
-        
+
         if (\is_object($USER)) {
             $this->bitrixUserService = $USER;
         } else {
@@ -134,6 +154,7 @@ class UserService implements
         $this->manzanaOrdersImportUserRepository = $manzanaOrdersImportUserRepository;
         $this->locationService = $locationService;
         $this->userCollection = new ArrayCollection();
+        $this->transformer = $transformer;
     }
 
     /**
@@ -478,6 +499,34 @@ class UserService implements
         }
         $client->setActualContact();
         $client->setLoyaltyProgramContact();
+    }
+
+    public function setManzanaClientPersonalDataByUser(array $fields)
+    {
+        $client = new Client();
+
+        if ($fields['PERSONAL_BIRTHDAY']) {
+            $birthDate = new \DateTime($fields['PERSONAL_BIRTHDAY']);
+        }
+
+        if ($birthDate) {
+            $result = new \DateTimeImmutable($birthDate->format('Y-m-d\TH:i:s'));
+            $client->birthDate = $result;
+        }
+        if ($fields['PERSONAL_PHONE']) {
+            $client->phone = PhoneHelper::getManzanaPhone($fields['PERSONAL_PHONE']);
+        }
+        $client->firstName = $fields['NAME'] ?? $client->firstName;
+        $client->secondName = $fields['SECOND_NAME'] ?? $client->secondName;
+        $client->lastName = $fields['LAST_NAME'] ?? $client->lastName;
+        $client->genderCode = $fields['PERSONAL_GENDER'] ? str_replace(['M', 'F',], [1, 2], $fields['PERSONAL_GENDER']) : $client->genderCode;
+        $client->email = $fields['EMAIL'] ?? $client->email;
+        $client->plLogin = $fields['LOGIN'] ?? $client->plLogin;
+
+        $client->setActualContact();
+        $client->setLoyaltyProgramContact();
+
+        return $client;
     }
 
     /**
@@ -865,20 +914,25 @@ class UserService implements
             return false;
         }
         try {
+            $this->sqlHeartBeat();
             /**
              * @var ManzanaService $manzanaService
              */
             $manzanaService = App::getInstance()
                                  ->getContainer()
                                  ->get('manzana.service');
+            $this->sqlHeartBeat();
         } catch (ApplicationCreateException $e) {
             $this->log()
                  ->error('ошибка загрузки сервиса - manzana ', $e->getTrace());
 
             return false;
         }
+        $this->sqlHeartBeat();
         try {
+            $this->sqlHeartBeat();
             $contact = $manzanaService->getContactByUser($user);
+            $this->sqlHeartBeat();
         } catch (ApplicationCreateException $e) {
             /** не должно сюда доходить, так как передаем объект юзера */
             $this->log()
@@ -899,8 +953,14 @@ class UserService implements
 
             return false;
         }
+        $this->sqlHeartBeat();
         try {
+            $this->sqlHeartBeat();
+            $this->log()
+                ->info('обновление карты');
             $manzanaService->updateUserCardByClient($contact);
+            $this->log()
+                ->info('обновление карты stop');
 
             return true;
         } catch (ManzanaCardIsNotFound $e) {
@@ -1175,7 +1235,7 @@ class UserService implements
         $orders = $query->exec()
             ->fetchAll();
 
-        /** @var PersonalOffersService $personalOffersService */
+        /** @var PersonalBundlePersonalOffersService $personalOffersService */
         $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
         $coupons = $personalOffersService->getReturningUsersCoupons(array_column($orders, 'USER_ID'), $personalOfferId);
 
@@ -1205,5 +1265,190 @@ class UserService implements
         $updateResult = $user_class->Update($userId, ['UF_MODALS_CNTS' => $newValue]);
 
         return $updateResult;
+    }
+
+    /**
+     * @param array $userIds
+     * @param int $idEvents
+     * @param int|null $emailId
+     * @param string $promocode
+     * @param \DateTime $startDate
+     * @param \DateTime|null $lastDate
+     * @param bool|null $isOnlyEmail
+     * @param string|null $field
+     * @param int|null $promocodeId
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
+     */
+    public function sendNotifications(array $userIds, int $idEvents, ?int $emailId, string $promocode, \DateTime $startDate, ?\DateTime $lastDate, ?bool $isOnlyEmail = false, ?string $field = 'LOGIN', ?int $promocodeId = null)
+    {
+        $container = App::getInstance()->getContainer();
+        $renderer = $container->get('templating');
+        $this->personalOffersService = $container->get('personal_offers.service');
+
+        if ($isOnlyEmail) {
+            $field = 'ID';
+        }
+
+        $users = $this->userRepository->findBy([$field => $userIds]);
+
+        $userIdsOrig = $userIds;
+
+        $userIds = [];
+
+        foreach ($users as $user) {
+            $userIds[] = $user->getId();
+        }
+
+        $userIdsOrig = array_filter($userIdsOrig, function ($item) {
+            return !empty(trim($item));
+        });
+
+        if (count($userIdsOrig) > 0 and $field == 'LOGIN') {
+            $users = $this->userRepository->findBy(['PERSONAL_PHONE' => $userIdsOrig]);
+            foreach ($users as $user) {
+                $userIds[] = $user->getId();
+            }
+        }
+
+        if (count($userIds) == 0) {
+            return;
+        }
+
+        $filter = ['=USER_ID' => $userIds];
+        $query = ApiUserSessionTable::query()->addSelect('USER_ID')->setFilter($filter);
+
+        $dbResult = $query->exec();
+
+        $resultIds = $dbResult->fetchAll();
+
+        $userIdByEmail = [];
+        $userIdByPush = [];
+
+        foreach ($resultIds as $resultItem) {
+            $userIdByPush[] = $resultItem['USER_ID'];
+        }
+
+        if (!is_array($userIdByPush)) {
+            $userIdByPush = [$userIdByPush];
+        }
+
+        $userIdByPush = array_unique($userIdByPush);
+
+        $userIdByEmail = array_diff($userIds, $userIdByPush);
+
+        $textStart = $renderer->render('FourPawsSaleBundle:Push:coupon.new.start.html.php');
+        $textLast = $renderer->render('FourPawsSaleBundle:Push:coupon.last.start.html.php');
+
+        if (!$isOnlyEmail && count($userIdByPush) > 0) {
+            $hlblock = \Bitrix\HighloadBlock\HighloadBlockTable::getList([
+                'filter' => [
+                    'TABLE_NAME' => 'api_push_messages'
+                ]
+            ])->fetch();
+
+            $userField = (new \CUserTypeEntity())->GetList([], [
+                'ENTITY_ID' => 'HLBLOCK_' . $hlblock['ID'],
+                'XML_ID' => 'UF_TYPE',
+            ])->fetch();
+
+            $type = (new \CUserFieldEnum())->GetList([], [
+                'USER_FIELD_ID' => $userField['ID'],
+                'XML_ID' => 'personal_offer',
+            ])->fetch();
+
+            $startDateSend = $startDate;
+
+            $pushMessage = (new ApiPushMessage())
+                ->setActive(true)
+                ->setMessage($textStart)
+                ->setUserIds($userIdByPush)
+                ->setEventId($idEvents)
+                ->setStartSend($startDateSend)
+                ->setTypeId($type['ID']);
+
+            $pushMessageLast = clone $pushMessage;
+
+            if ($lastDate instanceof \DateTime) {
+                $pushMessageLast->setStartSend($lastDate->modify('-4 day'));
+            }
+            $pushMessageLast->setMessage($textLast);
+
+            $data = $this->transformer->toArray(
+                $pushMessage,
+                SerializationContext::create()->setGroups([CrudGroups::CREATE])
+            );
+
+            $dataLast = $this->transformer->toArray(
+                $pushMessageLast,
+                SerializationContext::create()->setGroups([CrudGroups::CREATE])
+            );
+
+            if (count($userIdByPush) > 0) {
+                $hlBlockPushMessages = \FourPaws\App\Application::getHlBlockDataManager('bx.hlblock.pushmessages');
+                $hlBlockPushMessages->add($data);
+                if ($lastDate instanceof \DateTime) {
+                    $hlBlockPushMessages->add($dataLast);
+                }
+            }
+        }
+
+        if ($emailId) {
+            $userIdByEmail = $userIds;
+            $users = $this->userRepository->findBy(['ID' => $userIdByEmail]);
+
+            $barcodeGenerator = new BarcodeGeneratorPNG();
+//            if ($isOnlyEmail) {
+////                $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(is_int($promocode) ? intval($promocode) : $promocodeId);
+//                $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
+//            } else {
+//                $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
+//            }
+
+            $offerFields = $this->personalOffersService->getOfferFieldsByCouponId($promocodeId);
+
+            if ($offerFields->count() == 0) {
+                throw new Exception('Купон по промокоду не найден');
+            }
+
+            $expertSender = $container->get('expertsender.service');
+
+            $couponDescription = $offerFields->get('PREVIEW_TEXT');
+            $couponDateActiveTo = $offerFields->get('PROPERTY_ACTIVE_TO_VALUE');
+            $discountValue = $offerFields->get('PROPERTY_DISCOUNT_VALUE');
+
+            if ($discountValue) {
+                $discountValue .= '%';
+            } else {
+                $discountValue = $offerFields->get('PROPERTY_DISCOUNT_CURRENCY_VALUE') . ' руб';
+            }
+
+            foreach ($users as $user) {
+                try {
+                    $resSend = $expertSender->sendPersonalOfferCouponEmail(
+                        $user->getId(),
+                        $user->getName(),
+                        $user->getEmail(),
+                        $promocode,
+                        'data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($promocode, BarcodeGenerator::TYPE_CODE_128, 2.132310384278889, 127)),
+                        $couponDescription,
+                        $couponDateActiveTo,
+                        $discountValue,
+                        $emailId
+                    );
+                } catch (Exception $e) {
+                }
+            }
+        }
+    }
+
+    private function sqlHeartBeat()
+    {
+        BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
     }
 }

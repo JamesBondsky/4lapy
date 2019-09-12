@@ -32,7 +32,13 @@ $markup = PawsApplication::markup();
 $sViewportCookie = $_COOKIE['viewport'] ?? null;
 
 $bodyClass = '';
-if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
+if(KioskService::isKioskMode()) {
+    $bodyClass = 'body-kiosk js-body-kiosk';
+
+    if($USER->IsAuthorized()) {
+        $bodyClass .= ' authorized';
+    }
+}
 
 ?>
 <!DOCTYPE html>
@@ -59,6 +65,9 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
     <meta name="google" content="notranslate">
     <meta name="format-detection" content="telephone=no">
     <meta name="yandex-verification" content="6266e34669b85ed6">
+
+    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/favicons.php'; ?>
+
     <?php /** @todo Mobe onto right place  */ ?>
     <script src="/static/build/js/jquery/jquery.min.js"></script>
     <script data-skip-moving="true">
@@ -101,12 +110,21 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
 </head>
 <body <? if($bodyClass != ''){ ?>class="<?= $bodyClass ?>"<? } ?>>
+<?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/pixel_vk.php'; ?>
+
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php if (!KioskService::isKioskMode()) {
     $APPLICATION->ShowPanel();
 } ?>
 
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
+    <?php
+        if(!KioskService::isKioskMode()
+            && !$template->isBasket()
+            && !$template->isOrderPage()) {
+            require_once __DIR__ . '/blocks/header/promo_top_dobrolap.php';
+        }
+    ?>
     <?php
     $APPLICATION->IncludeComponent('articul:header.mobile.bunner',
         '',
@@ -377,4 +395,8 @@ if ($template->hasContent()) {
             'PATH'           => sprintf('/include/%s.php', trim($template->getPath(), '/')),
         ],
         false);
+}
+
+if ($template->isDobrolap()) {
+    include_once $_SERVER['DOCUMENT_ROOT'] . '/dobrolap/assets.php';
 }

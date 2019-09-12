@@ -11,7 +11,7 @@ class CSocServFB2 extends \CSocServFacebook
     public function prepareUser($arFBUser, $short = false)
     {
         $arFields = array(
-//			'EXTERNAL_AUTH_ID' => self::ID,
+			'EXTERNAL_AUTH_ID' => self::ID,
             'XML_ID' => $arFBUser["id"],
             'LOGIN' => static::LOGIN_PREFIX.$arFBUser["id"],
             'EMAIL' => ($arFBUser["email"] != '') ? $arFBUser["email"] : '',

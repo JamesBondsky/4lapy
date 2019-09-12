@@ -69,504 +69,479 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
 ?>
     <div class="b-container js-cart-wrapper">
         <h1 class="b-title b-title--h1 b-title--shopping-cart">Корзина</h1>
-        <main class="b-shopping-cart__main" role="main">
-            <div class="b-panel-subscribe-cart">
-                <div class="b-panel-subscribe-cart__content">
-                    <div class="b-panel-subscribe-cart__info">
-                        Подпишитесь на&nbsp;доставку и&nbsp;получите скидку <?= ($subscribePriceDiff > 0) ? WordHelper::numberFormat($subscribePriceDiff, 2).' ₽' : ''?> на&nbsp;вашу корзину&nbsp;&mdash;
-                        <a href="javascript:void(0);" class="b-link" data-show-subscribe-delivery-cart="true">узнать подробнее</a>
+
+        <div class="b-shopping-cart__sticky-wrap" data-shopping-cart-sticky-aside="wrapper">
+            <main class="b-shopping-cart__main" role="main">
+                <div class="b-panel-subscribe-cart">
+                    <div class="b-panel-subscribe-cart__content">
+                        <div class="b-panel-subscribe-cart__info">
+                            Получите <span class="orange">скидку <?= ($subscribePriceDiff > 0) ? WordHelper::numberFormat($subscribePriceDiff, 2).' ₽' : ''?></span> на&nbsp;вашу корзину&nbsp;&mdash; используйте
+                            <nobr><a href="javascript:void(0);" class="b-link" data-show-subscribe-delivery-cart="true">
+                                <span class="logo-subscr"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
+                                Подписку
+                            </a></nobr> на доставку
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <?php if ($arResult['POSSIBLE_GIFT_GROUPS']) {
-                ?>
-                <section class="b-stock b-stock--shopping-cart">
-                    <h3 class="b-title b-title--h2-cart">Подарки к заказу</h3>
-                    <?php foreach ($arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
-                        $group = current($group);
-                        $disableClass = '';
+                <?php if ($arResult['POSSIBLE_GIFT_GROUPS']) {
+                    ?>
+                    <section class="b-stock b-stock--shopping-cart">
+                        <h3 class="b-title b-title--h2-cart">Подарки к заказу</h3>
+                        <?php foreach ($arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
+                            $group = current($group);
+                            $disableClass = '';
 
-                        /** @noinspection PhpUndefinedMethodInspection */
-                        $selectedCount = 0;
-                        foreach($arResult['SELECTED_GIFTS'][$group['discountId']] as $giftOffer){
-                            $selectedCount += $giftOffer['quantity'];
-                        }
-                        $availableGifts = $group['count'] - $selectedCount;
+                            /** @noinspection PhpUndefinedMethodInspection */
+                            $selectedCount = 0;
+                            foreach($arResult['SELECTED_GIFTS'][$group['discountId']] as $giftOffer){
+                                $selectedCount += $giftOffer['quantity'];
+                            }
+                            $availableGifts = $group['count'] - $selectedCount;
 
-                        if (0 >= $availableGifts) {
-                            $disableClass = ' b-link-gift--disabled';
-                        }
-                        if ($group['list'] instanceof OfferCollection) {
-                            $giftCanBeRefused = $group['list']->count() > 1;
-                        } elseif (\is_array($group['list'])) {
-                            $giftCanBeRefused = count($group['list']) > 1;
-                        }
-                        ?>
-                        <div class="b-gift-order">
-                            <div class="b-gift-order__info">
-                                <span class="b-gift-order__text">
-                                    Подарок по акции —
-                                    <span class="b-gift-order__text-additional"><?= $group['name'] ?></span>
-                                </span>
-                                <a class="b-link-gift js-presents-order-open<?= $disableClass ?>"
-                                   href="javascript:void(0);"
-                                   data-url="/ajax/sale/basket/gift/get/"
-                                   data-url-gift="/ajax/sale/basket/gift/select/"
-                                   data-available-gifts="<?= $availableGifts ?>"
-                                   data-discount-id="<?= $group['discountId']; ?>" title=""
-                                   data-popup-id="popup-choose-gift">
-                                    <span class="b-link-gift__text">
-                                        <?php if (
-                                            isset($arResult['SELECTED_GIFTS'][$group['discountId']])
-                                            && !empty($arResult['SELECTED_GIFTS'][$group['discountId']])
-                                        ) { ?>
-                                            Выбрать ещё
-                                        <?php }else{ ?>
-                                            Выбрать подарок
-                                        <?php } ?>
+                            if (0 >= $availableGifts) {
+                                $disableClass = ' b-link-gift--disabled';
+                            }
+                            if ($group['list'] instanceof OfferCollection) {
+                                $giftCanBeRefused = $group['list']->count() > 1;
+                            } elseif (\is_array($group['list'])) {
+                                $giftCanBeRefused = count($group['list']) > 1;
+                            }
+                            ?>
+                            <div class="b-gift-order">
+                                <div class="b-gift-order__info">
+                                    <span class="b-gift-order__text">
+                                        Подарок по акции —
+                                        <span class="b-gift-order__text-additional"><?= $group['name'] ?></span>
                                     </span>
-                                    <span class="b-icon b-icon--gift">
-                                        <?= new SvgDecorator('icon-gift', 18, 18) ?>
+                                    <a class="b-link-gift js-presents-order-open<?= $disableClass ?>"
+                                    href="javascript:void(0);"
+                                    data-url="/ajax/sale/basket/gift/get/"
+                                    data-url-gift="/ajax/sale/basket/gift/select/"
+                                    data-available-gifts="<?= $availableGifts ?>"
+                                    data-discount-id="<?= $group['discountId']; ?>" title=""
+                                    data-popup-id="popup-choose-gift">
+                                        <span class="b-link-gift__text">
+                                            <?php if (
+                                                isset($arResult['SELECTED_GIFTS'][$group['discountId']])
+                                                && !empty($arResult['SELECTED_GIFTS'][$group['discountId']])
+                                            ) { ?>
+                                                Выбрать ещё
+                                            <?php }else{ ?>
+                                                Выбрать подарок
+                                            <?php } ?>
+                                        </span>
+                                        <span class="b-icon b-icon--gift">
+                                            <?= new SvgDecorator('icon-gift', 18, 18) ?>
+                                        </span>
+                                    </a>
+                                </div>
+                                <?php if (
+                                    isset($arResult['SELECTED_GIFTS'][$group['discountId']])
+                                    && !empty($arResult['SELECTED_GIFTS'][$group['discountId']])
+                                ) { ?>
+                                    <div class="b-gift-order__gift-product js-section-remove-stock">
+                                        <?php foreach ($arResult['SELECTED_GIFTS'][$group['discountId']] as $gift) {
+                                                $quantity = $gift['quantity'];
+                                                $offer = $component->getOffer((int)$gift['offerId']);
+                                                $image = $component->getImage((int)$gift['offerId']);
+                                                /**
+                                                 * @var Offer $offer
+                                                 */
+                                                $product = $offer->getProduct();
+                                                $name = '<strong>' . $product->getBrandName() . '</strong> ' . \lcfirst(\trim($product->getName())); ?>
+                                                <div class="b-common-item b-common-item--shopping-cart js-remove-shopping">
+                                                    <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
+                                                        <img class="b-common-item__image b-common-item__image--shopping-cart"
+                                                            src="<?= $image ?>" alt="<?= $product->getName() ?>">
+                                                    </span>
+                                                    <div class="b-common-item__info-center-block b-common-item__info-center-block--shopping-cart">
+                                                <?php
+                                                    if ($offer->getPrice() && strpos($offer->getXmlId(), '1') === 0) {
+                                                        ?>
+                                                        <a class="b-common-item__description-wrap"
+                                                        href="<?= $offer->getLink(); ?>" title="">
+                                                <?php
+                                                    } else {
+                                                        ?>
+                                                        <div class="b-common-item__description-wrap">
+                                                <?php
+                                                    }
+                                                    ?>
+
+                                                            <span class="b-clipped-text b-clipped-text--shopping-cart b-clipped-text--gift-order">
+                                                                <span><?= $name ?></span>
+                                                            </span>
+                                                                <?php /* <span class="b-common-item__variant b-common-item__variant--shopping-cart"><span class="b-common-item__name-value">Цвет:</span><span>прозрачные</span></span>*/ ?>
+                                                <?php
+                                                    if (strpos($offer->getXmlId(), '1') === 0) {
+                                                        ?>
+                                                        </a>
+                                                <?php
+                                                    } else {
+                                                    ?>
+                                                        </div>
+                                                <?php
+                                                    }
+                                                    ?>
+                                                        <span class="b-common-item__description-wrap">
+                                                            <span class="b-clipped-text b-clipped-text--shopping-cart b-clipped-text--gift-order">
+                                                                <span>Количество: <?= $quantity;?></span>
+                                                            </span>
+                                                        </span>
+                                                        <a class="b-common-item__delete js-present-delete-item"
+                                                        href="javascript:void(0);" title=""
+                                                        data-url="/ajax/sale/basket/gift/refuse/"
+                                                        data-gift-id="<?= $gift['basketId']; ?>"
+                                                        data-gift-quantity="<?= $quantity; ?>">
+                                                            <?php
+                                                            if ($giftCanBeRefused) {
+                                                                ?>
+                                                                <span class="b-icon b-icon--delete">
+                                                                    <?= new SvgDecorator(
+                                                                        'icon-delete-cart-product',
+                                                                        12,
+                                                                        14
+                                                                    ); ?>
+                                                                </span>
+                                                                <?php
+                                                            }
+                                                            ?>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                        <? } ?>
+                                    </div>
+                                <?php } ?>
+                            </div>
+                        <?php } ?>
+                    </section>
+                <?php }
+
+                if ($hasNormalItems) { ?>
+                    <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
+
+                        <div class="b-stock__header">
+                            <h3 class="b-stock__header-title">Ваш заказ</h3>
+                            <?
+                            $APPLICATION->IncludeComponent(
+                                    'fourpaws:order.coupon.list',
+                                    '',
+                                    [
+                                        'BASKET_ITEMS' => $orderableItems
+                                    ],
+                                    null,
+                                    ['HIDE_ICONS' => 'Y']
+                            );
+                            ?>
+                        </div>
+
+                        <?php
+                        /** @var BasketItem $basketItem */
+                        foreach ($orderableItems as $basketItem) {
+                            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+                                continue;
+                            }
+
+                            $offer = $component->getOffer((int)$basketItem->getProductId());
+
+                            if (
+                                $offer->isByRequest()
+                                ||
+                                in_array($basketItem->getBasketCode(),$arResult['SKIP_ROWS'], true)
+                            ) {
+                                continue;
+                            }
+
+                            require __DIR__ . '/basketItem.php';
+                        }
+
+                        $isOnlyPickup = false;
+                        ?>
+                    </section>
+                <?php }
+
+                if ($hasNotAllowedItems) { ?>
+                    <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
+                        <h3 class="b-title b-title--h2-cart b-title--shopping-product">Под заказ</h3>
+                        <?php foreach ($notAllowedItems as $basketItem) {
+                            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+                                continue;
+                            }
+                            $offer = $component->getOffer((int)$basketItem->getProductId());
+                            require __DIR__ . '/basketItem.php';
+                        } ?>
+                    </section>
+                <?php } ?>
+
+	            <? /*if($arResult['SUBSCRIBE_ALLOWED']){
+	                include('include/subscribe_promo.php');
+	            }*/ ?>
+	        </main>
+
+            <aside class="b-shopping-cart__aside" data-shopping-cart-sticky-aside="aside">
+                <div class="b-information-order">
+                    <div class="b-information-order__client">
+                        <?php if ($user) { ?>
+                            <?php if ($arResult['MAX_BONUS_SUM']) { ?>
+                                <span class="b-information-order__pay-points">
+                                    <span class="b-information-order__name"><?= $user->getName() ?>, </span>
+                                    вы можете оплатить этот заказ баллами (до <?= $arResult['MAX_BONUS_SUM'] ?>).
+                                </span>
+                            <?php }
+                        } else { ?>
+                            <span class="b-information-order__pay-points b-information-order__pay-points--flex">
+                                Уже покупали у нас?
+                                <a class="b-link-gift b-link-gift--shopping-aside js-open-popup" href="javascript:void(0);"
+                                data-popup-id="authorization">
+                                    <span class="b-link-gift__text">Войти</span>
+                                </a>
+                            </span>
+                        <?php }
+
+                        $APPLICATION->IncludeComponent(
+                            'fourpaws:city.selector',
+                            'basket.summary',
+                            [],
+                            $component,
+                            ['HIDE_ICONS' => 'Y']
+                        ); ?>
+                        <p class="b-information-order__additional-info">От Вашего города зависит наличие товаров и параметры
+                            доставки.</p>
+                        <?php $APPLICATION->IncludeComponent(
+                            'fourpaws:city.delivery.info',
+                            'basket.summary',
+                            ['BASKET_PRICE' => $orderableItems->getPrice()],
+                            false,
+                            ['HIDE_ICONS' => 'Y']
+                        ); ?>
+
+                    </div>
+                    <div class="b-information-order__order-wrapper">
+                        <div class="b-information-order__order">
+                            <div class="b-information-order__order-price"><?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'],
+                                    0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
+                                    ['товар', 'товара', 'товаров']) ?>
+                                <?php if ($arResult['BASKET_WEIGHT'] > 0) { ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'],
+                                    true) ?>)<?php } ?>
+                            </div>
+                            <div class="b-price b-price--information-order">
+                                <span class="b-price__current" data-basket-total-base-price>
+                                    <?= WordHelper::numberFormat($arResult['TOTAL_BASE_PRICE']); ?>
+                                </span><span class="b-ruble">₽</span>
+                            </div>
+                        </div>
+
+                        <?php if ($arResult['TOTAL_DISCOUNT'] >= 0.01) { ?>
+                            <div class="b-information-order__order">
+                                <div class="b-information-order__order-price">Общая скидка</div>
+                                <div class="b-price b-price--information-order">
+                                    <span class="b-price__current">
+                                        - <?= WordHelper::numberFormat($arResult['TOTAL_DISCOUNT']) ?>
+                                    </span>
+                                    <span class="b-ruble">₽</span>
+                                </div>
+                            </div>
+                        <?php } ?>
+
+                        <?php if ($arResult['IS_STAMPS_OFFER_ACTIVE']) { ?>
+                            <div class="b-information-order__order b-information-order__order--mark">
+                                <div class="">За заказ будет начислено:</div>
+                                <div class="">
+                                    <?= $arResult['MARKS_TO_BE_ADDED'] . '&nbsp;' . WordHelper::declension($arResult['MARKS_TO_BE_ADDED'], ['марка', 'марки', 'марок']) ?>
+                                </div>
+                            </div>
+                        <?php } ?>
+
+                        <?php if ($arResult['COUPON_DISCOUNT']) { ?>
+                            <div class="b-information-order__order">
+                                <div class="b-information-order__order-price">Скидка по промокоду</div>
+                                <div class="b-price b-price--information-order">
+                                    <span class="b-price__current">-
+                                        <?= WordHelper::numberFormat($arResult['COUPON_DISCOUNT']) ?>
+                                    </span>
+                                    <span class="b-ruble">₽</span>
+                                </div>
+                                <a class="b-information-order__delete-promocode js-promo-code-del"
+                                href="javascript:void(0)" title="Сбросить промокод"
+                                data-url="/ajax/sale/basket/promo/delete/"
+                                data-promocode-id="<?= $arResult['COUPON'] ?>">
+                                    <span class="b-icon b-icon--delete-promocode">
+                                        <?= new SvgDecorator('filter-change', 8, 8) ?>
                                     </span>
                                 </a>
                             </div>
-                            <?php if (
-                                isset($arResult['SELECTED_GIFTS'][$group['discountId']])
-                                && !empty($arResult['SELECTED_GIFTS'][$group['discountId']])
-                            ) { ?>
-                                <div class="b-gift-order__gift-product js-section-remove-stock">
-                                    <?php foreach ($arResult['SELECTED_GIFTS'][$group['discountId']] as $gift) {
-                                            $quantity = $gift['quantity'];
-                                            $offer = $component->getOffer((int)$gift['offerId']);
-                                            $image = $component->getImage((int)$gift['offerId']);
-                                            /**
-                                             * @var Offer $offer
-                                             */
-                                            $product = $offer->getProduct();
-                                            $name = '<strong>' . $product->getBrandName() . '</strong> ' . \lcfirst(\trim($product->getName())); ?>
-                                            <div class="b-common-item b-common-item--shopping-cart js-remove-shopping">
-                                                <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
-                                                    <img class="b-common-item__image b-common-item__image--shopping-cart"
-                                                         src="<?= $image ?>" alt="<?= $product->getName() ?>">
-                                                </span>
-                                                <div class="b-common-item__info-center-block b-common-item__info-center-block--shopping-cart">
-                                            <?php
-                                                if ($offer->getPrice() && strpos($offer->getXmlId(), '1') === 0) {
-                                                    ?>
-                                                    <a class="b-common-item__description-wrap"
-                                                       href="<?= $offer->getLink(); ?>" title="">
-                                            <?php
-                                                } else {
-                                                    ?>
-                                                    <div class="b-common-item__description-wrap">
-                                            <?php
-                                                }
-                                                ?>
-
-                                                        <span class="b-clipped-text b-clipped-text--shopping-cart b-clipped-text--gift-order">
-                                                            <span><?= $name ?></span>
-                                                        </span>
-                                                            <?php /* <span class="b-common-item__variant b-common-item__variant--shopping-cart"><span class="b-common-item__name-value">Цвет:</span><span>прозрачные</span></span>*/ ?>
-                                            <?php
-                                                if (strpos($offer->getXmlId(), '1') === 0) {
-                                                    ?>
-                                                    </a>
-                                            <?php
-                                                } else {
-                                                ?>
-                                                    </div>
-                                            <?php
-                                                }
-                                                ?>
-                                                    <span class="b-common-item__description-wrap">
-                                                        <span class="b-clipped-text b-clipped-text--shopping-cart b-clipped-text--gift-order">
-                                                            <span>Количество: <?= $quantity;?></span>
-                                                        </span>
-                                                    </span>
-                                                    <a class="b-common-item__delete js-present-delete-item"
-                                                       href="javascript:void(0);" title=""
-                                                       data-url="/ajax/sale/basket/gift/refuse/"
-                                                       data-gift-id="<?= $gift['basketId']; ?>"
-                                                       data-gift-quantity="<?= $quantity; ?>">
-                                                        <?php
-                                                        if ($giftCanBeRefused) {
-                                                            ?>
-                                                            <span class="b-icon b-icon--delete">
-                                                                <?= new SvgDecorator(
-                                                                    'icon-delete-cart-product',
-                                                                    12,
-                                                                    14
-                                                                ); ?>
-                                                            </span>
-                                                            <?php
-                                                        }
-                                                        ?>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                    <? } ?>
+                        <?php } else { ?>
+                            <form class="b-information-order__form-promo js-form-validation js-promo-code-add" method="post"
+                                data-url="/ajax/sale/basket/promo/apply/">
+                                <div class="b-input b-input--form-promo">
+                                    <input class="b-input__input-field b-input__input-field--form-promo" type="text"
+                                        id="promocode-delivery" placeholder="Промо-код" name="text"
+                                        value="<?= $arResult['COUPON'] ?>"/>
+                                    <div class="b-error"><span class="js-message"></span></div>
                                 </div>
-                            <?php } ?>
-                        </div>
-                    <?php } ?>
-                </section>
-            <?php }
+                                <button class="b-button b-button--form-promo">Применить</button>
+                            </form>
+                        <?php } ?>
 
-            if ($hasNormalItems) { ?>
-                <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
-                    <h3 class="b-title b-title--h2-cart b-title--shopping-product">Ваш заказ</h3>
-                    <?php
-                    /** @var BasketItem $basketItem */
-                    foreach ($orderableItems as $basketItem) {
-                        if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
-                            continue;
-                        }
-
-                        $offer = $component->getOffer((int)$basketItem->getProductId());
-
-                        if (
-                            $offer->isByRequest()
-                            ||
-                            in_array($basketItem->getBasketCode(),$arResult['SKIP_ROWS'], true)
-                        ) {
-                            continue;
-                        }
-
-                        require __DIR__ . '/basketItem.php';
-                    }
-
-                    $isOnlyPickup = false;
-                    ?>
-                </section>
-            <?php }
-
-            if ($hasNotAllowedItems) { ?>
-                <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
-                    <h3 class="b-title b-title--h2-cart b-title--shopping-product">Под заказ</h3>
-                    <?php foreach ($notAllowedItems as $basketItem) {
-                        if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
-                            continue;
-                        }
-                        $offer = $component->getOffer((int)$basketItem->getProductId());
-                        require __DIR__ . '/basketItem.php';
-                    } ?>
-                </section>
-            <?php } ?>
-
-            <? if($arResult['SUBSCRIBE_ALLOWED']){ ?>
-            <section class="b-subscribe-delivery-cart desktop">
-                <div class="b-subscribe-delivery-cart__anchor" data-subscribe-delivery-cart="true"></div>
-                <div class="b-subscribe-delivery-cart__content">
-                    <div class="b-subscribe-delivery-cart__info-list">
-                        <div class="item">
-                            <div class="item__icon">
-                                <?= new SvgDecorator('icon-retime', 24, 24) ?>
-                            </div>
-                            <div class="item__text">
-                                Регулярная доставка необходимых товаров в&nbsp;удобное для вас время.
-                            </div>
-                        </div>
-                        <div class="item">
-                            <div class="item__icon">
-                                <?= new SvgDecorator('icon-price', 24, 24) ?>
-                            </div>
-                            <div class="item__text">
-                                Получайте специальную цену на&nbsp;некоторые товары.
-                            </div>
-                        </div>
-                        <div class="item">
-                            <div class="item__icon">
-                                <?= new SvgDecorator('icon-calendar', 24, 24) ?>
-                            </div>
-                            <div class="item__text">
-                                Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;двух месяцев.
-                            </div>
-                        </div>
-                        <div class="item">
-                            <div class="item__icon">
-                                <?= new SvgDecorator('icon-cancel', 24, 24) ?>
-                            </div>
-                            <div class="item__text">
-                                Вы&nbsp;можете отказаться от&nbsp;подписки в&nbsp;любое время.
-                            </div>
-                        </div>
-                    </div>
-                    <div class="b-subscribe-delivery-cart__bottom">
-                        <ul class="b-price-subscribe-delivery-cart">
-                            <?/*<li class="b-price-subscribe-delivery-cart__item">
-                                <div class="b-price-subscribe-delivery-cart__text">
-                                    <div class="b-price-subscribe-delivery-cart__clipped-text">
-                                        <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'],
-                                            0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
-                                            ['товар', 'товара', 'товаров']) ?>
-                                        <?php if ($arResult['BASKET_WEIGHT'] > 0) { ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'],
-                                            true) ?>)<?php } ?>
-                                    </div>
+                        <div class="b-information-order__order-basediscount hidden" data-basket-base-discount>
+                            <div class="b-information-order__order">
+                                <div class="b-information-order__order-price">Общая скидка</div>
+                                <div class="b-price b-price--information-order">
+                                    <span class="b-price__current" data-basket-base-discount-summ></span>
+                                    <span class="b-ruble">₽</span>
                                 </div>
-                                <div class="b-price-subscribe-delivery-cart__value">
-                                    <div class="b-price b-price--subscribe-cart">
-                                        <? if($arResult['TOTAL_PRICE'] != $arResult['SUBSCRIBE_PRICE']) { ?>
-                                            <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
-                                                <span class="b-old-price__old"><?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?></span>
-                                                <span class="b-ruble">₽</span>
-                                            </span>
-                                        <? } ?>
-                                        <span class="b-price__current b-price__current--light"><?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?></span>
-                                        <span class="b-ruble">₽</span>
-                                    </div>
-                                </div>
-                            </li>*/?>
-                            <li class="b-price-subscribe-delivery-cart__item">
-                                <div class="b-price-subscribe-delivery-cart__text">
-                                    <div class="b-price-subscribe-delivery-cart__clipped-text">
-                                        Итого стоимость по подписке
-                                    </div>
-                                </div>
-                                <div class="b-price-subscribe-delivery-cart__value">
-                                    <div class="b-price b-price--subscribe-cart b-price--result-subscribe-cart">
-                                        <? if($arResult['TOTAL_PRICE'] != $arResult['SUBSCRIBE_PRICE']) { ?>
-                                            <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
-                                                <span class="b-old-price__old"><?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?></span>
-                                                <span class="b-ruble">₽</span>
-                                            </span>
-                                        <? } ?>
-                                        <span class="b-price__current"><?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?></span>
-                                        <span class="b-ruble">₽</span>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
+                            </div>
+                        </div>
 
-                        <form action="/sale/order/" method="post">
-                            <button class="b-button b-button--subscribe-delivery-cart"
-                               title="Подписка на доставку" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
-                                Подписаться на доставку
-                            </button>
-                            <input type="hidden" name="subscribe" value="1">
-                        </form>
-                    </div>
-                </div>
-            </section>
-            <? } ?>
-        </main>
+                        <div class="b-information-order__order-discounts" data-basket-coupons-discount-list></div>
 
-        <aside class="b-shopping-cart__aside">
-            <div class="b-information-order">
-                <div class="b-information-order__client">
-                    <?php if ($user) { ?>
-                        <?php if ($arResult['MAX_BONUS_SUM']) { ?>
-                            <span class="b-information-order__pay-points">
-                                <span class="b-information-order__name"><?= $user->getName() ?>, </span>
-                                вы можете оплатить этот заказ баллами (до <?= $arResult['MAX_BONUS_SUM'] ?>).
-                            </span>
-                        <?php }
-                    } else { ?>
-                        <span class="b-information-order__pay-points b-information-order__pay-points--flex">
-                            Уже покупали у нас?
-                            <a class="b-link-gift b-link-gift--shopping-aside js-open-popup" href="javascript:void(0);"
-                               data-popup-id="authorization">
-                                <span class="b-link-gift__text">Войти</span>
-                            </a>
-                        </span>
-                    <?php }
+                        <form
+                            action="/sale/order/"
+                            method="post"
+                            data-basket-subscription-price
+                            data-total-price="<?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?>"
+                            data-subscription-price="<?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?>"
+                        >
+	                      <?php if ($arResult['SUBSCRIBE_ALLOWED']): ?>
+	                        <div class="b-cart-aside-subscription">
+	                          <div class="b-cart-aside-subscription__title">
+	                            Подключите
 
-                    $APPLICATION->IncludeComponent(
-                        'fourpaws:city.selector',
-                        'basket.summary',
-                        [],
-                        $component,
-                        ['HIDE_ICONS' => 'Y']
-                    ); ?>
-                    <p class="b-information-order__additional-info">От Вашего города зависит наличие товаров и параметры
-                        доставки.</p>
-                    <?php $APPLICATION->IncludeComponent(
-                        'fourpaws:city.delivery.info',
-                        'basket.summary',
-                        ['BASKET_PRICE' => $orderableItems->getPrice()],
-                        false,
-                        ['HIDE_ICONS' => 'Y']
-                    ); ?>
+	                            <div class="b-cart-aside-subscription__tooltip">
+	                                <button type="button" class="b-cart-aside-subscription__tooltip-toggle">
+	                                    <span class="b-cart-aside-subscription__title-icon"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
+	                                    Подписку
+	                                </button>
 
-                </div>
-                <div class="b-information-order__order-wrapper">
-                    <div class="b-information-order__order">
-                        <div class="b-information-order__order-price"><?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'],
-                                0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
-                                ['товар', 'товара', 'товаров']) ?>
-                            <?php if ($arResult['BASKET_WEIGHT'] > 0) { ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'],
-                                true) ?>)<?php } ?>
-                        </div>
-                        <div class="b-price b-price--information-order">
-                            <span class="b-price__current">
-                                <?= WordHelper::numberFormat($arResult['TOTAL_BASE_PRICE']); ?>
-                            </span><span class="b-ruble">₽</span>
-                        </div>
-                    </div>
-                    <?php if ($arResult['TOTAL_DISCOUNT'] >= 0.01) { ?>
-                        <div class="b-information-order__order">
-                            <div class="b-information-order__order-price">Общая скидка</div>
-                            <div class="b-price b-price--information-order">
-                                <span class="b-price__current">
-                                    - <?= WordHelper::numberFormat($arResult['TOTAL_DISCOUNT']) ?>
-                                </span>
-                                <span class="b-ruble">₽</span>
-                            </div>
-                        </div>
-                    <?php }
+	                                <div class="b-cart-aside-subscription__tooltip-content">
+	                                    <ul class="b-cart-aside-subscription__features">
+	                                        <li class="b-cart-aside-subscription__features-item">
+	                                            <span class="b-cart-aside-subscription__features-icon">
+	                                                <?= new SvgDecorator('icon-calendar', 24, 24) ?>
+	                                            </span>
+	                                            Установите удобное расписание доставок
+	                                        </li>
+	                                        <li class="b-cart-aside-subscription__features-item">
+	                                            <span class="b-cart-aside-subscription__features-icon">
+	                                                <?= new SvgDecorator('icon-cancel', 24, 24) ?>
+	                                            </span>
+	                                            Переносите или отменяйте доставку в&nbsp;любое время
+	                                        </li>
+	                                        <li class="b-cart-aside-subscription__features-item">
+	                                            <span class="b-cart-aside-subscription__features-icon">
+	                                                <?= new SvgDecorator('icon-price', 24, 24) ?>
+	                                            </span>
+	                                            Наслаждайтесь экономией денег и времени
+	                                        </li>
+	                                    </ul>
+	                                </div>
+	                            </div>
 
-                    if ($arResult['COUPON_DISCOUNT']) { ?>
-                        <div class="b-information-order__order">
-                            <div class="b-information-order__order-price">Скидка по промокоду</div>
-                            <div class="b-price b-price--information-order">
-                                <span class="b-price__current">-
-                                    <?= WordHelper::numberFormat($arResult['COUPON_DISCOUNT']) ?>
-                                </span>
-                                <span class="b-ruble">₽</span>
-                            </div>
-                            <a class="b-information-order__delete-promocode js-promo-code-del"
-                               href="javascript:void(0)" title="Сбросить промокод"
-                               data-url="/ajax/sale/basket/promo/delete/"
-                               data-promocode-id="<?= $arResult['COUPON'] ?>">
-                                <span class="b-icon b-icon--delete-promocode">
-                                    <?= new SvgDecorator('filter-change', 8, 8) ?>
-                                </span>
-                            </a>
-                        </div>
-                    <?php } else { ?>
-                        <form class="b-information-order__form-promo js-form-validation js-promo-code-add" method="post"
-                              data-url="/ajax/sale/basket/promo/apply/">
-                            <div class="b-input b-input--form-promo">
-                                <input class="b-input__input-field b-input__input-field--form-promo" type="text"
-                                       id="promocode-delivery" placeholder="Промо-код" name="text"
-                                       value="<?= $arResult['COUPON'] ?>"/>
-                                <div class="b-error"><span class="js-message"></span></div>
-                            </div>
-                            <button class="b-button b-button--form-promo">Применить</button>
-                        </form>
-                    <?php } ?>
-                    <div class="b-information-order__order b-information-order__order--total">
-                        <div class="b-information-order__order-price">Итого без учета доставки</div>
-                        <div class="b-price b-price--information-order b-price--total-price">
-                            <span class="b-price__current">
-                                <?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?>
-                            </span><span class="b-ruble">₽</span>
-                        </div>
-                    </div>
-                    <form action="/sale/order/" method="post">
-                        <button class="b-button b-button--start-order <?= $sViewportCookie === null ? 'b-button--bottom-indent' : '' ?>"
-                           title="Начать оформление" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
-                            Начать оформление
-                        </button>
-                        <input type="hidden" name="default" value="1">
-                    </form>
-                    <?php if ($arResult['SHOW_FAST_ORDER']) { ?>
-                        <div class="b-information-order__one-click">
-                            <a class="b-link b-link--one-click <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' js-open-popup js-open-popup--one-click' ?>"
-                               href="javascript:void(0)" title="Купить в 1 клик"
-                                <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"' ?>
-                                <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
-                                <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
-                            </a>
-                        </div>
-                    <?php } ?>
-                </div>
-            </div>
-        </aside>
+	                            <?php if ($subscribePriceDiff > 0): ?>
+	                              и&nbsp;получите
 
-        <section class="b-subscribe-delivery-cart mobile">
-                <div class="b-subscribe-delivery-cart__anchor" data-subscribe-delivery-cart="true"></div>
-                <div class="b-subscribe-delivery-cart__content">
-                    <div class="b-subscribe-delivery-cart__info-list">
-                        <div class="item">
-                            <div class="item__icon">
-                                <?= new SvgDecorator('icon-retime', 24, 24) ?>
-                            </div>
-                            <div class="item__text">
-                                Регулярная доставка необходимых товаров в&nbsp;удобное для вас время.
-                            </div>
-                        </div>
-                        <div class="item">
-                            <div class="item__icon">
-                                <?= new SvgDecorator('icon-price', 24, 24) ?>
-                            </div>
-                            <div class="item__text">
-                                Получайте специальную цену на&nbsp;некоторые товары.
-                            </div>
-                        </div>
-                        <div class="item">
-                            <div class="item__icon">
-                                <?= new SvgDecorator('icon-calendar', 24, 24) ?>
-                            </div>
-                            <div class="item__text">
-                                Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;двух месяцев.
-                            </div>
-                        </div>
-                        <div class="item">
-                            <div class="item__icon">
-                                <?= new SvgDecorator('icon-cancel', 24, 24) ?>
-                            </div>
-                            <div class="item__text">
-                                Вы&nbsp;можете отказаться от&nbsp;подписки в&nbsp;любое время.
-                            </div>
-                        </div>
-                    </div>
-                    <div class="b-subscribe-delivery-cart__bottom">
-                        <ul class="b-price-subscribe-delivery-cart">
-                            <?/*<li class="b-price-subscribe-delivery-cart__item">
-                                <div class="b-price-subscribe-delivery-cart__text">
-                                    <div class="b-price-subscribe-delivery-cart__clipped-text">
-                                        <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'],
-                                            0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
-                                            ['товар', 'товара', 'товаров']) ?>
-                                        <?php if ($arResult['BASKET_WEIGHT'] > 0) { ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'],
-                                            true) ?>)<?php } ?>
-                                    </div>
-                                </div>
-                                <div class="b-price-subscribe-delivery-cart__value">
-                                    <div class="b-price b-price--subscribe-cart">
-                                        <? if($arResult['TOTAL_PRICE'] != $arResult['SUBSCRIBE_PRICE']) { ?>
-                                            <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
-                                                <span class="b-old-price__old"><?= WordHelper::numberFormat($arResult['TOTAL_BASE_PRICE']); ?></span>
-                                                <span class="b-ruble">₽</span>
-                                            </span>
-                                        <? } ?>
-                                        <span class="b-price__current b-price__current--light"><?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?></span>
-                                        <span class="b-ruble">₽</span>
-                                    </div>
-                                </div>
-                            </li>*/?>
-                            <li class="b-price-subscribe-delivery-cart__item">
-                                <div class="b-price-subscribe-delivery-cart__text">
-                                    <div class="b-price-subscribe-delivery-cart__clipped-text">
-                                        Итого стоимость по подписке
-                                    </div>
-                                </div>
-                                <div class="b-price-subscribe-delivery-cart__value">
-                                    <div class="b-price b-price--subscribe-cart b-price--result-subscribe-cart">
-                                        <? if($arResult['TOTAL_PRICE'] != $arResult['SUBSCRIBE_PRICE']) { ?>
-                                            <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
-                                                <span class="b-old-price__old"><?= WordHelper::numberFormat($arResult['TOTAL_BASE_PRICE']); ?></span>
-                                                <span class="b-ruble">₽</span>
-                                            </span>
-                                        <? } ?>
-                                        <span class="b-price__current"><?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?></span>
-                                        <span class="b-ruble">₽</span>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
+	                              <nobr class="b-cart-aside-subscription__title-highlight">
+	                                скидку
 
-                        <form action="/sale/order/" method="post">
-                            <button class="b-button b-button--subscribe-delivery-cart"
-                               title="Подписка на доставку" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
-                                Подписаться на доставку
-                            </button>
-                            <input type="hidden" name="subscribe" value="1">
-                        </form>
-                    </div>
-                </div>
-            </section>
+	                                <span class="b-cart-aside-subscription__title-discount">
+	                                 <?= WordHelper::numberFormat($subscribePriceDiff, 2) ?> <span class="b-ruble">₽</span>
+	                                </span>
+	                              </nobr>
+	                            <?php else: ?>
+	                              <nobr>и&nbsp;получите <span class="b-cart-aside-subscription__title-highlight">скидку</span></nobr>
+	                            <?php endif ?>
+	                          </div>
+
+	                          <div class="b-cart-aside-subscription__toggles" data-basket-subscription-price="input-wrapper">
+	                            <?php if ($user): ?>
+	                              <label class="b-radio-button">
+	                                <input
+	                                  type="radio"
+	                                  value="1"
+	                                  name="subscribe"
+	                                  class="b-radio-button__input"
+	                                />
+
+	                                <div class="b-radio-button__fake"></div>
+
+	                                <div class="b-radio-button__content">
+	                                  Да, подключить
+	                                </div>
+	                              </label>
+	                            <?php else: ?>
+	                              <div class="b-radio-button js-open-popup" data-popup-id="authorization" data-btn-subscribe-delivery-cart="true">
+	                                <input
+	                                  type="radio"
+	                                  value="1"
+	                                  name="subscribe"
+	                                  class="b-radio-button__input"
+	                                />
+
+	                                <div class="b-radio-button__fake"></div>
+
+	                                <div class="b-radio-button__content">
+	                                  Да, подключить
+	                                </div>
+	                              </div>
+	                            <?php endif ?>
+
+	                            <label class="b-radio-button">
+	                              <input
+	                                type="radio"
+	                                name="subscribe"
+	                                value="0"
+	                                checked
+	                                class="b-radio-button__input"
+	                              />
+
+	                              <div class="b-radio-button__fake"></div>
+
+	                              <div class="b-radio-button__content">
+	                                Нет, спасибо
+	                              </div>
+	                            </label>
+	                          </div>
+	                        </div>
+	                      <?php endif ?>
+
+	                      <div class="b-information-order__order b-information-order__order--total">
+	                          <div class="b-information-order__order-price">Итого без учета доставки</div>
+	                          <div class="b-price b-price--information-order b-price--total-price">
+	                              <span class="b-price__current" data-basket-total-price  data-basket-subscription-price="price">
+	                                  <?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?>
+	                              </span>
+
+	                              <span class="b-ruble">₽</span>
+	                          </div>
+	                      </div>
+
+	                      <button class="b-button b-button--start-order <?= $sViewportCookie === null ? 'b-button--bottom-indent' : '' ?>"
+	                         title="Начать оформление" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
+	                          Начать оформление
+	                      </button>
+	                    </form>
+
+	                    <?php if ($arResult['SHOW_FAST_ORDER']) { ?>
+	                        <div class="b-information-order__one-click">
+	                            <a class="b-link b-link--one-click <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' js-open-popup js-open-popup--one-click' ?>"
+	                               href="javascript:void(0)" title="Купить в 1 клик"
+	                                <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"' ?>
+	                                <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
+	                                <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
+	                            </a>
+	                        </div>
+	                    <?php } ?>
+	                </div>
+	            </div>
+	        </aside>
+	    </div>
+
+        <? /*if($arResult['SUBSCRIBE_ALLOWED']){
+            $mobile = true;
+            include('include/subscribe_promo.php');
+        }*/ ?>
+
         <script id="gtag-cart">
             let offers = [];
             $('a.b-common-item__description-wrap.b-common-item__description-wrap--shopping span.b-common-item__variant.b-common-item__variant--shopping-cart.b-common-item__variant--shopping span').each(function() {

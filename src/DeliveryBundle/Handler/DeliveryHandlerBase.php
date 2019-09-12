@@ -316,6 +316,12 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
 
             $amount = $stockResult->getAmount();
             $stocks = $offer->getAllStocks();
+
+            if($offer->isIgnoreStocks()){
+                $stockResultCollection->add($stockResult);
+                continue;
+            }
+
             if ($availableAmount = $stocks->filterByStore($store)->getTotalAmount()) {
                 if ($availableAmount < $amount) {
                     $delayedStockResult = $stockResult->splitByAmount($availableAmount);
@@ -430,7 +436,8 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                     default:
                         if (
                             mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
-                            mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                            mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false ||
+                            mb_strpos($deliveryZone, DeliveryService::ZONE_4) !== false
                         ) {
                             $result = $storeService->getBaseShops($locationCode);
                             if ($result->isEmpty()) {
@@ -448,6 +455,9 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                         $result = $storeService->getStoresByLocation($locationCode, StoreService::TYPE_SHOP)->getStores();
                         break;
                 }
+                break;
+            case DeliveryService::DOBROLAP_DELIVERY_CODE:
+                $result = $storeService->getStores(StoreService::TYPE_ALL, ['XML_ID' => OrderService::STORE]);
                 break;
         }
 

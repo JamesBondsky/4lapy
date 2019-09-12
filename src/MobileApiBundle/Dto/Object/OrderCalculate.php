@@ -37,12 +37,29 @@ class OrderCalculate
     protected $cardDetails = [];
 
     /**
+     * Расшифровка движений марок клиентов на текущий заказ, список ОбъектДетализацииМарок[]
+     * @Serializer\SerializedName("stamps_details")
+     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\StampsDetailing>")
+     * @Serializer\SkipWhenEmpty()
+     * @var StampsDetailing[]
+     */
+    protected $stampsDetails = [];
+
+    /**
      * Используемый промокод
      * @Serializer\Type("string")
      * @Serializer\SerializedName("promocode_result")
      * @var string
      */
     protected $promoCodeResult = '';
+
+    /**
+     * Можно ли связаться с клиентом по телефону
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("isPhoneCallAvailable")
+     * @var bool
+     */
+    protected $isPhoneCallAvailable = true;
 
     /**
      * @return Price
@@ -102,6 +119,25 @@ class OrderCalculate
     }
 
     /**
+     * @return StampsDetailing[]
+     */
+    public function getStampsDetails(): array
+    {
+        return $this->stampsDetails;
+    }
+
+    /**
+     * @param StampsDetailing[] $stampsDetails
+     *
+     * @return OrderCalculate
+     */
+    public function setStampsDetails(array $stampsDetails): OrderCalculate
+    {
+        $this->stampsDetails = $stampsDetails;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getPromoCodeResult(): string
@@ -118,5 +154,23 @@ class OrderCalculate
     {
         $this->promoCodeResult = $promoCodeResult;
         return $this;
+    }
+
+    /**
+     * @param bool $isPhoneCallAvailable
+     * @return OrderCalculate
+     */
+    public function setIsPhoneCallAvailable(bool $isPhoneCallAvailable): OrderCalculate
+    {
+        $this->isPhoneCallAvailable = $isPhoneCallAvailable;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPhoneCallAvailable(): bool
+    {
+        return $this->isPhoneCallAvailable;
     }
 }

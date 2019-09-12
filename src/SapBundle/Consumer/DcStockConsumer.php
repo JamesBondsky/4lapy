@@ -19,6 +19,7 @@ use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Dto\In\DcStock\DcStock;
 use FourPaws\SapBundle\Dto\In\DcStock\StockItem;
 use FourPaws\SapBundle\Exception\InvalidArgumentException;
+use FourPaws\SapBundle\Service\Materials\ProductService;
 use RuntimeException;
 
 /**
@@ -28,6 +29,11 @@ use RuntimeException;
  */
 class DcStockConsumer extends SapConsumerBase
 {
+    /**
+     * @var ProductService
+     */
+    private $productService;
+
     /** @var array $offersCache */
     private $offersCache = [];
 
@@ -39,6 +45,11 @@ class DcStockConsumer extends SapConsumerBase
 
     /** @var int $maxStoresCacheSize */
     protected $maxStoresCacheSize = 100;
+
+    public function __construct(ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
 
     /**
      * @param DcStock $dcStock
@@ -67,6 +78,8 @@ class DcStockConsumer extends SapConsumerBase
             }
 
             $setResult = $this->setOfferStock($stockItem);
+
+            $this->productService->addProductsToClearCache([$this->getOfferElementDataByXmlId($stockItem->getOfferXmlId())->getData()['ID']]);
 
             if (!$setResult->isSuccess()) {
                 $errorCount++;

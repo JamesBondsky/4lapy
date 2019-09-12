@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Object;
 
+use FourPaws\PersonalBundle\Service\StampService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -92,6 +93,20 @@ class User
      * @var string
      */
     protected $locationId;
+
+    /**
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("stamps_income")
+     * @var float
+     */
+    protected $stampsIncome = 0;
+
+    /**
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("stamps_offer_active")
+     * @var bool
+     */
+    protected $stampsOfferActive = StampService::IS_STAMPS_OFFER_ACTIVE;
 
 
     /**
@@ -299,5 +314,41 @@ class User
     {
         $this->locationId = $locationId;
         return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getStampsIncome(): float
+    {
+        return $this->stampsIncome;
+    }
+
+    /**
+     * @param float $stampsIncome
+     * @return User
+     */
+    public function setStampsIncome(float $stampsIncome): User
+    {
+        $this->stampsIncome = $stampsIncome;
+        return $this;
+    }
+
+    /**
+     * @param bool $stampsOfferActive
+     * @return User
+     */
+    public function setStampsOfferActive(bool $stampsOfferActive): User
+    {
+        $this->stampsOfferActive = $stampsOfferActive;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isStampsOfferActive(): bool
+    {
+        return $this->stampsOfferActive;
     }
 }

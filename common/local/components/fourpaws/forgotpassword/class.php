@@ -124,7 +124,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
                 try {
-                    if ($confirmService::checkCode($hash, 'email_forgot')) {
+                    if ($confirmService::checkCode($hash, 'email_forgot', true)) {
                         if ($backUrl === static::BASKET_BACK_URL) {
                             $this->authService->authorize($request->get('user_id'));
                             LocalRedirect($backUrl);
@@ -165,6 +165,46 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         $password = $request->get('password', '');
         $confirm_password = $request->get('confirmPassword', '');
         $login = $request->get('login', '');
+        $phone = $request->get('phone');
+        $confirmCode = $request->get('confirmCode');
+        $hash = $request->get('cpToken');
+
+        if (!$login && !$phone) {
+            return $this->ajaxMess->getUsernameNotFoundException($login . ', ' . $phone);
+        }
+        $loginMd5 = md5($login);
+        if ($loginMd5 !== $hash) {
+            return $this->ajaxMess->getWrongConfirmCode();
+        }
+
+        /** @var ConfirmCodeService $confirmService */
+        $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+        try {
+        	if ($login && !$phone) { // email
+                $res = $confirmService::checkConfirmEmailForgot(
+                    $confirmCode,
+                    false,
+                    $hash
+                );
+	        } elseif ($login && $phone) { // phone
+	            $res = $confirmService::checkConfirmSms(
+	                $phone,
+	                $confirmCode,
+		            false,
+	                $hash
+	            );
+	        }
+        } catch (WrongPhoneNumberException $e) {
+            return $this->ajaxMess->getWrongPhoneNumberException();
+        } catch (ExpiredConfirmCodeException $e) {
+            return $this->ajaxMess->getExpiredConfirmCodeException();
+        } catch (NotFoundConfirmedCodeException $e) {
+            return $this->ajaxMess->getNotFoundConfirmedCodeException();
+        }
+
+        if (!$res) {
+            return $this->ajaxMess->getWrongConfirmCode();
+        }
 
         try {
             $userId = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($login);
@@ -188,6 +228,9 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
+
+        $user = $this->currentUserProvider->getUserRepository()->find($userId);
+        if ($login)
 
         if (empty($password) || empty($confirm_password)) {
             return $this->ajaxMess->getEmptyDataError();
@@ -381,6 +424,9 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
 
             $recovery = $request->get('recovery', '');
             if ($recovery === 'phone') {
+            	if (!$phone) {
+            		return $this->ajaxMess->getWrongPhoneNumberException();
+	            }
                 $title = 'Восстановление пароля';
                 $step = 'sendSmsCode';
                 $res = $this->ajaxGetSendSmsCode($phone);
@@ -388,8 +434,11 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                     return $res;
                 }
 
-                $phone = $res;
+                [$phone, $hash] = $res; // $hash используется в шаблоне смены пароля
             } elseif ($recovery === 'email') {
+                if (!$email) {
+                    return $this->ajaxMess->getWrongEmailError();
+                }
                 $title = 'Восстановление пароля';
                 $res = $this->ajaxGetSendEmailCode($email, $backUrl);
                 if ($res instanceof JsonResponse) {
@@ -398,6 +447,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 if (is_bool($res) && !$res) {
                     return $this->ajaxMess->getEmailSendError();
                 }
+                $hash = $res; // $hash используется в шаблоне смены пароля
                 $step = 'compileSendEmail';
             } else {
                 return $this->ajaxMess->getNoActionError();
@@ -406,6 +456,8 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
 
         switch ($step) {
             case 'createNewPassword':
+            	$confirmCode = $request->get('confirmCode');
+            	$hash = $request->get('cpToken'); // $hash используется в шаблоне смены пароля
                 $title = 'Создание нового пароля';
                 /** @noinspection PhpUnusedLocalVariableInspection */
                 $login = !empty($phone) ? $phone : $email;
@@ -416,7 +468,8 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                         $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
                         $res = $confirmService::checkConfirmSms(
                             $phone,
-                            $request->get('confirmCode')
+                            $confirmCode,
+	                        true
                         );
 
                         if (!$res) {
@@ -494,7 +547,8 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         try {
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-            $confirmService::sendConfirmSms($phone);
+            $hash = md5($phone);
+            $confirmService::sendConfirmSms($phone, $hash);
             $this->writeForgotPasswordSmsTime($userID, $time);
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
@@ -507,7 +561,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             }
         }
 
-        return $phone;
+        return [$phone, $hash];
     }
 
     /**
@@ -541,7 +595,8 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         if ($curUser->hasEmail()) {
             try {
                 $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
-                return $expertSenderService->sendForgotPassword($curUser, $backUrl);
+                $hash = md5($email);
+                return $expertSenderService->sendForgotPassword($curUser, $backUrl, $hash);
             } catch (ExpertsenderServiceException $e) {
                 try {
                     $logger = LoggerFactory::create('expertSender');

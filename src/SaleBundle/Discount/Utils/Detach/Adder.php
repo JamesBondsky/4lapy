@@ -10,6 +10,7 @@
 
 namespace FourPaws\SaleBundle\Discount\Utils\Detach;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\App\Application as App;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
@@ -17,16 +18,22 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
 use Exception;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\BxCollection;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
 use FourPaws\SaleBundle\Discount\Utils\BaseDiscountPostHandler;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\RuntimeException;
 use FourPaws\SaleBundle\Helper\PriceHelper;
+use FourPaws\SaleBundle\Service\BasketRulesService;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
+use WebArch\BitrixCache\BitrixCache;
 
 /**
  * Class Adder
@@ -35,6 +42,12 @@ use FourPaws\SaleBundle\Service\OrderStorageService;
 class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
     public static $skippedDiscountsFakeIds = [];
+
+    private static $excludedDiscountsFakeIds = [];
+    private static $excludedDiscountsIds = null;
+
+    public static $regionalDiscounts = [];
+
     /**
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentException
@@ -48,6 +61,9 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
      */
     public function processOrder(): void
     {
+        /** @var StampService $stampService */
+        $stampService = App::getInstance()->getContainer()->get(StampService::class);
+
         /**
          * 1. Региональные скидки
          * 2. количества и свойства
@@ -61,7 +77,45 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         $this->applySimpleDiscounts();
 
         $applyResult = $discountBase->getApplyResult(true);
-        $lowDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
+        $skippedDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
+        $skippedDiscounts = array_merge($skippedDiscounts, $this->getExcludedDiscounts($applyResult['DISCOUNT_LIST']));
+
+        if ($stampService::IS_STAMPS_OFFER_ACTIVE) {
+            $basket = $this->order->getBasket();
+            /** @var BasketItem $basketItem */
+            foreach ($basket as $basketItem) {
+                $useStamps = $this->basketService->getBasketItemPropertyValue($basketItem, 'USE_STAMPS');
+                $usedStampsLevel = unserialize($this->basketService->getBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL'));
+                if ($useStamps && $usedStampsLevel) {
+                    // Костыли, чтобы скидка не применялась повторно. Лучше вынести флаг о том, что скидка за марки применена, например, в отдельное свойство товара в корзине
+                    $basketItem->setPrice($basketItem->getBasePrice());
+                    $applyResult['PRICES']['BASKET'][$basketItem->getId()]['PRICE'] = $basketItem->getBasePrice();
+
+                    $params = [
+                        'discountType' => "DETACH",
+                        'params' => [
+                            'apply_count' => $usedStampsLevel['productQuantity'],
+                            'discount_value' => $usedStampsLevel['discountValue'],
+                            'percent' => $usedStampsLevel['discountType'] === 'P',
+                        ]
+                    ];
+                    $applyResult['RESULT']['BASKET'][$basketItem->getId()] = [[ //FIXME сейчас заменяем все остальные скидки, которые доступны по этому товару. После релиза в перспективе логика должна быть переделана с возможностью применения разных скидок одновременно
+                        //'DISCOUNT_ID' => 0,
+                        'COUPON_ID' => '',
+                        'APPLY' => 'Y',
+                        'DESCR' => json_encode($params)
+                    ]];
+                } elseif (
+                    ($xmlId = explode('#', $basketItem->getField('PRODUCT_XML_ID'))[1])
+                    && array_key_exists($xmlId, $stampService::EXCHANGE_RULES)
+                ) {
+                    // Костыли, для отмены скидки. Лучше вынести флаг о том, что скидка за марки применена, например, в отдельное свойство товара в корзине
+                    $basketItem->setPrice($basketItem->getBasePrice());
+                    $applyResult['PRICES']['BASKET'][$basketItem->getId()]['PRICE'] = $basketItem->getBasePrice();
+                }
+            }
+            unset ($params);
+        }
 
         if (is_iterable($applyResult['RESULT']['BASKET'])) {
             foreach ($applyResult['RESULT']['BASKET'] as $basketCode => $discounts) {
@@ -73,7 +127,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                             && isset($params['discountType'])
                             && $params['discountType'] === 'DETACH'
                         ) {
-                            if (\in_array((int)$discount['DISCOUNT_ID'], $lowDiscounts, true)) {
+                            if (\in_array((int)$discount['DISCOUNT_ID'], $skippedDiscounts, true)) {
                                 continue;
                             }
 
@@ -261,6 +315,33 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     }
 
     /**
+     * @param array $discountList
+     * @param array $skippedDiscounts
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    protected function getExcludedDiscounts(array $discountList)
+    {
+        $excludedDiscounts = [];
+
+        /** @var LocationService $locationService */
+        $locationService = App::getInstance()->getContainer()->get('location.service');
+        /** @var BasketRulesService $BasketRulesService */
+        $basketRulesService = App::getInstance()->getContainer()->get(BasketRulesService::class);
+
+        $regionCode = $locationService->getCurrentRegionCode();
+        $regionalDiscounts = $basketRulesService->getRegionalDiscounts();
+
+        foreach($discountList as $discount){
+            if(!empty($regionalDiscounts[$discount['REAL_DISCOUNT_ID']]) && !in_array($regionCode, $regionalDiscounts[$discount['REAL_DISCOUNT_ID']])){
+                $excludedDiscounts[$discount['ID']] = $discount['REAL_DISCOUNT_ID'];
+            }
+        }
+        self::setExcludedDiscountsFakeIds(array_keys($excludedDiscounts));
+        return count($excludedDiscounts) > 0 ? array_keys($excludedDiscounts) : [];
+    }
+
+    /**
      * @return array
      */
     public static function getSkippedDiscountsFakeIds(): array
@@ -276,6 +357,61 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         self::$skippedDiscountsFakeIds = array_flip(array_flip(array_merge(
             $skippedDiscountsFakeIds, self::$skippedDiscountsFakeIds
         )));
+    }
+
+    /**
+     * @return array
+     */
+    public static function getExcludedDiscountsFakeIds(): array
+    {
+        return self::$excludedDiscountsFakeIds;
+    }
+
+    /**
+     * @param array $skippedDiscountsFakeIds
+     */
+    public static function setExcludedDiscountsFakeIds(array $skippedDiscountsFakeIds): void
+    {
+        self::$excludedDiscountsFakeIds = array_flip(array_flip(array_merge(
+            $skippedDiscountsFakeIds, self::$excludedDiscountsFakeIds
+        )));
+    }
+
+    /**
+     * @return array
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public static function getExcludedDiscountsIds(): array
+    {
+        if(null === self::$excludedDiscountsIds) {
+            $excludedDiscounts = [];
+
+            /** @var LocationService $locationService */
+            $locationService = App::getInstance()->getContainer()->get('location.service');
+            /** @var BasketRulesService $basketRulesService */
+            $basketRulesService = App::getInstance()->getContainer()->get(BasketRulesService::class);
+
+            $regionCode = $locationService->getCurrentRegionCode();
+            $regionalDiscounts = $basketRulesService->getRegionalDiscounts();
+
+            foreach($regionalDiscounts as $discountId => $regions){
+                if(!in_array($regionCode, $regions)){
+                    $excludedDiscounts[] = $discountId;
+                }
+            }
+            self::setExcludedDiscountsIds($excludedDiscounts);
+        }
+
+        return self::$excludedDiscountsIds;
+    }
+
+    /**
+     * @param array $skippedDiscountsIds
+     */
+    public static function setExcludedDiscountsIds(array $skippedDiscountsIds): void
+    {
+        self::$excludedDiscountsIds = $skippedDiscountsIds;
     }
 
     /**
@@ -300,13 +436,6 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                     'CUSTOM_PRICE' => 'Y'
                 ]);
             }
-            /*else if($basketItem->getBasePrice() != $basketItem->getPrice()){
-                $basketItem->setFieldsNoDemand([
-                    'DISCOUNT_PRICE' => null,
-                    'PRICE' => $basketItem->getBasePrice(),
-                    'CUSTOM_PRICE' => 'N'
-                ]);
-            }*/
         }
     }
 

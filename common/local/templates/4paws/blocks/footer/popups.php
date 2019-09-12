@@ -42,8 +42,15 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     if ($template->hasOrderDeliveryPage()) {
         $APPLICATION->IncludeComponent('fourpaws:order.shop.list', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
     }
+    if ($template->hasOrderDeliveryPage()) {
+        $APPLICATION->ShowViewContent('shelter_popup');
+    }
     if ($template->hasFastOrder()) {
         $APPLICATION->IncludeComponent('fourpaws:fast.order', '', [], null, ['HIDE_ICONS' => 'Y']);
+    }
+
+    if ($template->isOrderCompletePage()) {
+        include __DIR__ . '/personal_offers_form.php';
     }
 
     if(KioskService::isKioskMode() && $template->isIndex()) {
@@ -72,6 +79,11 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         include __DIR__ . '/message-renew-subscribe-delivery.php';
     }
 
+    if ($template->isDobrolap()) {
+        include __DIR__ . '/dobrolap-popup.php';
+    }
+
+    include __DIR__ . '/promo-subscribe.php';
 
     include __DIR__ . '/gifts_popup.php';
     include __DIR__ . '/modal_popup.php';

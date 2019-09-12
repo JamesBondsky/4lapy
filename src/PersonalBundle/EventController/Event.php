@@ -7,6 +7,7 @@ use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\Exception;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\GroupTable;
@@ -20,11 +21,14 @@ use Bitrix\Sale\Internals\DiscountTable;
 use CSaleDiscount;
 use CUser;
 use FourPaws\App\Application;
+use FourPaws\App\Application as App;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockProperty;
 use FourPaws\Enum\IblockType;
 use FourPaws\Enum\UserGroup;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -133,6 +137,9 @@ class Event extends BaseServiceHandler
         static::initHandler('OnAfterIBlockElementAdd', [self::class, 'importPersonalOffersCoupons'], 'iblock');
         static::initHandler('OnAfterIBlockElementUpdate', [self::class, 'importPersonalOffersCoupons'], 'iblock');
         static::initHandler('\PersonalCouponUsers::OnAfterAdd', [self::class, 'resetCouponWindowCounter']);
+
+        static::initHandler('OnAfterIBlockElementUpdate', [self::class, 'processShareFileProducts'], 'iblock');
+        static::initHandler('OnAfterIBlockElementAdd', [self::class, 'processShareFileProducts'], 'iblock');
 
         /** уникальные акции */
         static::initHandler('OnAfterIBlockElementAdd', [self::class, 'createDiscountFromPersonalOffer'], 'iblock');
@@ -592,6 +599,7 @@ class Event extends BaseServiceHandler
      */
     public static function importPersonalOffersCoupons($arFields): void
     {
+        set_time_limit(0);
         if ($arFields['RESULT'] && $arFields['IBLOCK_ID'] == IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS))
         {
             $fileFieldId = IblockUtils::getPropertyId($arFields['IBLOCK_ID'], 'FILE');
@@ -661,7 +669,7 @@ class Event extends BaseServiceHandler
                     $container = Application::getInstance()->getContainer();
                     /** @var PersonalOffersService $personalOffersService */
                     $personalOffersService = $container->get('personal_offers.service');
-                    $personalOffersService->importOffers($arFields['ID'], $coupons, true);
+                    $personalOffersService->importOffers($arFields['ID'], $coupons, $arFields['ACTIVE_FROM'], true);
                 }
             }
         }
@@ -707,6 +715,80 @@ class Event extends BaseServiceHandler
 
         $userService = Application::getInstance()->getContainer()->get(UserSearchInterface::class);
         $userService->setModalsCounters($userId, $newValue);
+    }
+
+    public static function processShareFileProducts($arFields): void
+    {
+        if (static::isDisabledHandler(__FUNCTION__)) {
+            return;
+        }
+
+        if ($arFields['IBLOCK_ID'] == IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES)) {
+            $arFilter = [
+                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),
+                [
+                    'LOGIC' => 'or',
+                    ['CODE' => IblockProperty::SHARES_FILE_IMPORT_CODE],
+                    ['CODE' => IblockProperty::SHARES_PRODUCT_CODE],
+                ]
+            ];
+            $props = \CIBlockProperty::GetList([], $arFilter);
+
+            $propId = null;
+            $productPropId = null;
+
+            while($propsItem = $props->GetNext()) {
+                if ($propsItem['CODE'] == IblockProperty::SHARES_FILE_IMPORT_CODE && is_null($propId)) {
+                    $propId = $propsItem['ID'];
+                }
+                if ($propsItem['CODE'] == IblockProperty::SHARES_PRODUCT_CODE && is_null($productPropId)) {
+                    $productPropId = $propsItem['ID'];
+                }
+            }
+
+            if (isset($arFields['PROPERTY_VALUES'][$propId])) {
+                $fileImport = array_shift($arFields['PROPERTY_VALUES'][$propId]);
+                $fileImport = $fileImport['VALUE'];
+
+                $products = file_get_contents($fileImport['tmp_name']);
+
+                $productItems = explode("\n", $products);
+
+                $productItems = array_map(function($productItem) {
+                    if (!empty($productItem)) {
+                        return str_replace(["\r", "\n"], '', $productItem);
+                    }
+                }, $productItems);
+
+                $productItems = array_filter($productItems, function ($productItem) {
+                    if (!empty($productItem)) {
+                        return $productItem;
+                    }
+                });
+
+                $productAddedArr = [];
+
+                if (isset($arFields['PROPERTY_VALUES'][$productPropId])) {
+                    foreach ($arFields['PROPERTY_VALUES'][$productPropId] as $productAdded) {
+                        $productAddedArr[] = $productAdded['VALUE'];
+                    }
+                }
+
+                $productItems = ($productItems);
+
+                $uniqArrProducts = (array_merge($productItems, $productAddedArr));
+
+                $uniqArrProducts = array_filter($uniqArrProducts, function ($uniqArrProduct) {
+                    if (!empty($uniqArrProduct)) {
+                        return $uniqArrProduct;
+                    }
+                });
+
+
+                \CModule::IncludeModule("iblock");
+                \CIBlockElement::SetPropertyValuesEx($arFields['ID'], $arFields['IBLOCK_ID'], [IblockProperty::SHARES_PRODUCT_CODE => $uniqArrProducts]);
+            }
+        }
     }
 
     /**

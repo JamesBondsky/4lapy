@@ -22,6 +22,7 @@ use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
@@ -297,7 +298,8 @@ class OrderStorageService
                     'secondDeliveryInterval',
                     'secondComment',
                     'lng',
-                    'lat'
+                    'lat',
+                    'shelter'
                 ];
                 break;
             case OrderStorageEnum::PAYMENT_STEP:
@@ -333,7 +335,7 @@ class OrderStorageService
                         $storage->$setter($data['deliveryTypeId']);
                         break;
                     case 'comment':
-                        if($step == OrderStorageEnum::DELIVERY_STEP && $deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE){
+                        if($step == OrderStorageEnum::DELIVERY_STEP && $deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE && $data['comment_dostavista']){
                             $storage->$setter($data['comment_dostavista']);
                         } elseif(isset($data['comment'])) {
                             $storage->$setter($data['comment']);
@@ -479,6 +481,12 @@ class OrderStorageService
         if($storage->isSubscribe()){
             $payments = array_filter($payments, function($item){
                 return in_array($item['CODE'], [OrderPayment::PAYMENT_CASH, OrderPayment::PAYMENT_CASH_OR_CARD]);
+            });
+        }
+        $deliveryCode = $this->deliveryService->getDeliveryCodeById($storage->getDeliveryId());
+        if ($this->deliveryService->isDobrolapDeliveryCode($deliveryCode)){
+            $payments = array_filter($payments, function($item){
+                return $item['CODE'] == OrderPayment::PAYMENT_ONLINE;
             });
         }
 
@@ -646,8 +654,8 @@ class OrderStorageService
     public function getInnerDelivery(OrderStorage $storage): ?DeliveryResultInterface
     {
         $result = null;
-        foreach ($this->getDeliveries($storage) as $delivery) {
-            if ($delivery instanceof DeliveryResultInterface) {
+        foreach ($this->getDeliveries($storage, true) as $delivery) {
+            if ($delivery instanceof DeliveryResult) {
                 $result = $delivery;
                 break;
             }

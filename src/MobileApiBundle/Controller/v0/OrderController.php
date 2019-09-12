@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\OrderInfoRequest;
 use FourPaws\MobileApiBundle\Dto\Request\OrderStatusHistoryRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PaginationRequest;
@@ -23,7 +24,7 @@ use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
  * @package FourPaws\MobileApiBundle\Controller
  * @Security("has_role('REGISTERED_USERS')")
  */
-class OrderController extends FOSRestController
+class OrderController extends BaseController
 {
     /**
      * @var ApiOrderService

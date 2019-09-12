@@ -41,7 +41,8 @@ class ShareQuery extends IblockElementQuery
             'BASKET_RULES',
             'JSON_GROUP_SET',
             'PREMISE_BONUS',
-            'SIGNCHARGE'
+            'SIGNCHARGE',
+            'REGION',
         ];
     }
 
@@ -78,7 +79,7 @@ class ShareQuery extends IblockElementQuery
     {
         return [
             'IBLOCK_ID'        => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),
-            'PROPERTY_ONLY_MP' => [false, 0],
+            'PROPERTY_ONLY_MP' => [false, 0, 'N'],
         ];
     }
 

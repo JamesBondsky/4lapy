@@ -168,6 +168,7 @@ abstract class FeedService
     {
         /** @noinspection PhpIncompatibleReturnTypeInspection */
         return (new OfferQuery())->withFilter($filter)
+            ->withOrder(['ID' => 'ASC'])
             ->withNav([
                 'nPageSize' => $limit,
                 'iNumPage' => (int)\ceil(($offset + 1) / $limit),

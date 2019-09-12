@@ -76,6 +76,10 @@ class KkmService implements LoggerAwareInterface
             'code'    => 204,
             'message' => 'Успешно, но тело ответа пустое'
         ],
+        'success_no_items' => [
+            'code'    => 205,
+            'message' => 'Успешно, но товар закончился на складе'
+        ],
         'syntax_error'   => [
             'code'    => 400,
             'message' => 'В запросе синтаксическая ошибка'
@@ -95,6 +99,8 @@ class KkmService implements LoggerAwareInterface
         'street',     //Улица
         'house'       //Дом
     ];
+
+    const CUSTOM_NOT_FOUND = 'Нет';
 
     /**
      * @var DaDataService $daDataService
@@ -217,10 +223,25 @@ class KkmService implements LoggerAwareInterface
             $suggestions = $this->daDataService->getKkmSuggestions($query, $level, $cityKladrId, $streetKladrId);
 
             if (count($suggestions) == 0) {
-                throw new KkmException(
-                    static::RESPONSE_STATUSES['success_empty']['message'] . ': по вводимым данным подсказки не найдены',
-                    static::RESPONSE_STATUSES['success_empty']['code']
-                );
+                if ($level == 'house' || $level == 'street') {
+                    $suggestions[] = [
+                        'value' => static::CUSTOM_NOT_FOUND,
+                        'unrestricted_value' => static::CUSTOM_NOT_FOUND,
+                        'data' => [
+                            'house' => static::CUSTOM_NOT_FOUND,
+                            'street' => static::CUSTOM_NOT_FOUND,
+                            'settlement_kladr_id' => static::CUSTOM_NOT_FOUND,
+                            'city_kladr_id' => static::CUSTOM_NOT_FOUND,
+                            'kladr_id' => static::CUSTOM_NOT_FOUND,
+                            'street_kladr_id' => static::CUSTOM_NOT_FOUND,
+                        ],
+                    ];
+                } else {
+                    throw new KkmException(
+                        static::RESPONSE_STATUSES['success_empty']['message'] . ': по вводимым данным подсказки не найдены',
+                        static::RESPONSE_STATUSES['success_empty']['code']
+                    );
+                }
             }
 
             foreach ($suggestions as $key => &$suggestion) {
@@ -243,7 +264,7 @@ class KkmService implements LoggerAwareInterface
                             break;
                         case 'house':
                             $suggestion = [
-                                'address'         => $suggestion['data']['house'] . (($suggestion['data']['block_type'] . $suggestion['data']['block']) ? ' ' . $suggestion['data']['block_type'] . $suggestion['data']['block'] : ''),
+                                'address'         => $suggestion['data']['house'] . (($suggestion['data']['block_type'] . $suggestion['data']['block']) ? ' ' . $suggestion['data']['block_type'] . str_replace('стр ', 'стр', $suggestion['data']['block']) : ''),
                                 'city_kladr_id'   => $suggestion['data']['settlement_kladr_id'] ?: $suggestion['data']['city_kladr_id'],
                                 'street_kladr_id' => $suggestion['data']['street_kladr_id'],
                                 'house_kladr_id'  => $suggestion['data']['kladr_id'],
@@ -456,6 +477,16 @@ class KkmService implements LoggerAwareInterface
                 );
             }
 
+            $errorsOffers = [];
+            $sumOffers = 0;
+
+            foreach ($offers->getValues() as $offerItem) {
+                if (($quantities[$offerItem->getXmlId()] + 3) > $offerItem->getQuantity() || $quantities[$offerItem->getXmlId()] == 0) {
+                    $errorsOffers[] = $offerItem->getXmlId();
+                }
+                $sumOffers += $quantities[$offerItem->getXmlId()] * $offerItem->getPrice();
+            }
+
             try {
                 $deliveries = $this->deliveryService->getByOfferCollection($offers, $quantities, $location, static::DELIVERY_CODES);
             } catch (
@@ -469,18 +500,34 @@ class KkmService implements LoggerAwareInterface
                 );
             }
 
+
+            if (count($deliveries) == 0) {
+                foreach ($quantities as $productId => &$quantity) {
+                    $quantity = 0;
+                }
+
+                $deliveries = $this->deliveryService->getByOfferCollection($offers, $quantities, $location, static::DELIVERY_CODES);
+                if (count($deliveries) == 0) {
+                    throw new KkmException(
+                        static::RESPONSE_STATUSES['success_no_items']['message'],
+                        static::RESPONSE_STATUSES['success_no_items']['code']
+                    );
+                }
+            }
+
             $rc = false;
             $innerDeliveryAvailable = false;
             $deliveryPrice = false;
             $deliveryDates = [];
             $intervals = [];
+            $intervalsAll = [];
             /** @var CalculationResultInterface $delivery */
             foreach ($deliveries as $delivery) {
                 if ($delivery->getDeliveryCode() == DeliveryService::INNER_DELIVERY_CODE) {
                     /** @var DeliveryResultInterface $delivery */
                     $innerDeliveryAvailable = true;
                     $rc = true;
-                    $deliveryPrice = $delivery->getDeliveryPrice();
+                    $deliveryPrice = $delivery->getPriceBySum($sumOffers);
                     try {
                         $nextDeliveries = $this->deliveryService->getNextDeliveries($delivery, 10);
                         foreach ($nextDeliveries as $nextDelivery) {
@@ -495,6 +542,10 @@ class KkmService implements LoggerAwareInterface
                     foreach ($delivery->getAvailableIntervals() as $interval) {
                         $intervals[] = str_replace(' ', '', (string)$interval);
                     }
+
+                    foreach ($delivery->getIntervals() as $interval) {
+                        $intervalsAll[] = str_replace(' ', '', (string)$interval);
+                    }
                 }
             }
 
@@ -505,12 +556,20 @@ class KkmService implements LoggerAwareInterface
                 );
             }
 
+            if (count($errorsOffers) > 0) {
+                $rc = false;
+            }
+
+            //временный костыль
+            $rc = false;
+
             $deliveryRules = [
                 'rc'      => $rc,
                 'courier' => [
                     'price' => $deliveryPrice,
                     'date'  => $deliveryDates,
-                    'time'  => $intervals
+                    'time'  => $intervals,
+                    'timeAll'  => $intervalsAll,
                 ]
             ];
 

@@ -33,6 +33,7 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\Model\City;
+use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
@@ -157,8 +158,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->arResult['IS_SHOW_CAPTCHA'] = $this->isShowCapthca();
             $this->setSocial();
 
-            unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
-
             $this->includeComponentTemplate();
         } catch (Exception $e) {
             try {
@@ -215,7 +214,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @throws WrongPhoneNumberException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws Exception
      */
     public function ajaxLogin(string $rawLogin, string $password, string $backUrl = '', $token = false): JsonResponse
     {
@@ -230,6 +228,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         $newToken = ProtectorHelper::generateToken(ProtectorHelper::TYPE_AUTH);
+        $this->arResult['token'] = $newToken;
         $newToken['value'] = $newToken['token'];
         unset($newToken['token']);
         $newTokenResponse = ['token' => $newToken];
@@ -250,22 +249,36 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if (!isset($_SESSION['COUNT_AUTH_AUTHORIZE'])) {
             $_SESSION['COUNT_AUTH_AUTHORIZE'] = 0;
         }
+
         $_SESSION['COUNT_AUTH_AUTHORIZE']++;
 
-        $checkedCaptcha = true;
         if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
             try {
-                if ($this->isShowCapthca()) {
+                if ($this->showBitrixCaptcha()) {
                     $recaptchaService = $container->get(ReCaptchaInterface::class);
                     $checkedCaptcha = $recaptchaService->checkCaptcha();
+
+                    if (!$checkedCaptcha) {
+                        $html = $this->getHtml(
+                            'begin',
+                            '',
+                            [
+                                'isAjax'   => true,
+                                'backUrl'  => $backUrl,
+                                'arResult' => $this->arResult
+                            ]
+                        );
+
+                        return $this->ajaxMess->getWrongPasswordError(array_merge(
+                            ['html' => $html],
+                            $newTokenResponse
+                        ));
+                    }
                 }
                 $this->userAuthorizationService->clearLoginAttempts($rawLogin);
             } catch (Exception $e) {
                 return $this->ajaxMess->getSystemError()->extendData($newTokenResponse);
             }
-        }
-        if (!$checkedCaptcha) {
-            return $this->ajaxMess->getFailCaptchaCheckError()->extendData($newTokenResponse);
         }
 
         $needConfirmBasket = false;
@@ -373,8 +386,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                     ->hasPhone()) {
                 $needWritePhone = true;
             }
+            if ($this->userAuthorizationService->isAuthorized()) {
+                unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
+            }
         } catch (UsernameNotFoundException $e) {
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3 && $this->isShowCapthca()) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 2) {
                 try {
                     $this->setSocial();
                     $html = $this->getHtml(
@@ -398,7 +414,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
             return $this->ajaxMess->getWrongPasswordError($newTokenResponse);
         } catch (InvalidCredentialException $e) {
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3 && $this->isShowCapthca()) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 2 && $this->showBitrixCaptcha()) {
                 try {
                     $this->setSocial();
                     $html = $this->getHtml(
@@ -435,7 +451,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
         }
 
-        unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
         if ($needConfirmBasket) {
             $html = $this->getHtml(
                 'unionBasket',
@@ -862,7 +877,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                         if ($basketItem !== null) {
                             $id = $basketItem->getId();
                             if ($id > 0) {
-                                $basketService->deleteOfferFromBasket($id);
+                                $basketService->deleteOfferFromBasket($id, [BasketService::GIFT_DOBROLAP_XML_ID, BasketService::GIFT_DOBROLAP_XML_ID_ALT]);
                             }
                         }
                     } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
@@ -881,7 +896,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             if (\is_array($delBasketItems) && !empty($delBasketItems)) {
                 foreach ($delBasketItems as $id) {
                     try {
-                        $basketService->deleteOfferFromBasket($id);
+                        $basketService->deleteOfferFromBasket($id, [BasketService::GIFT_DOBROLAP_XML_ID, BasketService::GIFT_DOBROLAP_XML_ID_ALT]);
                     } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
                         return $this->ajaxMess->getSystemError();
                     }
@@ -1054,5 +1069,17 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     protected function isShowCapthca()
     {
         return !KioskService::isKioskMode();
+    }
+
+    protected function showBitrixCaptcha()
+    {
+        $this->arResult['IS_SHOW_CAPTCHA'] = $_SESSION['COUNT_AUTH_AUTHORIZE'] > 2;
+
+        return $this->arResult['IS_SHOW_CAPTCHA'];
+    }
+
+    protected function isShowBitrixCaptcha($word, $code)
+    {
+        return !empty($code) && !empty($word);
     }
 }

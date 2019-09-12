@@ -8,9 +8,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
@@ -28,6 +31,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DobrolapDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
@@ -35,6 +39,9 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
+use FourPaws\Enum\IblockElementXmlId;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\ManzanaService;
 use FourPaws\KioskBundle\Service\KioskService;
@@ -45,11 +52,13 @@ use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
+use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderSplitService;
@@ -59,6 +68,7 @@ use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\SaleBundle\Validation\OrderDeliveryValidator;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\EmptyPhoneException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -433,6 +443,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $delivery = null;
             $pickup   = null;
             $deliveryDostavista = null;
+            $deliveryDobrolap = null;
             foreach ($deliveries as $calculationResult) {
                 if ($this->deliveryService->isPickup($calculationResult)) {
                     $pickup = $calculationResult;
@@ -440,6 +451,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $delivery = $calculationResult;
                 } elseif($this->deliveryService->isDostavistaDelivery($calculationResult)){
                     $deliveryDostavista = $calculationResult;
+                } elseif($this->deliveryService->isDobrolapDelivery($calculationResult)){
+                    $deliveryDobrolap = $calculationResult;
+                    $this->getDobrolapData($deliveries, $storage, $selectedCity);
                 }
             }
 
@@ -463,6 +477,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['DELIVERY']             = $delivery;
             if (isset($deliveryDostavista)) {
                 $this->arResult['DELIVERY_DOSTAVISTA'] = $deliveryDostavista;
+            }
+            if (isset($deliveryDobrolap)) {
+                $this->arResult['DELIVERY_DOBROLAP'] = $deliveryDobrolap;
             }
             $this->arResult['ADDRESSES']            = $addresses;
             $this->arResult['SELECTED_DELIVERY']    = $selectedDelivery;
@@ -509,6 +526,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $basket = $order1->getBasket();
             }
 
+            // бонусы
             if ($user) {
                 $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basket); // Получение из Manzana максимального количества бонусов для списания
 
@@ -531,6 +549,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 }
             }
 
+            // киоск: скидочная карта
             if(KioskService::isKioskMode()){
                 $curPage = BitrixApplication::getInstance()->getContext()->getRequest()->getRequestUri();
                 $url = $this->kioskService->addParamsToUrl($curPage, ['bindcard' => true]);
@@ -541,6 +560,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $storage->setDiscountCardNumber($this->kioskService->getCardNumber());
                     $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
                 }
+            }
+
+            // магнит добролап
+            if($user){
+                $this->checkAndReplaceDobrolapMagnet($basket, $user, $selectedDelivery);
             }
 
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
@@ -560,6 +584,18 @@ class FourPawsOrderComponent extends \CBitrixComponent
     /**
      * @param CalculationResultInterface[] $deliveries
      * @param OrderStorage                 $storage
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotFoundException
+     * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws StoreNotFoundException
+     * @throws SystemException
      */
     protected function getPickupData(array $deliveries, OrderStorage $storage): void
     {
@@ -572,9 +608,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         if (null !== $pickup) {
             /** @var PickupResultInterface $pickup */
-            $storage          = clone $storage;
+            $storage = clone $storage;
             $selectedShopCode = $storage->getDeliveryPlaceCode();
-            $shops            = $pickup->getStockResult()->getStores();
+            $shops = $pickup->getStockResult()->getStores();
 
             if ($selectedShopCode && isset($shops[$selectedShopCode])) {
                 $pickup->setSelectedShop($shops[$selectedShopCode]);
@@ -593,11 +629,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->orderStorageService->getAvailablePayments($storage, false, true, $pickup->getStockResult()
                 ->getPrice());
 
-            if(!$storage->isSubscribe()){
+            if (!$storage->isSubscribe()) {
                 $storage->setSplit(true);
                 $splitStockResult = $this->orderSplitService->splitStockResult($pickup);
-                $available        = $splitStockResult->getAvailable();
-                $delayed          = $splitStockResult->getDelayed();
+                $available = $splitStockResult->getAvailable();
+                $delayed = $splitStockResult->getDelayed();
 
                 $canGetPartial = $this->orderSplitService->canGetPartial($pickup);
 
@@ -609,11 +645,115 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     ? null
                     : (clone $pickup)->setStockResult($available);
 
-                $this->arResult['PARTIAL_PICKUP_AVAILABLE']  = $canGetPartial;
-                $this->arResult['SPLIT_PICKUP_AVAILABLE']    = $this->orderSplitService->canSplitOrder($pickup);
-                $this->arResult['PICKUP_STOCKS_AVAILABLE']   = $available;
-                $this->arResult['PICKUP_STOCKS_DELAYED']     = $delayed;
+                $this->arResult['PARTIAL_PICKUP_AVAILABLE'] = $canGetPartial;
+                $this->arResult['SPLIT_PICKUP_AVAILABLE'] = $this->orderSplitService->canSplitOrder($pickup);
+                $this->arResult['PICKUP_STOCKS_AVAILABLE'] = $available;
+                $this->arResult['PICKUP_STOCKS_DELAYED'] = $delayed;
             }
+        }
+    }
+
+    /**
+     * @param CalculationResultInterface[] $deliveries
+     * @param OrderStorage                 $storage
+     *
+     * @param array                        $selectedCity
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotFoundException
+     * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     */
+    protected function getDobrolapData(array $deliveries, OrderStorage $storage, array $selectedCity): void
+    {
+        $dobrolap = null;
+        foreach ($deliveries as $calculationResult) {
+            if ($this->deliveryService->isDobrolapDelivery($calculationResult)) {
+                $dobrolap = $calculationResult;
+                break;
+            }
+        }
+
+        if (null !== $dobrolap) {
+            /** @var DobrolapDeliveryResult $dobrolap */
+            $storage = clone $storage;
+            $selectedShopCode = $storage->getDeliveryPlaceCode();
+            $shops = $dobrolap->getStockResult()->getStores();
+
+            if ($selectedShopCode && isset($shops[$selectedShopCode])) {
+                $dobrolap->setSelectedShop($shops[$selectedShopCode]);
+            }
+
+            $this->arResult['DOBROLAP_SELECTED_SHOP'] = $dobrolap->getSelectedShop();
+
+            $storage->setDeliveryId($dobrolap->getDeliveryId());
+            $storage->setDeliveryPlaceCode($dobrolap->getSelectedShop()->getXmlId());
+
+            $payments = $this->orderStorageService->getAvailablePayments($storage, false, true, $dobrolap->getStockResult()->getPrice());
+            foreach ($payments as $key => $payment) {
+                if ($payment['CODE'] != OrderPayment::PAYMENT_ONLINE) {
+                    unset($payments[$key]);
+                }
+            }
+
+            $this->arResult['DOBROLAP_AVAILABLE_PAYMENTS'] = $payments;
+            $this->arResult['DOBROLAP_SPLIT_AVAILABLE'] = $this->orderSplitService->canSplitOrder($dobrolap);
+
+            if (!$storage->isSubscribe()) {
+                $storage->setSplit(true);
+                $splitStockResult = $this->orderSplitService->splitStockResult($dobrolap);
+                $available = $splitStockResult->getAvailable();
+                $delayed = $splitStockResult->getDelayed();
+
+                $canGetPartial = $this->orderSplitService->canGetPartial($dobrolap);
+
+                if ($canGetPartial) {
+                    $available = $this->orderSplitService->recalculateStockResult($available);
+                }
+
+                $this->arResult['DOBROLAP_PARTIAL'] = $available->isEmpty()
+                    ? null
+                    : (clone $dobrolap)->setStockResult($available);
+
+                $this->arResult['DOBROLAP_PARTIAL_AVAILABLE'] = $canGetPartial;
+                $this->arResult['DOBROLAP_SPLIT_AVAILABLE'] = $this->orderSplitService->canSplitOrder($dobrolap);
+                $this->arResult['DOBROLAP_STOCKS_AVAILABLE'] = $available;
+                $this->arResult['DOBROLAP_STOCKS_DELAYED'] = $delayed;
+            }
+            $shelters = AnimalShelterTable::getList([
+                'order' => [
+                    'name' => 'asc'
+                ]
+            ])->fetchAll();
+
+            $checkedShelter = $storage->getShelter();
+            $currentShelters = [];
+            $currentSheltersMO = [];
+            foreach ($shelters as $key => &$shelter) {
+                if($shelter['id'] == $checkedShelter){
+                    $shelter['checked'] = true;
+                }
+                if ($selectedCity['NAME'] == $shelter['city']) {
+                    $currentShelters[] = $shelter;
+                    unset($shelters[$key]);
+                } elseif(strpos($shelter['city'], $selectedCity['NAME']) !== false) {
+                    $currentShelters[] = $shelter;
+                    unset($shelters[$key]);
+                } elseif ($selectedCity['NAME'] == 'Москва' && strpos($shelter['city'], 'Московская область') !== false) {
+                    $currentSheltersMO[] = $shelter;
+                    unset($shelters[$key]);
+                }
+            }
+            $shelters = array_merge($currentShelters, $currentSheltersMO, $shelters);
+
+            $this->arResult['SHELTERS'] = $shelters;
         }
     }
 
@@ -761,5 +901,66 @@ class FourPawsOrderComponent extends \CBitrixComponent
             );
         }
         return $this->orderSubscribeService;
+    }
+
+    /**
+     * @param Basket $basket
+     * @param User $user
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws SystemException
+     * @throws BitrixProxyException
+     */
+    private function checkAndReplaceDobrolapMagnet(Basket $basket, User $user, CalculationResultInterface $selectedDelivery)
+    {
+        $magnets = $this->basketService->getDobrolapMagnets();
+        if(!$magnets){
+            return;
+        }
+        $magnetIds = array_column($magnets, 'ID');
+        /** @var BasketItem $basketItem */
+        foreach($basket as $basketItem) {
+            if(in_array($basketItem->getProductId(), $magnetIds)){
+                if($basketItem->getProductId() == $magnets[BasketService::GIFT_DOBROLAP_XML_ID]['ID']
+                    && ($this->deliveryService->isInnerPickup($selectedDelivery) || $this->deliveryService->isDostavistaDelivery($selectedDelivery))
+                ){
+                    $this->basketService->deleteOfferFromBasket($basketItem->getId());
+                    try {
+                        $this->basketService->addOfferToBasket(
+                            (int)$magnets[BasketService::GIFT_DOBROLAP_XML_ID_ALT]['ID'],
+                            1,
+                            [],
+                            true,
+                            $basket
+                        );
+                    } catch (\Exception $e) {
+                        $this->logger->error(sprintf('Не удалось добавить альтерантивынй магнит в корзину: %s', $e->getMessage()), [
+                            'user' => $user->getId(),
+                        ]);
+                    }
+                }
+                if($basketItem->getProductId() == $magnets[BasketService::GIFT_DOBROLAP_XML_ID_ALT]['ID']
+                    && (!$this->deliveryService->isInnerPickup($selectedDelivery) && !$this->deliveryService->isDostavistaDelivery($selectedDelivery))
+                ){
+                    $this->basketService->deleteOfferFromBasket($basketItem->getId());
+                    try {
+                        $this->basketService->addOfferToBasket(
+                            (int)$magnets[BasketService::GIFT_DOBROLAP_XML_ID_ALT]['ID'],
+                            1,
+                            [],
+                            true,
+                            $basket
+                        );
+                    } catch (\Exception $e) {
+                        $this->logger->error(sprintf('Не удалось добавить альтерантивынй магнит в корзину: %s', $e->getMessage()), [
+                            'user' => $user->getId(),
+                        ]);
+                    }
+                }
+            }
+        }
     }
 }
