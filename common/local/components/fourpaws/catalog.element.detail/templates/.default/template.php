@@ -15,6 +15,7 @@ use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\CatalogBundle\Service\SortService;
 use FourPaws\Components\CatalogElementDetailComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\DateHelper;
@@ -30,6 +31,7 @@ global $APPLICATION;
 
 /** @var LocationService $locationService */
 $locationService = Application::getInstance()->getContainer()->get('location.service');
+$sortService = Application::getInstance()->getContainer()->get(SortService::class);
 
 /**
  * @todo Разворачивать всю цепочку нужных элементов в result_modifier
@@ -473,33 +475,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                             foreach ($unionOffers as $unionOffer) {
                                 $unionOffersSort[$unionOffer->getColorWithSize()] = $unionOffer;
                             }
-	                        usort($unionOffersSort, static function($a, $b) { // Сортировка по названию цвета, затем по полю SORT размера
-	                        	/** @var Offer $a */
-                                /** @var Offer $b */
-                                $aClothingSize = $a->getClothingSize();
-                                $bClothingSize = $b->getClothingSize();
-                                if ($aClothingSize && $bClothingSize) {
-                                	$clothingSizeComparisonResult = $aClothingSize->getSort() <=> $bClothingSize->getSort();
-                                }
-
-                                $aColor = $a->getColor();
-                                $bColor = $b->getColor();
-                                if ($aColor && $bColor) {
-		                            $colorComparisonResult = $aColor->getName() <=> $bColor->getName();
-                                }
-
-                                if (isset($colorComparisonResult)) {
-	                                if ($colorComparisonResult === 0 && isset($clothingSizeComparisonResult)) {
-	                                    return $clothingSizeComparisonResult;
-	                                } else {
-	                                    return $colorComparisonResult;
-			                        }
-                                } elseif (isset($clothingSizeComparisonResult)) {
-                                	return $clothingSizeComparisonResult;
-                                }
-
-                                return 0;
-	                        });
+                            $sortService->colorWithSizeSort($unionOffersSorted);
                             ?>
                             <li class="b-product-information__item">
                                 <div class="b-product-information__title-info">Цвет

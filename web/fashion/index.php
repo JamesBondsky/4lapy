@@ -103,7 +103,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
             <div class="fashion-info__list">
                 <div class="fashion-item-info fashion-item-info_small">
                     <div class="fashion-item-info__title">Новая коллекция</div>
-                    <div class="fashion-item-info__descr">2000&nbsp;товаров одежды <br /> и&nbsp;обуви</div>
+                    <div class="fashion-item-info__descr">2000&nbsp;новинок из&nbsp;категорий <br /> одежда и&nbsp;обувь</div>
                 </div>
                 <div class="fashion-item-info">
                     <div class="fashion-item-info__title">скидки до&nbsp;15%</div>
@@ -180,7 +180,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
     $deliveryResult = reset($filtered);
     ?>
 
-    <section class="fashion-free-shipping">
+    <section class="fashion-free-shipping" id="fashion-measure-dog">
         <div class="b-container">
             <div class="fashion-free-shipping__content">
                 <div class="fashion-free-shipping__img"></div>

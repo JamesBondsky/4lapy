@@ -11,7 +11,7 @@ class Color
     /**
      * @var string
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("name")
+     * @Serializer\SerializedName("title")
      */
     protected $name;
 
