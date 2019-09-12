@@ -34,6 +34,7 @@ use FourPaws\CatalogBundle\Controller\CatalogController;
 use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterHelper;
 use FourPaws\CatalogBundle\Service\SortService;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
@@ -934,8 +935,12 @@ class ProductService
                         $imageUrl = $color->getFilePath();
 
                         $fullProductColour
-                            ->setHexCode($hexCode)
-                            ->setImageUrl($imageUrl);
+                            ->setHexCode($hexCode);
+
+                        if ($imageUrl) {
+                            $fullProductColour
+                            ->setImageUrl((new FullHrefDecorator($imageUrl))->getFullPublicPath());
+                        }
                     }
                     $colours[] = $fullProductColour;
                 }
