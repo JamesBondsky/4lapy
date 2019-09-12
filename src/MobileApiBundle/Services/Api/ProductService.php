@@ -73,6 +73,8 @@ class ProductService
 {
     const LIST_IMAGE_WIDTH = 200;
     const LIST_IMAGE_HEIGHT = 250;
+    public const DETAIL_PICTURE_WIDTH = 2000;
+    public const DETAIL_PICTURE_HEIGHT = 2000;
 
     /** @var UserService */
     private $userService;
@@ -553,12 +555,9 @@ class ProductService
             ;
 
         // большая картинка
-        if ($images = $offer->getImages()) {
+        if ($images = $offer->getResizeImages(static::DETAIL_PICTURE_WIDTH, static::DETAIL_PICTURE_HEIGHT)) {
             /** @var Image $picture */
-            $picture = $images->first();
-            if ($pictureSrc = \CFile::getPath($picture->getId())) {
-                $shortProduct->setPicture($pictureSrc);
-            }
+            $shortProduct->setPicture($images->first());
         }
 
         // картинка ресайз (возможно не используется, но это не точно)
@@ -1109,7 +1108,7 @@ class ProductService
         $images = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
-            if ($offerImages = $offer->getImages()) {
+            if ($offerImages = $offer->getResizeImages(static::DETAIL_PICTURE_WIDTH, static::DETAIL_PICTURE_HEIGHT)) {
                 foreach ($offerImages as $image) {
                     $images[] = $image;
                 }
