@@ -396,7 +396,13 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
 
                         <div class="b-information-order__order-discounts" data-basket-coupons-discount-list></div>
 
-	                    <form action="/sale/order/" method="post">
+                        <form
+                            action="/sale/order/"
+                            method="post"
+                            data-basket-subscription-price
+                            data-total-price="<?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?>"
+                            data-subscription-price="<?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?>"
+                        >
 	                      <?php if ($arResult['SUBSCRIBE_ALLOWED']): ?>
 	                        <div class="b-cart-aside-subscription">
 	                          <div class="b-cart-aside-subscription__title">
@@ -447,7 +453,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
 	                            <?php endif ?>
 	                          </div>
 
-	                          <div class="b-cart-aside-subscription__toggles">
+	                          <div class="b-cart-aside-subscription__toggles" data-basket-subscription-price="input-wrapper">
 	                            <?php if ($user): ?>
 	                              <label class="b-radio-button">
 	                                <input
@@ -502,7 +508,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
 	                      <div class="b-information-order__order b-information-order__order--total">
 	                          <div class="b-information-order__order-price">Итого без учета доставки</div>
 	                          <div class="b-price b-price--information-order b-price--total-price">
-	                              <span class="b-price__current" data-basket-total-price>
+	                              <span class="b-price__current" data-basket-total-price  data-basket-subscription-price="price">
 	                                  <?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?>
 	                              </span>
 
