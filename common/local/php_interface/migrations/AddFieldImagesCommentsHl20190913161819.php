@@ -7,7 +7,7 @@ class AddFieldImagesCommentsHl20190913161819 extends \Adv\Bitrixtools\Migration\
 {
     const HL_NAME = 'Comments';
 
-    const FIELD_NAME = 'UF_IMAGES';
+    const FIELD_NAME = 'UF_COMMENT_IMAGES';
 
     protected $description = 'Добавление поля "Изображения" в highload комметарии';
 

@@ -253,6 +253,16 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                                     <p><?= $comment['UF_TEXT'] ?></p>
                                 </div>
                             </div>
+                            <?php //todo стилизовать ?>
+                            <?php if ($comment['UF_COMMENT_IMAGES']) { ?>
+                                <div>
+                                    <?php foreach ($comment['UF_COMMENT_IMAGES'] as $imageId) { ?>
+                                        <?php if ($commentImage = $arResult['COMMENT_IMAGES'][$imageId]) { ?>
+                                            <img src="<?= $commentImage ?>">
+                                        <?php } ?>
+                                    <?php } ?>
+                                </div>
+                            <?php } ?>
                         </li>
                     <?php } ?>
                 </ul>
