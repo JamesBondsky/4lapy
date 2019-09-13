@@ -1858,26 +1858,25 @@ class OrderService implements LoggerAwareInterface
                 case $isFastOrder:
                     $value = OrderPropertyService::COMMUNICATION_ONE_CLICK;
                     break;
+                case $this->deliveryService->isDelivery($delivery) && $address && !$address->isValid():
+                    $value = OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS;
+                    break;
                 case $this->isSubscribe($order):
 
                     $propCopyOrderId = $this->getOrderPropertyByCode($order, 'COPY_ORDER_ID');
                     $isFirsSubscribeOrder = ($propCopyOrderId) ? !\boolval($propCopyOrderId->getValue()) : true;
 
                     switch (true) {
-                        case ($isFirsSubscribeOrder && ($value == OrderPropertyService::COMMUNICATION_SMS)):
+                        case ($isFirsSubscribeOrder && (($value == OrderPropertyService::COMMUNICATION_SMS) || $delivery->getSelectedStore()->isShop())):
                             $value = OrderPropertyService::COMMUNICATION_FIRST_SUBSCRIBE_SMS;
                             break;
-                        case ($isFirsSubscribeOrder && ($value == OrderPropertyService::COMMUNICATION_PHONE)):
+                        case ($isFirsSubscribeOrder && ($value == OrderPropertyService::COMMUNICATION_PHONE) && !$delivery->getSelectedStore()->isShop()):
                             $value = OrderPropertyService::COMMUNICATION_FIRST_SUBSCRIBE_PHONE;
                             break;
                         default:
                             $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
                             break;
                     }
-                    break;
-
-                case $this->deliveryService->isDelivery($delivery) && $address && !$address->isValid():
-                    $value = OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS;
                     break;
                 // способ получения 07
                 case $this->deliveryService->isDpdPickup($delivery):
