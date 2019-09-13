@@ -72,8 +72,7 @@ services:
 
   manzana.guzzle:
     class: GuzzleHttp\Client
-    arguments:
-      - curl: '%manzana.guzzle.curl%'
+    arguments: ['%manzana.guzzle.proxy%']
 
   async.soap.factory:
     class: Meng\AsyncSoap\Guzzle\Factory

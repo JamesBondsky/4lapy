@@ -103,6 +103,8 @@ class PushEventService
             ->setFilter([
                 'UF_ACTIVE' => true,
                 '!UF_FILE' => false,
+                '>=UF_START_SEND' => (new \Bitrix\Main\Type\DateTime())->add('-10 minutes')->format('d.m.Y H:i:00'),
+                '<=UF_START_SEND' => (new \Bitrix\Main\Type\DateTime())->add('-10 minutes')->format('d.m.Y H:i:59'),
             ])
             ->setSelect([
                 '*',
@@ -146,7 +148,7 @@ class PushEventService
         $res = $hlBlockPushMessages->query()
             ->setFilter([
                 'UF_ACTIVE' => true,
-                '<=UF_START_SEND' => (new \Bitrix\Main\Type\DateTime())->add('6 hour')->format('d.m.Y H:i:s'),
+                '<=UF_START_SEND' => (new \Bitrix\Main\Type\DateTime())->add('+10 minutes')->format('d.m.Y H:i:s'),
                 'UF_FILE' => false,
             ])
             ->setSelect([
@@ -302,12 +304,25 @@ class PushEventService
                 $this->log()->error('Ошибка при отправке push ios ' . $e->getMessage());
             }
 
-            foreach ($pushManager->getResponse()->getParsedResponses() as $token => $response) {
-                if (is_null($response['id'])) {
-                    if (isset($pushId[$token])) {
-                        $pushId[$token]->setSuccessExec(ApiPushEvent::EXEC_SUCCESS_CODE);
+            $haveThrow = false;
+
+            foreach ($response as $responseItem) {
+                if ($responseItem['token'] != 0) {
+                    $haveThrow = true;
+                }
+            }
+
+            foreach ($response as $token => $responseItem) {
+                if ($haveThrow) {
+                    if ($responseItem['token'] != 0) {
+                        $pushId[$token]->setServiceResponseStatus($responseItem['token']);
+                        $pushId[$token]->setSuccessExec($responseItem['token'] > 0 ? ApiPushEvent::EXEC_FAIL_CODE : ApiPushEvent::EXEC_SUCCESS_CODE);
                         $this->apiPushEventRepository->update($pushId[$token]);
                     }
+                } else {
+                    $pushId[$token]->setServiceResponseStatus($responseItem['token']);
+                    $pushId[$token]->setSuccessExec($responseItem['token'] > 0 ? ApiPushEvent::EXEC_FAIL_CODE : ApiPushEvent::EXEC_SUCCESS_CODE);
+                    $this->apiPushEventRepository->update($pushId[$token]);
                 }
             }
         }

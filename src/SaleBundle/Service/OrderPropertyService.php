@@ -31,7 +31,11 @@ class OrderPropertyService
 
     public const COMMUNICATION_DOSTAVISTA_ERROR = '08';
 
-    public const COMMUNICATION_PAYMENT_ANALYSIS_DOSTAVISTA_ERROR = '09';
+    public const COMMUNICATION_PAYMENT_ANALYSIS_DOSTAVISTA_ERROR = '08'; // все ошибки достависты имеют код 8
+
+    public const COMMUNICATION_FIRST_SUBSCRIBE_SMS = '09';
+
+    public const COMMUNICATION_FIRST_SUBSCRIBE_PHONE = '10';
 
     /**
      * @var OrderPropertyVariantRepository
