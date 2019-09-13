@@ -49,6 +49,7 @@ use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Service\BrandService;
 use FourPaws\CatalogBundle\Service\CatalogGroupService;
 use FourPaws\CatalogBundle\Service\SubscribeDiscountService;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
@@ -1494,7 +1495,13 @@ class Offer extends IblockElement
         }
         if ($this->colour) {
             $this->color->setName($this->colour->getName());
-            $this->color->setImageUrl($this->colour->getFilePath());
+            $filePath = $this->colour->getFilePath();
+            if ($filePath) {
+                try {
+                    $this->color->setImageUrl((new FullHrefDecorator($filePath))->getFullPublicPath());
+                } catch (SystemException $e) {
+                }
+            }
             $this->color->setHexCode($this->colour->getColorCode());
         }
     }

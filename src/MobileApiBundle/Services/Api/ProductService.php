@@ -11,6 +11,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\BasketItem;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
@@ -33,6 +34,7 @@ use FourPaws\CatalogBundle\Controller\CatalogController;
 use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterHelper;
 use FourPaws\CatalogBundle\Service\SortService;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
@@ -71,6 +73,8 @@ class ProductService
 {
     const LIST_IMAGE_WIDTH = 200;
     const LIST_IMAGE_HEIGHT = 250;
+    public const DETAIL_PICTURE_WIDTH = 2000;
+    public const DETAIL_PICTURE_HEIGHT = 2000;
 
     /** @var UserService */
     private $userService;
@@ -310,8 +314,11 @@ class ProductService
      * Мэппинг полей товара для списка
      * @param Product $product
      * @return FullProduct|null
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
      */
     protected function mapProductForList(Product $product)
     {
@@ -325,7 +332,23 @@ class ProductService
             $itemOffer->setColor();
         }
 
-        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true, $this->forceAtLeastOnePackingVariant);
+        $hasColours = (bool)$this->getColours($currentOffer)
+            && (bool)$currentOffer->getColor();
+
+        $clothingSizes = [];
+        foreach ($product->getOffers() as $itemOffer) {
+            $clothingSize = $itemOffer->getClothingSize();
+            if ($clothingSize) {
+                $clothingSizes[] = $clothingSize->getId();
+            }
+        }
+        $hasOnlyColourCombinations = false;
+        if ($hasColours && count($clothingSizes) <= 1) { // есть деление по цветам, но нет деления по размерам
+            $hasOnlyColourCombinations = true;
+        }
+
+
+        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true, $this->forceAtLeastOnePackingVariant, $hasOnlyColourCombinations);
 
         // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
         $fullProduct->setIsAvailable(true);
@@ -385,12 +408,27 @@ class ProductService
             throw new NotFoundProductException();
         }
         $product = $offer->getProduct();
+        $colours = $this->getColours($offer);
+        $hasColours = (bool)$colours;
 
-        $fullProduct = $this->convertToFullProduct($product, $offer, true);
+        $clothingSizes = [];
+        foreach ($product->getOffers() as $itemOffer) {
+            $clothingSize = $itemOffer->getClothingSize();
+            if ($clothingSize) {
+                $clothingSizes[] = $clothingSize->getId();
+            }
+        }
+        $hasOnlyColourCombinations = false;
+        if ($hasColours && count($clothingSizes) <= 1) { // есть деление по цветам, но нет деления по размерам
+            $hasOnlyColourCombinations = true;
+        }
+
+        $fullProduct = $this->convertToFullProduct($product, $offer, true, true, $hasOnlyColourCombinations);
         $fullProduct->setIsAvailable($offer->isAvailable()); // returns ShortProduct
         $fullProduct
             ->setSpecialOffer($this->getSpecialOffer($offer))           // акция
             ->setFlavours($this->getFlavours($offer))                   // вкус
+            ->setColours($colours)                                      // цвет
             ->setAvailability($offer->getAvailabilityText())            // товар под заказ
             ->setDelivery($this->getDeliveryText($offer))               // товар под заказ
             ->setPickup($this->getPickupText($offer))                   // товар под заказ
@@ -517,12 +555,9 @@ class ProductService
             ;
 
         // большая картинка
-        if ($images = $offer->getImages()) {
+        if ($images = $offer->getResizeImages(static::DETAIL_PICTURE_WIDTH, static::DETAIL_PICTURE_HEIGHT)) {
             /** @var Image $picture */
-            $picture = $images->first();
-            if ($pictureSrc = \CFile::getPath($picture->getId())) {
-                $shortProduct->setPicture($pictureSrc);
-            }
+            $shortProduct->setPicture($images->first());
         }
 
         // картинка ресайз (возможно не используется, но это не точно)
@@ -634,14 +669,17 @@ class ProductService
      * @param Offer $offer
      * @param bool $needPackingVariants
      * @param bool|null $showVariantsIfOneVariant
+     * @param bool|null $hasOnlyColourCombinations
      * @return FullProduct
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws SystemException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteErrorException
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteException
      */
-    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true): FullProduct
+    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true, ?bool $hasOnlyColourCombinations = false): FullProduct
     {
         $offer->setColor();
         $shortProduct = $this->convertToShortProduct($product, $offer);
@@ -674,7 +712,12 @@ class ProductService
         $fullProduct->setColor($shortProduct->getColor());
 
         if ($needPackingVariants) {
-            $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // фасовки
+            if ($hasOnlyColourCombinations) {
+                $fullProduct->setColourVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // цвета
+                $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant, true));
+            } else {
+                $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // фасовки
+            }
         }
 
         return $fullProduct;
@@ -756,15 +799,19 @@ class ProductService
     /**
      * Фасовки товара
      *
-     * @param Product     $product
+     * @param Product $product
      * @param FullProduct $currentFullProduct
-     * @param bool|null   $showVariantsIfOneVariant
+     * @param bool|null $showVariantsIfOneVariant
+     * @param bool|null $onlyCurrentOffer
      *
      * @return array
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
-    public function getPackingVariants(Product $product, FullProduct $currentFullProduct, ?bool $showVariantsIfOneVariant = true): array
+    public function getPackingVariants(Product $product, FullProduct $currentFullProduct, ?bool $showVariantsIfOneVariant = true, ?bool $onlyCurrentOffer = false): array
     {
         $offers = $product->getOffersSorted();
         // если в предложениях только текущий продукт
@@ -772,13 +819,18 @@ class ProductService
         if ($hasOnlyCurrentOffer && $showVariantsIfOneVariant) {
             return [$fullProduct = $this->convertToFullProduct($product, $offers->current())];
         }
-        if (empty($offers) || ($hasOnlyCurrentOffer && !$showVariantsIfOneVariant)) {
+        if (empty($offers) || ($hasOnlyCurrentOffer && !$showVariantsIfOneVariant)
+            || ($onlyCurrentOffer && !$showVariantsIfOneVariant)
+        ) {
             return [];
         }
 
         $packingVariants = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
+            if ($onlyCurrentOffer && $offer->getId() != $currentFullProduct->getId()) {
+                continue;
+            }
             // if ($offer->getId() === $currentFullProduct->getId()) {
                 // toDo если переиспользовать $currentFullProduct - в массиве $packingVariants в итоге попадает null вместо объекта
             //    $fullProduct = clone $currentFullProduct;
@@ -846,6 +898,52 @@ class ProductService
                         ->setTitle($flavourWithWeight);
                 }
                 return $flavours;
+            }
+        }
+        return [];
+    }
+
+    /**
+     * Цвета товара
+     * @param Offer $offer
+     * @return FullProduct\Flavour[]
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getColours(Offer $offer): array
+    {
+        if (!empty($offer->getColourCombination()) && $offer->getColor()) {
+            $unionOffers = $this->getOffersByUnion('color', $offer->getColourCombinationXmlId());
+            if (!$unionOffers->isEmpty()) {
+                $unionOffersSorted = [];
+                /** @var Offer $unionOffer */
+                foreach ($unionOffers as $unionOffer) {
+                    $unionOffersSorted[$unionOffer->getColorWithSize()] = $unionOffer;
+                }
+                $this->sortService->colorWithSizeSort($unionOffersSorted);
+
+                $colours = [];
+                foreach ($unionOffersSorted as $unionOffer) {
+                    $color = $unionOffer->getColor();
+                    $fullProductColour = (new FullProduct\Colour())
+                        ->setOfferId($unionOffer->getId())
+                        ->setTitle($unionOffer->getColorWithSize());
+                    if ($color) {
+                        $hexCode = $color->getColorCode();
+                        $imageUrl = $color->getFilePath();
+
+                        $fullProductColour
+                            ->setHexCode($hexCode);
+
+                        if ($imageUrl) {
+                            $fullProductColour
+                            ->setImageUrl((new FullHrefDecorator($imageUrl))->getFullPublicPath());
+                        }
+                    }
+                    $colours[] = $fullProductColour;
+                }
+                return $colours;
             }
         }
         return [];
@@ -1010,7 +1108,7 @@ class ProductService
         $images = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
-            if ($offerImages = $offer->getImages()) {
+            if ($offerImages = $offer->getResizeImages(static::DETAIL_PICTURE_WIDTH, static::DETAIL_PICTURE_HEIGHT)) {
                 foreach ($offerImages as $image) {
                     $images[] = $image;
                 }

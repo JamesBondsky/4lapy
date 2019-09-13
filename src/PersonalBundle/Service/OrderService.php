@@ -1158,4 +1158,10 @@ class OrderService
 
         return new ArrayCollection($statuses);
     }
+
+    public function clearOrderRepositoryNav()
+    {
+        $this->orderRepository->clearNav();
+        return $this;
+    }
 }

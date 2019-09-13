@@ -67,7 +67,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     /** @var OrderSubscribeService $orderSubscribeService */
     private $orderSubscribeService;
 
-    /** @var OrderSubscribeService $orderSubscribeService */
+    /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
     private $orderSubscribeHistoryService;
 
     /** @var OrderService $orderService */
@@ -739,6 +739,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     BitrixApplication::getConnection()->rollbackTransaction();
                 }
             }
+        } else {
+            $this->log()->error(__METHOD__.' ошибка валидации');
         }
 
         $this->loadData();
@@ -808,6 +810,11 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             // иначе форму редактирования подписки
             if(null === $this->arParams['STEP']){
                 $this->arResult['ORDER'] = $this->getOrder();
+
+                $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribe(false);
+                $this->isBySubscribe();
+                $this->getSubscribePrice();
+
                 $this->arResult['CURRENT_STAGE'] = 'initial';
             } else if($this->arParams['STEP'] == 1){
                 $this->initStep1();
@@ -1130,6 +1137,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             } elseif ($this->arParams['USER_ID'] <= 0) {
                 $this->setExecError('getOrder', 'Некорректный идентификатор пользователя', 'incorrectUserId');
             } else {
+                $this->getOrderSubscribeService()->getPersonalOrderService()->clearOrderRepositoryNav(); // выставлен, если получаем следующую страницу в личном кабинете
                 $orderSubscribeService = $this->getOrderSubscribeService();
                 /** @var Order $order */
                 $order = $orderSubscribeService->getOrderById($orderId);
@@ -1794,5 +1802,67 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     public function getRequest()
     {
         return $this->request;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getSubscribePrice()
+    {
+        // логика взята из BasketComponent::calcSubscribeFields
+        $subscribePrice = 0;
+
+        /** @var Basket $basket */
+        $basket = $this->arResult['ORDER']->getBitrixOrder()->getBasket();
+
+        /** @var BasketItem $basketItem */
+        $orderableBasket = $basket->getOrderableItems();
+
+        foreach ($orderableBasket as $basketItem) {
+            if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+                $offer = $this->getOffer((int)$basketItem->getProductId());
+                if (!$offer) {
+                    continue;
+                }
+
+                $priceSubscribe = $offer->getSubscribePrice() * $basketItem->getQuantity();
+                $priceDefault = $basketItem->getPrice() * $basketItem->getQuantity();
+                $price = $priceDefault;
+                if ($priceSubscribe < $priceDefault) {
+                    $price = $priceSubscribe;
+                }
+
+                $subscribePrice += $price;
+            }
+        }
+
+        $this->arResult['SUBSCRIBE_PRICE'] = $subscribePrice;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function isBySubscribe()
+    {
+        // если на этот заказ оформлена подписка, то заказ не может быть создан по подписке
+        if ($this->arResult['ORDER_SUBSCRIBE']) {
+            $this->arResult['BY_SUBSCRIBE'] = false;
+            return;
+        }
+
+        if (($this->arResult['ORDER']) && ($this->arResult['ORDER']->getId())) {
+            $this->arResult['BY_SUBSCRIBE'] = $this->getOrderSubscribeHistoryService()->hasOriginOrder($this->arResult['ORDER']->getId());
+        } else {
+            $this->arResult['BY_SUBSCRIBE'] = false;
+        }
     }
 }
