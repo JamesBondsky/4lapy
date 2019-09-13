@@ -56,4 +56,6 @@ class IblockCode
 
     public const FASHION_SLIDER_PRODUCTS = 'fashion_slider_product';
     public const FASHION_FOOTER_PRODUCTS = 'fashion_footer_product';
+
+    public const HEADER_PROMO_BANNER = 'header_promo_banner';
 }
