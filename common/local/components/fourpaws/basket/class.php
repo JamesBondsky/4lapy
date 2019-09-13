@@ -13,6 +13,8 @@ use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
+use Bitrix\Sale\Discount;
+use Bitrix\Sale\DiscountCouponsManager;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\PriceMaths;
 use CBitrixComponent;
@@ -184,6 +186,30 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
                 $storage->setSubscribe(false);
                 $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
             }
+
+            $coupon = $this->couponsStorage->getApplicableCoupon();
+            /*$isBitrixCoupon = (bool)DiscountCouponTable::getCount([
+                'COUPON' => $coupon,
+                'USER_ID' => $order->getUserId(),
+            ]);*/
+
+            //if ($isBitrixCoupon) {
+                DiscountCouponsManager::get();
+                DiscountCouponsManager::init(DiscountCouponsManager::MODE_CLIENT, array("userId" => $userId));
+                if ($coupon) {
+                    DiscountCouponsManager::add($coupon);
+                } else {
+                    DiscountCouponsManager::clear(true);
+                }
+
+                $discounts = Discount::loadByBasket($basket);
+                $basket->refreshData(array('PRICE', 'COUPONS'));
+                if ($discounts) {
+                    $discounts->calculate();
+                    $discountResult = $discounts->getApplyResult();
+                    $basket->save();
+                }
+            //}
             $order = Order::create(SITE_ID, $userId);
             $order->setBasket($basket);
             // но иногда он так просто не запускается

@@ -891,7 +891,9 @@ class OrderService
             $order->setFieldNoDemand('DATE_UPDATE', new DateTime());
 
             if ($baseOrderStatus !== BitrixUtils::BX_BOOL_TRUE) {
-                $order->setFieldNoDemand('PAYED', BitrixUtils::BX_BOOL_TRUE);
+                /** @var \DateTimeImmutable $date */
+                $date = $cheque->date;
+                $paymentDate = DateTime::createFromTimestamp($date->getTimestamp());
 
                 $basket = $order->getBasket();
                 $basketItems = $basket->getBasketItems();
@@ -949,6 +951,9 @@ class OrderService
                         LoggerFactory::create('manzanaOrder')->error(sprintf('failed to set BONUS_COUNT for order %s', $order->getField('ACCOUNT_NUMBER')));
                     }
                 }
+
+                $order->setFieldNoDemand('PAYED', BitrixUtils::BX_BOOL_TRUE);
+                $order->setFieldNoDemand('DATE_PAYED', $paymentDate);
             }
             $order->save();
         }

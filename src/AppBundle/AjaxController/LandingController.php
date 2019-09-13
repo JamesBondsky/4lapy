@@ -284,7 +284,7 @@ class LandingController extends Controller
                         $coupons = [
                             $festivalUserId => [$userId]
                         ];
-                        $personalOffersService->importOffers($festivalOfferId, $coupons);
+                        $personalOffersService->importOffers($festivalOfferId, $coupons, true);
                         $festivalPersonalOfferLinked = true;
                     } catch (\Exception $e) {
                         $logger = LoggerFactory::create('Festival');
