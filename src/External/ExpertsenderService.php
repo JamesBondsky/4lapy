@@ -21,6 +21,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
 use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
 use FourPaws\External\Exception\ExpertsenderNotAllowedException;
@@ -603,6 +604,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $properties = $orderService->getOrderPropertiesByCode($order, [
             'NAME',
             'DELIVERY_DATE',
+            'DELIVERY_INTERVAL',
             'PHONE',
             'USER_REGISTERED',
             'COM_WAY',
@@ -639,6 +641,10 @@ class ExpertsenderService implements LoggerAwareInterface
             new Snippet('total_bonuses', (int)$properties['BONUS_COUNT']),
             new Snippet('order_date', $order->getDateInsert()->format('d.m.Y')),
         ];
+
+        if ($deliveryInterval = IntervalService::validateDeliveryInterval($properties['DELIVERY_INTERVAL'])) {
+            $snippets[] = new Snippet('delivery_interval', $deliveryInterval);
+        }
 
         $isOnlinePayment = $orderService->isOnlinePayment($order);
         $royalCaninAction = $orderService->checkRoyalCaninAction($order);
@@ -1132,6 +1138,10 @@ class ExpertsenderService implements LoggerAwareInterface
         $snippets[] = new Snippet('tel_number', $properties['PHONE'] !== '' ? PhoneHelper::formatPhone($properties['PHONE']) : '');
         $snippets[] = new Snippet('total_bonuses', (int)$orderService->getOrderBonusSum($order));
         $snippets[] = new Snippet('delivery_cost', (float)$order->getShipmentCollection()->getPriceDelivery());
+
+        if ($deliveryInterval = IntervalService::validateDeliveryInterval($properties['DELIVERY_INTERVAL'])) {
+            $snippets[] = new Snippet('delivery_interval', $deliveryInterval);
+        }
 
         $items = $this->getAltProductsItems($order);
         $items = '<Products>' . implode('', $items) . '</Products>';

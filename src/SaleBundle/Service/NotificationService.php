@@ -14,6 +14,7 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Enum\CrudGroups;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
 use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
 use FourPaws\External\Exception\ExpertsenderServiceBlackListException;
@@ -515,6 +516,7 @@ class NotificationService implements LoggerAwareInterface
                     'PHONE',
                     'EMAIL',
                     'DELIVERY_DATE',
+                    'DELIVERY_INTERVAL',
                     'DELIVERY_PLACE_CODE',
                     'IS_FAST_ORDER'
                 ]
@@ -536,6 +538,8 @@ class NotificationService implements LoggerAwareInterface
             );
             $result['deliveryCode'] = $this->orderService->getOrderDeliveryCode($order);
             $result['isOneClick'] = $properties['IS_FAST_ORDER'] === 'Y';
+
+            $result['deliveryInterval'] = IntervalService::validateDeliveryInterval($properties['DELIVERY_INTERVAL']);
 
             if (!$result['isOneClick'] &&
                 ($result['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE)
