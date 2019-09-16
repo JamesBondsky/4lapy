@@ -8,6 +8,7 @@ use Bitrix\Main\Entity\Query;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\SystemException;
+use CIBlockElement;
 use CUserFieldEnum;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\HlblockCode;
@@ -15,6 +16,8 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Import\Model\ImportOffer;
+use FourPaws\PersonalBundle\Exception\AlreadyExistsException;
+use FourPaws\PersonalBundle\Exception\BaseException;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\Serializer;
@@ -152,14 +155,10 @@ class PersonalOffersService
                 'promocode' => $coupon['UF_PROMO_CODE']
             ];
 
-            if ($offer['PROPERTY_DISCOUNT_VALUE']) {
-                $item['discount'] = $offer['PROPERTY_DISCOUNT_VALUE'] . '%';
-            } elseif ($offer['PROPERTY_DISCOUNT_CURRENCY_VALUE']) {
-                $item['discount'] = $offer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] . ' ₽';
-            }
+            $item['discount'] = $coupon['custom_title'];
 
-            if ($offer['PROPERTY_ACTIVE_TO_VALUE']) {
-                $item['date_active'] = 'Действует до ' . $offer['PROPERTY_ACTIVE_TO_VALUE'];
+            if ($coupon['custom_date_to']) {
+                $item['date_active'] = $coupon['custom_date_to'];
             }
 
             $item['text'] = strip_tags(html_entity_decode($offer['PREVIEW_TEXT']));
@@ -219,7 +218,8 @@ class PersonalOffersService
                 'PROPERTY_DISCOUNT_CURRENCY',
                 'PREVIEW_TEXT',
                 'DATE_ACTIVE_TO',
-                'PROPERTY_ACTIVE_TO'
+                'PROPERTY_ACTIVE_TO',
+                'PROPERTY_COUPON_TITLE',
             ]
         );
         while ($res = $rsOffers->GetNext())
@@ -287,8 +287,7 @@ class PersonalOffersService
     /**
      * @param int $offerId
      * @param array $coupons
-     *
-     * @param bool $useOldLinkingMethod
+     * @param bool $useOldLinkingMethod В новом методе связывания используются два ключа - users для массива пользователей, к которым привязать промокод, и coupon для расширенной информации о купоне. В старом способе связывания возможно указывать только пользователей
      * @throws InvalidArgumentException
      * @throws \Bitrix\Main\ObjectException
      */
@@ -605,6 +604,7 @@ class PersonalOffersService
             'UF_DATE_CREATED' => new DateTime(),
             'UF_DATE_CHANGED' => new DateTime(),
             'UF_DISCOUNT_VALUE' => $coupon['discountValue'],
+            'UF_DATE_ACTIVE_FROM' => $coupon['dateTimeActiveFrom'],
             'UF_DATE_ACTIVE_TO' => $coupon['dateTimeActiveTo'],
         ]);
     }
@@ -649,14 +649,57 @@ class PersonalOffersService
 
         if ($promoCodeUserLinkId > 0)
         {
-            $currentDateTime = new DateTime();
-            $this->personalCouponUsersManager::update($promoCodeUserLinkId, [
-                'UF_USED' => true,
-                'UF_DATE_CHANGED' => $currentDateTime,
-                'UF_DATE_USED' => $currentDateTime,
-            ]);
+            $this->setUsedStatus($promoCodeUserLinkId);
         }
     }
+
+    /**
+     * @param string $manzanaId
+     * @throws InvalidArgumentException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function setUsedStatusByManzanaId(string $manzanaId): void
+    {
+        if (($manzanaId = trim($manzanaId)) === '')
+        {
+            throw new InvalidArgumentException(InvalidArgumentException::ERRORS[1], 1);
+        }
+
+        $promoCodeUserLinkId = $this->personalCouponUsersManager::query()
+            ->setSelect(['ID'])
+            ->setFilter([
+                '=UF_MANZANA_ID' => $manzanaId,
+            ])
+            ->exec()
+            ->fetch()['ID'];
+
+        if ($promoCodeUserLinkId > 0)
+        {
+            $this->setUsedStatus($promoCodeUserLinkId);
+        }
+    }
+
+    /**
+     * @param int $promoCodeUserLinkId
+     * @throws \Bitrix\Main\ObjectException
+     * @throws InvalidArgumentException
+     */
+    private function setUsedStatus(int $promoCodeUserLinkId): void
+    {
+        if ($promoCodeUserLinkId <= 0) {
+            throw new InvalidArgumentException(InvalidArgumentException::ERRORS[2], 2);
+        }
+
+        $currentDateTime = new DateTime();
+        $this->personalCouponUsersManager::update($promoCodeUserLinkId, [
+            'UF_USED' => true,
+            'UF_DATE_CHANGED' => $currentDateTime,
+            'UF_DATE_USED' => $currentDateTime,
+        ]);
+    }
+
 
     /**
      * @param string $promoCode
@@ -716,8 +759,11 @@ class PersonalOffersService
      *
      * @return ArrayCollection
      * @throws InvalidArgumentException
+     * @throws SystemException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectPropertyException
      */
     public function getOfferFieldsByPromoCode(string $promoCode): ArrayCollection
     {
@@ -729,19 +775,32 @@ class PersonalOffersService
             throw new SystemException('Module iblock is not installed');
         }
 
-        $offerId = $this->personalCouponManager::query()
+        $personalCouponUsersQuery = Query\Join::on('this.ID', 'ref.UF_COUPON');
+
+        $rsOffer = $this->personalCouponManager::query()
             ->setSelect([
                 'ID',
                 'UF_OFFER',
+                'USER_COUPONS.UF_DATE_ACTIVE_TO',
             ])
             ->setFilter([
                 '=UF_PROMO_CODE' => $promoCode,
             ])
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'USER_COUPONS', $this->personalCouponUsersManager::getEntity(),
+                    $personalCouponUsersQuery,
+                    ['join_type' => 'LEFT']
+                )
+            )
             ->exec()
-            ->fetch()['UF_OFFER'];
+            ->fetch();
+
+        $offerId = $rsOffer['UF_OFFER'];
         $offer = [];
         if ($offerId)
         {
+            $offerActiveTo = $rsOffer['PERSONAL_COUPON_USER_COUPONS_UF_DATE_ACTIVE_TO'];
             $rsOffers = \CIBlockElement::GetList(
                 [
                     'DATE_ACTIVE_TO' => 'asc,nulls'
@@ -766,6 +825,16 @@ class PersonalOffersService
                 {
                     $offer = $res;
                 }
+            }
+
+            if ($offerActiveTo) {
+                if ($offerActiveTo < new DateTime('01.01.3000')) { // Дата, с которой Manzana устанавливает дату окончания действия бесконечных купонов
+                    $offer['custom_date_active_to'] =  $offerActiveTo->format('d.m.Y');
+                } else {
+                    $offer['custom_date_active_to'] = '';
+                }
+            } else {
+                $offer['custom_date_active_to'] = $offer['ACTIVE_TO'];
             }
         }
 
@@ -979,6 +1048,14 @@ class PersonalOffersService
             uasort($coupons, static function($a, $b) use($offersOrder) {
                 return $offersOrder[$a['UF_OFFER']] <=> $offersOrder[$b['UF_OFFER']];
             });*/
+        }
+
+        // Формирование кастомного заголовка (размер скидки/текст)
+        foreach ($coupons as $couponKey => $coupon) {
+            $offer = $offersCollection->get($coupon['UF_OFFER']);
+
+            $coupons[$couponKey]['custom_title'] = $this->getCouponTitle($coupon, $offer);
+            $coupons[$couponKey]['custom_date_to'] = $this->getCouponDateToText($coupon, $offer);
         }
 
         $couponsCollection = new ArrayCollection($coupons);
@@ -1343,7 +1420,7 @@ class PersonalOffersService
     }
 
     /**
-     * @param $offerID
+     * @param $coupon
      *
      * @return array|null
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
@@ -1380,5 +1457,112 @@ class PersonalOffersService
         }
 
         return $offer;
+    }
+
+    /**
+     * Добавляет персональное предложение в инфоблок
+     *
+     * @param string $name
+     * @param string|null $description
+     * @throws BaseException
+     * @throws InvalidArgumentException
+     * @throws SystemException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public function addPersonalOffer(string $name, ?string $description = ''): void
+    {
+        if (!Loader::includeModule('iblock')) {
+            throw new SystemException('Module iblock is not installed');
+        }
+        if (!$name) {
+            throw new InvalidArgumentException(InvalidArgumentException::ERRORS[3], 3);
+        }
+
+        $iblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS);
+
+        $isOfferExists = (bool)CIBlockElement::GetList([], [
+            '=IBLOCK_ID' => $iblockId,
+            '=NAME' => $name,
+        ], []);
+        if ($isOfferExists) {
+            throw new AlreadyExistsException(AlreadyExistsException::ERRORS[1], 1);
+        }
+
+        $el = new CIBlockElement;
+        $fields = [
+            'IBLOCK_SECTION_ID' => false,
+            'IBLOCK_ID'         => $iblockId,
+            'NAME'              => $name,
+            'ACTIVE'            => 'Y',
+            'PREVIEW_TEXT'      => $description,
+        ];
+        if (!$elementId = $el->Add($fields)) {
+            throw new BaseException($el->LAST_ERROR);
+        }
+    }
+
+    /**
+     * Возвращает заголовок, выводимый в описании купона.
+     * Приоритеты:
+     * 1. Заголовок из элемента инфоблока "Персональные предложения"
+     * 2. Скидка в процентах из HL-блока с купонами
+     * 3. Скидка в процентах из инфоблока "Персональные предложения"
+     * 4. Скидка в рублях из инфоблока "Персональные предложения"
+     * 5. Текст "Купон", если предыдущие поля не заданы
+     *
+     * @param array $coupon
+     * @param array $offer
+     * @return string
+     */
+    public function getCouponTitle(array $coupon, array $offer): string
+    {
+        $couponTitle = '';
+        $discount = '';
+        if ($offer['PROPERTY_COUPON_TITLE_VALUE']) {
+            $couponTitle = $offer['PROPERTY_COUPON_TITLE_VALUE'];
+        } elseif (isset($coupon['PERSONAL_COUPON_USER_COUPONS_UF_DISCOUNT_VALUE'])) {
+            $discount = $coupon['PERSONAL_COUPON_USER_COUPONS_UF_DISCOUNT_VALUE'] . '%';
+        } elseif ($offer['PROPERTY_DISCOUNT_VALUE']) {
+            $discount = $offer['PROPERTY_DISCOUNT_VALUE'] . '%';
+        } elseif ($offer['PROPERTY_DISCOUNT_CURRENCY_VALUE']) {
+            $discount = $offer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] . ' ₽';
+        } else {
+            $couponTitle = 'Купон';
+        }
+        if ($discount) {
+            $couponTitle = '-' . $discount;
+        }
+
+        return $couponTitle;
+    }
+
+    /**
+     * Получение текста с датой окончания действия купона (дата купона из HL-блока приоритетнее даты перс.предложения из инфоблока)
+     *
+     * @param array $coupon
+     * @param array $offer
+     * @return mixed|string
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function getCouponDateToText(array $coupon, array $offer)
+    {
+        /** @var DateTime $couponDateTo */
+        if ($couponDateTo = $coupon['PERSONAL_COUPON_USER_COUPONS_UF_DATE_ACTIVE_TO']) {
+            if ($couponDateTo < new DateTime('01.01.3000')) { // Дата, с которой Manzana устанавливает дату окончания действия бесконечных купонов
+                $text =  $couponDateTo->format('d.m.Y');
+            } else {
+                $text = '';
+            }
+        }
+
+        if (!isset($text)) {
+            $text = $offer['PROPERTY_ACTIVE_TO_VALUE'];
+        }
+
+        if ($text) {
+            $text = 'Действует до ' . $text;
+        }
+        return $text;
     }
 }
