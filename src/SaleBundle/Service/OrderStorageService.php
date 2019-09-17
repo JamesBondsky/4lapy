@@ -350,14 +350,11 @@ class OrderStorageService
         }
 
         // проверка на случай, когда текущая дата больше даты доставки
-        if ($selectedDelivery = $this->getSelectedDelivery($storage)) {
-            $deliveryDate = $selectedDelivery->getDeliveryDate();
-            $date = new \DateTime();
-
-            if ($deliveryDate->getTimestamp() < $date->getTimestamp()) {
-                throw new RuntimeException('Дата доставки выбрана меньше, чем текущая дата');
-            }
-        }
+//        if ($selectedDelivery = $this->getSelectedDelivery($storage)) {
+//            if (($deliveryDate = $selectedDelivery->getDeliveryDate()) && ($deliveryDate->getTimestamp() < (new \DateTime())->getTimestamp())) {
+//                throw new RuntimeException('Дата доставки выбрана меньше, чем текущая дата');
+//            }
+//        }
 
         return $storage;
     }
