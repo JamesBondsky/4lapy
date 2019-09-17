@@ -355,7 +355,10 @@ class BasketService
     {
         try {
             if (!$basketItem->isDelay()) {
-                if ($basketItem->getPrice() && (
+                if (
+                    ($basketItem->getPrice() > 0 || $basketItem->getBasePrice() > 0)
+                    &&
+                    (
                         (null === $delivery) ||
                         !(clone $delivery)->setStockResult(
                             $this->deliveryService->getStockResultForOffer(
