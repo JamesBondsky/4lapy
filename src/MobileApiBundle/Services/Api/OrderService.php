@@ -1171,7 +1171,7 @@ class OrderService
             //toDo DPD доставка
             case self::DELIVERY_TYPE_COURIER:
                 $cartParamArray['delyveryType'] = $cartParamArray['split'] ? 'twoDeliveries' : ''; // have no clue why this param used
-                $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
+                $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::INNER_DELIVERY_CODE);
                 //toDo доставка DPD должна определяться автоматически, в зависимости от зоны
                 break;
             case self::DELIVERY_TYPE_PICKUP:
