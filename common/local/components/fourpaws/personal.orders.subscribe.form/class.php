@@ -990,7 +990,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         if($this->arParams['SUBSCRIBE_ID'] > 0){
             $this->arResult['SUBSCRIBE'] = $this->setSubscribe($this->getOrderSubscribeService()->getById($this->arParams['SUBSCRIBE_ID']));
             if($this->request->get('changeNextDelivery')){
-                $isSuccess = $this->getOrderSubscribeService()->createSingleNextDelivery($this->getSubscribe());
+                $isSuccess = $this->getOrderSubscribeService()->createSingleSubscribe($this->getSubscribe());
                 if(!$isSuccess){
                     $result->addError(new Error(
                         sprintf("Не удалось создать единичную подписку на доставку: %s", $this->arParams['SUBSCRIBE_ID'])

@@ -64,23 +64,13 @@ class OrderSubscribeSingle extends BaseEntity
     protected $data;
 
     /**
-     * @var array
-     * @Serializer\Type("array<string>")
+     * @var string
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_ITEMS")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $items;
-
-    /**
-     * @var array
-     * @Serializer\Type("array<string>")
-     * @Serializer\SerializedName("UF_QUANTITY")
-     * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create","read"})
-     * @Serializer\SkipWhenEmpty()
-     */
-    protected $quantity;
 
     /**
      * @var DateTime
@@ -128,38 +118,20 @@ class OrderSubscribeSingle extends BaseEntity
     }
 
     /**
-     * @return array
+     * @return string
      */
-    public function getItems(): array
+    public function getItems(): string
     {
         return $this->items;
     }
 
     /**
-     * @param array $offers
+     * @param string $offers
      * @return OrderSubscribeSingle
      */
-    public function setItems(array $items): OrderSubscribeSingle
+    public function setItems(string $items): OrderSubscribeSingle
     {
         $this->items = $items;
-        return $this;
-    }
-
-    /**
-     * @return array
-     */
-    public function getQuantity(): array
-    {
-        return $this->quantity;
-    }
-
-    /**
-     * @param array $quantity
-     * @return OrderSubscribeSingle
-     */
-    public function setQuantity(array $quantity): OrderSubscribeSingle
-    {
-        $this->quantity = $quantity;
         return $this;
     }
 

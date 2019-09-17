@@ -19,22 +19,19 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 
 /**
- * Class OrderSubscribeNextDeliveryRepository
+ * Class OrderSubscribeSingleDeliveryRepository
  *
  * @package FourPaws\PersonalBundle\Repository
  */
 class OrderSubscribeSingleRepository extends BaseHlRepository
 {
-    public const HL_NAME = 'OrderSubscribeNextDelivery';
-
-    /**@var UserService */
-    public $curUserService;
+    public const HL_NAME = 'OrderSubscribeSingle';
 
     /** @var OrderSubscribeSingle $entity */
     protected $entity;
 
     /**
-     * OrderSubscribeNextDeliveryRepository constructor.
+     * OrderSubscribeSingleDeliveryRepository constructor.
      * @inheritdoc
      */
     public function __construct(

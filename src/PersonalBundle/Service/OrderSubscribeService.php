@@ -2196,7 +2196,7 @@ class OrderSubscribeService implements LoggerAwareInterface
      * @throws SystemException
      * @throws \Bitrix\Main\ObjectException
      */
-    public function createSingleNextDelivery(OrderSubscribe $orderSubscribe)
+    public function createSingleSubscribe(OrderSubscribe $orderSubscribe)
     {
         $singleSubscribeCollection = $this->orderSubscribeSingleRepository->findBySubscribe($orderSubscribe->getId());
         if(!$singleSubscribeCollection->isEmpty()){
@@ -2205,18 +2205,18 @@ class OrderSubscribeService implements LoggerAwareInterface
         }
 
         $arOrderSubscribe = $this->arrayTransformer->toArray($orderSubscribe);
-        $items = $orderSubscribe->getItems();
+        $arOrderSubscribeItems = [];
 
+        $items = $orderSubscribe->getItems();
         /** @var OrderSubscribeItem $item */
         foreach ($items as $item){
-            $arItems[$item->getId()] = $item->getQuantity();
+            $arOrderSubscribeItems[$item->getId()] = $item->getQuantity();
         }
 
         $singleSubscribe = (new OrderSubscribeSingle())
             ->setSubscribeId($orderSubscribe->getId())
             ->setData(serialize($arOrderSubscribe))
-            ->setItems(array_keys($arItems))
-            ->setQuantity(array_values($arItems))
+            ->setItems(serialize($arOrderSubscribeItems))
             ->setDateCreate(new DateTime())
         ;
 
@@ -2224,31 +2224,29 @@ class OrderSubscribeService implements LoggerAwareInterface
         return $result;
     }
 
-
     /**
      * @param OrderSubscribeSingle $singleSubscribe
      * @return mixed
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws \Bitrix\Main\ObjectException
      * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     * @throws \Exception
      */
     public function updateBySingleSubscribe(OrderSubscribeSingle $singleSubscribe)
     {
         $orderSubscribe = $this->arrayTransformer->fromArray($singleSubscribe->getSubscribe(), OrderSubscribe::class);
-        $items = $singleSubscribe->getItems();
-        $quantity = $singleSubscribe->getQuantity();
+        $orderSubscribeItems = unserialize($singleSubscribe->getItems());
 
         if(!$this->getById($orderSubscribe->getId())) {
-            throw new Exception("Подписка не найдена");
+            throw new \Exception(sprintf("Подписка на доставку ID=%s не найдена", $orderSubscribe->getId()));
         }
 
         $this->deleteAllItems($orderSubscribe->getId());
-        foreach ($items as $key => $offerId){
+        foreach ($orderSubscribeItems as $offerId => $quantity){
             $subscribeItem = (new OrderSubscribeItem())
                 ->setOfferId($offerId)
-                ->setQuantity($quantity[$key])
+                ->setQuantity($quantity)
                 ->setSubscribeId($orderSubscribe->getId())
             ;
 
