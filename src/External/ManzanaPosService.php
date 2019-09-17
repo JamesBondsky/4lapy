@@ -30,6 +30,8 @@ use FourPaws\Helpers\ArithmeticHelper;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
 use Psr\Log\LoggerAwareInterface;
 use Throwable;
 
@@ -398,6 +400,21 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         $cacheKey = \json_encode(['items' => $items, 'bonus' => floor($chequeRequest->getPaidByBonus())]);
         if ($noCache || !$this->results[$cacheKey]) {
             try {
+                $userId = 0;
+
+                $container = App::getInstance()->getContainer();
+
+                try {
+                    /** @var UserService $userCurrentUserService */
+                    $userCurrentUserService = $container->get(CurrentUserProviderInterface::class);
+                    $currentUser = $userCurrentUserService->getCurrentUser();
+                    $userId = $currentUser->getId();
+                } catch (Exception $e) {}
+
+                $this->logger->info('Manzana query', [
+                    'user_id' => $userId,
+                    'arguments' => $this->buildParametersFromRequest($chequeRequest),
+                ]);
                 $result = $this->buildResponseFromRawResponse(
                     $this->client->call(
                         self::METHOD_EXECUTE,
