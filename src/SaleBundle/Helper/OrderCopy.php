@@ -26,6 +26,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
+use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
@@ -1568,8 +1569,13 @@ class OrderCopy
                     if (!$this->deliveryService->isDpdPickup($delivery)) {
                         continue 2;
                     }
-                    /** @var DpdPickupResult $selectedDelivery */
-                    $value = $delivery->getSelectedShop()->getXmlId();
+                    /** @var DpdPickupResult $delivery */
+                    /** @var Terminal $terminal */
+                    if ($terminal = $delivery->getTerminals()[$subscribe->getDeliveryPlace()]) {
+                        $value = $terminal->getXmlId();
+                    } else {
+                        $value = $delivery->getSelectedShop()->getXmlId();
+                    }
                     break;
                 case 'DELIVERY_DATE':
                     $value = $delivery->getDeliveryDate()->format('d.m.Y');

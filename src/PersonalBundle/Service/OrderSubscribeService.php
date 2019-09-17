@@ -827,7 +827,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                 );
             }
 
-            if($deliveryService->isPickup($calculationResult)){
+            if($deliveryService->isPickup($calculationResult) && ($calculationResult->getDeliveryCode() !== DeliveryService::DPD_PICKUP_CODE)){
                 try {
                     $store = $storeService->getStoreByXmlId($subscribe->getDeliveryPlace());
                 } catch (\Exception $e) {
