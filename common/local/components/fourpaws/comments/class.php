@@ -249,6 +249,7 @@ class CCommentsComponent extends \CBitrixComponent
                 $comments = $this->getComments();
                 $this->arResult['COMMENTS'] = $comments['ITEMS'];
                 $this->arResult['COUNT_COMMENTS'] = $comments['COUNT'];
+                $this->arResult['COMMENT_IMAGES'] = $comments['IMAGES'];
             } catch (ArgumentException $e) {
                 $this->abortResultCache();
                 $tagCache->abortTagCache();
@@ -396,6 +397,8 @@ class CCommentsComponent extends \CBitrixComponent
         $res = $query->exec();
         $items = [];
         $userIds = [];
+        $imageIds = [];
+
         while ($item = $res->fetch()) {
             if ($item['UF_DATE'] instanceof Date) {
                 $item['DATE_FORMATED'] = $item['UF_DATE']->format($this->arParams['ACTIVE_DATE_FORMAT']);
@@ -406,6 +409,10 @@ class CCommentsComponent extends \CBitrixComponent
                 $item['USER_NAME'] = 'Анонимно';
             }
             $items[$item['ID']] = $item;
+
+            if ($item['UF_COMMENT_IMAGES'] && is_array($item['UF_COMMENT_IMAGES']) && !empty($item['UF_COMMENT_IMAGES'])) {
+                $imageIds = array_merge($imageIds, $item['UF_COMMENT_IMAGES']);
+            }
         }
         if (!empty($userIds)) {
             $users = $this->userCurrentUserService->getUserRepository()->findBy(['ID' => array_unique($userIds)]);
@@ -421,8 +428,19 @@ class CCommentsComponent extends \CBitrixComponent
             }
         }
 
+        $imageIds = array_filter($imageIds);
+        $images = [];
+        if (!empty($imageIds)) {
+            $rsFile = CFile::GetList(false, ['@ID' => array_unique($imageIds)]);
+
+            while ($arFile = $rsFile->GetNext()) {
+                $images[$arFile['ID']] = CFile::GetFileSRC($arFile);
+            }
+        }
+
         return [
             'ITEMS' => $items,
+            'IMAGES' => $images,
             'COUNT' => $res->getCount(),
         ];
     }

@@ -141,7 +141,13 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                 <?php }
                 /** @noinspection PhpUnhandledExceptionInspection */
                 $frame->end(); ?>
-                <button class="b-button b-button--link-feedback js-add-review">Оставить отзыв</button>
+                <?php if ($arResult['AUTH']) { ?>
+                    <button class="b-button b-button--link-feedback js-add-review">Оставить отзыв</button>
+                <?php } else { ?>
+                    <a class="js-open-popup js-toggle-popover-mobile-header" href="javascript:void(0);" title="Войти" data-popup-id="authorization">
+                        <button class="b-button b-button--link-feedback">Оставить отзыв</button>
+                    </a>
+                <?php } ?>
             </div>
         </div>
         <form class="b-form-review js-form-review js-form-validation js-review-query"
@@ -253,6 +259,16 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                                     <p><?= $comment['UF_TEXT'] ?></p>
                                 </div>
                             </div>
+                            <?php //todo стилизовать ?>
+                            <?php if ($comment['UF_COMMENT_IMAGES']) { ?>
+                                <div>
+                                    <?php foreach ($comment['UF_COMMENT_IMAGES'] as $imageId) { ?>
+                                        <?php if ($commentImage = $arResult['COMMENT_IMAGES'][$imageId]) { ?>
+                                            <img src="<?= $commentImage ?>">
+                                        <?php } ?>
+                                    <?php } ?>
+                                </div>
+                            <?php } ?>
                         </li>
                     <?php } ?>
                 </ul>
