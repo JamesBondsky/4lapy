@@ -12,6 +12,7 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\MobileApiBundle\Dto\Request\FeedbackRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ReportRequest;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
 
 class FeedbackService
@@ -119,11 +120,7 @@ class FeedbackService
             $phone = PhoneHelper::formatPhone($normPhone, PhoneHelper::FORMAT_URL);
 
             if ($phone) {
-                $callbackService = Application::getInstance()->getContainer()->get('callback.service');
-                $callbackService->send(
-                    $phone,
-                    (new DateTime())->format('Y-m-d H:i:s')
-                );
+                $this->sendCallCenter($phone);
             }
         } else {
             /** $strError - глобальная переменная @see \CAllFormResult::add */
@@ -160,6 +157,22 @@ class FeedbackService
         $sendSuccess = $sendResult === \Bitrix\Main\Mail\Event::SEND_RESULT_SUCCESS;
         if (!$sendSuccess) {
             throw new RuntimeException('Ошибка отправки сообщения. ' . $GLOBALS['strError']);
+        } else {
+            if ($user instanceof User) {
+                $phone = PhoneHelper::formatPhone($user->getPersonalPhone(), PhoneHelper::FORMAT_URL);
+                $this->sendCallCenter($phone);
+            }
+        }
+    }
+
+    private function sendCallCenter($phone)
+    {
+        if ($phone) {
+            $callbackService = Application::getInstance()->getContainer()->get('callback.service');
+            $callbackService->send(
+                $phone,
+                (new DateTime())->format('Y-m-d H:i:s')
+            );
         }
     }
 }
