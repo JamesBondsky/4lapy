@@ -240,12 +240,7 @@ class Banner
             } else if (strpos($link, '/articles/') !== false) {
                 // ссылка на статью
                 $type = 'articles';
-            } else if (
-                strpos($link, '/shares/') !== false
-                || strpos($link, '/dobrolap/') !== false
-                || strpos($link, '/fashion/') !== false
-                || strpos($link, '/iqgames/') !== false
-            ) {
+            } else if (strpos($link, '/shares/') !== false || strpos($link, '/dobrolap/') !== false) { //для добролапа
                 // ссылка на акцию
                 $type = 'action';
             } else {
