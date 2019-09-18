@@ -618,6 +618,22 @@ class OrderController extends Controller implements LoggerAwareInterface
         }
 
         if (empty($errors)) {
+            // проверка на корректность даты доставки
+            try {
+                if (!$this->orderStorageService->validateDeliveryDate($storage)) {
+                    /*
+                     * Обнуление просиходит в fourpaws:order для того, что бы был редирект на нужный, тут просто валидация
+                     */
+                    if ($step != OrderStorageEnum::AUTH_STEP) {
+                        $step = OrderStorageEnum::AUTH_STEP;
+                        $errors[] = 'Некорректная дата доставки!';
+                    }
+                }
+            } catch (\Exception $e) {
+            }
+        }
+
+        if (empty($errors)) {
             try {
                 $this->orderStorageService->updateStorage($storage, $step);
 

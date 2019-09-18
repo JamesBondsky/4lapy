@@ -26,7 +26,6 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
-use FourPaws\DeliveryBundle\Exception\RuntimeException;
 use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
@@ -165,11 +164,15 @@ class OrderStorageService
      * @param Request $request
      * @param string $step
      *
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     * @throws OrderSubscribeException
      * @return OrderStorage
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
      */
     public function setStorageValuesFromRequest(OrderStorage $storage, Request $request, string $step): OrderStorage
     {
@@ -177,6 +180,21 @@ class OrderStorageService
         return $this->setStorageValuesFromArray($storage, $data, $step);
     }
 
+    /**
+     * @param OrderStorage $storage
+     * @param array $data
+     * @param string $step
+     *
+     * @return OrderStorage
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     */
     public function setStorageValuesFromArray(OrderStorage $storage, array $data, string $step): OrderStorage
     {
         $mapping = [
@@ -348,13 +366,6 @@ class OrderStorageService
                 }
             }
         }
-
-        // проверка на случай, когда текущая дата больше даты доставки
-//        if ($selectedDelivery = $this->getSelectedDelivery($storage)) {
-//            if (($deliveryDate = $selectedDelivery->getDeliveryDate()) && ($deliveryDate->getTimestamp() < (new \DateTime())->getTimestamp())) {
-//                throw new RuntimeException('Дата доставки выбрана меньше, чем текущая дата');
-//            }
-//        }
 
         return $storage;
     }
@@ -755,5 +766,43 @@ class OrderStorageService
     public function storageToArray(OrderStorage $storage): array
     {
         return $this->storageRepository->toArray($storage);
+    }
+
+    /**
+     * @param OrderStorage $storage
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @throws UserMessageException
+     */
+    public function validateDeliveryDate($storage)
+    {
+        if ($selectedDelivery = $this->getSelectedDelivery($storage)) {
+            if ($selectedDelivery->getDeliveryDate()->getTimestamp() < (new \DateTime())->getTimestamp()) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param OrderStorage $storage
+     * @return OrderStorage
+     * @throws \Exception
+     */
+    public function clearDeliveryDate($storage)
+    {
+        $storage->setDeliveryDate(0)
+            ->setDeliveryInterval(0)
+            ->setCurrentDate(new \DateTime());
+
+        return $storage;
     }
 }

@@ -546,11 +546,6 @@ class OrderService implements LoggerAwareInterface
                     $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
                     break;
                 case 'DELIVERY_DATE':
-
-//                    if (($selectedDelivery) && ($selectedDelivery->getDeliveryDate()->getTimestamp() < (new \DateTime())->getTimestamp())) {
-//                        throw new RuntimeException('Дата доставки выбрана меньше, чем текущая дата');
-//                    }
-
                     $value = $selectedDelivery->getDeliveryDate()->format('d.m.Y');
                     break;
                 case 'DELIVERY_INTERVAL':
