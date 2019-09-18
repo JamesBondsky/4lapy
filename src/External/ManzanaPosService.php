@@ -411,14 +411,16 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                     $userId = $currentUser->getId();
                 } catch (Exception $e) {}
 
+                $arguments = $this->buildParametersFromRequest($chequeRequest);
+
                 $this->logger->info('Manzana query', [
                     'user_id' => $userId,
-                    'arguments' => $this->buildParametersFromRequest($chequeRequest),
+                    'arguments' => $arguments,
                 ]);
                 $result = $this->buildResponseFromRawResponse(
                     $this->client->call(
                         self::METHOD_EXECUTE,
-                        $this->buildParametersFromRequest($chequeRequest)
+                        $arguments
                     )
                 );
             } catch (Exception $e) {
