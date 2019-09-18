@@ -355,7 +355,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
             ->setVendor($offer->getProduct()->getBrandName())
             ->setGtin($offer->getBarcodes()[0] ?? '');
 
-        if ($offer->getOldPrice() !== $offer->getPrice()) {
+        if ($offer->getDiscount() > 5 && $offer->getDiscount() < 90) {
             $item->setPrice(
                 \sprintf(
                     '%d RUB',

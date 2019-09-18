@@ -1999,7 +1999,7 @@ class Offer extends IblockElement
 
         $this->withPrice($price)
              ->withOldPrice($oldPrice)
-             ->withDiscount(round(100 * $oldPrice / $price));
+             ->withDiscount(round(100 - (100*$price / $oldPrice)));
         $this->isCounted = true;
     }
 
