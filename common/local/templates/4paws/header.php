@@ -122,7 +122,8 @@ if(KioskService::isKioskMode()) {
         if(!KioskService::isKioskMode()
             && !$template->isBasket()
             && !$template->isOrderPage()) {
-            $APPLICATION->IncludeComponent('articul:header.promo.banner', '');
+//            $APPLICATION->IncludeComponent('articul:header.promo.banner', ''); todo ждем согласования структуры баннера с клиентом
+            require_once __DIR__ . '/blocks/header/promo_top_fashion.php';
         }
     ?>
     <?php

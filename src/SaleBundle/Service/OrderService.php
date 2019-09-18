@@ -531,6 +531,9 @@ class OrderService implements LoggerAwareInterface
                     if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
                         /** @var PickupResult $selectedDelivery */
                         $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
+                    } else if ($this->deliveryService->isPickup($selectedDelivery)) {
+                        /** @var PickupResult $selectedDelivery */
+                        $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
                     } else {
                         $value = $selectedDelivery->getSelectedStore()->getXmlId();
                     }
