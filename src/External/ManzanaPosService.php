@@ -413,7 +413,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
 
                 $arguments = $this->buildParametersFromRequest($chequeRequest);
 
-                $this->logger->info('Manzana query', [
+                $this->logger->info('Manzana query pos', [
                     'user_id' => $userId,
                     'arguments' => $arguments,
                 ]);
