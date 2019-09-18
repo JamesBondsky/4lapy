@@ -14,6 +14,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Category;
@@ -338,7 +339,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
-        $item = (new Item())
+            $item = (new Item())
             ->setId($offer->getXmlId())
             ->setName(\sprintf(
                 '%s %s',
@@ -365,6 +366,17 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
                     '%d RUB',
                     $offer->getCatalogPrice()
                 ));
+
+            // непонятно как определить какая из акций влияет на цену, поэтому берём всегда одну
+            if($offer->getShare()->count() == 1){
+                /** @var Share $share */
+                $share = $offer->getShare()->first();
+                $dateFrom = date('c', $share->getDateActiveFrom());
+                $dateTo = date('c', $share->getDateActiveTo());
+
+                $item->setSalePriceDate(sprintf("%s/%s", $dateFrom, $dateTo));
+            }
+
         } else {
             $item->setPrice(
                 \sprintf(
