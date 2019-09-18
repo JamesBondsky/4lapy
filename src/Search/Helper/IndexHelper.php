@@ -8,6 +8,10 @@ namespace FourPaws\Search\Helper;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Iblock\ElementTable;
+use Bitrix\Iblock\PropertyTable;
+use Bitrix\Main\Entity\Base;
+use Bitrix\Main\Result;
 use Elastica\Client;
 use Elastica\Document;
 use Elastica\Exception\InvalidException;
@@ -16,14 +20,20 @@ use Elastica\Index;
 use Elastica\Query;
 use Elastica\Search;
 use Exception;
+use FourPaws\App\Application;
 use FourPaws\App\Env;
 use FourPaws\BitrixOrm\Collection\CollectionBase;
 use FourPaws\Catalog\Model\Brand;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\BrandQuery;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\Search\Enum\DocumentType;
 use FourPaws\Search\Exception\Index\IndexExceptionInterface;
 use FourPaws\Search\Exception\Index\NotActiveException;
@@ -466,6 +476,9 @@ class IndexHelper implements LoggerAwareInterface
 
             return $result;
         });
+
+        $this->fillDeliveryAvailability($products);
+
         $documents = array_map(function (Product $product) {
             return $this->factory->makeProductDocument($product);
         }, $products);
@@ -489,6 +502,85 @@ class IndexHelper implements LoggerAwareInterface
         }
 
         return true;
+    }
+
+    private function fillDeliveryAvailability(array $products)
+    {
+        $result = new Result();
+        $productIds = [];
+
+        /** @var Product $product */
+        foreach ($products as $product){
+            $productIds[] = $product->getId();
+        }
+
+        $offerIds = [];
+        $dbres = \CIBlockElement::GetList([], ['IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS), 'PROPERTY_CML2_LINK' => $productIds], false, false, ['ID', 'NAME']);
+        while ($offer = $dbres->Fetch()){
+            $offerIds[] = $offer['ID'];
+        }
+
+        $storeEntity = Base::compileEntity(
+            'STORE_PRODUCT',
+            [
+                'ID'         => ['data_type' => 'integer'],
+                'PRODUCT_ID' => ['data_type' => 'integer'],
+                'AMOUNT'     => ['data_type' => 'integer'],
+                'STORE_ID'   => ['data_type' => 'integer'],
+            ],
+            ['table_name' => 'b_catalog_store_product']
+        );
+        $storeTable = $storeEntity->getDataClass();
+
+        $storeProduct = [];
+        $dbres = $storeTable::getList([
+            'select' => ['*'],
+            'filter' => [
+                'PRODUCT_ID' => $offerIds,
+                '>AMOUNT'    => 0,
+            ]
+        ]);
+        while($store = $dbres->fetch()){
+            $storeProduct[$store['STORE_ID']][] = $store['PRODUCT_ID'];
+        }
+
+
+        // TODO: мы здесь
+
+
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+        $locationGroups = $locationService->getLocationGroups();
+
+        foreach ($locationGroups as $locationGroup) {
+            if(empty($locationGroup['LOCATIONS'])) continue;
+
+            $locationCode = array_pop($locationGroup['LOCATIONS']);
+            $deliveryZone = $locationGroup['CODE'];
+            $deliveryCode = $deliveryZone == 'ZONE_4' ? DeliveryService::DPD_DELIVERY_CODE : DeliveryService::INNER_DELIVERY_CODE;
+
+            $stores = DeliveryHandlerBase::getAvailableStores($deliveryCode, $deliveryZone, $locationCode);
+
+
+            /*foreach ($this->getOffers() as $offer) {
+                if(!in_array(static::AVAILABILITY_DELIVERY, $result[$locationGroup['CODE']])
+                    && $canDeliver
+                    && $offer->isDeliverable($location)
+                ){
+                    $result[$locationGroup['CODE']][] = static::AVAILABILITY_DELIVERY;
+                }
+
+                if(!in_array(static::AVAILABILITY_PICKUP, $result[$locationGroup['CODE']])
+                    && $canDeliver
+                    && $offer->isPickupAvailable($location)
+                ){
+                    $result[$locationGroup['CODE']][] = static::AVAILABILITY_PICKUP;
+                }
+            }*/
+        }
+
     }
 
     public function indexBrand(Brand $brand)
@@ -568,6 +660,8 @@ class IndexHelper implements LoggerAwareInterface
         if ($flushBaseFilter) {
             $query->withFilter([]);
         }
+
+        $query->withFilter(['IBLOCK_SECTION_ID' => 3]);
 
         $allProducts = $query->exec();
         $this->__indexAll(Product::class, $allProducts, $batchSize);
