@@ -20,21 +20,28 @@ class CustomCacheEngineMemcache extends \Bitrix\Main\Data\CacheEngineMemcache
 
     function write($allVars, $baseDir, $initDir, $filename, $TTL)
     {
+        $secondSendInCache = false;
         try {
             parent::write($allVars, $baseDir, $initDir, $filename, $TTL);
         } catch (\Exception $e) {
-            LoggerFactory::create('cacheSerializer')->error(
-                sprintf('can\'t serialize cache'), [
-                    'serverVar'    => $_SERVER,
-                    'request'    => $_REQUEST,
-                    'baseDir'    => $baseDir,
-                    'initDir'    => $initDir,
-                    'filename'    => $filename,
-                ]
-            );
-
             $allVars = s($allVars);
-            parent::write($allVars, $baseDir, $initDir, $filename, $TTL);
+            $secondSendInCache = true;
+        }
+
+        if ($secondSendInCache) {
+            try {
+                parent::write($allVars, $baseDir, $initDir, $filename, $TTL);
+            } catch (Exception $e) {
+                LoggerFactory::create('cacheSerializer')->error(
+                    sprintf('can\'t serialize cache'), [
+                        'serverVar' => $_SERVER,
+                        'request' => $_REQUEST,
+                        'baseDir' => $baseDir,
+                        'initDir' => $initDir,
+                        'filename' => $filename,
+                    ]
+                );
+            }
         }
     }
 }

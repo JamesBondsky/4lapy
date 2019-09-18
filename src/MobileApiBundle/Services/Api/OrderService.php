@@ -935,7 +935,9 @@ class OrderService
      */
     public function getBasketWithCurrentDelivery()
     {
+        Manager::disableExtendsDiscount();
         [$courierDelivery, , , ] = $this->getDeliveryVariants();
+        Manager::enableExtendsDiscount();
 
         $basketProducts = $this->apiBasketService->getBasketProducts(true);
         if ($courierDelivery->getAvailable()) {
