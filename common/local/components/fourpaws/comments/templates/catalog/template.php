@@ -216,6 +216,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                               maxlength="1000"></textarea>
                     <div class="b-error"><span class="js-message"></span></div>
                 </div>
+                <div id="dZUpload" class="dropzone">
+                    <div class="dz-default dz-message"></div>
+                </div>
                 <? if (KioskService::isKioskMode()) { ?>
                     <div class="js-comments-captcha-block-<?= $uniqueCommentString ?>" style="display: none"></div>
                 <? } ?>
