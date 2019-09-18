@@ -713,7 +713,23 @@ class ProductService
 
         if ($needPackingVariants) {
             if ($hasOnlyColourCombinations) {
-                $fullProduct->setColourVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // цвета
+                $colours = $this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant);
+
+                $sortingColours = [];
+
+                foreach ($colours as $colourItem) {
+                    if ($colourItem->getColor()->getHexCode() == $shortProduct->getColor()->getHexCode()) {
+                        $sortingColours[] = $colourItem;
+                    }
+                }
+
+                foreach ($colours as $colourItem) {
+                    if ($colourItem->getColor()->getHexCode() != $shortProduct->getColor()->getHexCode()) {
+                        $sortingColours[] = $colourItem;
+                    }
+                }
+
+                $fullProduct->setColourVariants($sortingColours);   // цвета
                 $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant, true));
             } else {
                 $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // фасовки
