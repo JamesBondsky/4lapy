@@ -35,7 +35,7 @@ class StatusService implements LoggerAwareInterface
         'P' => 'J',
         'K' => '',
         'E' => '',
-        'V' => 'A',
+        'I' => 'B', // todo
     ];
 
     /**
@@ -81,6 +81,7 @@ class StatusService implements LoggerAwareInterface
         'K' => '',
         'E' => '',
         'V' => 'K',
+        'I' => 'B', //todo
     ];
 
     private const STATUS_MAP = [
