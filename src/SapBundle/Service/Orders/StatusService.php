@@ -35,6 +35,7 @@ class StatusService implements LoggerAwareInterface
         'P' => 'J',
         'K' => '',
         'E' => '',
+        'V' => 'A',
         'C' => 'B',
     ];
 
