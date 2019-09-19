@@ -1,6 +1,17 @@
 <?php if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die; ?>
 
 <?php if ($arResult['ELEMENT']) { ?>
+    <?php
+    /**
+        переменные шаблона
+        $arResult['ELEMENT']['LINK']
+        $arResult['NAME']
+
+        $arResult['IMAGES'][$arResult['ELEMENT']['PICTURE']]
+        $arResult['IMAGES'][$arResult['ELEMENT']['MOBILE_PICTURE']]
+        $arResult['IMAGES'][$arResult['ELEMENT']['TABLET_PICTURE']]
+     */
+    ?>
     <div class="b-promo-top-full b-promo-top-full--fashion js-promo-top-full hide">
         <div class="b-container b-promo-top-full__fashion-container">
             <a href="<?= $arResult['ELEMENT']['LINK'] ?>" class="b-promo-top-full__fashion-inner">

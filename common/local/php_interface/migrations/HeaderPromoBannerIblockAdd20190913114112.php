@@ -3,19 +3,23 @@
 namespace Sprint\Migration;
 
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+
 class HeaderPromoBannerIblockAdd20190913114112 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
 {
-
     protected $description = 'Добавляет новый инфоблок "Баннер в шапке сайта"';
+
+    const IBLOCK_TYPE_ID = 'publications';
+    const IBLOCK_CODE = 'header_promo_banner';
 
     public function up()
     {
         $helper = new HelperManager();
 
         $iblockId = $helper->Iblock()->addIblockIfNotExists([
-            'IBLOCK_TYPE_ID' => 'publications',
+            'IBLOCK_TYPE_ID' => static::IBLOCK_TYPE_ID,
             'LID' => 's1',
-            'CODE' => 'header_promo_banner',
+            'CODE' => static::IBLOCK_CODE,
             'NAME' => 'Баннер в шапке сайта',
             'ACTIVE' => 'Y',
             'SORT' => '800',
@@ -250,6 +254,32 @@ class HeaderPromoBannerIblockAdd20190913114112 extends \Adv\Bitrixtools\Migratio
             'HINT' => '',
         ]);
 
+        $helper->Iblock()->addPropertyIfNotExists($iblockId, [
+            'NAME' => 'Картинка для планшета',
+            'ACTIVE' => 'Y',
+            'SORT' => '500',
+            'CODE' => 'TABLET_PREVIEW_PICTURE',
+            'DEFAULT_VALUE' => '',
+            'PROPERTY_TYPE' => 'F',
+            'ROW_COUNT' => '1',
+            'COL_COUNT' => '30',
+            'LIST_TYPE' => 'L',
+            'MULTIPLE' => 'N',
+            'XML_ID' => '',
+            'FILE_TYPE' => '',
+            'MULTIPLE_CNT' => '5',
+            'TMP_ID' => NULL,
+            'LINK_IBLOCK_ID' => '0',
+            'WITH_DESCRIPTION' => 'N',
+            'SEARCHABLE' => 'N',
+            'FILTRABLE' => 'N',
+            'IS_REQUIRED' => 'N',
+            'VERSION' => '1',
+            'USER_TYPE' => NULL,
+            'USER_TYPE_SETTINGS' => NULL,
+            'HINT' => '',
+        ]);
+
         $helper->AdminIblock()->buildElementForm($iblockId, [
             'Элемент' =>
                 [
@@ -266,6 +296,7 @@ class HeaderPromoBannerIblockAdd20190913114112 extends \Adv\Bitrixtools\Migratio
                     'IBLOCK_ELEMENT_PROP_VALUE' => 'Значения свойств',
                     'PREVIEW_PICTURE' => 'Картинка для анонса',
                     'PROPERTY_MOBILE_PREVIEW_PICTURE' => 'Картинка для мобильной версии',
+                    'PROPERTY_TABLET_PREVIEW_PICTURE' => 'Картинка для планшетов',
                     'PROPERTY_LINK' => 'Ссылка',
                 ],
         ]);
@@ -276,7 +307,10 @@ class HeaderPromoBannerIblockAdd20190913114112 extends \Adv\Bitrixtools\Migratio
     {
         $helper = new HelperManager();
 
-        //your code ...
+        $iblockId = IblockUtils::getIblockId(static::IBLOCK_TYPE_ID, static::IBLOCK_CODE);
 
+        $helper->Iblock()->deleteIblock($iblockId);
+
+        return true;
     }
 }

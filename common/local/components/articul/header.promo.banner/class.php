@@ -48,7 +48,7 @@ class CHeaderPromoBannerComponent extends \CBitrixComponent
                 ],
                 false, false,
                 [
-                    'ID', 'IBLOCK_ID', 'NAME', 'PREVIEW_PICTURE', 'PROPERTY_MOBILE_PREVIEW_PICTURE', 'PROPERTY_LINK'
+                    'ID', 'IBLOCK_ID', 'NAME', 'PREVIEW_PICTURE', 'PROPERTY_MOBILE_PREVIEW_PICTURE', 'PROPERTY_TABLET_PREVIEW_PICTURE', 'PROPERTY_LINK'
                 ]
             );
 
@@ -60,6 +60,7 @@ class CHeaderPromoBannerComponent extends \CBitrixComponent
                     'LINK' => $arElement['PROPERTY_LINK_VALUE'],
                     'PICTURE' => $arElement['PREVIEW_PICTURE'],
                     'MOBILE_PICTURE' => $arElement['PROPERTY_MOBILE_PREVIEW_PICTURE_VALUE'],
+                    'TABLET_PICTURE' => $arElement['PROPERTY_TABLET_PREVIEW_PICTURE_VALUE'],
                 ];
 
                 if ($arElement['PREVIEW_PICTURE']) {
@@ -68,6 +69,10 @@ class CHeaderPromoBannerComponent extends \CBitrixComponent
 
                 if ($arElement['PROPERTY_MOBILE_PREVIEW_PICTURE_VALUE']) {
                     $this->imageIds[] = $arElement['PROPERTY_MOBILE_PREVIEW_PICTURE_VALUE'];
+                }
+
+                if ($arElement['PROPERTY_TABLET_PREVIEW_PICTURE_VALUE']) {
+                    $this->imageIds[] = $arElement['PROPERTY_TABLET_PREVIEW_PICTURE_VALUE'];
                 }
             }
 
