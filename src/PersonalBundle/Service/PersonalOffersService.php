@@ -606,6 +606,7 @@ class PersonalOffersService
             'UF_DISCOUNT_VALUE' => $coupon['discountValue'],
             'UF_DATE_ACTIVE_FROM' => $coupon['dateTimeActiveFrom'],
             'UF_DATE_ACTIVE_TO' => $coupon['dateTimeActiveTo'],
+            'UF_MANZANA_ID' => $coupon['manzanaId'],
         ]);
     }
 
@@ -725,6 +726,8 @@ class PersonalOffersService
                 'UF_USED',
                 'UF_DATE_USED',
                 'USER_COUPONS.UF_OFFER',
+                'UF_DATE_ACTIVE_FROM',
+                'UF_DATE_ACTIVE_TO',
             ])
             ->setFilter([
                 //'UF_USED' => true,
@@ -748,9 +751,11 @@ class PersonalOffersService
             && ($arPromoCode['UF_USED']
                 || $arPromoCode['UF_DATE_USED']
                 || ($activeOffersIds && !in_array($arPromoCode['PERSONAL_COUPON_USERS_USER_COUPONS_UF_OFFER'], $activeOffersIds, false))
+                || ($arPromoCode['UF_DATE_ACTIVE_FROM'] && new DateTime() < $arPromoCode['UF_DATE_ACTIVE_FROM'])
+                || ($arPromoCode['UF_DATE_ACTIVE_TO'] && new DateTime() > $arPromoCode['UF_DATE_ACTIVE_TO'])
             )
         ) {
-            throw new CouponIsNotAvailableForUseException('coupon is not available for use. Already used or deactivated. Promo code: ' . $promoCode . '. User id: ' . $userId);
+            throw new CouponIsNotAvailableForUseException('coupon is not available for use. Already used, deactivated or not active. Promo code: ' . $promoCode . '. User id: ' . $userId);
         }
     }
 
@@ -994,6 +999,12 @@ class PersonalOffersService
                     ->where([
                         ['ref.UF_DATE_ACTIVE_TO', '>', new DateTime()],
                         ['ref.UF_DATE_ACTIVE_TO', '=', null],
+                    ]))
+                ->where(Query::filter()
+                    ->logic('or')
+                    ->where([
+                        ['ref.UF_DATE_ACTIVE_FROM', '<', new DateTime()],
+                        ['ref.UF_DATE_ACTIVE_FROM', '=', null],
                     ]))
                 ->where(Query::filter()
                     ->logic('or')

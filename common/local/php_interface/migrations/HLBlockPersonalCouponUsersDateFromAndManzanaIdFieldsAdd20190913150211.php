@@ -112,7 +112,7 @@ class HLBlockPersonalCouponUsersDateFromAndManzanaIdFieldsAdd20190913150211 exte
         ]);
 
         Application::getConnection()->query('create index b_hlbd_personal_coupon_users_UF_MANZANA_ID_index
-    on b_hlbd_personal_coupon_users (UF_MANZANA_ID(50) desc);');
+    on b_hlbd_personal_coupon_users (UF_MANZANA_ID(36) desc);');
     }
 
     public function down()

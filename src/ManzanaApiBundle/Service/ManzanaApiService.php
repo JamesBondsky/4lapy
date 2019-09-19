@@ -137,6 +137,7 @@ class ManzanaApiService
                     $coupon->getStartDate();
                     $coupon->getEndDate();
                     $coupon->getPhone();
+                    $coupon->getCouponId();
                 } catch (Throwable $e) {
                     $result[] = (new Message())
                         ->setMessageId($coupon->getMessageId())
@@ -179,6 +180,7 @@ class ManzanaApiService
                             //'discountValue' => ,
                             'dateTimeActiveFrom' => DateTime::createFromTimestamp($coupon->getStartDate()->getTimestamp()),
                             'dateTimeActiveTo'   => DateTime::createFromTimestamp($coupon->getEndDate()->getTimestamp()),
+                            'manzanaId'   => $coupon->getCouponId(),
                         ],
                     ],
                 ];
