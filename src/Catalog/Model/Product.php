@@ -2193,7 +2193,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
 
-    // TODO:: доделать
+
     /**
      * @throws ApplicationCreateException
      * @return array
@@ -2201,61 +2201,61 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getFullDeliveryAvailability(): array
     {
         if (null === $this->fullDeliveryAvailability) {
-//            $canDeliver = !$this->isDeliveryForbidden();
-//            /** @var DeliveryService $deliveryService */
-//            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-//            $zones = array_keys($deliveryService->getAllZones());
-//            $offerCollection = $this->getOffers();
-//            $quantities = [];
-//            foreach ($offerCollection as $offer){
-//                $quantities[$offer->getXmlId()] = 1;
-//            }
-//
-//            foreach ($zones as $zone) {
-//                $result = [];
-//                foreach ($deliveryService->getByZone($zone) as $deliveryCode) {
-//                    switch (true) {
-//                        case $canDeliver && \in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true):
-//                            $result[] = static::AVAILABILITY_DELIVERY;
-//                            break;
-//                        case $deliveryCode === DeliveryService::INNER_PICKUP_CODE:
-//                        case $canDeliver && $deliveryCode === DeliveryService::DPD_PICKUP_CODE:
-//                            $result[] = static::AVAILABILITY_PICKUP;
-//                            break;
-//                    }
-//                }
-//
-//                $this->fullDeliveryAvailability[$zone] = $result;
-//            }
-
-
             $canDeliver = !$this->isDeliveryForbidden();
-            /** @var LocationService $locationService */
-            $locationService = Application::getInstance()->getContainer()->get('location.service');
-            $locationGroups = $locationService->getLocationGroups();
-
-            $result = [];
-            foreach ($locationGroups as $locationGroup) {
-                if(empty($locationGroup['LOCATIONS'])) continue;
-                $location = array_pop($locationGroup['LOCATIONS']);
-                foreach ($this->getOffers() as $offer) {
-                    if(!in_array(static::AVAILABILITY_DELIVERY, $result[$locationGroup['CODE']])
-                        && $canDeliver
-                        && $offer->isDeliverable($location)
-                    ){
-                        $result[$locationGroup['CODE']][] = static::AVAILABILITY_DELIVERY;
-                    }
-
-                    if(!in_array(static::AVAILABILITY_PICKUP, $result[$locationGroup['CODE']])
-                        && $canDeliver
-                        && $offer->isPickupAvailable($location)
-                    ){
-                        $result[$locationGroup['CODE']][] = static::AVAILABILITY_PICKUP;
-                    }
-                }
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+            $zones = array_keys($deliveryService->getAllZones());
+            $offerCollection = $this->getOffers();
+            $quantities = [];
+            foreach ($offerCollection as $offer){
+                $quantities[$offer->getXmlId()] = 1;
             }
 
-            $this->fullDeliveryAvailability = $result;
+            foreach ($zones as $zone) {
+                $result = [];
+                foreach ($deliveryService->getByZone($zone) as $deliveryCode) {
+                    switch (true) {
+                        case $canDeliver && \in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true):
+                            $result[] = static::AVAILABILITY_DELIVERY;
+                            break;
+                        case $deliveryCode === DeliveryService::INNER_PICKUP_CODE:
+                        case $canDeliver && $deliveryCode === DeliveryService::DPD_PICKUP_CODE:
+                            $result[] = static::AVAILABILITY_PICKUP;
+                            break;
+                    }
+                }
+
+                $this->fullDeliveryAvailability[$zone] = $result;
+            }
+
+              // новый вариант индексации, которые не взлетел - слишком долго отрабатывает
+//            $canDeliver = !$this->isDeliveryForbidden();
+//            /** @var LocationService $locationService */
+//            $locationService = Application::getInstance()->getContainer()->get('location.service');
+//            $locationGroups = $locationService->getLocationGroups();
+//
+//            $result = [];
+//            foreach ($locationGroups as $locationGroup) {
+//                if(empty($locationGroup['LOCATIONS'])) continue;
+//                $location = array_pop($locationGroup['LOCATIONS']);
+//                foreach ($this->getOffers() as $offer) {
+//                    if(!in_array(static::AVAILABILITY_DELIVERY, $result[$locationGroup['CODE']])
+//                        && $canDeliver
+//                        && $offer->isDeliverable($location)
+//                    ){
+//                        $result[$locationGroup['CODE']][] = static::AVAILABILITY_DELIVERY;
+//                    }
+//
+//                    if(!in_array(static::AVAILABILITY_PICKUP, $result[$locationGroup['CODE']])
+//                        && $canDeliver
+//                        && $offer->isPickupAvailable($location)
+//                    ){
+//                        $result[$locationGroup['CODE']][] = static::AVAILABILITY_PICKUP;
+//                    }
+//                }
+//            }
+//
+//            $this->fullDeliveryAvailability = $result;
         }
 
         return $this->fullDeliveryAvailability;
