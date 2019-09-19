@@ -371,10 +371,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
             if($offer->getShare()->count() == 1){
                 /** @var Share $share */
                 $share = $offer->getShare()->first();
-                $dateFrom = date('c', $share->getDateActiveFrom());
-                $dateTo = date('c', $share->getDateActiveTo());
-
-                $item->setSalePriceDate(sprintf("%s/%s", $dateFrom, $dateTo));
+                $item->setSalePriceDate(sprintf("%s/%s", $share->getDateActiveFrom()->format('YYYY-MM-DDThh:mm:ss+0300'), $share->getDateActiveTo()->format('YYYY-MM-DDThh:mm:ss+0300')));
             }
 
         } else {
