@@ -581,8 +581,6 @@ class IndexHelper implements LoggerAwareInterface
             $query->withFilter([]);
         }
 
-        $query->withFilter(['IBLOCK_SECTION_ID' => 3]);
-
         $allProducts = $query->exec();
         $this->__indexAll(Product::class, $allProducts, $batchSize);
 //        $indexOk = 0;
