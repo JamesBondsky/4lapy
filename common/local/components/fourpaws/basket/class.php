@@ -455,7 +455,10 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
             if ($basketItem->isDelay()) {
                 $notAllowedItems->add($basketItem);
             } else {
-                if ($basketItem->getPrice() && (
+                if (
+                    ($basketItem->getPrice() > 0 || $basketItem->getBasePrice() > 0)
+                    &&
+                    (
                         (null === $delivery) ||
                         !(clone $delivery)->setStockResult(
                             $this->getDeliveryService()->getStockResultForOffer(

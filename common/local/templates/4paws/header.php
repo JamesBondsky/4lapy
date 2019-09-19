@@ -122,7 +122,7 @@ if(KioskService::isKioskMode()) {
         if(!KioskService::isKioskMode()
             && !$template->isBasket()
             && !$template->isOrderPage()) {
-            require_once __DIR__ . '/blocks/header/promo_top_dobrolap.php';
+            require_once __DIR__ . '/blocks/header/promo_top_fashion.php';
         }
     ?>
     <?php
