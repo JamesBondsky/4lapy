@@ -638,8 +638,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @var array
      * @Type("array<string>")
-     * @Accessor(getter="getFullDeliveryAvailabilityForFilter")
-     * @Groups({"elastic"})
      */
     protected $deliveryAvailability;
 
@@ -670,7 +668,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $PROPERTY_DC_SPECIAL_AREA_STORAGE = false;
 
     /**
-     * @var string
+     * @var array
      * @Type("array<string>")
      * @Groups({"elastic"})
      * @Accessor(getter="getAvailableStores")
@@ -2135,6 +2133,13 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         $this->offers->add($offer);
+    }
+
+    public function removeOffer(int $offerId)
+    {
+        $this->offers = $this->offers->filter(function(Offer $offer) use($offerId) {
+           return $offer->getId() !== $offerId;
+        });
     }
 
     /**

@@ -126,6 +126,10 @@ class SearchService implements LoggerAwareInterface
             }
         }
 
+        //$queryBuilder = new QueryBuilder();
+        //$termsQuery = $queryBuilder->query()->multi_match();
+        //$queryRule->addParam('filter', $termsQuery);
+
         $search->getQuery()
             ->setFrom($navigation->getFrom())
             ->setSize($navigation->getSize())
@@ -180,15 +184,15 @@ class SearchService implements LoggerAwareInterface
                         if(in_array('d', $availabilityFlags) && !$offer->isDeliverable()){
                             $remove = true;
                         }
-                        if(in_array('d', $availabilityFlags) && !$offer->isPickupAvailable()){
+                        if(in_array('p', $availabilityFlags) && !$offer->isPickupAvailable()){
                             $remove = true;
                         }
-                        if(in_array('p', $availabilityFlags) && !$offer->isByRequest()){
+                        if(in_array('r', $availabilityFlags) && !$offer->isByRequest()){
                             $remove = true;
                         }
 
                         if($remove){
-                            $productSearchResult->getProductCollection()->remove($key);
+                            $productSearchResult->getProductCollection()->get($key)->removeOffer($offer->getId());
                         }
                     }
                 }
