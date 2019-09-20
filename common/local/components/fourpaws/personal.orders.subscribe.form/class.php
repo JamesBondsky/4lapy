@@ -739,6 +739,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     BitrixApplication::getConnection()->rollbackTransaction();
                 }
             }
+        } else {
+            $this->log()->error(__METHOD__.' ошибка валидации');
         }
 
         $this->loadData();
