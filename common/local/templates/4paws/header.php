@@ -42,7 +42,7 @@ if(KioskService::isKioskMode()) {
 
 ?>
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" <?= (CSite::InDir('/fashion/')) ? 'style="scroll-behavior: smooth;"' : '' ?>>
 <head>
     <? /** onesignal.com manifest.json, must appear before any other link <link rel="manifest" ...> */?>
     <? if ($USER->IsAdmin()) { /** [todo] remove after production tests */?>
