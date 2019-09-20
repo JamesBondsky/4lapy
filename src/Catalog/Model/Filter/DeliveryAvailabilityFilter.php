@@ -53,7 +53,7 @@ class DeliveryAvailabilityFilter extends FilterBase
      */
     public function getRuleCode(): string
     {
-        return 'availableStores';
+        return '';
     }
 
     /**
