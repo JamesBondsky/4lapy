@@ -157,11 +157,6 @@ class FeedbackService
         $sendSuccess = $sendResult === \Bitrix\Main\Mail\Event::SEND_RESULT_SUCCESS;
         if (!$sendSuccess) {
             throw new RuntimeException('Ошибка отправки сообщения. ' . $GLOBALS['strError']);
-        } else {
-            if ($user instanceof User) {
-                $phone = PhoneHelper::formatPhone($user->getPersonalPhone(), PhoneHelper::FORMAT_URL);
-                $this->sendCallCenter($phone);
-            }
         }
     }
 
