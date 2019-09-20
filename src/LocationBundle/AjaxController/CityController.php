@@ -100,11 +100,11 @@ class CityController extends Controller
 
         $query = $content->query;
         $limit = $content->count;
-        $exact = false;
+        $exact = $limit == 1;
         $filter = [];
 
         $locations = $this->locationService->findLocationNew(
-            array_merge([$exact ? '=' : '?' . 'NAME.NAME_UPPER' => ToUpper($query)], $filter),
+            array_merge([($exact ? '=' : '?') . 'NAME.NAME_UPPER' => ToUpper($query)], $filter),
             $limit
         );
 
