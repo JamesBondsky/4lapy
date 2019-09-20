@@ -70,7 +70,8 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
                 if ((bool)$this->getShipmentResults() &&
                     !(
                         in_array($this->getDeliveryZone(), DeliveryService::getZonesTwo()) ||
-                        mb_strpos($this->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false
+                        mb_strpos($this->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                        mb_strpos($this->getDeliveryZone(), DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
                     )
                 ) {
                     $defaultDate = clone $this->deliveryDate;
@@ -152,6 +153,20 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
             }
         }
         return $text;
+    }
+
+    /**
+     * Возвращает стоимость доставки для переданной стоимости
+     * @param float $offerPrice
+     * @return float
+     */
+    public function getPriceBySum(float $offerPrice): float
+    {
+        if ($this->freeFrom > $offerPrice) {
+            return $this->getDeliveryPrice();
+        } else {
+            return 0;
+        }
     }
 
     protected function resetResult(): void

@@ -25,6 +25,7 @@ use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentItem;
 use Bitrix\Sale\UserMessageException;
+use COption;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
@@ -41,6 +42,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
+use FourPaws\DeliveryBundle\Service\DeliveryScheduleResultService;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\DostavistaService;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
@@ -75,9 +77,12 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Repository\OrderStatusRepository;
+use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Service\ScheduleResultService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -526,6 +531,9 @@ class OrderService implements LoggerAwareInterface
                     if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
                         /** @var PickupResult $selectedDelivery */
                         $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
+                    } else if ($this->deliveryService->isPickup($selectedDelivery)) {
+                        /** @var PickupResult $selectedDelivery */
+                        $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
                     } else {
                         $value = $selectedDelivery->getSelectedStore()->getXmlId();
                     }
@@ -607,27 +615,42 @@ class OrderService implements LoggerAwareInterface
                 $nearShop = $selectedDelivery->getStockResult()->first();
             }
             $selectedDelivery->getStockResult();
-            $this->basketService->setBasketItemPropertyValue(
-                $item,
-                'SHIPMENT_PLACE_CODE',
-                $nearShop->getXmlId()
-            );
+            foreach ($order->getBasket() as $item) {
+                $this->basketService->setBasketItemPropertyValue(
+                    $item,
+                    'SHIPMENT_PLACE_CODE',
+                    $nearShop->getXmlId()
+                );
+            }
             $this->setOrderPropertiesByCode($order,
                 [
-                    'STORE_FOR_DOSTAVISTA' => $nearShop->getXmlId()
+                    'STORE_FOR_DOSTAVISTA' => $nearShop->getXmlId(),
+                    'SHIPMENT_PLACE_CODE' => $nearShop->getXmlId(),
                 ]
             );
         } elseif (!($selectedDelivery->getStockResult()->getDelayed()->isEmpty() &&
-            (
-                ($this->deliveryService->isInnerDelivery($selectedDelivery) && $selectedDelivery->getSelectedStore()->isShop()) ||
-                $this->deliveryService->isInnerPickup($selectedDelivery)
-            ))
+                (
+                    ($this->deliveryService->isInnerDelivery($selectedDelivery) && $selectedDelivery->getSelectedStore()->isShop()) ||
+                    $this->deliveryService->isInnerPickup($selectedDelivery)
+                )) ||
+            mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
         ) {
+            /**
+             * Месье Костелье для районов Москвы (установка SHIPMENT_PLACE_CODE если есть базовый магазин для зоны)
+             */
             $shipmentResults = $selectedDelivery->getShipmentResults();
             $shipmentDays = [];
+            $isSetParam = [];
+            $shipmentPlaceCodeDefault = '';
             /** @var BasketItem $item */
-            foreach ($order->getBasket() as $item) {
-                $shipmentPlaceCode = self::STORE;
+            foreach ($order->getBasket() as $itemKey => $item) {
+                $offer = OfferQuery::getById($item->getProductId());
+                $selectedShop = $selectedDelivery->getSelectedStore();
+                if ($selectedShop instanceof Store) {
+                    $shipmentPlaceCode = $selectedShop->getXmlId();
+                } else {
+                    $shipmentPlaceCode = self::STORE;
+                }
                 /** @var DeliveryScheduleResult $deliveryResult */
                 if ($shipmentResults &&
                     ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
@@ -638,13 +661,31 @@ class OrderService implements LoggerAwareInterface
                         $shipmentDays[$shipmentPlaceCode] = $days;
                     }
                 }
+                $arShipmentPlaceCode[$itemKey] = $shipmentPlaceCode;
+                if ($offer->isAvailable() && $offer->isByRequest()) {
+                    $isSetParam[] = $item->getProductId();
+                    $this->basketService->setBasketItemPropertyValue(
+                        $item,
+                        'SHIPMENT_PLACE_CODE',
+                        $shipmentPlaceCode
+                    );
+                } else {
+                    if ($shipmentPlaceCode === self::STORE) {
+                        $shipmentPlaceCodeDefault = $shipmentPlaceCode;
+                    }
+                }
 
-                $this->basketService->setBasketItemPropertyValue(
-                    $item,
-                    'SHIPMENT_PLACE_CODE',
-                    $shipmentPlaceCode
-                );
             }
+            foreach ($order->getBasket() as $itemKey => $item) {
+                if (!in_array($item->getProductId(), $isSetParam)) {
+                    $this->basketService->setBasketItemPropertyValue(
+                        $item,
+                        'SHIPMENT_PLACE_CODE',
+                        $shipmentPlaceCodeDefault ?: $arShipmentPlaceCode[$itemKey]
+                    );
+                }
+            }
+            $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', $shipmentPlaceCodeDefault);
             if (!empty($shipmentDays)) {
                 arsort($shipmentDays);
                 $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
@@ -876,9 +917,17 @@ class OrderService implements LoggerAwareInterface
                                     }
                                     break;
                                 default:
-                                    if (mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                                    if (
+                                        mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                                        mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                                    ) {
                                         if ($this->deliveryService->isDelivery($selectedDelivery)) {
-                                            $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                                            $baseShops = $selectedDelivery->getBestShops()->getBaseShops();
+                                            if($baseShops->count() > 0){
+                                                $value = $baseShops->first()->getXmlId();
+                                            } else {
+                                                $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                                            }
                                         } elseif ($baseShop = $selectedDelivery->getBestShops()->getBaseShops()->first()) {
                                             $value = $baseShop->getXmlId();
                                         } else {
@@ -947,6 +996,9 @@ class OrderService implements LoggerAwareInterface
 
         if (null === $selectedDelivery) {
             $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
+        }
+        if($storage->getDeliveryDate() > 0){
+            $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, ($storage->getDeliveryDate()+1))[$storage->getDeliveryDate()];
         }
 
         /**
@@ -1093,6 +1145,18 @@ class OrderService implements LoggerAwareInterface
             );
         }
 
+        $shipmentPlaceCode = $this->getOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE')->getValue();
+        if ($shipmentPlaceCode) {
+            $sender = $this->storeService->getStoreByXmlId($shipmentPlaceCode);
+            //$receiver = $this->storeService->getStoreByXmlId('R111');
+            $receiver = $selectedDelivery->getSelectedStore();
+            $currentDate = $storage->getCurrentDate();
+            $scheduleResultOptimal = $this->getScheduleResultOptimal($sender, $receiver, $currentDate, $selectedDelivery->getDeliveryDate());
+            if (!empty($scheduleResultOptimal)) {
+                $this->setOrderPropertyByCode($order, 'SCHEDULE_REGULARITY', $scheduleResultOptimal->getRegularityName());
+            }
+        }
+
         $address = null;
         if (!$fastOrder) {
             if ($this->deliveryService->isDelivery($selectedDelivery) || $this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
@@ -1220,6 +1284,10 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
+        if ($this->deliveryService->isDobrolapDelivery($selectedDelivery)) {
+            $this->setOrderPropertiesByCode($order, ['DOBROLAP_SHELTER' => $storage->getShelter()]);
+        }
+
         $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address);
 
         try {
@@ -1264,38 +1332,8 @@ class OrderService implements LoggerAwareInterface
             }
 
             // активация подписки на доставку
-            if($storage->isSubscribe()){
-                if(null === $storage->getSubscribeId()){
-                    throw new OrderSubscribeException('Susbcribe not found');
-                }
-                $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
-                $subscribe->setActive(true)->setOrderId($order->getId());
-
-                // привяжем созданный адрес
-                if($subscribe->getDeliveryPlace() === '0' && $storage->getAddressId() > 0){
-                    $subscribe->setDeliveryPlace($storage->getAddressId());
-                }
-
-                // привяжем пользователя
-                if(!$subscribe->getUserId()){
-                    $subscribe->setUserId($order->getUserId());
-                }
-
-                // добавим заказ в историю закзаов по подписке
-                $result = $this->orderSubscribeService->update($subscribe);
-                if($result->isSuccess()){
-                    /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
-                    $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
-                    $historyAddResult = $orderSubscribeHistoryService->add(
-                        $subscribe,
-                        $order->getId(),
-                        (new \DateTime($this->getOrderPropertyByCode($order, 'DELIVERY_DATE')->getValue()))
-                    );
-                    if (!$historyAddResult->isSuccess()) {
-                        throw new \Exception('Ошибка сохранения записи в истории');
-                    }
-                    $this->orderSubscribeService->sendOrderSubscribedNotification($subscribe);
-                }
+            if($storage->isSubscribe() && $storage->getSubscribeId() > 0){
+                $this->orderSubscribeService->activateSubscription($storage, $order);
             }
 
         } catch (\Exception $e) {
@@ -1305,6 +1343,7 @@ class OrderService implements LoggerAwareInterface
             }
             $this->log()->error(sprintf('failed to create order: %s', $e->getMessage()), [
                 'fuserId' => $storage->getFuserId(),
+                'trace' => $e->getTraceAsString()
             ]);
             throw new OrderCreateException('failed to save order');
         }
@@ -1823,8 +1862,23 @@ class OrderService implements LoggerAwareInterface
                     $value = OrderPropertyService::COMMUNICATION_ONE_CLICK;
                     break;
                 case $this->isSubscribe($order):
-                    $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
+
+                    $propCopyOrderId = $this->getOrderPropertyByCode($order, 'COPY_ORDER_ID');
+                    $isFirsSubscribeOrder = ($propCopyOrderId) ? !\boolval($propCopyOrderId->getValue()) : true;
+
+                    switch (true) {
+                        case ($isFirsSubscribeOrder && ($value == OrderPropertyService::COMMUNICATION_SMS)):
+                            $value = OrderPropertyService::COMMUNICATION_FIRST_SUBSCRIBE_SMS;
+                            break;
+                        case ($isFirsSubscribeOrder && ($value == OrderPropertyService::COMMUNICATION_PHONE)):
+                            $value = OrderPropertyService::COMMUNICATION_FIRST_SUBSCRIBE_PHONE;
+                            break;
+                        default:
+                            $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
+                            break;
+                    }
                     break;
+
                 case $this->deliveryService->isDelivery($delivery) && $address && !$address->isValid():
                     $value = OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS;
                     break;
@@ -1836,10 +1890,8 @@ class OrderService implements LoggerAwareInterface
                 // способ получения 04
                 case $this->deliveryService->isInnerPickup($delivery) && $stockResult->getDelayed()->isEmpty():
                     // способ получения 06
-                case $deliveryFromShop && $stockResult->getDelayed()->isEmpty():
-                    $value = OrderPropertyService::COMMUNICATION_SMS;
-                    break;
                 case $this->deliveryService->isDostavistaDelivery($delivery):
+                case $deliveryFromShop && $stockResult->getDelayed()->isEmpty():
                     $value = OrderPropertyService::COMMUNICATION_SMS;
                     break;
             }
@@ -2028,7 +2080,15 @@ class OrderService implements LoggerAwareInterface
 
     public function getOrderFeedbackLink(Order $order): string
     {
-        return sprintf('/sale/order/interview/%d/?HASH=%s', $order->getId(), $order->getHash());
+        //return sprintf('/sale/order/interview/%d/?HASH=%s', $order->getId(), $order->getHash());
+
+        $serverName = $_SERVER['SERVER_NAME'];
+        if (strlen($serverName) <= 0)
+            $serverName = COption::GetOptionString('main', 'server_name', '');
+
+        $serverName = str_replace(array("https://", "http://"), '', $serverName);
+        $protocol = \CMain::IsHTTPS() ? "https://" : "http://";
+        return $protocol.$serverName.sprintf('/sale/order/interview/%d/?HASH=%s', $order->getId(), $order->getHash());
     }
 
 
@@ -2146,8 +2206,7 @@ class OrderService implements LoggerAwareInterface
             'loaders_count' => $loadersCount
         ];
 
-        $nearAddressString = $this->storeService->getStoreAddress($nearShop) . ', ' . $nearShop->getAddress();
-        $nearAddress = $this->locationService->splitAddress($nearAddressString, $nearShop->getLocation())->toStringExt();
+        $nearAddress = $this->locationService->splitAddress($nearShop->getAddress(), $nearShop->getLocation())->toStringExt();
         $secondAddress = $this->getOrderDeliveryAddress($order);
 
         $pointZeroDate = clone $curDate;
@@ -2277,5 +2336,73 @@ class OrderService implements LoggerAwareInterface
             $res = true;
         }
         return $res;
+    }
+
+    /**
+     * @param Store $sender
+     * @param Store $receiver
+     * @param \DateTime $currentDate
+     * @param \DateTime $deliveryDate
+     * @return mixed|null
+     */
+    protected function getScheduleResultOptimal(Store $sender, Store $receiver, \DateTime $currentDateOrig, \DateTime $deliveryDate)
+    {
+        $scheduleResultOptimal = null;
+        $currentDate = clone $currentDateOrig;
+        try {
+            /** @var ScheduleResultService $scheduleResultService */
+            $scheduleResultService = Application::getInstance()->getContainer()->get(ScheduleResultService::class);
+
+            /** @var ScheduleResult $scheduleResult */
+            foreach ($scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver)->filterByDateActiveEqual(clone $currentDate) as $scheduleResult) {
+
+                // нужно добавить срок поставки магазина,
+                // т.к. товар готов к выдаче не сразу (кроме нерегулярок)
+                $modifier = 0;
+                if ($receiver->isShop() && !$scheduleResult->isIrregular()) {
+                    $modifier = $receiver->getDeliveryTime();
+                    if ($modifier < 1) {
+                        $modifier = 1;
+                    }
+                }
+
+                $daysSchedule = $scheduleResult->getDays($currentDate);
+                if ($daysSchedule === ScheduleResult::RESULT_ERROR) {
+                    continue;
+                }
+                $daysSchedule += $modifier;
+
+                $daysDelivery = $deliveryDate->setTime(0,0,0)->diff($currentDate->setTime(0,0,0))->days;
+
+                // не успеваем доставить в срок по этому расписанию
+                if($daysDelivery - $daysSchedule < 0){
+                    continue;
+                }
+
+                if(!$scheduleResultOptimal){
+                    $scheduleResultOptimal = $scheduleResult;
+                    continue;
+                }
+
+                if($scheduleResult->getRegularitySort() < $scheduleResultOptimal->getRegularitySort()) {
+                    $scheduleResultOptimal = $scheduleResult;
+                }
+
+                // если срок доставки в магазин меньше даты доставки клиенту,
+                // то выбираем расписание по сортировке
+//                if ($daysDelivery - $daysSchedule <= 0) {
+//                    $regularitySort = $scheduleResult->getRegularitySort();
+//                    if($regularitySort < $scheduleResultOptimal->getRegularitySort()) {
+//                        $scheduleResultOptimal = $scheduleResult;
+//                    }
+//                } else if($daysSchedule < $daysScheduleOptimal) {
+//                    $scheduleResultOptimal = $scheduleResult;
+//                }
+            }
+        } catch (\Exception $e) {
+            // просто не проставится регулярность
+        }
+
+        return $scheduleResultOptimal;
     }
 }

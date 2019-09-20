@@ -1,9 +1,11 @@
 <?php
 
 use Bitrix\Sale\BasketItem;
+use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Components\CatalogElementDetailComponent;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\WordHelper;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
@@ -26,6 +28,39 @@ $basketService = $this->getBasketService();
  * TODO 1 запрос к user_table. Нужно бы убрать.
  */
 $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
+$bonusSubscribe = $currentOffer->getBonusFormattedText($userService->getDiscount(), 1, true);
+
+$shareContent = null;
+if ($currentOffer->isShare()) {
+    /** @var IblockElement $share */
+    foreach ($currentOffer->getShare() as $share) {
+        $activeFrom = $share->getDateActiveFrom();
+        $activeTo = $share->getDateActiveTo();
+        ob_start()?>
+        <a href="<?= $share->getDetailPageUrl() ?>" title="<?= $share->getName() ?>" <?= $arParams['IS_POPUP'] ? 'target="_blank"' : ''?>>
+            <p class="b-counter-basket__text b-counter-basket__text--red">
+                <?= $share->getName() ?>
+            </p>
+        </a>
+        <?php if (!empty($share->getPreviewText()->getText())) { ?>
+            <p class="b-counter-basket__text"><?= $share->getPreviewText()->getText() ?></p>
+        <?php } ?>
+        <p class="b-counter-basket__text">
+            <?php if ($activeFrom && $activeTo) { ?>
+                <?= DateHelper::replaceRuMonth($activeFrom->format('d #n#')) ?>
+                —
+                <?= DateHelper::replaceRuMonth($activeTo->format('d #n# Y')) ?>
+            <?php } elseif ($activeFrom) { ?>
+                С <?= DateHelper::replaceRuMonth($activeFrom->format('d #n#')) ?>
+            <?php } elseif ($activeTo) { ?>
+                По <?= DateHelper::replaceRuMonth($activeTo->format('d #n# Y')) ?>
+            <?php } ?>
+        </p>
+        <?php
+        $shareContent = ob_get_contents();
+        ob_end_clean();
+    }
+}
 
 ?>
     <script<?= ($arParams['IS_POPUP']) ? ' data-epilog-handlers="true"' : '' ?>>
@@ -45,19 +80,28 @@ $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
                     });
                     this.getInstance().handlers = [];
                 },
-                getInstance: function() { return this }
+                getInstance: function(){ return this }
             };
         }
 
-
-        <? if (!empty($bonus)) { ?>
         epilogHandlers.add(function () {
             var $jsBonus = $('.js-bonus-<?=$currentOffer->getId()?>');
+            var $jsBonusSubscribe = $('.js-bonus-subscribe-<?=$currentOffer->getId()?>');
+
             if ($jsBonus.length > 0) {
-                $jsBonus.html('<?=$bonus?>');
+                <? if (!empty($bonus)) { ?>
+                    $jsBonus.html('<?=$bonus?>');
+                <?php }else{ ?>
+                    $jsBonus.hide();
+                <? } ?>
             }
+
+            <? if (!empty($bonus)) { ?>
+                if ($jsBonusSubscribe.length > 0) {
+                    $jsBonusSubscribe.html('<?=$bonusSubscribe?>');
+                }
+            <? } ?>
         });
-        <?php } ?>
 
         epilogHandlers.add(function () {
             $('.js-current-offer-price-old').html('<?= $currentOffer->getCatalogOldPrice() ?>');
@@ -65,56 +109,58 @@ $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
             $('.js-plus-minus-count')
                 .data('cont-max', '<?=$currentOffer->getQuantity()?>')
                 .data('one-price', '<?=$currentOffer->getPrice()?>');
-            <? if($currentOffer->getSubscribeDiscount() > 0){ ?>
-            $('.js-subscribe-price').html('<?= $currentOffer->getSubscribePrice() ?>');
-            $('.js-subscribe-price-block').show();
+            <? if($currentOffer->getSubscribePrice() < $currentOffer->getPrice()){ ?>
+                $('.js-subscribe-price').html('<?= $currentOffer->getSubscribePrice() ?>');
+                $('.js-subscribe-price-block').show();
             <? } ?>
         });
+
         <?php
         /** установка количества товаров в корзине для офферов */
         $basket = $basketService->getBasket();
 
         /** @var BasketItem $basketItem */
         foreach ($basket->getBasketItems() as $basketItem) { ?>
-        epilogHandlers.add(function () {
-            var $offerInCart = $('.js-offer-in-cart-<?=$basketItem->getProductId()?>');
+            epilogHandlers.add(function () {
+                var $offerInCart = $('.js-offer-in-cart-<?=$basketItem->getProductId()?>');
 
-            if ($offerInCart.length > 0) {
-                $offerInCart.find('.b-weight-container__number').html('<?=$basketItem->getQuantity()?>');
-                $offerInCart.css('display', 'inline-block');
-            }
-        });
+                if ($offerInCart.length > 0) {
+                    $offerInCart.find('.b-weight-container__number').html('<?=$basketItem->getQuantity()?>');
+                    $offerInCart.css('display', 'inline-block');
+                }
+            });
         <?php }
 
         foreach ($product->getOffers() as $offer) {
         /** установка цен, скидочных цен, акции, нет в наличии */ ?>
-        epilogHandlers.add(function () {
-            var $offerLink = $('.js-offer-link-<?=$offer->getId()?>');
-            if ($offerLink.length > 0) {
-                $offerLink.find('.b-weight-container__price').html('<?= WordHelper::numberFormat($offer->getCatalogPrice(),
-                    0) ?> <span class="b-ruble b-ruble--weight">₽</span>');
-                $offerLink.data('price', '<?= WordHelper::numberFormat($offer->getCatalogPrice(), 0) ?>');
-                <?php if(!$offer->isAvailable()) { ?>
-                $offerLink.addClass('unavailable-link');
-                $offerLink.find('.b-weight-container__not').html('Нет в наличии').css('display', 'inline-block');
-                <?php } elseif($offer->isShare()) { ?>
-                $offerLink.find('.js-offer-action').html('Акция').css('display', 'inline-block');
-                <?php }?>
-            }
-        });
+            epilogHandlers.add(function () {
+                var $offerLink = $('.js-offer-link-<?=$offer->getId()?>');
+                if ($offerLink.length > 0) {
+                    $offerLink.find('.b-weight-container__price').html('<?= WordHelper::numberFormat($offer->getCatalogPrice(),
+                        0) ?> <span class="b-ruble b-ruble--weight">₽</span>');
+                    $offerLink.data('price', '<?= WordHelper::numberFormat($offer->getCatalogPrice(), 0) ?>');
+                    <?php if(!$offer->isAvailable()) { ?>
+                    $offerLink.addClass('unavailable-link');
+                    $offerLink.find('.b-weight-container__not').html('Нет в наличии').css('display', 'inline-block');
+                    <?php } elseif($offer->isShare()) { ?>
+                    $offerLink.find('.js-offer-action').html('Акция').css('display', 'inline-block');
+                    <?php }?>
+                }
+            });
         <?php }
 
         if ($currentOffer->isAvailable()) { ?>
-        epilogHandlers.add(function () {
-            $('.js-product-controls').addClass('active')
-        });
+            epilogHandlers.add(function () {
+                $('.js-product-controls').addClass('active')
+            });
         <?php } ?>
 
-        <? if(!$arParams['IS_POPUP']) { ?>
-        $(function(){
-            //epilogHandlers.execute();
-        });
-        <? } ?>
+        <? if ($shareContent) { ?>
+            epilogHandlers.add(function () {
+                $('.js-dynaminc-content[data-id="shares"]').html(`<?=$shareContent?>`);
+            });
+        <?php } ?>
+
     </script>
 
 <?php

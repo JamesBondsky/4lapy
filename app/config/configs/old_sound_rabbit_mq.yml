@@ -29,6 +29,10 @@ old_sound_rabbit_mq:
             connection: default
             exchange_options: { name: 'manzana_update', type: direct }
 
+        manzana_mobile_update:
+            connection: default
+            exchange_options: { name: 'manzana_mobile_update', type: direct }
+
         manzana_referral_add:
             connection: default
             exchange_options: { name: 'manzana_referral_add', type: direct }
@@ -57,51 +61,77 @@ old_sound_rabbit_mq:
             connection: default
             exchange_options: { name: 'main_queue_dead', type: direct }
 
+        import_offers:
+            connection: default
+            exchange_options: {name: 'import_offers', type: direct }
+
     consumers:
         callback_set:
             connection:       default
             exchange_options: { name: 'callback_set', type: direct}
             queue_options:    { name: 'callback_set' }
             callback:         callback_set.consumer
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
 
         catalog_sync:
             connection: default
             exchange_options: {name: 'catalog_sync', type: direct}
             queue_options: {name: 'catalog_sync'}
             callback: search.sync_consumer
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
 
         manzana_update:
             connection: default
             exchange_options: {name: 'manzana_update', type: direct}
             queue_options: {name: 'manzana_update'}
             callback: manzana.contact_consumer
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
+
+        manzana_mobile_update:
+            connection: default
+            exchange_options: {name: 'manzana_mobile_update', type: direct}
+            queue_options: {name: 'manzana_mobile_update'}
+            callback: manzana.contact_mobile_update_consumer
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
 
         manzana_referral_add:
             connection: default
             exchange_options: {name: 'manzana_referral_add', type: direct}
             queue_options: {name: 'manzana_referral_add'}
             callback: manzana.referral_add_consumer
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
 
         dostavista_orders_add:
             connection: default
             exchange_options: {name: 'dostavista_orders_add', type: direct}
             queue_options: {name: 'dostavista_orders_add'}
             callback: dostavista.orders_add_consumer
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
 
         dostavista_orders_add_dead:
             connection: default
             exchange_options: {name: 'dostavista_orders_add_dead', type: direct }
             queue_options: {name: 'dostavista_orders_add_dead'}
             callback: dostavista.orders_add_dead_consumer
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
 
         dostavista_orders_cancel:
             connection: default
             exchange_options: {name: 'dostavista_orders_cancel', type: direct}
             queue_options: {name: 'dostavista_orders_cancel'}
             callback: dostavista.orders_cancel_consumer
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
 
         manzana_orders_import:
             connection: default
             exchange_options: {name: 'manzana_orders_import', type: direct}
             queue_options: {name: 'manzana_orders_import'}
             callback: manzana.orders_import_consumer
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
+
+        import_offers:
+            connection: default
+            exchange_options: {name: 'import_offers', type: direct }
+            queue_options: {name: 'import_offers'}
+            callback: import.import_offers
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}

@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\UserPetAddRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserPetDeleteRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserPetPhotoAddRequest;
@@ -17,7 +18,7 @@ use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Services\Api\PetService as ApiPetService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
-class PetsController extends FOSRestController
+class PetsController extends BaseController
 {
 
     /**

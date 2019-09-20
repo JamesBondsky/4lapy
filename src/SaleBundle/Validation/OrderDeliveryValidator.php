@@ -16,6 +16,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
@@ -79,6 +80,13 @@ class OrderDeliveryValidator extends ConstraintValidator
     {
         if (!$entity instanceof OrderStorage || !$constraint instanceof OrderDelivery) {
             return;
+        }
+
+        /**
+         * Moscow Districts
+         */
+        if ($entity->getMoscowDistrictCode() != '') {
+            $this->orderStorageService->updateStorageMoscowZone($entity, OrderStorageEnum::NOVALIDATE_STEP);
         }
 
         $checkDate = function (int $dateIndex, int $intervalIndex, DeliveryResultInterface $delivery) use (
@@ -154,7 +162,7 @@ class OrderDeliveryValidator extends ConstraintValidator
             if ($entity->isSplit()) {
                 $checkDate($entity->getSecondDeliveryDate(), $entity->getSecondDeliveryInterval(), $delivery);
             }
-        } elseif ($this->deliveryService->isDostavistaDelivery($delivery)) {
+        } elseif ($this->deliveryService->isDostavistaDelivery($delivery) || $this->deliveryService->isDobrolapDelivery($delivery)) {
         } else {
             /** @var PickupResultInterface $delivery */
             try {

@@ -8,9 +8,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CMain $APPLICATION
  */
 
-use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;use FourPaws\Enum\IblockCode;use FourPaws\Enum\IblockType;
+use Bitrix\Main\Application;
+use Bitrix\Main\Page\Asset;
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application as PawsApplication;
+use FourPaws\App\MainTemplate;
+use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\KioskBundle\Service\KioskService;
-use FourPaws\SaleBundle\Service\BasketViewService;use FourPaws\UserBundle\Enum\UserLocationEnum;
+use FourPaws\PersonalBundle\Service\PersonalOffersService;
+use FourPaws\SaleBundle\Service\BasketViewService;
+use FourPaws\UserBundle\Enum\UserLocationEnum;
 
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()
@@ -23,7 +32,13 @@ $markup = PawsApplication::markup();
 $sViewportCookie = $_COOKIE['viewport'] ?? null;
 
 $bodyClass = '';
-if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
+if(KioskService::isKioskMode()) {
+    $bodyClass = 'body-kiosk js-body-kiosk';
+
+    if($USER->IsAuthorized()) {
+        $bodyClass .= ' authorized';
+    }
+}
 
 ?>
 <!DOCTYPE html>
@@ -50,6 +65,9 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
     <meta name="google" content="notranslate">
     <meta name="format-detection" content="telephone=no">
     <meta name="yandex-verification" content="6266e34669b85ed6">
+
+    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/favicons.php'; ?>
+
     <?php /** @todo Mobe onto right place  */ ?>
     <script src="/static/build/js/jquery/jquery.min.js"></script>
     <script data-skip-moving="true">
@@ -92,6 +110,8 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
 </head>
 <body <? if($bodyClass != ''){ ?>class="<?= $bodyClass ?>"<? } ?>>
+<?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/pixel_vk.php'; ?>
+
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php if (!KioskService::isKioskMode()) {
     $APPLICATION->ShowPanel();
@@ -99,9 +119,11 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
 
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
     <?php
-    if(!KioskService::isKioskMode()) {
-        require_once __DIR__ . '/blocks/header/promo_top_festival.php';
-    }
+        if(!KioskService::isKioskMode()
+            && !$template->isBasket()
+            && !$template->isOrderPage()) {
+            require_once __DIR__ . '/blocks/header/promo_top_fashion.php';
+        }
     ?>
     <?php
     $APPLICATION->IncludeComponent('articul:header.mobile.bunner',
@@ -135,6 +157,33 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
                 <? } ?>
             </div>
         <?php } else { ?>
+	        <?
+            if(!$template->isPersonalOffers() && $USER->IsAuthorized()) {
+                $modal_counts_txt = CUser::GetByID( $USER->GetID() )->Fetch()['UF_MODALS_CNTS'];
+                $modal_counts = explode(' ', $modal_counts_txt);
+
+                /** @var PersonalOffersService $personalOffersService */
+                $personalOffersService = PawsApplication::getInstance()->getContainer()->get('personal_offers.service');
+                $userId = $USER->GetID();
+                try {
+                    $userPersonalOffers = $personalOffersService->getActiveUserCoupons($userId, true);
+                } catch (\Exception $e) {
+                    $userPersonalOffers = [];
+                }
+
+                if ($userPersonalOffers) {
+	                /** @var ArrayCollection $coupons */
+	                $coupons = $userPersonalOffers['coupons'];
+
+	                if (!$coupons->isEmpty() && $modal_counts[3] <= 2
+		                && $USER->GetParam('data_collect') !== 'Y' // модалку в сессии еще не показали
+	                ) {
+	                    $modal_number = 4;
+                        $lastCouponOffer = $userPersonalOffers['offers']->get($coupons->get(0)['UF_OFFER']);
+	                }
+                }
+            }
+	        ?>
             <div class="b-header__info">
                 <a class="b-hamburger b-hamburger--mobile-menu js-hamburger-menu-mobile"
                    href="javascript:void(0);"
@@ -162,7 +211,9 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
                     } ?>
                     <?php $APPLICATION->IncludeComponent('fourpaws:auth.form',
                         '',
-                        [],
+                        [
+                            'NOT_SEEN_COUPONS' => isset($coupons) ? $coupons->count() : '',
+                        ],
                         false,
                         ['HIDE_ICONS' => 'Y']);
 
@@ -170,6 +221,32 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
                         ->getContainer()
                         ->get(BasketViewService::class)
                         ->getMiniBasketHtml(); ?>
+
+	                <?
+				    if($USER->GetParam('data_collect') !== 'Y') // модалку в сессии еще не показали
+				    {
+		                if ($modal_number === 4) { ?>
+			                <?
+			                if ($lastCouponOffer) {
+				                $offerDiscountText = ($lastCouponOffer['PROPERTY_DISCOUNT_VALUE'] ? $lastCouponOffer['PROPERTY_DISCOUNT_VALUE'] . '%' :
+					                ($lastCouponOffer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] ? $lastCouponOffer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] . ' ₽' : '')
+				                );
+				                ?>
+			                    <div class="b-person-coupon js-coupon-person-popup" data-id="<?= $coupons->get(0)['PERSONAL_COUPON_USER_COUPONS_ID'] ?>">
+			                        <div class="b-person-coupon__inner">
+			                            <div class="b-person-coupon__close js-close-person-coupon-popup"></div>
+				                        <? if ($offerDiscountText) { ?>
+			                                <div class="b-person-coupon__persent">-<?= $offerDiscountText ?></div>
+										<? } ?>
+			                            <div class="b-person-coupon__descr"><?= $lastCouponOffer['~PREVIEW_TEXT'] ?></div>
+			                            <a href="/personal/personal-offers/" class="b-person-coupon__btn">Подробнее</a>
+			                        </div>
+			                    </div>
+							<?
+			                }
+		                }
+				    }
+	                ?>
                 </div>
             </div>
             <div class="b-header__menu js-minimal-menu js-nav-first-desktop">
@@ -318,4 +395,8 @@ if ($template->hasContent()) {
             'PATH'           => sprintf('/include/%s.php', trim($template->getPath(), '/')),
         ],
         false);
+}
+
+if ($template->isDobrolap()) {
+    include_once $_SERVER['DOCUMENT_ROOT'] . '/dobrolap/assets.php';
 }

@@ -36,6 +36,27 @@ class Product
      */
     protected $prices = [];
 
+    /**
+     * @Serializer\SerializedName("useStamps")
+     * @Serializer\Type("bool")
+     * @var bool
+     */
+    protected $useStamps = false;
+
+    /**
+     * @Serializer\SerializedName("canUseStamps")
+     * @Serializer\Type("bool")
+     * @var bool
+     */
+    protected $canUseStamps = false;
+
+    /**
+     * @Serializer\SerializedName("canUseStampsAmount")
+     * @Serializer\Type("int")
+     * @var int
+     */
+    protected $canUseStampsAmount = 0;
+
 
     /**
      * @return int
@@ -109,6 +130,60 @@ class Product
     public function setPrices(array $prices): Product
     {
         $this->prices = $prices;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isUseStamps(): bool
+    {
+        return $this->useStamps;
+    }
+
+    /**
+     * @param bool $useStamps
+     * @return Product
+     */
+    public function setUseStamps(bool $useStamps): Product
+    {
+        $this->useStamps = $useStamps;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCanUseStamps(): bool
+    {
+        return $this->canUseStamps;
+    }
+
+    /**
+     * @param bool $canUseStamps
+     * @return Product
+     */
+    public function setCanUseStamps(bool $canUseStamps): Product
+    {
+        $this->canUseStamps = $canUseStamps;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCanUseStampsAmount(): int
+    {
+        return $this->canUseStampsAmount;
+    }
+
+    /**
+     * @param int $canUseStampsAmount
+     * @return Product
+     */
+    public function setCanUseStampsAmount(int $canUseStampsAmount): Product
+    {
+        $this->canUseStampsAmount = $canUseStampsAmount;
         return $this;
     }
 }

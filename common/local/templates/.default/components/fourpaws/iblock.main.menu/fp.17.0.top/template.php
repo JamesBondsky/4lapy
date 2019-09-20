@@ -85,10 +85,24 @@ $sArrowDownIcoBrand = '<span class="b-icon b-icon--brand-menu">' . $sArrowDownSw
                     </li>
                 <?php } else { ?>
                     <li class="b-menu__item<?= ($arItem['XML_ID'] == 'vetapteka') ? ' b-menu__item--vetapteka' : ''; ?>">
-                        <a class="b-menu__link<?= ($arItem['XML_ID'] == 'vetapteka') ? ' b-menu__link--blue' : ''; ?>"<?= $arItem['_LINK_ATTR1_'] ?>
-                           href="<?= $arItem['_URL_'] ?>">
-                            <?= $arItem['_TEXT_'] ?>
-                        </a>
+	                    <a class="b-menu__link<?= ($arItem['XML_ID'] == 'vetapteka' && !$arItem['PREVIEW_PICTURE']) ? ' b-menu__link--blue' : ''; ?>"<?= $arItem['_LINK_ATTR1_'] // костыль - использован пункт ветаптеки с нужными настройками, хотя она уже не имеет отношения к этому пункту ?>
+	                       href="<?= $arItem['_URL_'] ?>">
+	                    <?php
+		                    if ($arItem['PREVIEW_PICTURE']) {
+	                            $buttonImageArray = CFile::GetFileArray($arItem['PREVIEW_PICTURE']);
+		                        ?><img
+				                    src="<?= $buttonImageArray['SRC'] ?>"
+				                    width="<?= $buttonImageArray['WIDTH'] ?>"
+				                    height="<?= $buttonImageArray['HEIGHT'] ?>"
+				                    alt="<?= $arItem['NAME'] ?>"
+			                    ><?php
+		                    } else {
+			                    ?>
+                                <?= $arItem['_TEXT_'] ?>
+		                    <?php
+	                        }
+		                    ?>
+	                    </a>
                     </li>
                 <?php }
             } ?>
@@ -118,7 +132,7 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                         </a>
                     </li>
                     <?php foreach ($arFirstLevelItem['NESTED'] as $arSecondLevelItem) { ?>
-                        <li class="b-menu-main__item">
+                        <li class="b-menu-main__item js-item-main-menu">
                             <a class="b-menu-main__link js-active-submenu <?=$arSecondLevelItem['NESTED'] ? ' js-open-step-mobile' : ''?>"<?= $arSecondLevelItem['_LINK_ATTR2_'] ?>
                                href="<?= $arSecondLevelItem['_URL_'] ?>">
                                <!--noindex-->

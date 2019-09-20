@@ -27,19 +27,25 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
         /** @var OrderSubscribe $orderSubscribe */
         foreach ($subscriptions as $orderSubscribe) {
-            $APPLICATION->IncludeComponent(
-                'fourpaws:personal.order.item',
-                'subscribe',
-                [
-                    'ORDER' => $orderSubscribe->getOrder(),
-                    'ORDER_SUBSCRIBE' => $orderSubscribe,
-                    'METRO' => $arResult['METRO']
-                ],
-                $component,
-                [
-                    'HIDE_ICONS' => 'Y'
-                ]
-            );
+            try {
+                $orderSubscribeItem = $orderSubscribe->getOrder();
+            } catch (Exception $exception) {}
+
+            if ($orderSubscribeItem) {
+                $APPLICATION->IncludeComponent(
+                    'fourpaws:personal.order.item',
+                    'subscribe',
+                    [
+                        'ORDER' => $orderSubscribeItem,
+                        'ORDER_SUBSCRIBE' => $orderSubscribe,
+                        'METRO' => $arResult['METRO']
+                    ],
+                    $component,
+                    [
+                        'HIDE_ICONS' => 'Y'
+                    ]
+                );
+            }
         }
         ?>
     </ul>

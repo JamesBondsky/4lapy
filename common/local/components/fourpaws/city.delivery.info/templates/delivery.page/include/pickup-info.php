@@ -10,6 +10,29 @@ use FourPaws\Helpers\WordHelper;
 
 $isInnerPickup = $pickup['CODE'] === DeliveryService::INNER_PICKUP_CODE;
 ?>
+<?
+if ($arParams['LOCATION_CODE'] === '0000073738') { // Москва
+    ?>
+    <div class="b-delivery__delivery-type-row">
+        <div class="b-delivery__delivery-type-row__title"><p>Экспресс-доставка</p></div>
+        <div class="b-delivery__delivery-type-row__price">
+            <p>Стоимость</p>
+            <span>397 ₽</span>
+            <span>Бесплатно при заказе от 3997 ₽</span>
+        </div>
+        <div class="b-delivery__delivery-type-row__day">
+            <p>Получение</p>
+            <span>В течение 3-х часов с момента оформления заказа (при оформлении до 19:00)</span>
+        </div>
+        <div class="b-delivery__delivery-type-row__time">
+            <p>Время</p>
+            <span>Через 3 часа</span>
+        </div>
+    </div>
+    <?
+}
+?>
+
 <div class="b-delivery__delivery-type-row">
     <div class="b-delivery__delivery-type-row__title">
         <?php if ($isInnerPickup) { ?>
@@ -47,25 +70,3 @@ $isInnerPickup = $pickup['CODE'] === DeliveryService::INNER_PICKUP_CODE;
         <?php } ?>
     </div>
 </div>
-
-<?
-if ($arParams['LOCATION_CODE'] === '0000073738') { // Москва
-	?>
-	<div class="b-delivery__delivery-type-row">
-		<div class="b-delivery__delivery-type-row__title"><p>Экспресс-доставка</p></div>
-		<div class="b-delivery__delivery-type-row__price">
-			<p>Стоимость</p>
-			<span>397 ₽</span>
-			<span>Бесплатно при заказе от 3997 ₽</span>
-		</div>
-		<div class="b-delivery__delivery-type-row__day">
-			<p>Получение</p>
-			<span>В течение 3-х часов с момента оформления заказа (при оформлении до 19:00)</span>
-		</div>
-		<div class="b-delivery__delivery-type-row__time">
-			<p>Время</p>
-			<span>10:00-21:00</span>
-		</div>
-	</div>
-	<?
-}

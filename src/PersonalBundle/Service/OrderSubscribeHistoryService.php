@@ -4,6 +4,7 @@ namespace FourPaws\PersonalBundle\Service;
 
 use Bitrix\Highloadblock\DataManager;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\Result;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\SystemException;
@@ -298,16 +299,10 @@ class OrderSubscribeHistoryService
         ];
         $dbres = $this->findBy($params);
 
-        // [костыль] здесь сравнивается id подписки,
-        // т.к. из ожного заказа можно сформировать несколько подписок
-        while ($row = $dbres->fetch()) {
-            $subData = unserialize($row['UF_SUBS_DATA']);
-            if($subData['ID'] != $orderSubscribe->getId()){
-                continue;
-            }
-            $orderIds[] = $row['UF_NEW_ORDER_ID'];
+        $orders = $this->fetchAllBySubscribeId($dbres, $orderSubscribe->getId());
+        foreach($orders as $order){
+            $orderIds[] = $order['UF_NEW_ORDER_ID'];
         }
-
         return $orderIds;
     }
 
@@ -318,7 +313,7 @@ class OrderSubscribeHistoryService
      * @throws SystemException
      * @throws \Bitrix\Main\ObjectPropertyException
      */
-    protected function findBy(array $params): \Bitrix\Main\DB\Result
+    public function findBy(array $params): \Bitrix\Main\DB\Result
     {
         $result = $this->dataManager::getList($params);
         return $result;
@@ -363,15 +358,67 @@ class OrderSubscribeHistoryService
             ]
         );
 
-        // [костыль] см. метод getNotDeliveredOrderIds
-        while ($row = $dbres->fetch()) {
+        $orders = $this->fetchAllBySubscribeId($dbres, $orderSubscribe->getId());
+        return $orders[0] ? $orders[0]['UF_DELIVERY_DATE'] : $orderSubscribe->getNextDate();
+    }
+
+    public function getLastOrderDeliveryDate(OrderSubscribe $orderSubscribe)
+    {
+        $dbres = $this->findBy(
+            [
+                'select' => [
+                    'ID',
+                    'UF_DELIVERY_DATE',
+                ],
+                'filter' => [
+                    '=UF_ORIGIN_ORDER_ID' => (int)$orderSubscribe->getOrderId()
+                ],
+                'order' => [
+                    'ID' => 'DESC',
+                ],
+            ]
+        );
+
+        $orders = $this->fetchAllBySubscribeId($dbres, $orderSubscribe->getId());
+        return $orders[0] ? $orders[0]['UF_DELIVERY_DATE'] : $orderSubscribe->getNextDate();
+    }
+
+    // [костыль] здесь сравнивается id подписки,
+    // т.к. из ожного заказа можно сформировать несколько подписок
+    protected function fetchAllBySubscribeId(Result $result, int $orderSubscribeId)
+    {
+        $results = [];
+        while ($row = $result->fetch()) {
             $subData = unserialize($row['UF_SUBS_DATA']);
-            if($subData['ID'] != $orderSubscribe->getId()){
+            if($subData['ID'] != $orderSubscribeId){
                 continue;
             }
-            $order = $row;
+            $results[] = $row;
         }
+        return $results;
+    }
 
-        return $order ? $order['UF_DELIVERY_DATE'] : $orderSubscribe->getNextDate();
+    /**
+     * @param $orderId
+     * @return bool
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function hasOriginOrder($orderId) : bool
+    {
+        $params = [
+            'select' => [
+                'ID'
+            ],
+            'filter' => [
+                '=UF_NEW_ORDER_ID' => $orderId,
+                '!=UF_ORIGIN_ORDER_ID' => $orderId,
+            ],
+        ];
+
+        $dbres = $this->findBy($params);
+
+        return  ($dbres->fetch()) ? true : false;
     }
 }

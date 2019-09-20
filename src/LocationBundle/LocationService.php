@@ -65,6 +65,8 @@ class LocationService
 
     public const TYPE_DISTRICT = 'DISTRICT';
 
+    public const TYPE_DISTRICT_MOSCOW = 'DISTRICT_MOSCOW';
+
     public const TYPE_SUBREGION = 'SUBREGION';
 
     public const TYPE_REGION = 'REGION';
@@ -78,6 +80,8 @@ class LocationService
     public const REGION_SERVICE_CODE = 'REGION';
 
     public const KLADR_SERVICE_CODE = 'KLADR';
+
+    public const OKATO_SERVICE_CODE = 'OKATO';
 
     /**
      * @var DaDataService
@@ -639,7 +643,7 @@ class LocationService
                 $this->locationsByCode[$code] = [];
             }
         }
-        return $this->locationsByCode[$code] ?? [];
+        return \is_array($this->locationsByCode[$code]) ? $this->locationsByCode[$code] : [];
     }
 
     /**
@@ -657,7 +661,7 @@ class LocationService
                 $this->locationsById[$id] = [];
             }
         }
-        return $this->locationsById[$id] ?? [];
+        return \is_array($this->locationsById[$id]) ? $this->locationsById[$id] : [];
     }
 
     /**
@@ -707,6 +711,7 @@ class LocationService
                 static::TYPE_CITY,
                 static::TYPE_VILLAGE,
                 static::TYPE_DISTRICT,
+                static::TYPE_DISTRICT_MOSCOW,
             ],
         ];
         if ($parentName !== null && !empty($parentName)) {
@@ -752,7 +757,7 @@ class LocationService
             if (!isset($this->locationsByCode[$code])) {
                 $this->locationsByCode[$code] = reset($this->findLocationNew([
                     '=CODE'     => $code,
-                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE, static::TYPE_DISTRICT],
+                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE, static::TYPE_DISTRICT, static::TYPE_DISTRICT_MOSCOW],
                 ]));
             }
             if (!empty($this->locationsByCode[$code]) && !\is_bool($this->locationsByCode[$code])) {

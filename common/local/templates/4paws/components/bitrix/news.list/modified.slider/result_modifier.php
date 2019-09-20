@@ -17,6 +17,8 @@ if (empty($arResult['ITEMS']) || !\is_array($arResult['ITEMS'])) {
     return;
 }
 
+$fileIds = [];
+
 $container = Application::getInstance()->getContainer();
 $ecommerceService = $container->get(GoogleEcommerceService::class);
 $mapper = $container->get(MapperPreset::class)->mapperSliderFactory();
@@ -42,4 +44,20 @@ foreach ($arResult['ITEMS'] as &$item)
     }
 
     $item['MOD']['ADDITIONAL_CLASSES'] = ' ' . implode(' ', $additionalClasses);
+
+    if (!empty($item['PROPERTIES']['LEFT_SVG']['VALUE'])) {
+        $fileIds[] = $item['PROPERTIES']['LEFT_SVG']['VALUE'];
+    }
+
+    $item['LEFT_COLOR'] = (!empty($item['PROPERTIES']['HASH_LEFT_COLOR']['VALUE'])) ? substr($item['PROPERTIES']['HASH_LEFT_COLOR']['VALUE'], 1) : false;
+}
+
+// получаем svg для левого блока
+$arResult['FILES'] = [];
+
+if (!empty($fileIds)) {
+    $rsFile = CFile::GetList(false, ['@ID' => array_unique($fileIds)]);
+    while ($arFile = $rsFile->Fetch()) {
+        $arResult['FILES'][$arFile['ID']] = CFile::GetFileSRC($arFile);
+    }
 }

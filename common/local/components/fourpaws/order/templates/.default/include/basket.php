@@ -52,6 +52,8 @@ if ($deliveryService->isPickup($selectedDelivery)) {
 $pickup = $arResult['PICKUP'];
 /** @var CalculationResultInterface $delivery */
 $delivery = $arResult['DELIVERY'];
+/** @var CalculationResultInterface $deliveryDobrolap */
+$deliveryDobrolap = $arResult['DELIVERY_DOBROLAP'];
 
 $isSplit = $storage->isSplit();
 
@@ -103,6 +105,8 @@ $productsDeclension = new Declension('товар', 'товара', 'товаро
 
 if (null !== $delivery) {
     $deliveryResult = $delivery->getStockResult();
+} elseif ($deliveryDobrolap) {
+    $deliveryResult = $deliveryDobrolap->getStockResult();
 } else {
     $deliveryResult = $pickup->getStockResult();
 }
@@ -188,7 +192,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
                         <div class="b-order-list__order-text b-order-list__order-text--aside">
                             <div class="b-order-list__clipped-text">
                                 <div class="b-order-list__text-backed">
-                                    <?= $item['name'] ?>
+                                    <?= $item['brand'] ?> <?= $item['name'] ?>
                                     <?php if ($item['quantity'] > 1) { ?>
                                         (<?= $item['quantity'] ?> шт)
                                     <?php } ?>
@@ -231,7 +235,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
                             <div class="b-order-list__order-text b-order-list__order-text--aside">
                                 <div class="b-order-list__clipped-text">
                                     <div class="b-order-list__text-backed">
-                                        <?= $item['name'] ?>
+                                        <?= $item['brand'] ?> <?= $item['name'] ?>
                                         <?php if ($item['quantity'] > 1) { ?>
                                             (<?= $item['quantity'] ?> шт)
                                         <?php } ?>
@@ -260,7 +264,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
                             <div class="b-order-list__order-text b-order-list__order-text--aside">
                                 <div class="b-order-list__clipped-text">
                                     <div class="b-order-list__text-backed">
-                                        <?= $item['name'] ?>
+                                        <?= $item['brand'] ?> <?= $item['name'] ?>
                                         <?php if ($item['quantity'] > 1) { ?>
                                             (<?= $item['quantity'] ?> шт)
                                         <?php } ?>
@@ -294,7 +298,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
                             <div class="b-order-list__order-text b-order-list__order-text--aside">
                                 <div class="b-order-list__clipped-text">
                                     <div class="b-order-list__text-backed">
-                                        <?= $item['name'] ?>
+                                        <?= $item['brand'] ?> <?= $item['name'] ?>
                                         <?php if ($item['quantity'] > 1) { ?>
                                             (<?= $item['quantity'] ?> шт)
                                         <?php } ?>
@@ -343,7 +347,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
                     <div class="b-order-list__order-text">
                         <div class="b-order-list__clipped-text">
                             <div class="b-order-list__text-backed">
-                                <?= $item['name'] ?>
+                                <?= $item['brand'] ?> <?= $item['name'] ?>
                                 <?php if ($item['quantity'] > 1) { ?>
                                     (<?= $item['quantity'] ?> шт)
                                 <?php } ?>
@@ -377,7 +381,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
                     <div class="b-order-list__order-text b-order-list__order-text--aside">
                         <div class="b-order-list__clipped-text">
                             <div class="b-order-list__text-backed">
-                                <?= $item['name'] ?>
+                                <?= $item['brand'] ?> <?= $item['name'] ?>
                                 <?php if ($item['quantity'] > 1) { ?>
                                     (<?= $item['quantity'] ?> шт)
                                 <?php } ?>

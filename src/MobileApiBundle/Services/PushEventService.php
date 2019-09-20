@@ -21,6 +21,13 @@ use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
 use FourPaws\UserBundle\Repository\UserRepository;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializationContext;
+use Sly\NotificationPusher\Adapter\Apns;
+use Sly\NotificationPusher\Collection\DeviceCollection;
+use Sly\NotificationPusher\Exception\AdapterException;
+use Sly\NotificationPusher\Model\Device;
+use Sly\NotificationPusher\Model\Message;
+use Sly\NotificationPusher\Model\Push;
+use tests\units\Sly\NotificationPusher\PushManager;
 
 class PushEventService
 {
@@ -96,10 +103,13 @@ class PushEventService
             ->setFilter([
                 'UF_ACTIVE' => true,
                 '!UF_FILE' => false,
+                '>=UF_START_SEND' => (new \Bitrix\Main\Type\DateTime())->add('-10 minutes')->format('d.m.Y H:i:00'),
+                '<=UF_START_SEND' => (new \Bitrix\Main\Type\DateTime())->add('-10 minutes')->format('d.m.Y H:i:59'),
             ])
             ->setSelect([
                 '*',
             ])
+            ->setLimit(500)
             ->exec();
 
         $pushMessages = $this->transformer->fromArray(
@@ -138,12 +148,13 @@ class PushEventService
         $res = $hlBlockPushMessages->query()
             ->setFilter([
                 'UF_ACTIVE' => true,
-                '<=UF_START_SEND' => (new \Bitrix\Main\Type\DateTime())->add('6 hour')->format('d.m.Y H:i:s'),
+                '<=UF_START_SEND' => (new \Bitrix\Main\Type\DateTime())->add('+10 minutes')->format('d.m.Y H:i:s'),
                 'UF_FILE' => false,
             ])
             ->setSelect([
                 '*'
             ])
+            ->setLimit(500)
             ->exec();
 
         /** @var ApiPushMessage[] $pushMessages */
@@ -197,7 +208,7 @@ class PushEventService
      * @throws \ApnsPHP_Exception
      * @throws \ApnsPHP_Push_Server_Exception
      */
-    public function execPushEventsForIos()
+    public function execPushEventsForIos1111()
     {
         $this->applePushNotificationService->startServer();
         $pushEvents = $this->apiPushEventRepository->findForIos();
@@ -224,6 +235,100 @@ class PushEventService
         }
     }
 
+    public function execPushEventsForIos()
+    {
+        $pushEvents = $this->apiPushEventRepository->findForIos();
+
+        $adapter = new \FourPaws\External\ApplePushNotificationAdapter([
+            'certificate' => Application::getInstance()->getRootDir() . '/app/config/apple-push-notification-cert-new.pem',
+            'passPhrase' => 'lapy'
+        ]);
+        $pushManager = new \Sly\NotificationPusher\PushManager(\Sly\NotificationPusher\PushManager::ENVIRONMENT_PROD);
+
+        $pushId = [];
+
+        if (count($pushEvents) > 0) {
+            foreach ($pushEvents as $pushEvent) {
+                try {
+                    $message = new Message($pushEvent->getMessageText());
+
+                    $message->setOption('badge', 1);
+                    $message->setOption('sound', '');
+                    $message->setOption('custom', [
+                        'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
+                        'id' => $pushEvent->getEventId()
+                    ]);
+                    $message->setOption('type', $pushEvent->getMessageTypeEntity()->getXmlId());
+                    $message->setOption('id', $pushEvent->getEventId());
+
+
+                    try {
+                        $device = new Device($pushEvent->getPushToken());
+                    } catch (AdapterException $adapterException) {
+                        continue;
+                    }
+                    $device->setParameter('badge', 1);
+                    $device->setParameter('sound', '');
+                    $device->setParameter('type', $pushEvent->getMessageTypeEntity()->getXmlId());
+                    $device->setParameter('id', $pushEvent->getEventId());
+                    $device->setParameter('custom', [
+                        'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
+                        'id' => $pushEvent->getEventId()
+                    ]);
+
+                    $deviceArr = new DeviceCollection([
+                        $device
+                    ]);
+                    $push = new Push($adapter, $deviceArr, $message);
+
+                    $pushManager->add($push);
+
+                    $pushId[$pushEvent->getPushToken()] = $pushEvent;
+                } catch (\Exception $e) {
+                    $pushEvent->setServiceResponseError($e->getMessage());
+                }
+            }
+
+            try {
+                $pushManager->push();
+            } catch (\Exception $adapterException) {
+                $this->log()->error('Ошибка при отправке push ios ' . $adapterException->getMessage());
+            }
+
+            $response = [];
+
+            try {
+                $response = $pushManager->getResponse()->getParsedResponses();
+            } catch (\Exception $e) {
+                $adapter->getOpenedClient()->close();
+                $this->log()->error('Ошибка при отправке push ios ' . $e->getMessage());
+            }
+
+            $haveThrow = false;
+
+            foreach ($response as $responseItem) {
+                if ($responseItem['token'] != 0) {
+                    $haveThrow = true;
+                }
+            }
+
+            foreach ($response as $token => $responseItem) {
+                if ($haveThrow) {
+                    if ($responseItem['token'] != 0) {
+                        $pushId[$token]->setServiceResponseStatus($responseItem['token']);
+                        $pushId[$token]->setSuccessExec($responseItem['token'] > 0 ? ApiPushEvent::EXEC_FAIL_CODE : ApiPushEvent::EXEC_SUCCESS_CODE);
+                        $this->apiPushEventRepository->update($pushId[$token]);
+                    }
+                } else {
+                    $pushId[$token]->setServiceResponseStatus($responseItem['token']);
+                    $pushId[$token]->setSuccessExec($responseItem['token'] > 0 ? ApiPushEvent::EXEC_FAIL_CODE : ApiPushEvent::EXEC_SUCCESS_CODE);
+                    $this->apiPushEventRepository->update($pushId[$token]);
+                }
+            }
+        }
+    }
+
+
     /**
      * Ищет сессии пользователей для конкретного push-сообщения
      * @param ApiPushMessage $pushMessage
@@ -244,9 +349,9 @@ class PushEventService
         foreach ($pushMessage->getUsers() as $user) {
             $userIds[] = $user->getId();
         }
-        $userFilter = [
-            'LOGIC' => 'OR',
-        ];
+
+        $userFilter = [];
+
         if (!empty($userIds)) {
             $userFilter[] =[
                 '=USER_ID' => $userIds,
@@ -264,9 +369,17 @@ class PushEventService
             $userFilter[] = $userGroupFilter;
         }
 
-        if (empty($userFilter)) {
+        if (empty($userFilter) && !$pushMessage->getIsSendingToAllUsers()) {
             // если адресаты не указаны - ничего отправлять не нужно
             return [];
+        }
+
+        $userFilter['LOGIC'] = 'OR';
+
+        if ($pushMessage->getIsSendingToAllUsers()) { // если стоит галка "Отправить всем пользователям", то игнорируются указанные группы и отдельные пользователи
+            $userFilter = [
+                'LOGIC' => 'OR',
+            ];
         }
 
         if ($pushMessage->getPlatformId()) {

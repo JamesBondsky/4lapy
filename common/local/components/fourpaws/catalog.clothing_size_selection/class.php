@@ -18,7 +18,12 @@ class FourPawsClothingSizeSelection extends FourPawsComponent
     /**
      * @var DataManager
      */
-    protected $dataManager;
+    protected $hlSizeSelection;
+
+    /**
+     * @var DataManager
+     */
+    protected $hlSize;
 
     /**
      * FourPawsClothingSizeSelection constructor.
@@ -29,7 +34,8 @@ class FourPawsClothingSizeSelection extends FourPawsComponent
     public function __construct(?CBitrixComponent $component = null)
     {
         parent::__construct($component);
-        $this->dataManager = Application::getInstance()->getContainer()->get('bx.hlblock.clothingsizeselection');
+        $this->hlSizeSelection = Application::getInstance()->getContainer()->get('bx.hlblock.clothingsizeselection');
+        $this->hlSize = Application::getInstance()->getContainer()->get('bx.hlblock.clothingsize');
 
     }
 
@@ -57,7 +63,12 @@ class FourPawsClothingSizeSelection extends FourPawsComponent
      */
     public function prepareResult(): void
     {
-        $this->arResult['ITEMS'] = $this->dataManager::query()->setSelect(['*', 'UF_*'])->exec()->fetchAll();
+        $this->arResult['ITEMS'] = $this->hlSizeSelection::query()->setSelect(['*', 'UF_*'])->exec()->fetchAll();
+
+        $dbres = $this->hlSize::query()->setSelect(['*', 'UF_*'])->exec();
+        while($size = $dbres->fetch()){
+            $this->arResult['SIZE'][$size['UF_NAME']] = $size;
+        }
     }
 
 }

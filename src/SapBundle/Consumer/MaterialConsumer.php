@@ -7,6 +7,7 @@
 namespace FourPaws\SapBundle\Consumer;
 
 use Bitrix\Main\Application;
+use CIBlock;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Offer;
@@ -112,7 +113,6 @@ class MaterialConsumer extends SapConsumerBase
              */
             Event::lockEvents();
 
-            $this->referenceService->fillFromMaterial($material);
             $this->connection->commitTransaction();
 
             $this->connection->startTransaction();
@@ -129,8 +129,7 @@ class MaterialConsumer extends SapConsumerBase
              * Костыль! Уровень изоляции кривой.
              */
             Event::unlockEvents();
-            Event::clearProductCache($offer->getId());
-            Event::clearProductCache($product->getId());
+            $this->productService->addProductsToClearCache([$offer->getId(), $product->getId()]);
 
             return true;
         } catch (LoggedException $exception) {
@@ -221,11 +220,13 @@ class MaterialConsumer extends SapConsumerBase
         $product = $this->productService->processMaterial($material);
         $product->withBrandId($brand->getId());
 
+        CIBlock::disableClearTagCache();
         if ($product->getId()) {
             $result = $this->productService->update($product);
         } else {
             $result = $this->productService->create($product);
         }
+        CIBlock::enableClearTagCache();
 
         if ($result->isSuccess()) {
             $this->log()->log(LogLevel::DEBUG, sprintf(
@@ -276,6 +277,7 @@ class MaterialConsumer extends SapConsumerBase
         }
         $offer->withCml2Link($product->getId());
 
+        CIBlock::disableClearTagCache();
         if ($offer->getId()) {
             $result = $this->offerService->update($offer);
         } else {
@@ -287,6 +289,7 @@ class MaterialConsumer extends SapConsumerBase
         ) {
             $this->productService->update($product);
         }
+        CIBlock::enableClearTagCache();
 
         if ($result->isSuccess()) {
             $this->log()->log(LogLevel::DEBUG, sprintf(

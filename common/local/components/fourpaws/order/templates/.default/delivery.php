@@ -15,6 +15,8 @@ use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\StoreBundle\Entity\Store;
 
 /**
+ * @bxnolanginspection
+ *
  * @var array $arParams
  * @var array $arResult
  * @var CMain $APPLICATION
@@ -25,6 +27,8 @@ use FourPaws\StoreBundle\Entity\Store;
 $delivery = $arResult['DELIVERY'];
 /** @var CalculationResultInterface $deliveryDostavista */
 $deliveryDostavista = $arResult['DELIVERY_DOSTAVISTA'];
+/** @var CalculationResultInterface $deliveryDobrolap */
+$deliveryDobrolap = $arResult['DELIVERY_DOBROLAP'];
 /** @var PickupResultInterface $pickup */
 $pickup = $arResult['PICKUP'];
 /** @var CalculationResultInterface $selectedDelivery */
@@ -113,6 +117,8 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                    }
                                    else if($pickup){
                                        echo $pickup->getDeliveryId();
+                                   } else if($deliveryDobrolap){
+                                       echo $deliveryDobrolap->getDeliveryId();
                                    }
                                ?>"
                                class="js-no-valid">
@@ -153,6 +159,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                     </span>
                                 </label>
                             <?php }
+
                             if ($pickup) {
                                 $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
                                 if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
@@ -200,9 +207,63 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         ) ?>, <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
                                     </span>
                                 </label>
-                                <?php
-                            } ?>
+                            <? } ?>
+
+                            <? if ($deliveryDobrolap) { ?>
+                                <div class="b-choice-recovery__tooltip" data-b-choice-recovery-tooltip>
+                                    <input  <?= $deliveryService->isDobrolapDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
+                                            class="b-choice-recovery__input js-recovery-dobrolap js-myself-shop js-delivery"
+                                            data-set-delivery-type="<?= $deliveryDobrolap->getDeliveryId() ?>"
+                                            id="order-delivery-dobrolap"
+                                            type="radio"
+                                            name="deliveryId"
+                                            data-text="Самовывоз"
+                                            value="<?= $deliveryDobrolap->getDeliveryId() ?>"
+                                            data-delivery="<?= $deliveryDobrolap->getPrice() ?>"
+                                            data-full="<?= $deliveryDobrolap->getStockResult()->getOrderable()->getPrice() ?>"
+                                            data-check="js-list-orders-cont"
+                                    />
+
+                                    <label
+                                        class="
+                                            b-choice-recovery__label
+                                            b-choice-recovery__label--right
+                                            b-choice-recovery__label--order-step
+                                            b-choice-recovery__label--with-icon
+                                            b-choice-recovery__label--mt
+                                            js-open-popup
+                                        "
+                                        for="order-delivery-dobrolap"
+                                        data-popup-id="popup-order-shelters"
+                                    >
+                                        <img src="/static/build/images/content/dobrolap/dobrolap-logo.png" alt="" srcset="/static/build/images/content/dobrolap/dobrolap-logo@2x.png 2x, /static/build/images/content/dobrolap/dobrolap-logo@3x.png 3x" class="b-choice-recovery__label-icon"/>
+
+                                        <div>
+                                            <span class="b-choice-recovery__main-text">Доставка в приют</span>
+
+                                            <span class="b-choice-recovery__addition-text">
+                                                бесплатно
+                                            </span>
+
+                                            <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
+                                                бесплатно
+                                            </span>
+                                        </div>
+                                    </label>
+
+                                    <button type="button" class="b-choice-recovery__tooltip-trigger" data-b-choice-recovery-tooltip="trigger">
+                                        Информация
+                                    </button>
+
+                                    <div class="b-choice-recovery__tooltip-content" data-b-choice-recovery-tooltip="content">
+                                        Ваш заказ будет доставлен в&nbsp;выбранный Вами приют для&nbsp;бездомных животных.
+                                        После оплаты заказа вы получите сюрприз и&nbsp;памятный магнит.
+                                    </div>
+                                </div>
+                            <? } ?>
+
                         </div>
+
                         <ul class="b-radio-tab js-myself-shop">
                             <?php if ($delivery) {
                                 $isHidden = $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId();
@@ -222,6 +283,15 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 </li>
                                 <?php
                             } ?>
+                            <?php if ($deliveryDobrolap) {
+                                $isHidden = $selectedDelivery->getDeliveryId() !== $deliveryDobrolap->getDeliveryId();
+                                ?>
+                                <li class="b-radio-tab__tab js-dobrolap-recovery"
+                                    <?= $isHidden ? 'style="display:none"' : '' ?>>
+                                    <?php include 'include/dobrolap.php' ?>
+                                </li>
+                                <?php
+                            } ?>
                         </ul>
                     </form>
                 </article>
@@ -236,8 +306,10 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
             } else {
                 $basketPrice = $pickup->getStockResult()->getPrice();
             }
-        } else {
+        } elseif ($delivery) {
             $basketPrice = $delivery->getStockResult()->getOrderable()->getPrice();
+        } elseif ($deliveryDobrolap) {
+            $basketPrice = $deliveryDobrolap->getStockResult()->getOrderable()->getPrice();
         }
         ?>
         <div class="b-order-list b-order-list--cost b-order-list--order-step-two js-order-next">

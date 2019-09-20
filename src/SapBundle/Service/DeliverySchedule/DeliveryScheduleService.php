@@ -9,13 +9,16 @@ namespace FourPaws\SapBundle\Service\DeliverySchedule;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\SystemException;
 use Exception;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedule;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedules;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\ManualDayItem;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\WeekDayItem;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\OrderDayItem;
+use FourPaws\SapBundle\Exception\InvalidArgumentException;
 use FourPaws\SapBundle\Exception\NotFoundScheduleException;
 use FourPaws\StoreBundle\Entity\DeliverySchedule as DeliveryScheduleEntity;
 use FourPaws\StoreBundle\Exception\BitrixRuntimeException;
@@ -38,18 +41,17 @@ class DeliveryScheduleService implements LoggerAwareInterface
     use LazyLoggerAwareTrait;
 
     public const CACHE_TAG = 'delivery_schedule';
-    /**
-     * @var DeliveryScheduleRepository
-     */
+
+    /** @var DeliveryScheduleRepository */
     private $repository;
-    /**
-     * @var Serializer
-     */
+
+    /** @var Serializer */
     private $serializer;
-    /**
-     * @var BaseService
-     */
+
+    /** @var BaseService */
     private $baseService;
+
+    private $regular;
 
     /**
      * DeliveryScheduleService constructor.
@@ -214,15 +216,16 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
         /** Дни заказа и поставки */
         $orderDays = $schedule->getOrderDays();
-        //$obWeekDays = $schedule->getWeekDays();
+        $arOrderDays = $this->serializer->toArray($orderDays->first());
+        $arOrderDays = array_filter($arOrderDays);
 
-        if ($orderDays->count()) {
-            $arOrderDays = $this->serializer->toArray($orderDays->first());
-            $arOrderDays = array_filter($arOrderDays);
+        if (!empty($arOrderDays)) {
             $arSupplyDays = $this->baseService->getWeeknums($arOrderDays);
 
             $entity->setOrderDays($arOrderDays);
             $entity->setSupplyDays($arSupplyDays);
+        } else if ($schedule->getScheduleType() == 1){
+            throw new InvalidArgumentException(sprintf("Не переданы дни заказа orderDays для %s -> %s", $schedule->getSenderCode(), $schedule->getRecipientCode()));
         }
 
         /** Номера недели */
@@ -263,8 +266,50 @@ class DeliveryScheduleService implements LoggerAwareInterface
         /** Дата изменения */
         $entity->setDateUpdate();
 
+        /** Регулярность */
+        $regular = $this->getRegularByXmlId($schedule->getRegular());
+        $entity->setRegular($regular->getId());
+
         return $entity;
     }
+
+    /**
+     * @param $xmlId
+     * @return mixed
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    public function getRegularByXmlId($xmlId)
+    {
+        $regular = $this->getRegular()->filter(function($item) use($xmlId) {
+            return $item->getXmlId() == $xmlId;
+        })->current();
+        return $regular;
+    }
+
+    /**
+     * @return \FourPaws\AppBundle\Collection\UserFieldEnumCollection
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    public function getRegular()
+    {
+        if(null === $this->regular){
+            /** @var UserFieldEnumService $userFieldEnumService */
+            $userFieldEnumService = Application::getInstance()->getContainer()->get('userfield_enum.service');
+            $hlBlockEntityFields = $this->repository->getHlBlockEntityFields();
+            if (isset($hlBlockEntityFields['UF_REGULARITY'])) {
+                if ($hlBlockEntityFields['UF_REGULARITY']['USER_TYPE_ID'] === 'enumeration') {
+                    $this->regular = $userFieldEnumService->getEnumValueCollection(
+                        $hlBlockEntityFields['UF_REGULARITY']['ID']
+                    );
+                }
+            }
+        }
+
+        return $this->regular;
+    }
+
 
     /**
      * @param DeliveryScheduleEntity $entity

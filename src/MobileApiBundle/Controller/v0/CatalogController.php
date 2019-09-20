@@ -8,11 +8,12 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\FilterListRequest;
 use FourPaws\MobileApiBundle\Dto\Response\FilterListResponse;
 use FourPaws\MobileApiBundle\Services\Api\CatalogService as ApiCatalogService;
 
-class CatalogController extends FOSRestController
+class CatalogController extends BaseController
 {
 
     /**
@@ -38,7 +39,7 @@ class CatalogController extends FOSRestController
     public function getFilterListAction(FilterListRequest $filterListRequest): FilterListResponse
     {
         return new FilterListResponse(
-            $this->apiCatalogService->getFilters($filterListRequest->getId())
+            $this->apiCatalogService->getFilters($filterListRequest->getId(), $filterListRequest->getStockId())
         );
     }
 }

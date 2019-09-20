@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Bitrix\Main\ObjectPropertyException;
 use CUser;
 use Exception;
 use Bitrix\Main\LoaderException;
@@ -75,13 +76,22 @@ class PersonalOffersService
         $session = $this->apiUserSessionRepository->findByToken($this->tokenStorage->getToken()->getCredentials());
         $userId = $session->getUserId();
         if (!$userId) {
-            return [];
+            return [
+                'success' => false,
+                'error'   => [
+                    'code'    => 0,
+                    'message' => 'Пользователь не авторизован'
+                ]
+            ];
         }
         try {
             $result = [
                 'success' => true,
                 'data'    => [
-                    'personal_offers' => $this->personalOffersService->getActiveUserCouponsEx($userId)
+                    'personal_offers' => array_map(static function($coupon) {
+                        $coupon['discount'] = '-' . $coupon['discount'];
+                        return $coupon;
+                    }, $this->personalOffersService->getActiveUserCouponsEx($userId))
                 ]
             ];
         } catch (BarcodeException|IblockNotFoundException|ArgumentException|LoaderException|SystemException|InvalidArgumentException $exception) {
@@ -175,5 +185,30 @@ class PersonalOffersService
 
         return $result;
 
+    }
+
+    /**
+     * @param string $orderID
+     *
+     * @return array|null
+     */
+    public function bindUnreservedDobrolapCoupon(string $orderID = ''): ?array
+    {
+        if(!$orderID){
+            return [
+                'success' => false,
+                'message' => 'Номер заказа не передан'
+            ];
+        }
+        $session = $this->apiUserSessionRepository->findByToken($this->tokenStorage->getToken()->getCredentials());
+        $userId = $session->getUserId();
+        try {
+            return $this->personalOffersService->bindDobrolapRandomCoupon($userId, $orderID, false, false);
+        } catch (IblockNotFoundException |ObjectPropertyException| ArgumentException |LoaderException |SystemException $e) {
+            return [
+                'success' => false,
+                'message' => $e->getMessage() . ' [' . $e->getCode() . ']'
+            ];
+        }
     }
 }

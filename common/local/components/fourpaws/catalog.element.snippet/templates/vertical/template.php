@@ -69,8 +69,22 @@ if (!$currentOffer->getImagesIds()) {
     }
 }
 
-/** @noinspection PhpUnhandledExceptionInspection */
-$value = $currentOffer->getPackageLabel(true, 999);
+$packageLabelType = $currentOffer->getPackageLabelType();
+
+switch ($packageLabelType) {
+    case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+        $color = $currentOffer->getColor();
+        if ($color) {
+            $value = $color->getName();
+            $image = $color->getFilePath();
+            $colourCombination = true;
+        }
+        break;
+}
+if (!$colourCombination) {
+    $value = $currentOffer->getPackageLabel(false, 999);
+}
+
 $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
 ?>
     <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>"
@@ -116,6 +130,7 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
             </a>
             <?php if ($offers->count() > 0) {
                 $isOffersPrinted = false;
+                $colourCombination = false;
 
                 ob_start(); ?>
                 <div class="b-weight-container b-weight-container--list">
@@ -129,9 +144,19 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                         <?php
                         $countSizes = 0;
                         foreach ($offers as $offer) {
-
-                            /** @noinspection PhpUnhandledExceptionInspection */
-                            $value = $offer->getPackageLabel(false, 0);
+                            switch ($packageLabelType) {
+                                case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+                                    $color = $offer->getColor();
+                                    if ($color) {
+                                        $value = $color->getName();
+                                        $image = $color->getFilePath();
+                                        $colourCombination = true;
+                                    }
+                                    break;
+                            }
+                            if (!$colourCombination) {
+                                $value = $offer->getPackageLabel(false, 0);
+                            }
 
                             $countSizes++;
                             $isOffersPrinted = true;
@@ -141,6 +166,7 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                                 : $offerWithImages->getResizeImages(240, 240)->first();
 
                             $addAttr = ' data-price="' . $offer->getCatalogPrice() . '"';
+                            $addAttr .= ' data-subscribePrice="' . \round($offer->getSubscribePrice()) . '"';
                             $addAttr .= ' data-offerid="' . $offer->getId() . '"';
                             $addAttr .= ' data-image="' . $offerImage . '"';
                             $addAttr .= ' data-pickup="' . ($offer->isByRequest() ? $byRequestText : '') . '"';
@@ -177,6 +203,7 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                                class="b-weight-container__link js-price active-link"
                                data-oldprice="<?= ($currentOffer->getCatalogOldPrice()
                                                    !== $currentOffer->getCatalogPrice() ? $currentOffer->getCatalogOldPrice() : '') ?>"
+                               data-subscribePrice="<?= \round($offer->getSubscribePrice()) ?>"
                                data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
                                data-onclick="<?= $getOnClick($currentOffer) ?>"
                                data-onmousedown="<?= $getOnMouseDown($currentOffer) ?>"
@@ -221,6 +248,15 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                     </span>
                 </div>
             <?php }
+
+            if($currentOffer->getSubscribePrice() < $currentOffer->getPrice()){ ?>
+                <a class="b-common-item__price-subscribe" href="<?= $currentOffer->getLink() ?>">
+                    <span class="logo-subscr"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
+                    <span class="b-common-item__price js-price-subscribe-block"><?= \round($currentOffer->getSubscribePrice()) ?></span>
+                    <span class="b-ruble">₽</span>
+                    <span class="title-subscr">Подписка</span>
+                </a>
+            <? }
 
             if ($currentOffer->isByRequest()) {
                 ?>

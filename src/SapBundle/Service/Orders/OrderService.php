@@ -31,6 +31,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Env;
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
@@ -42,8 +43,10 @@ use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Enum\OrderPayment;
+use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SapBundle\Dto\Base\Orders\DeliveryAddress;
 use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;
@@ -63,6 +66,7 @@ use FourPaws\SapBundle\Exception\NotFoundProductException;
 use FourPaws\SapBundle\Service\SapOutFile;
 use FourPaws\SapBundle\Service\SapOutInterface;
 use FourPaws\SapBundle\Source\SourceMessage;
+use FourPaws\StoreBundle\Service\ScheduleResultService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Repository\UserRepository;
@@ -126,6 +130,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @var BasketService
      */
     private $basketService;
+    /**
+     * @var StampService
+     */
+    private $stampService;
 
     /**
      * @var int
@@ -140,14 +148,15 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     /**
      * OrderService constructor.
      *
-     * @param DeliveryService     $deliveryService
-     * @param LocationService     $locationService
+     * @param DeliveryService $deliveryService
+     * @param LocationService $locationService
      * @param SerializerInterface $serializer
-     * @param Filesystem          $filesystem
-     * @param UserRepository      $userRepository
-     * @param IntervalService     $intervalService
-     * @param StatusService       $statusService
-     * @param BasketService       $basketService
+     * @param Filesystem $filesystem
+     * @param UserRepository $userRepository
+     * @param IntervalService $intervalService
+     * @param StatusService $statusService
+     * @param BasketService $basketService
+     * @param StampService $stampService
      */
     public function __construct(
         DeliveryService $deliveryService,
@@ -157,7 +166,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         UserRepository $userRepository,
         IntervalService $intervalService,
         StatusService $statusService,
-        BasketService $basketService
+        BasketService $basketService,
+        StampService $stampService
     )
     {
         $this->serializer = $serializer;
@@ -169,6 +179,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
         $this->setFilesystem($filesystem);
         $this->basketService = $basketService;
+        $this->stampService = $stampService;
     }
 
     /**
@@ -271,6 +282,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ]
         )) ?: '';
 
+        $deliveryTypeCode = $this->getDeliveryCode($order);
+        if ($deliveryTypeCode == DeliveryService::INNER_DELIVERY_CODE || $deliveryTypeCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+            $this->populateOrderDtoUserCoords($orderDto, $order);
+        }
+
         $orderDto
             ->setId($order->getField('ACCOUNT_NUMBER'))
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()
@@ -291,6 +307,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setAvatarEmail($this->getPropertyValueByCode($order, 'OPERATOR_EMAIL'))
             ->setAvatarDepartment($this->getPropertyValueByCode($order, 'OPERATOR_SHOP'));
 
+        if ($this->deliveryService->isDobrolapDeliveryCode($deliveryTypeCode)) {
+            $orderDto->setFastDeliv('P');
+        } else {
+            $isFastDeliv = $this->isFastDelivery($this->getPropertyValueByCode($order, 'SCHEDULE_REGULARITY'));
+            $orderDto->setFastDeliv($isFastDeliv ? 'X' : '');
+        }
+
+
         if (Env::isStage()) {
             $orderDto
                 ->setClientPhone(SapOrder::TEST_PHONE)
@@ -302,11 +326,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $this->populateOrderDtoDelivery($orderDto, $order);
         $this->populateOrderDtoProducts($orderDto, $order);
         $this->populateOrderDtoCouponNumber($orderDto, $order);
-
-        $deliveryTypeCode = $this->getDeliveryCode($order);
-        if ($deliveryTypeCode == DeliveryService::INNER_DELIVERY_CODE || $deliveryTypeCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
-            $this->populateOrderDtoUserCoords($orderDto, $order);
-        }
 
         $xml = $this->serializer->serialize($orderDto, 'xml');
 
@@ -495,7 +514,17 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $this->getPropertyValueByCode($order, 'DELIVERY_DATE')
         );
 
-        $deliveryAddress = $this->getDeliveryAddress($order);
+        if ($this->deliveryService->isDobrolapDeliveryCode($this->getDeliveryCode($order))) {
+            $deliveryAddress = new OutDeliveryAddress();
+            $shelterBarcode = $this->getPropertyValueByCode($order, 'DOBROLAP_SHELTER');
+            $shelter = AnimalShelterTable::getByBarcode($shelterBarcode);
+            if ($shelter) {
+                $deliveryAddress->setCityName($shelter['city']);
+                $deliveryAddress->setStreetName($shelter['name']);
+            }
+        } else {
+            $deliveryAddress = $this->getDeliveryAddress($order);
+        }
 
         $orderDto
             ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
@@ -543,6 +572,20 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 ->setDeliveryShipmentPoint($this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE'))
                 ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
 
+            if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
+                $useStamps = $this->getBasketPropertyValueByCode($basketItem, 'USE_STAMPS');
+                $discountStamps = 0;
+                if ($useStamps) {
+                    $maxStampsLevel = $this->getBasketPropertyValueByCode($basketItem, 'MAX_STAMPS_LEVEL');
+                    if ($maxStampsLevelArr = unserialize($maxStampsLevel)) {
+                        $offer->setExchangeName($maxStampsLevelArr['key']);
+                        $discountStamps = $this->stampService->parseLevelKey($maxStampsLevelArr['key'])['discountStamps'];
+                    } else {
+                        $useStamps = false;
+                    }
+                }
+            }
+
             $hasBonus = $this->getBasketPropertyValueByCode($basketItem, 'HAS_BONUS');
             $quantity = $basketItem->getQuantity();
             if ($hasBonus && $hasBonus < $quantity) {
@@ -552,9 +595,19 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     ->setQuantity($hasBonus)
                     ->setChargeBonus((bool)$hasBonus)
                     ->setPosition($position);
+
+                if ($this->stampService::IS_STAMPS_OFFER_ACTIVE && $useStamps) {
+                    $detachedOffer->setStampsQuantity($hasBonus * $discountStamps);
+                }
+
                 $collection->add($detachedOffer);
                 $hasBonus = 0;
                 $position++;
+            }
+
+            if ($this->stampService::IS_STAMPS_OFFER_ACTIVE && $useStamps) {
+                // $offer->setStampsQuantity($maxStampsLevelArr['value']); todo проблематично использовать, так как есть разделение по бонусам
+                $offer->setStampsQuantity($quantity * $discountStamps);
             }
 
             $offer->setQuantity($quantity);
@@ -661,7 +714,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $deliveryZone = $this->getDeliveryZone($order);
 
         if (
-            (in_array($deliveryZone, DeliveryService::getZonesTwo()) || mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false)
+            (
+                in_array($deliveryZone, DeliveryService::getZonesTwo()) ||
+                mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+            )
             && $this->getPropertyValueByCode($order, 'REGION_COURIER_FROM_DC') === 'Y'
         ) {
             return SapOrder::DELIVERY_TYPE_ROUTE;
@@ -696,7 +753,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     case DeliveryService::ZONE_IVANOVO_REGION:
                         return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
                     default:
-                        if (mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                        if (
+                            mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                            mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                        ) {
                             return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
                         }
                 }
@@ -715,6 +775,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 break;
             case DeliveryService::DELIVERY_DOSTAVISTA_CODE:
                 return SapOrder::DELIVERY_TYPE_DOSTAVISTA;
+                break;
+            case DeliveryService::DOBROLAP_DELIVERY_CODE:
+                return SapOrder::DELIVERY_TYPE_COURIER_RC;
                 break;
             default:
                 switch ($deliveryZone) {
@@ -741,7 +804,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     case DeliveryService::ZONE_3:
                         return SapOrder::DELIVERY_TYPE_PICKUP;
                     default:
-                        if (mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                        if (
+                            mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                            mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                        ) {
                             return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
                         }
                 }
@@ -1247,7 +1313,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
             switch ($deliveryZone) {
                 case DeliveryService::ZONE_1:
-                case DeliveryService::ZONE_IVANOVO:
                     $xmlId = SapOrder::DELIVERY_ZONE_1_ARTICLE;
                     break;
                 case DeliveryService::ZONE_5:
@@ -1269,7 +1334,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 case DeliveryService::ZONE_TULA_REGION:
                 case DeliveryService::ZONE_KALUGA:
                 case DeliveryService::ZONE_KALUGA_REGION:
+                case DeliveryService::ZONE_IVANOVO:
                 case DeliveryService::ZONE_IVANOVO_REGION:
+                case DeliveryService::ADD_DELIVERY_ZONE_10:
                     $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
                     break;
                 case DeliveryService::ZONE_3:
@@ -1279,7 +1346,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     $xmlId = SapOrder::DELIVERY_ZONE_4_ARTICLE;
                     break;
                 default:
-                    if (mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                    if (
+                        mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                        mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                    ) {
                         $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
                     } else {
                         $xmlId = SapOrder::DELIVERY_ZONE_4_ARTICLE;
@@ -1334,5 +1404,23 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $deliveryId = $shipment->getDeliveryId();
 
         return $this->deliveryService->getDeliveryZoneByDelivery($location, $deliveryId) ?? '';
+    }
+
+
+    /**
+     * @param string $regularityName
+     * @return bool
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function isFastDelivery(string $regularityName)
+    {
+        /** @var ScheduleResultService $scheduleResultService */
+        $scheduleResultService = Application::getInstance()->getContainer()->get(ScheduleResultService::class);
+        /** @var UserFieldEnumValue $regularityFastDeliv */
+        $regularityFastDeliv = $scheduleResultService->getRegularityEnumByXmlId(ScheduleResultService::FAST_DELIV);
+        return $regularityName == $regularityFastDeliv->getValue();
     }
 }

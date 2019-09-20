@@ -12,7 +12,9 @@ use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\EventController\Event;
+use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\UserException;
+use FourPaws\UserBundle\Service\UserSearchInterface;
 use PhpAmqpLib\Message\AMQPMessage;
 
 /**
@@ -25,6 +27,7 @@ class ManzanaOrderConsumer extends ManzanaConsumerBase
     /**
      * @inheritdoc
      *
+     * @throws Exception
      */
     public function execute(AMQPMessage $message)
     {
@@ -60,6 +63,17 @@ class ManzanaOrderConsumer extends ManzanaConsumerBase
         }
 
         Event::enableEvents();
+
+        if (isset($userId)) {
+            $userService = Application::getInstance()->getContainer()->get(UserSearchInterface::class);
+            $manzanaOrdersImportUserRepository = $userService->getManzanaOrdersImportUserRepository();
+            try
+            {
+                $manzanaOrdersImportUserRepository->deleteUser($userId);
+            } catch (NotFoundException $e)
+            {
+            }
+        }
 
         return static::MSG_ACK;
     }

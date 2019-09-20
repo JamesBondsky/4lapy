@@ -173,6 +173,14 @@ class DeliverySchedule extends Base implements \Serializable
     protected $dateUpdate;
 
     /**
+     * @var int
+     * @Serializer\SerializedName("UF_REGULARITY")
+     * @Serializer\Type("int")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $regular;
+
+    /**
      * @var Store
      */
     protected $sender;
@@ -787,7 +795,8 @@ class DeliverySchedule extends Base implements \Serializable
             $this->supplyDays,
             $this->deliveryNumber,
             $this->deliveryDates,
-            $this->type
+            $this->type,
+            $this->regular
         ]);
     }
 
@@ -811,9 +820,28 @@ class DeliverySchedule extends Base implements \Serializable
             $this->supplyDays,
             $this->deliveryNumber,
             $this->deliveryDates,
-            $this->type
+            $this->type,
+            $this->regular
         ] = \unserialize($serialized, ['allowed_classes' => true]);
 
         $this->__construct();
+    }
+
+    /**
+     * @param int $regular
+     * @return DeliverySchedule
+     */
+    public function setRegular(int $regular): DeliverySchedule
+    {
+        $this->regular = $regular;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getRegular(): int
+    {
+        return $this->regular;
     }
 }

@@ -11,38 +11,62 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
  * @var PhpEngine $view
  */ ?>
 <div class="measure_dog__wrapper js-measure-dog">
-    <div class="measure_dog">
+    <div class="measure_dog measure_dog--start_size">
         <div class="content_dropdown js-content-dropdown-trigger mobile_mq">
             <div class="content_dropdown__title">
-                Узнать размер собаки
+                Как узнать размер собаки
                 <div class="content_dropdown__arrow">
                     <?= new SvgDecorator('icon-up-arrow') ?>
                 </div>
             </div>
         </div>
         <div class="content_dropdown__content js-content-dropdown-content">
-            <div class="measure_dog__title tablet_up_mq">Узнайте размер вашей собаки</div>
-            <div class="measure_dog__paragraph">Измерьте свою собаку и укажите параметры в сантиметрах, как
-                показано на рисунке
+            <div class="measure_dog__title tablet_up_mq">Как узнать размер собаки</div>
+            <div class="measure_dog__info">
+                <style>
+                  .measure_dog__video-iframe {
+                    position: relative;
+                    padding-bottom: 56.25%;
+                    height: 0;
+                  }
+
+                  .measure_dog__video-iframe iframe {
+                  	position: absolute;
+                  	top: 0;
+                  	left: 0;
+                  	width: 100%;
+                  	height: 100%;
+                  }
+                </style>
+
+                <div class="measure_dog__video">
+                    <div class="measure_dog__video-iframe">
+                      <iframe src="https://www.youtube.com/embed/BxWcZ6uN7mQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                    </div>
+
+                    <?/*<video controls="" poster="/static/build/images/inhtml/preview-size-dog.jpg">
+                        <source src="/upload/dobrolap/measure_size.mp4">
+                        <source src="/upload/dobrolap/measure_size.ogv" type="video/webm">
+                        <source src="/upload/dobrolap/measure_size.webm" type="video/ogg">
+                    </video>*/?>
+                </div>
+                <div class="measure_dog__img"></div>
             </div>
-            <div class="measure_dog__img"></div>
-            <form class="measure_dog__size js-measure-dog-form">
-                <label class="measure_dog__label">1. Обхват груди
-                    <input class="measure_dog__input" pattern="[0-9]" id="chest_size" type="number" min="1" required>
-                </label>
-                <label class="measure_dog__label">2. Длина спинки
-                    <input class="measure_dog__input" pattern="[0-9]" id="back_size" type="number" min="1" required>
-                </label>
-                <label class="measure_dog__label">3. Обхват шеи
-                    <input class="measure_dog__input" pattern="[0-9]" id="neck_size" type="number" min="1" required>
-                </label>
+
+            <form class="measure_dog__form-size js-measure-dog-form">
+                <div class="measure_dog__fields">
+                    <input class="measure_dog__input" pattern="[0-9]" id="back_size" type="number" min="1" placeholder="Длина спинки (см)" required>
+                    <input class="measure_dog__input" pattern="[0-9]" id="chest_size" type="number" min="1" placeholder="Обхват груди (см)" required>
+                    <input class="measure_dog__input" pattern="[0-9]" id="neck_size" type="number" min="1" placeholder=" Обхват шеи (см)" required>
+                </div>
+
                 <input class="measure_dog__button" type="submit" value="Узнать размер">
             </form>
         </div>
     </div>
     <div class="measure_dog--custom_size">
         <div class="content_dropdown mobile_mq js-content-dropdown-trigger">
-            <div class="content_dropdown__title">Узнать размер собаки
+            <div class="content_dropdown__title">Как узнать размер собаки
                 <div class="content_dropdown__arrow">
                     <?= new SvgDecorator('icon-up-arrow') ?>
                 </div>
@@ -50,26 +74,31 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
         </div>
         <div class="content_dropdown__content js-content-dropdown-content">
             <div class="measure_dog__content_wrapper">
-                <div class="measure_dog__img"></div>
-                <div class="measure_dog__title">У вашей собаки нестандартный размер</div>
-                <div class="measure_dog__paragraph">
-                    <div>Указанные размеры не совпадают со стандартными.</div>
-                    <div>
-                        Пожалуйста, приезжайте в магазин для примерки, или обратитесь к нашим специалистам
-                        за помощью в подборе размера +7 (800) 770-00-22
+                <div class="measure_dog__title">У&nbsp;твоей собаки нестандарный размер</div>
+                <div class="measure_dog__container">
+                    <div class="measure_dog__img"></div>
+                    <div class="measure_dog__result">
+                        <ul class="measure_dog__steps">
+                            <li><span class="num">1</span>
+                                закажи бесплатную доставку и&nbsp;примерку<br/>
+                                <span class="light">домой или в <a href="/shops/">магазин</a></span>
+                            </li>
+                            <li><span class="num">2</span>примерь несколько размеров</li>
+                            <li><span class="num">3</span>купи только то, что подошло</li>
+                        </ul>
+                        <div class="measure_dog__button_set">
+                            <a class="measure_dog__button measure_dog__button--secondary js-measure-dog-recalculate" href="#">
+                                Рассчитать еще раз
+                            </a>
+                        </div>
                     </div>
-                </div>
-                <div class="measure_dog__button_set">
-                    <a class="measure_dog__button--secondary js-measure-dog-recalculate" href="#">
-                        Рассчитать еще раз</a>
-                    <a class="measure_dog__button js-scroll-to-catalog" href="#">Перейти в каталог</a>
                 </div>
             </div>
         </div>
     </div>
     <div class="measure_dog--default_size">
         <div class="content_dropdown mobile_mq js-content-dropdown-trigger">
-            <div class="content_dropdown__title">Узнать размер собаки
+            <div class="content_dropdown__title">Как узнать размер собаки
                 <div class="content_dropdown__arrow">
                     <?= new SvgDecorator('icon-up-arrow') ?>
                 </div>
@@ -77,19 +106,30 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
         </div>
         <div class="content_dropdown__content js-content-dropdown-content">
             <div class="measure_dog__content_wrapper">
-                <div class="measure_dog__img"></div>
-                <div class="measure_dog__title">Скорее всего у вашей собаки размер <span></span></div>
-                <div class="measure_dog__paragraph">так же мы рекомендуем померить размер <span></span>
+                <div class="measure_dog__title">Mы определили размер</div>
+                <div class="measure_dog__container">
+                    <div class="measure_dog__img"></div>
+                    <div class="measure_dog__result">
+                        <div class="measure_dog__size">
+                            <div class="measure_dog__size-title">
+                                скорее всего у&nbsp;вашей собаки размер
+                            </div>
+                            <div class="measure_dog__size-number" data-size-dog-measure="true"></div>
+                        </div>
+                        <div class="measure_dog__paragraph">
+                            специально для вашего питомца Мы подобрали одежду по&nbsp;размеру
+                        </div>
+                        <div class="measure_dog__button_set">
+                            <a class="measure_dog__button js-scroll-to-catalog" href="#">Посмотреть</a>
+                        </div>
+                    </div>
                 </div>
-                <div class="measure_dog__button_set">
-                    <a class="measure_dog__button--secondary js-measure-dog-recalculate" href="#">
-                        Рассчитать еще раз
-                    </a>
-                    <a class="measure_dog__button js-scroll-to-catalog" href="#">Перейти в каталог</a></div>
             </div>
         </div>
     </div>
 </div>
+
+<? if(!$hide_info) { ?>
 <div class="free_fitting__wrapper">
     <div class="free_fitting">
         <div class="content_dropdown mobile_mq js-content-dropdown-trigger">
@@ -201,3 +241,4 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
         </div>
     </div>
 </div>
+<? } ?>

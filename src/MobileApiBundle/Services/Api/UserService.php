@@ -30,7 +30,9 @@ use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Exception\TokenNotFoundException;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use FourPaws\MobileApiBundle\Services\Session\SessionHandler;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\UserBundle\Entity\User as AppUser;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\UserException;
@@ -78,6 +80,9 @@ class UserService
     /** @var PersonalOrderService */
     private $personalOrderService;
 
+    /** @var StampService */
+    private $stampService;
+
     public function __construct(
         UserBundleService $userBundleService,
         UserRepository $userRepository,
@@ -87,7 +92,8 @@ class UserService
         TokenStorageInterface $tokenStorage,
         ApiCityService $apiCityService,
         AppBonusService $appBonusService,
-        PersonalOrderService $personalOrderService
+        PersonalOrderService $personalOrderService,
+        StampService $stampService
     )
     {
         $this->userBundleService = $userBundleService;
@@ -99,6 +105,7 @@ class UserService
         $this->apiCityService = $apiCityService;
         $this->appBonusService = $appBonusService;
         $this->personalOrderService = $personalOrderService;
+        $this->stampService = $stampService;
     }
 
     /**
@@ -120,14 +127,24 @@ class UserService
         $excludeLoginsFromCaptchaCheck = [
             '9778016362',
             '9660949453',
-            '9299821844',
+            '9299821844', // Данил
             '9007531672',
             '9007523221',
             '9991693811',
             '9263987654',
             '9653770455',
             '9165919854',
+            '9636263044',
             'a.vorobyev@articul.ru',
+            '9051552482', // Андрей
+            '9255025069',
+            '9139740008',
+            '9046656072', // Tarox25@gmail.com
+            '9600401906',
+            '9178445061',
+            '9779461734', // Сергей Боканев
+            '9683618355',
+            'm.balezin@articul.ru',
         ];
 
         try {
@@ -144,6 +161,12 @@ class UserService
                 }
             }
             $userId = $this->userRepository->findIdentifierByRawLogin($loginRequest->getLogin());
+            try {
+                if ($this->userBundleService->getCurrentUserId() === $userId) {
+                    return new UserLoginResponse($this->getCurrentApiUser());
+                }
+            } catch (NotAuthorizedException $e) {
+            }
             $this->userBundleService->authorize($userId);
         } catch (UsernameNotFoundException $exception) {
             $user = new AppUser();
@@ -360,6 +383,14 @@ class UserService
                 ->setLocation($userLocation)
                 ->setLocationId($userLocation->getId());
         }
+        try {
+            $apiUser->setStampsIncome($this->stampService->getActiveStampsCount()); //TODO переделать(?) на вывод значения, сохраненного в профиле пользователя (для этого нужно его заранее асинхронно обновлять)
+        } catch (Exception $e) {
+            $logger = LoggerFactory::create('getCurrentApiUser');
+            $logger->error(sprintf('%s getActiveStampsCount exception: %s', __METHOD__, $e->getMessage()));
+
+            $apiUser->setStampsIncome(0);
+        }
         return $apiUser;
     }
 
@@ -382,11 +413,11 @@ class UserService
         } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException $exception) {
             return null;
         } catch (\FourPaws\External\Exception\ManzanaServiceException $exception) {
-            return null;
         }
         return (new ClientCard())
             ->setTitle('Карта клиента')
-            ->setBalance($bonusInfo->getActiveBonus())
+            ->setBalance(isset($bonusInfo) ? $bonusInfo->getActiveBonus() : $user->getActiveBonus())
+            ->setTempIncome(isset($bonusInfo) ? $bonusInfo->getTemporaryBonus() : $user->getTemporaryBonus())
             ->setNumber($user->getDiscountCardNumber())
             ->setSaleAmount($user->getDiscount());
     }
@@ -443,6 +474,8 @@ class UserService
      */
     public function getPersonalBonus()
     {
+        $logger = LoggerFactory::create('getPersonalBonus');
+
         /**
          * @var ApiToken $token | null
          */
@@ -453,19 +486,31 @@ class UserService
             throw new SessionUnavailableException();
         }
         $user = $this->userRepository->find($session->getUserId());
-        $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
+        try {
+            $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
+        } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchNullException $exception) {
+            $logger->error(sprintf('%s exception: %s', __METHOD__, $exception->getMessage()));
+            return new PersonalBonus();
+        } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException $exception) {
+            $logger->error(sprintf('%s exception: %s', __METHOD__, $exception->getMessage()));
+            return new PersonalBonus();
+        } catch (\FourPaws\External\Exception\ManzanaServiceException $exception) {
+            $logger->error(sprintf('%s exception: %s', __METHOD__, $exception->getMessage()));
+        }
 
         try {
-            $this->userBundleService->refreshUserBonusPercent($user, $bonusInfo);
+            if (isset($bonusInfo)) {
+                $this->userBundleService->refreshUserBonusPercent($user, $bonusInfo);
+            }
         } catch (\Exception $e) {
-            $logger = LoggerFactory::create('getPersonalBonus');
             $logger->error(sprintf('%s exception: %s', __METHOD__, $e->getMessage()));
         }
 
         return (new PersonalBonus())
             ->setAmount($user->getDiscount() ?? 0)
-            ->setTotalIncome($bonusInfo->getDebit() ?? 0)
-            ->setTotalOutgo($bonusInfo->getCredit() ?? 0)
-            ->setNextStage($bonusInfo->getSumToNext());
+            ->setTotalIncome(isset($bonusInfo) ? ($bonusInfo->getDebit() ?? 0) : 0)
+            ->setTempIncome(isset($bonusInfo) ? ($bonusInfo->getTemporaryBonus() ?? 0) : 0)
+            ->setTotalOutgo(isset($bonusInfo) ? ($bonusInfo->getCredit() ?? 0) : 0)
+            ->setNextStage(isset($bonusInfo) ? $bonusInfo->getSumToNext() : 0); //FIXME Это временное решение. Нужно сохранять все поля $bonusInfo на сайте и в случае, если манзана не отвечает, возвращать сохраненные значения
     }
 }

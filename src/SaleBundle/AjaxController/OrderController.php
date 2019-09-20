@@ -27,8 +27,11 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\KioskBundle\Service\KioskService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
@@ -40,12 +43,14 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
+use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\ShopInfoService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\ShopInfoService as StoreShopInfoService;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Protobuf\Exception;
 use Psr\Log\LoggerAwareInterface;
@@ -95,6 +100,11 @@ class OrderController extends Controller implements LoggerAwareInterface
     private $storeShopInfoService;
 
     /**
+     * @var LocationService
+     */
+    private $locationService;
+
+    /**
      * @var DeliveryService
      */
     private $deliveryService;
@@ -114,6 +124,7 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param UserAuthorizationInterface $userAuthProvider
      * @param ShopInfoService            $shopInfoService
      * @param StoreShopInfoService       $storeShopInfoService
+     * @param LocationService            $locationService
      * @param ReCaptchaService           $recaptcha
      */
     public function __construct(
@@ -124,6 +135,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         UserAuthorizationInterface $userAuthProvider,
         ShopInfoService $shopInfoService,
         StoreShopInfoService $storeShopInfoService,
+        LocationService $locationService,
         ReCaptchaService $recaptcha
     )
     {
@@ -134,6 +146,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         $this->userAuthProvider = $userAuthProvider;
         $this->shopInfoService = $shopInfoService;
         $this->storeShopInfoService = $storeShopInfoService;
+        $this->locationService = $locationService;
         $this->recaptcha = $recaptcha;
     }
 
@@ -165,6 +178,24 @@ class OrderController extends Controller implements LoggerAwareInterface
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
             $shopInfo
+        );
+    }
+
+    /**
+     * @Route("/shelter-search/", methods={"GET"})
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function shelterSearchAction(): JsonResponse
+    {
+        $shelters = AnimalShelterTable::getList()->fetchAll();
+        return JsonSuccessResponse::createWithData(
+            'Подгрузка успешна',
+            $shelters
         );
     }
 
@@ -261,12 +292,49 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @throws ApplicationCreateException
      * @throws NotFoundException
      * @throws StoreNotFoundException
+     * @throws OrderStorageValidationException
+     * @throws SystemException
      */
     public function deliveryIntervalsAction(Request $request): JsonResponse
     {
         $result = [];
         $date = (int)$request->get('deliveryDate', 0);
-        $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
+        $currentStep = OrderStorageEnum::NOVALIDATE_STEP;
+        $okato = (int)$request->get('okato', 0);
+        $storage = $this->orderStorageService->getStorage();
+
+        if ($okato > 0) {
+            /**
+             * Ищем зону по ОКАТО
+             */
+            $okato = substr($okato, 0, 8);
+            $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+            if (count($locations)) {
+                /**
+                 * Обновляем storage, записываем зону
+                 */
+                $location = current($locations);
+                $defaultCity = $storage->getCity();
+                $defaultCityCode = $storage->getCityCode();
+                $storage->setCity($location['NAME']);
+                $storage->setCityCode($location['CODE']);
+                $storage->setMoscowDistrictCode($location['CODE']);
+                $this->orderStorageService->updateStorage($storage, $currentStep);
+
+                /**
+                 * Получаем цену доставки в этой зоне
+                 */
+                $innerDelivery = $this->orderStorageService->getInnerDelivery($storage);
+
+                if (!$innerDelivery) {
+                    $storage->setCity($defaultCity);
+                    $storage->setCityCode($defaultCityCode);
+                    $this->orderStorageService->updateStorage($storage, $currentStep);
+                }
+            }
+        }
+
+        $deliveries = $this->orderStorageService->getDeliveries($storage);
         $delivery = null;
         foreach ($deliveries as $deliveryItem) {
             if (!$this->deliveryService->isDelivery($deliveryItem)) {
@@ -462,6 +530,14 @@ class OrderController extends Controller implements LoggerAwareInterface
             );
         }
 
+        /**
+         * Moscow Districts
+         */
+        if ($storage->getMoscowDistrictCode() != '') {
+            $this->orderStorageService->updateStorageMoscowZone($storage, OrderStorageEnum::NOVALIDATE_STEP);
+        }
+
+
         try {
             $order = $this->orderService->createOrder($storage);
         } catch (OrderCreateException|OrderSplitException $e) {
@@ -470,6 +546,13 @@ class OrderController extends Controller implements LoggerAwareInterface
             ]);
 
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заказа']]);
+        } catch (BitrixRuntimeException $e) {
+            if (strpos($e->getMessage(), 'Пользователь с таким e-mail') !== false) {
+                return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Пользователь с таким e-mail уже существует']]);
+            } else {
+                $this->log()->error(__METHOD__ . '. Не удалось создать заказ. ', $e->getMessage());
+                throw new BitrixRuntimeException($e->getMessage(), $e->getCode());
+            }
         }
 
         $url = new Uri('/sale/order/' . $this->getNextStep($currentStep) . '/' . $order->getId() . '/');
@@ -534,21 +617,22 @@ class OrderController extends Controller implements LoggerAwareInterface
             $errors[] = $e->getMessage();
         }
 
-        if(empty($errors)){
+        if (empty($errors)) {
             try {
                 $this->orderStorageService->updateStorage($storage, $step);
 
-                if($storage->isSubscribe()){
-                    if($step == OrderStorageEnum::DELIVERY_STEP){ // создание подписки на доставку
+                // создание подписки на доставку и установка свойства "Списывать все баллы по подписке"
+                if ($storage->isSubscribe()) {
+                    if ($step == OrderStorageEnum::DELIVERY_STEP) {
                         $result = $this->orderSubscribeService->createSubscriptionByRequest($storage, $request);
-                        if(!$result->isSuccess()){
+                        if (!$result->isSuccess()) {
                             $this->log()->error(implode(";\r\n", $result->getErrorMessages()));
                             throw new OrderSubscribeException("Произошла ошибка оформления подписки на доставку, пожалуйста, обратитесь к администратору");
                         }
                         $storage->setSubscribeId($result->getData()['subscribeId']);
                         $this->orderStorageService->updateStorage($storage, $step);
-                    } else if($step == OrderStorageEnum::PAYMENT_STEP){ // установка свойства "Списывать все баллы по подписке"
-                        if($storage->isSubscribe() && $request->get('subscribeBonus')){
+                    } else if ($step == OrderStorageEnum::PAYMENT_STEP) {
+                        if ($storage->isSubscribe() && $request->get('subscribeBonus')) {
                             $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
                             $subscribe->setPayWithbonus(true);
                             $this->orderSubscribeService->update($subscribe);
@@ -572,5 +656,125 @@ class OrderController extends Controller implements LoggerAwareInterface
             $errors,
             $step,
         ];
+    }
+
+    /**
+     * @Route("/set_delivery_zone_by_address/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws OrderStorageSaveException
+     * @throws OrderStorageValidationException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     */
+    public function setDeliveryZoneByAddressAction(Request $request): JsonResponse
+    {
+        $storage = $this->orderStorageService->getStorage();
+        $currentStep = OrderStorageEnum::NOVALIDATE_STEP;
+        $data = json_decode($request->get('data'), true);
+        $okato = $data['data']['okato'];
+        if (!$okato) {
+            $storage->setMoscowDistrictCode('');
+            $storage->setCity(DeliveryService::MOSCOW_LOCATION_NAME);
+            $storage->setCityCode(DeliveryService::MOSCOW_LOCATION_CODE);
+            $this->orderStorageService->updateStorage($storage, $currentStep);
+        } else {
+            /**
+             * Ищем зону по ОКАТО
+             */
+            $okato = substr($okato, 0, 8);
+            $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+            if (!count($locations)) {
+                $storage->setMoscowDistrictCode('');
+                $storage->setCity(DeliveryService::MOSCOW_LOCATION_NAME);
+                $storage->setCityCode(DeliveryService::MOSCOW_LOCATION_CODE);
+                $this->orderStorageService->updateStorage($storage, $currentStep);
+            } else {
+                /**
+                 * Обновляем storage, записываем зону
+                 */
+                $location = current($locations);
+                $defaultCity = $storage->getCity();
+                $defaultCityCode = $storage->getCityCode();
+                $storage->setCity($location['NAME']);
+                $storage->setCityCode($location['CODE']);
+                $storage->setMoscowDistrictCode($location['CODE']);
+                $this->orderStorageService->updateStorage($storage, $currentStep);
+
+                /**
+                 * Получаем цену доставки в этой зоне
+                 */
+                $innerDelivery = $this->orderStorageService->getInnerDelivery($storage);
+
+                if (!$innerDelivery) {
+                    $storage->setCity($defaultCity);
+                    $storage->setCityCode($defaultCityCode);
+                    $this->orderStorageService->updateStorage($storage, $currentStep);
+                }
+            }
+        }
+
+        if (!$innerDelivery) {
+            $innerDelivery = $this->orderStorageService->getInnerDelivery($storage);
+        }
+
+        if ($innerDelivery == null) {
+            $storage->setMoscowDistrictCode('');
+            $storage->setCity(DeliveryService::MOSCOW_LOCATION_NAME);
+            $storage->setCityCode(DeliveryService::MOSCOW_LOCATION_CODE);
+            $this->orderStorageService->updateStorage($storage, $currentStep);
+            return JsonErrorResponse::createWithData();
+        }
+
+        $deliveryPrice = $innerDelivery->getPrice();
+        /** @var BasketService $basketService */
+        $basketService = App::getInstance()->getContainer()->get(BasketService::class);
+        $basket = $basketService->getBasket();
+        $basketPrice = $basket->getPrice();
+        /**
+         * интервалы
+         */
+        $intervals = [];
+        foreach ($innerDelivery->getAvailableIntervals() as $i => $interval) {
+            $intervals[$i + 1] = [
+                'text'     => (string)$interval,
+                'selected' => ($i + 1 === 1) ? 'selected' : ''
+            ];
+        }
+        /**
+         * даты доставки
+         */
+        $nextDeliveries = $this->deliveryService->getNextDeliveries($innerDelivery, 10);
+        $deliveryDates = [];
+        foreach ($nextDeliveries as $i => $nextDelivery) {
+            $deliveryTimestamp = $nextDelivery->getDeliveryDate()->getTimestamp();
+            $deliveryDates[$i] = [
+                'value'     => FormatDate('l, Y-m-d', $deliveryTimestamp),
+                'text'     => FormatDate('l, d.m.Y', $deliveryTimestamp),
+                'date'     => FormatDate('d.m.Y', $deliveryTimestamp),
+                'selected' => ($i === 0) ? 'selected' : ''
+            ];
+        }
+
+        return JsonSuccessResponse::createWithData(
+            '',
+            [
+                'delivery_price'     => CurrencyHelper::formatPrice($deliveryPrice, false),
+                'price_full'         => CurrencyHelper::formatPrice($basketPrice, false),
+                'price_total'        => CurrencyHelper::formatPrice($basketPrice + $deliveryPrice, false),
+                'deliver_date_price' => DeliveryTimeHelper::showTime($innerDelivery) . ', <span class="js-delivery--price">' . $deliveryPrice . '</span> ₽',
+                'intervals'          => $intervals,
+                'delivery_dates'     => $deliveryDates
+            ]
+        );
     }
 }

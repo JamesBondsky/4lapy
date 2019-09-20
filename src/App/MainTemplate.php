@@ -248,6 +248,14 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
+    public function isAjaxRegister(): bool
+    {
+        return $this->isDir('/ajax/user/auth/register-r');
+    }
+
+    /**
+     * @return bool
+     */
     public function isForgotPassword(): bool
     {
         return $this->isDir('/personal/forgot-password');
@@ -363,6 +371,14 @@ class MainTemplate extends TemplateAbstract
     public function isOrderPage(): bool
     {
         return $this->isDir('/sale/order') || $this->isPartitionDir('/sale/order');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isOrderCompletePage(): bool
+    {
+        return $this->isDir('/sale/order/complete') || $this->isPartitionDir('/sale/order/complete');
     }
 
     /**
@@ -495,4 +511,11 @@ class MainTemplate extends TemplateAbstract
         return $this->isPartitionDir('/ajax/catalog');
     }
 
+    /**
+     * @return bool
+     */
+    public function isDobrolap(): bool
+    {
+        return $this->isPartitionPage('/dobrolap/');
+    }
 }

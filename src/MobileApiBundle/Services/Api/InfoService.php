@@ -38,6 +38,9 @@ class InfoService implements LoggerAwareInterface
     /** @var ProductService */
     private $productService;
 
+    /** @var bool $isNeedLoad */
+    private $isNeedLoad = false;
+
     /** @var ShortProduct[]  */
     private static $cache = [];
 
@@ -48,12 +51,12 @@ class InfoService implements LoggerAwareInterface
         $this->bitrixPhpDateTimeFormat = Date::convertFormatToPhp(\FORMAT_DATETIME) ?: '';
     }
 
-    public function getInfo(string $type, string $id, array $select = [], $offerTypeCode = '')
+    public function getInfo(string $type, string $id, array $select = [], $offerTypeCode = '', $cityId = '')
     {
         try {
             switch ($type) {
                 case InfoEnum::ACTION:
-                    $return = $this->getActions($id, $select, $offerTypeCode)->getValues();
+                    $return = $this->getActions($id, $select, $offerTypeCode, $cityId)->getValues();
                     break;
                 case InfoEnum::NEWS:
                     $return = $this->getNews($id, $select)->getValues();
@@ -274,7 +277,7 @@ class InfoService implements LoggerAwareInterface
      * @return ArrayCollection|Collection
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      */
-    protected function getActions(string $id, array $select = [], $offerTypeCode = ''): Collection
+    protected function getActions(string $id, array $select = [], $offerTypeCode = '', $cityId = ''): Collection
     {
         // костыль
         if ($offerTypeCode === 'vse') {
@@ -292,6 +295,10 @@ class InfoService implements LoggerAwareInterface
 
         if ($id) {
             $criteria['ID'] = $id;
+        }
+
+        if ($cityId) {
+            $criteria['=PROPERTY_REGION'] = [false, $cityId];
         }
 
         $order = [
@@ -409,6 +416,7 @@ class InfoService implements LoggerAwareInterface
 
                 if ($item['IBLOCK_CODE'] === IblockCode::SHARES && $withId) {
                     $apiView->setGoods($this->getGoods($item['ID']));
+                    $apiView->setIsNeedLoad($this->isNeedLoad);
                 }
 
                 return $apiView;
@@ -423,12 +431,17 @@ class InfoService implements LoggerAwareInterface
      * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    private function getGoods(int $specialOfferId)
+    private function getGoods(int $specialOfferId, ?int $limit = 20)
     {
+        $this->isNeedLoad = false;
         $products = new ArrayCollection();
         $iblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES);
         $rs = CIBlockElement::GetProperty($iblockId, $specialOfferId, [], ['CODE' => 'PRODUCTS', 'EMPTY' => 'N']);
         while ($property = $rs->fetch()) {
+            if ($products->count() == $limit) {
+                $this->isNeedLoad = true;
+                break;
+            }
             $offerId = $property['VALUE'];
 
             if (!array_key_exists($property['VALUE'], self::$cache)) {

@@ -4,6 +4,7 @@ namespace FourPaws\CatalogBundle\Service;
 
 use Bitrix\Main\ArgumentException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Sorting;
 use FourPaws\CatalogBundle\Collection\SortsCollection;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -233,5 +234,41 @@ class SortService
         }
 
         return $this->availabilitySortScript;
+    }
+
+    /**
+     * Сортирует по названию цвета, затем по полю SORT размера
+     *
+     * @param array|null $unionOffersSort
+     */
+    public function colorWithSizeSort(?array &$unionOffersSort = []): void
+    {
+        usort($unionOffersSort, static function($a, $b) {
+            /** @var Offer $a */
+            /** @var Offer $b */
+            $aClothingSize = $a->getClothingSize();
+            $bClothingSize = $b->getClothingSize();
+            if ($aClothingSize && $bClothingSize) {
+                $clothingSizeComparisonResult = $aClothingSize->getSort() <=> $bClothingSize->getSort();
+            }
+
+            $aColor = $a->getColor();
+            $bColor = $b->getColor();
+            if ($aColor && $bColor) {
+                $colorComparisonResult = $aColor->getName() <=> $bColor->getName();
+            }
+
+            if (isset($colorComparisonResult)) {
+                if ($colorComparisonResult === 0 && isset($clothingSizeComparisonResult)) {
+                    return $clothingSizeComparisonResult;
+                } else {
+                    return $colorComparisonResult;
+                }
+            } elseif (isset($clothingSizeComparisonResult)) {
+                return $clothingSizeComparisonResult;
+            }
+
+            return 0;
+        });
     }
 }

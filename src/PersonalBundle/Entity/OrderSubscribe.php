@@ -23,6 +23,7 @@ use FourPaws\AppBundle\Traits\UserFieldEnumTrait;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
+use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\StoreBundle\Exception\NotFoundException as NotFoundStoreException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
@@ -149,15 +150,6 @@ class OrderSubscribe extends BaseEntity
     protected $lastCheck;
 
     /**
-     * @var int
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("UF_DEL_DAY")
-     * @Serializer\Groups(groups={"create","read","update"})
-     * @Serializer\SkipWhenEmpty()
-     */
-    protected $deliveryDay;
-
-    /**
      * @var bool
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("UF_BONUS")
@@ -175,6 +167,14 @@ class OrderSubscribe extends BaseEntity
      */
     protected $checkDays;
 
+    /**
+     * @var DateTime
+     * @Serializer\Type("bitrix_date_time_ex")
+     * @Serializer\SerializedName("UF_DATE_CHECK")
+     * @Serializer\Groups(groups={"create","read","update"})
+     */
+    protected $dateCheck;
+
 
     /**
      * @var UserFieldEnumService $userFieldEnumService
@@ -182,13 +182,22 @@ class OrderSubscribe extends BaseEntity
      */
     private $userFieldEnumService;
 
-    /** @var null|Order $order */
+    /**
+     * @var null|Order $order
+     * @Serializer\Exclude()
+     */
     private $order;
 
-    /** @var UserFieldEnumValue $deliveryFrequencyEntity */
+    /**
+     * @var UserFieldEnumValue $deliveryFrequencyEntity
+     * @Serializer\Exclude()
+     */
     private $deliveryFrequencyEntity;
 
-    /** @var User $user */
+    /**
+     * @var User $user
+     * @Serializer\Exclude()
+     */
     private $user;
 
     /**
@@ -240,7 +249,7 @@ class OrderSubscribe extends BaseEntity
      * @param int $deliveryId
      * @return OrderSubscribe
      */
-    public function setDeliveryId(int $deliveryId): OrderSubscribe
+    public function setDeliveryId($deliveryId): OrderSubscribe
     {
         $this->deliveryId = $deliveryId;
         return $this;
@@ -282,19 +291,20 @@ class OrderSubscribe extends BaseEntity
         return $this;
     }
 
-    /**
-     * @return string|null
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \FourPaws\AppBundle\Exception\NotFoundException
-     */
     public function getDeliveryPlace(): ?string
     {
         // в старых подписках хранился ID адреса
         if($this->deliveryPlace > 0 && strcasecmp(intval($this->deliveryPlace), $this->deliveryPlace) === 0){
-            /** @var AddressService $addressService */
-            $addressService = Application::getInstance()->getContainer()->get('address.service');
-            $personalAddress = $addressService->getById($this->deliveryPlace);
-            $this->deliveryPlace = $personalAddress->getFullAddress();
+            try {
+                /** @var AddressService $addressService */
+                $addressService = Application::getInstance()->getContainer()->get('address.service');
+                $personalAddress = $addressService->getById($this->deliveryPlace);
+                $this->deliveryPlace = $personalAddress->getFullAddress();
+            } catch (\Exception $e) {
+                // если адреса уже нет, принудительно установим 0, чтобы деактивировать подписку
+                $this->deliveryPlace = '0';
+            }
+
         }
         return $this->deliveryPlace;
     }
@@ -414,24 +424,6 @@ class OrderSubscribe extends BaseEntity
     public function setDateUpdate(DateTime $dateUpdate): OrderSubscribe
     {
         $this->dateUpdate = $dateUpdate;
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDeliveryDay(): ?int
-    {
-        return $this->deliveryDay;
-    }
-
-    /**
-     * @param $deliveryDay
-     * @return OrderSubscribe
-     */
-    public function setDeliveryDay($deliveryDay): OrderSubscribe
-    {
-        $this->deliveryDay = $deliveryDay;
         return $this;
     }
 
@@ -609,6 +601,55 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
+     * @param DateTime $dateCheck
+     * @return OrderSubscribe
+     */
+    public function setDateCheck(DateTime $dateCheck): OrderSubscribe
+    {
+        $this->dateCheck = $dateCheck;
+        return $this;
+    }
+
+    /**
+     * @return DateTime
+     */
+    public function getDateCheck(): ?DateTime
+    {
+        return $this->dateCheck;
+    }
+
+    /**
+     * @return OrderSubscribe
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function countNextDate(): OrderSubscribe
+    {
+        $this->getOrderSubscribeService()->countNextDate($this);
+        return $this;
+    }
+
+    /**
+     * @return bool
+     * @throws OrderSubscribeException
+     */
+    public function countDateCheck(): bool
+    {
+        $deliveryDate = $this->getNextDate();
+        $checkDays = $this->getCheckDays();
+
+        if(!$deliveryDate){
+            throw new OrderSubscribeException(sprintf("Не установлена дата следущей доставки [id:%s, user_id: %s]", $this->getId(), $this->getUserId()));
+        }
+        if(!$checkDays || $checkDays <= 0){
+            throw new OrderSubscribeException(sprintf("Не установлено поле \"Кол-во дней до заказа\" [id:%s, user_id: %s]", $this->getId(), $this->getUserId()));
+        }
+
+        $dateCheck = (clone $deliveryDate)->setTime(9,0,0)->add(sprintf("-%s days", $checkDays));
+        $this->setDateCheck($dateCheck);
+        return true;
+    }
+
+    /**
      * @param $value
      * @return Date|null|string
      */
@@ -759,7 +800,7 @@ class OrderSubscribe extends BaseEntity
 
             try {
                 $result = $store->getAddress();
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 // ну давай хотя бы код магазина отбразим
                 $result = $this->getDeliveryPlace();
             }

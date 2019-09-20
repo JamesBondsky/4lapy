@@ -1360,6 +1360,17 @@ body.is_open_banner_top .header.navbar-fixed-top{
 #konkurs {
     position: relative;
 }
+    #konkurs .konkurs__link-rules {
+        display: inline-block;
+        position: absolute;
+        left: 50%;
+        bottom: 20px;
+        z-index: 2;
+        margin-left: 360px;
+        font-size: 18px;
+        line-height: 1.1;
+        color: #fff;
+    }
     #konkurs .video_wrapper {
         overflow: hidden;
         position: absolute;
@@ -1748,6 +1759,12 @@ body.is_open_banner_top .header.navbar-fixed-top{
             #partners .partners_wrap.partners_wrap--special-partners .partner_item {
                 width: auto;
             }
+
+    #konkurs .konkurs__link-rules {
+        right: 20px;
+        left: auto;
+        margin-left: 0;
+    }
 }
 
 /* desktop-min */
@@ -1861,10 +1878,8 @@ body.is_open_banner_top .header.navbar-fixed-top{
     #konkurs {}
         #konkurs .promo-banner .content-lg {
             padding-top: 120px;
-            padding-bottom: 170px;
         }
         #konkurs .join_btn {
-            bottom: 30px;
             margin-bottom: 0;
         }
 }
@@ -2003,6 +2018,21 @@ body.is_open_banner_top .header.navbar-fixed-top{
                 #activity .activity-frame .milk_bar h3{
                     font-size: 22px;
                 }
+
+    #konkurs {}
+        #konkurs .promo-banner .content-lg {
+            padding-bottom: 220px;
+        }
+        #konkurs .join_btn {
+            margin-top: -120px;
+        }
+        #konkurs .konkurs__link-rules {
+            display: block;
+            right: auto;
+            width: 100%;
+            padding: 0 15px;
+            text-align: center;
+        }
 }
 
 /* mobile */
@@ -2207,8 +2237,15 @@ body.is_open_banner_top .header.navbar-fixed-top{
         }
 
     #konkurs_scheme {}
+        #konkurs .konkurs__link-rules {
+            display: block;
+            right: auto;
+            width: 100%;
+            padding: 0 15px;
+            text-align: center;
+        }
         #konkurs .promo-banner .content-lg {
-            padding-bottom: 100px;
+            padding-bottom: 140px;
         }
         .konkurs_scheme {
             left: 0%;

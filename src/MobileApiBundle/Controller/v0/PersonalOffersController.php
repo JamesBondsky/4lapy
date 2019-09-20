@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FOS\RestBundle\Controller\Annotations;
@@ -13,7 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Services\Api\PersonalOffersService as ApiPersonalOffersService;
 
-class PersonalOffersController extends FOSRestController
+class PersonalOffersController extends BaseController
 {
 
     /**
@@ -41,7 +42,7 @@ class PersonalOffersController extends FOSRestController
             $response->setData($data['data']);
         } else {
             $response->setData([]);
-            $response->addError(new Error($data['error']['code'], $data['error']['message']));
+            $response->addError(new Error((int)$data['error']['code'], $data['error']['message']));
         }
 
         return $response;
@@ -67,6 +68,32 @@ class PersonalOffersController extends FOSRestController
         } else {
             $response->setData([]);
             $response->addError(new Error($data['error']['code'], $data['error']['message']));
+        }
+
+        return $response;
+    }
+
+    /**
+     * @Annotations\Post("/bind_unreserved_dobrolap_coupon/")
+     * @Annotations\View()
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function bindUnreservedDobrolapCouponAction(Request $request): Response
+    {
+        $orderID = $request->get('order_id');
+        $response = new Response();
+
+        $data = $this->apiPersonalOffersService->bindUnreservedDobrolapCoupon($orderID ?: '');
+        if ($data['success']) {
+            $response->setData($data['data']);
+            if($data['message']){
+                $response->addError(new Error(0, $data['message']));
+            }
+        } else {
+            $response->setData([]);
+            $response->addError(new Error(0, $data['message']));
         }
 
         return $response;

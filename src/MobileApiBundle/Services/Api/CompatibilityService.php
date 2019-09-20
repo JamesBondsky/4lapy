@@ -50,10 +50,6 @@ class CompatibilityService
      */
     public function isBlocked($osType, $buildVersion)
     {
-        if (!array_key_exists($osType,self::SUPPORTED)) {
-            return true;
-        } else {
-            return !in_array($buildVersion, self::SUPPORTED[$osType]);
-        }
+        return true; // т.к. метод используется только старым приложением, блокируем
     }
 }

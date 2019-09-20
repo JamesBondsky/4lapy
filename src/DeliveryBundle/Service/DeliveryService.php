@@ -70,6 +70,7 @@ class DeliveryService implements LoggerAwareInterface
 
     public const INNER_DELIVERY_CODE = '4lapy_delivery';
     public const DELIVERY_DOSTAVISTA_CODE = 'dostavista';
+    public const DOBROLAP_DELIVERY_CODE = 'dobrolap_delivery';
     public const INNER_PICKUP_CODE = '4lapy_pickup';
     public const DPD_DELIVERY_GROUP_CODE = 'ipolh_dpd';
     public const DPD_DELIVERY_CODE = self::DPD_DELIVERY_GROUP_CODE . ':COURIER';
@@ -85,6 +86,9 @@ class DeliveryService implements LoggerAwareInterface
     public const ZONE_4 = 'ZONE_4';
     public const ZONE_5 = 'ZONE_5';
     public const ZONE_6 = 'ZONE_6';
+
+    public const MOSCOW_LOCATION_CODE = '0000073738';
+    public const MOSCOW_LOCATION_NAME = 'Москва';
 
     /**
      * Нижний Новгород и Нижегородская область
@@ -130,6 +134,16 @@ class DeliveryService implements LoggerAwareInterface
      * Новые зоны с префиксом, работают как зона 2
      */
     public const ADD_DELIVERY_ZONE_CODE_PATTERN = 'ADD_DELIVERY_ZONE_';
+
+    /**
+     * Зоны Москвы
+     */
+    public const ADD_DELIVERY_ZONE_10 = 'ADD_DELIVERY_ZONE_10';
+
+    /**
+     * Новые зоны - районы Москвы
+     */
+    public const ZONE_MOSCOW_DISTRICT_CODE_PATTERN = 'ZONE_MOSCOW_DISTRICT_';
 
     public const PICKUP_CODES = [
         DeliveryService::INNER_PICKUP_CODE,
@@ -615,7 +629,7 @@ class DeliveryService implements LoggerAwareInterface
                 $weightSumm = 0;
                 /** @var BasketItem $basketItem */
                 foreach($basketItems as $basketItem){
-                    $weightSumm += $basketItem->getQuantity() * WordHelper::showWeightNumber($basketItem->getWeight(), true);
+                    $weightSumm += $basketItem->getQuantity() * WordHelper::showWeightNumber((float)$basketItem->getWeight(), true);
                 }
 
                 if ($weightSumm > 50) {
@@ -884,6 +898,15 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
+     * @param string|null $deliveryCode
+     * @return bool
+     */
+    public function isDobrolapDeliveryCode($deliveryCode): bool
+    {
+        return $deliveryCode == static::DOBROLAP_DELIVERY_CODE;
+    }
+
+    /**
      * @param CalculationResultInterface $calculationResult
      *
      * @return bool
@@ -901,6 +924,16 @@ class DeliveryService implements LoggerAwareInterface
     public function isDostavistaDelivery(CalculationResultInterface $calculationResult): bool
     {
         return $this->isDostavistaDeliveryCode($calculationResult->getDeliveryCode());
+    }
+
+    /**
+     * @param CalculationResultInterface $calculationResult
+     *
+     * @return bool
+     */
+    public function isDobrolapDelivery(CalculationResultInterface $calculationResult): bool
+    {
+        return $this->isDobrolapDeliveryCode($calculationResult->getDeliveryCode());
     }
 
     /**

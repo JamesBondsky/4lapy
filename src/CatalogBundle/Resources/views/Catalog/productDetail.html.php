@@ -102,6 +102,7 @@ if (null === $offer) {
                 '',
                 [
                     'IBLOCK_ELEMENT' => $product,
+                    'SHOW_CURRENT' => true,
                 ],
                 null,
                 ['HIDE_ICONS' => 'Y']

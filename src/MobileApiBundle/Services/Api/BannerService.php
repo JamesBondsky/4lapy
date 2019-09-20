@@ -32,6 +32,7 @@ class BannerService
     {
         $res = (new BannerQuery())
             ->withFilterParameter('ACTIVE', 'Y')
+            ->withFilterParameter('PROPERTY_LOCATION', [$this->cityId, false])
             ->withType($sectionCode)
             ->withOrder([
                 self::BANNER_LIST_SORT_BY1 => self::BANNER_LIST_SORT_ORDER1,
@@ -64,15 +65,19 @@ class BannerService
      * @return Banner
      */
     protected function map(BannerModel $bannerModel) {
+        $elementLink = $bannerModel->getElementLink();
+        $sectionLink = $bannerModel->getSectionLink();
+        $hasElementOrSectionLink = (bool)($elementLink || $sectionLink);
         $banner = (new Banner())
             ->setId($bannerModel->getId())
             ->setTitle($bannerModel->getName())
             ->setPicture($bannerModel->getPictureForMobile())
+            ->setHasElementOrSectionLink($hasElementOrSectionLink)
             ->setLink($bannerModel->getLink(), $this->cityId);
 
-        if ($elementLink = $bannerModel->getElementLink()) {
+        if ($elementLink) {
             $banner->setLink($elementLink);
-        } elseif ($sectionLink = $bannerModel->getSectionLink()) {
+        } elseif ($sectionLink) {
             $banner->setLink($sectionLink);
         }
 

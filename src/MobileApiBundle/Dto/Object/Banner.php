@@ -74,6 +74,13 @@ class Banner
      */
     protected $cityId = '';
 
+    /**
+     * Имеет или нет привязку к элементу/разделу
+     * @Serializer\Exclude()
+     * @var bool
+     */
+    protected $hasElementOrSectionLink = false;
+
 
 
     /**
@@ -173,6 +180,25 @@ class Banner
     }
 
     /**
+     * @param bool $hasElementOrSectionLink
+     * @return Banner
+     */
+    public function setHasElementOrSectionLink(bool $hasElementOrSectionLink): Banner {
+        $this->hasElementOrSectionLink = $hasElementOrSectionLink;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getHasElementOrSectionLink(): bool {
+        return $this->hasElementOrSectionLink;
+    }
+
+
+
+    /**
      * @return string
      */
     public function getPreparedLink(): string {
@@ -198,26 +224,31 @@ class Banner
      */
     protected function guessBannerType() {
         $link = $this->link;
-        if (strpos($link, '/catalog/') !== false && strpos($link, '.html') !== false) {
-            // ссылка на товар
-            $type = 'goods';
-        } else if (strpos($link, '/catalog/') !== false && strpos($link, '.html') === false) {
-            // ссылка на раздел каталога
-            $type = 'catalog';
-        } /* else if (strpos($link, '/catalog/') !== false && strpos($link, '.html') === false) {
-            // ссылка на список товаров
-            $type = 'goods_list';
-        }*/ else if (strpos($link, '/news/') !== false) {
-            // ссылка на новость
-            $type = 'news';
-        } else if (strpos($link, '/articles/') !== false) {
-            // ссылка на статью
-            $type = 'articles';
-        } else if (strpos($link, '/shares/') !== false) {
-            // ссылка на акцию
-            $type = 'action';
+        if ($this->getHasElementOrSectionLink()) {
+            if (strpos($link, '/catalog/') !== false && strpos($link, '.html') !== false) {
+                // ссылка на товар
+                $type = 'goods';
+            } else if (strpos($link, '/catalog/') !== false && strpos($link, '.html') === false) {
+                // ссылка на раздел каталога
+                $type = 'catalog';
+            } /* else if (strpos($link, '/catalog/') !== false && strpos($link, '.html') === false) {
+                // ссылка на список товаров
+                $type = 'goods_list';
+            }*/ else if (strpos($link, '/news/') !== false) {
+                // ссылка на новость
+                $type = 'news';
+            } else if (strpos($link, '/articles/') !== false) {
+                // ссылка на статью
+                $type = 'articles';
+            } else if (strpos($link, '/shares/') !== false || strpos($link, '/dobrolap/') !== false) { //для добролапа
+                // ссылка на акцию
+                $type = 'action';
+            } else {
+                // ссылка
+                $type = 'browser';
+            }
         } else {
-            // ссылка на акцию
+            // ссылка
             $type = 'browser';
         }
         $this->type = $type;

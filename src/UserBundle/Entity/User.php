@@ -360,6 +360,24 @@ class User implements UserInterface
      */
     protected $temporaryBonus = 0;
 
+    /**
+     * @var float
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("UF_ACTIVE_BONUS")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $activeBonus = 0;
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_ACTIVE_STAMPS")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $activeStamps = 0;
+
     /** @var bool
      * @Serializer\Type("boolean")
      * @Serializer\SerializedName("UF_ES_SUBSCRIBED")
@@ -367,6 +385,14 @@ class User implements UserInterface
      * @Serializer\SkipWhenEmpty()
      */
     protected $esSubscribed = false;
+
+    /** @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_GIFT_DOBROLAP")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $giftDobrolap = false;
 
     public function __construct()
     {
@@ -1413,6 +1439,64 @@ class User implements UserInterface
     public function setTemporaryBonus(float $temporaryBonus): User
     {
         $this->temporaryBonus = $temporaryBonus;
+
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getActiveBonus(): float
+    {
+        return $this->activeBonus ?? 0;
+    }
+
+    /**
+     * @param float $activeBonus
+     * @return User
+     */
+    public function setActiveBonus(float $activeBonus): User
+    {
+        $this->activeBonus = $activeBonus;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getActiveStamps(): int
+    {
+        return $this->activeStamps ?? 0;
+    }
+
+    /**
+     * @param int $activeStamps
+     * @return User
+     */
+    public function setActiveStamps(int $activeStamps): User
+    {
+        $this->activeStamps = $activeStamps;
+
+        return $this;
+    }
+
+    /**
+     * @return bool|null
+     */
+    public function getGiftDobrolap(): ?bool
+    {
+        return $this->giftDobrolap;
+    }
+
+    /**
+     * @param bool $giftDobrolap
+     *
+     * @return User
+     */
+    public function setGiftDobrolap(bool $giftDobrolap): User
+    {
+        $this->giftDobrolap = $giftDobrolap;
 
         return $this;
     }

@@ -14,6 +14,7 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Exception\WrongContactMessageException;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\EventController\Event;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
@@ -46,6 +47,10 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
 
             if (null === $contact || (empty($contact->phone) && empty($contact->contactId))) {
                 throw new WrongContactMessageException('Неожиданное сообщение: контакт пуст.');
+            }
+
+            if ($contact->phone) {
+                $contact->phone = PhoneHelper::getManzanaPhone($contact->phone);
             }
 
             if (empty($contact->contactId)) {

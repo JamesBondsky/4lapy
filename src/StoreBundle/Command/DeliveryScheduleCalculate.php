@@ -10,9 +10,11 @@ use Bitrix\Main\Application as BitrixApplication;
 use DateTime;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\Helpers\TaggedCacheHelper;
-use FourPaws\StoreBundle\Entity\ScheduleResult;
+use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Service\DeliveryScheduleService;
 use FourPaws\StoreBundle\Service\ScheduleResultService;
 use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
@@ -32,14 +34,13 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
 
     protected const OPT_TRANSITION_COUNT = 'transition-count';
 
-    /**
-     * @var ScheduleResultService
-     */
+    /** @var ScheduleResultService */
     protected $scheduleResultService;
 
-    /**
-     * @var StoreService
-     */
+    /** @var DeliveryScheduleService */
+    protected $deliveryScheduleService;
+
+    /** @var StoreService */
     protected $storeService;
 
     /**
@@ -56,6 +57,8 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
             ->get(ScheduleResultService::class);
         $this->storeService = Application::getInstance()->getContainer()
             ->get('store.service');
+        $this->deliveryScheduleService = Application::getInstance()->getContainer()
+            ->get(DeliveryScheduleService::class);
     }
 
     /**
@@ -110,69 +113,88 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
 
         /** Расчёты не сгенерируются, если для первого отправителя не будет расписаний */
         $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-        //$senders = [$this->storeService->getStoreByXmlId('0000100792')];
+        //$senders = [$this->storeService->getStoreByXmlId('DC01')];
 
+        $regularities = $this->scheduleResultService->getRegularityEnumAll();
+        /** @var UserFieldEnumValue $regularity */
+        foreach ($regularities as $regularityId => $regularity) {
 
-        /** @var Store $sender */
-        foreach ($senders as $i => $sender) {
-            BitrixApplication::getConnection()->startTransaction();
+            $scheduleRegularity = $this->deliveryScheduleService->getRegular()->filter(function($item) use ($regularity){
+                /**
+                 * @var UserFieldEnumValue $item
+                 * @var UserFieldEnumValue $regularity
+                 */
+                return $item->getXmlId() == $regularity->getXmlId();
+            })->first();
 
-            $start = microtime(true);
-            $isSuccess = false;
-            $totalCreated = 0;
-            $totalDeleted = 0;
-
-            try {
-                $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender, $dateDelete);
-                $results = $this->scheduleResultService->calculateForSender($sender, $dateActive, $tc);
-                [$created] = $this->scheduleResultService->updateResults($results, $dateDelete);
-                $totalCreated += $created;
-                $isSuccess = true;
-                //break;
-            } catch (\Exception $e) {
+            if(!$scheduleRegularity){
                 $this->log()->error(
-                    sprintf('Failed to calculate schedule results: %s: %s', \get_class($e), $e->getMessage()),
-                    ['sender' => $sender->getXmlId()]
+                    sprintf("Не найдена подходящая регулярность для расписаний: %s", $regularity->getValue())
                 );
-
-                //$isSuccess = false;
-                //break;
+                continue;
             }
+            $scheduleRegularityId = $scheduleRegularity->getId();
 
-            if ($isSuccess) {
-                BitrixApplication::getConnection()->commitTransaction();
+            /** @var Store $sender */
+            foreach ($senders as $i => $sender) {
+                $this->sqlHeartBeat();
+                BitrixApplication::getConnection()->startTransaction();
+                $start = microtime(true);
+                $isSuccess = false;
+                $totalCreated = 0;
+                $totalDeleted = 0;
 
-                $this->log()->info(
-                    sprintf(
-                        'Task finished for %s, time: %ss. %s of %s Created: %s, deleted: %s',
-                        $sender->getXmlId(),
-                        round(microtime(true) - $start, 2),
-                        $i,
-                        count($senders),
-                        $totalCreated,
-                        $totalDeleted
-                    )
-                );
-            } else {
-                BitrixApplication::getConnection()->rollbackTransaction();
+                try {
+                    $this->sqlHeartBeat();
+                    $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender, $dateDelete, $regularityId);
 
-                $this->log()->info(
-                    sprintf(
-                        'Task failed for %s, time: %ss. %s of %s',
-                        $sender->getXmlId(),
-                        round(microtime(true) - $start, 2),
-                        $i,
-                        count($senders)
-                    )
-                );
+                    $this->sqlHeartBeat();
+                    $results = $this->scheduleResultService->calculateForSender($sender, $dateActive, $scheduleRegularityId, $tc);
+
+                    $this->sqlHeartBeat();
+                    [$created] = $this->scheduleResultService->updateResults($results, $dateDelete);
+
+                    $this->sqlHeartBeat();
+                    $totalCreated += $created;
+                    $isSuccess = true;
+                } catch (\Throwable $e) {
+                    $this->log()->error(
+                        sprintf('Failed to calculate schedule results: %s: %s', \get_class($e), $e->getMessage()),
+                        ['sender' => $sender->getXmlId()]
+                    );
+                    $message = sprintf('Не удалось сгенерировать расписания для %s: %s', $sender->getXmlId(),  $e->getMessage());
+                    $this->sendMessageToAdmin($message);
+                }
+
+                if ($isSuccess) {
+                    BitrixApplication::getConnection()->commitTransaction();
+                    $this->log()->info(
+                        sprintf(
+                            'Task finished for %s, time: %ss. %s of %s Created: %s, deleted: %s',
+                            $sender->getXmlId(),
+                            round(microtime(true) - $start, 2),
+                            $i,
+                            count($senders),
+                            $totalCreated,
+                            $totalDeleted
+                        )
+                    );
+                } else {
+                    BitrixApplication::getConnection()->rollbackTransaction();
+                    $this->log()->info(
+                        sprintf(
+                            'Task failed for %s, time: %ss. %s of %s',
+                            $sender->getXmlId(),
+                            round(microtime(true) - $start, 2),
+                            $i,
+                            count($senders)
+                        )
+                    );
+                }
             }
         }
 
-        /*if ($isSuccess) {
-            BitrixApplication::getConnection()->commitTransaction();
-        } else {
-            BitrixApplication::getConnection()->rollbackTransaction();
-        }*/
+        $this->scheduleResultService->clearOldResults();
 
         TaggedCacheHelper::clearManagedCache(['catalog:store:schedule:results']);
 
@@ -182,5 +204,21 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                 round((microtime(true) - $start_global) / 60, 2)
             )
         );
+    }
+
+    private function sqlHeartBeat()
+    {
+        BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
+    }
+
+    /**
+     * Сообщение об ошибке при генерации
+     * @param $message
+     */
+    private function sendMessageToAdmin($message)
+    {
+        /** @var NotificationService $notificationService */
+        $notificationService = Application::getInstance()->getContainer()->get(NotificationService::class);
+        $notificationService->sendErrorMessageToAdmin("Ошибка генерации расписания", $message);
     }
 }

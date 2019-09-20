@@ -8,9 +8,10 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Response;
 
-class SocialController extends FOSRestController
+class SocialController extends BaseController
 {
     /**
      * @Rest\Get("/social/")

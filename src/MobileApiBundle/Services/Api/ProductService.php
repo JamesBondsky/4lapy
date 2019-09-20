@@ -6,33 +6,44 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
+use Bitrix\Sale\BasketItem;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Share;
+use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Catalog\Model\BundleItem;
+use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Model\Filter\ProductIdFilter;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Controller\CatalogController;
 use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterHelper;
 use FourPaws\CatalogBundle\Service\SortService;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
+use FourPaws\External\Manzana\Dto\ExtendedAttribute;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\ImageHelper;
@@ -41,15 +52,19 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 use FourPaws\CatalogBundle\Helper\MarkHelper;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\StampLevel;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\Tag;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Exception\CategoryNotFoundException;
 use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
+use FourPaws\PersonalBundle\Service\StampService;
+use FourPaws\SaleBundle\Service\BasketRulesService;
 use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\SearchService;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\UserBundle\Service\UserService;
+use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 
@@ -58,6 +73,8 @@ class ProductService
 {
     const LIST_IMAGE_WIDTH = 200;
     const LIST_IMAGE_HEIGHT = 250;
+    public const DETAIL_PICTURE_WIDTH = 2000;
+    public const DETAIL_PICTURE_HEIGHT = 2000;
 
     /** @var UserService */
     private $userService;
@@ -83,6 +100,19 @@ class ProductService
     /** @var AppBasketService */
     private $appBasketService;
 
+    /** @var BasketRulesService */
+    private $basketRulesService;
+
+    /** @var StampService */
+    private $stampService;
+
+
+    /**
+     * @var bool
+     */
+    private $forceAtLeastOnePackingVariant = false;
+
+
     public function __construct(
         CategoriesService $categoriesService,
         UserService $userService,
@@ -91,7 +121,9 @@ class ProductService
         FilterHelper $filterHelper,
         SortService $sortService,
         SearchService $searchService,
-        AppBasketService $appBasketService
+        AppBasketService $appBasketService,
+        BasketRulesService $basketRulesService,
+        StampService $stampService
     )
     {
         $this->categoriesService = $categoriesService;
@@ -102,6 +134,8 @@ class ProductService
         $this->sortService = $sortService;
         $this->searchService = $searchService;
         $this->appBasketService = $appBasketService;
+        $this->basketRulesService = $basketRulesService;
+        $this->stampService = $stampService;
     }
 
     /**
@@ -125,7 +159,8 @@ class ProductService
         string $sort = 'popular',
         int $count = 10,
         int $page = 1,
-        string $searchQuery = ''
+        string $searchQuery = '',
+        int $stockId = 0
     ): ArrayCollection
     {
         $filters = new FilterCollection();
@@ -135,8 +170,30 @@ class ProductService
             $filters = $category->getFilters();
         }
 
+        if ($stockId > 0) {
+            if(!$this->checkShareAccess($stockId)) {
+                return (new ArrayCollection([
+                    'products' => [],
+                    'cdbResult' => new \CIBlockResult()
+                ]));
+            }
+            $searchQuery = $this->getProductIdsByShareId($stockId);
 
-        if ($searchQuery) {
+            $category = new \FourPaws\Catalog\Model\Category();
+            $this->filterHelper->initCategoryFilters($category, $request);
+            $filters = $category->getFilters();
+
+            $filterArr = [];
+            foreach ($filters as $filter) {
+                $filterCode = $filter->getFilterCode();
+                $requestParam = $request->get($filterCode);
+                if ($requestParam) {
+                    $filterArr[] = $filter;
+                }
+            }
+
+            $filters = new FilterCollection($filterArr);
+        } else if ($searchQuery) {
             /** @see CatalogController::searchAction */
             $searchQuery = mb_strtolower($searchQuery);
             $searchQuery = IndexHelper::getAlias($searchQuery);
@@ -197,11 +254,71 @@ class ProductService
     }
 
     /**
+     * @param int[] $ids
+     * @param bool|null $onlyPackingVariants
+     * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     */
+    public function getListFromXmlIds(array $ids, ?bool $onlyPackingVariants = false): ArrayCollection
+    {
+        $filters = new FilterCollection();
+//        $filters->add([
+//            'ID' => $ids
+//        ]);
+
+        $sort = $this->sortService->getSorts('popular')->getSelected();
+
+        $productSearchResult = $this->searchService->searchProducts($filters, $sort, new Navigation(), $ids);
+        /** @var ProductCollection $productCollection */
+        $productCollection = $productSearchResult->getProductCollection();
+
+        $this->forceAtLeastOnePackingVariant = true;
+        $productList = $productCollection
+            ->map(\Closure::fromCallable([$this, 'mapProductForList']))
+            ->map(static function(FullProduct $product) use ($ids, $onlyPackingVariants) {
+                $packingVariants = $product->getPackingVariants();
+                $packingVariants = array_filter($packingVariants, static function(FullProduct $product) use ($ids) {
+                    return in_array($product->getXmlId(), $ids, false);
+                });
+                if ($onlyPackingVariants) {
+                    return array_values($packingVariants);
+                } else {
+                    $product->setPackingVariants($packingVariants);
+
+                    return $product;
+                }
+            })
+            ->filter(static function($value) {
+                return !is_null($value);
+            })
+            ->getValues();
+        $this->forceAtLeastOnePackingVariant = false;
+
+        if ($onlyPackingVariants) {
+            $productList = array_reduce($productList, static function($carry, $productArray) {
+                foreach ($productArray as $product) {
+                    $carry[] = $product;
+                }
+
+                return $carry;
+            }, []);
+        }
+
+        return new ArrayCollection([
+            $productList
+        ]);
+    }
+
+    /**
      * Мэппинг полей товара для списка
      * @param Product $product
      * @return FullProduct|null
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
      */
     protected function mapProductForList(Product $product)
     {
@@ -210,7 +327,28 @@ class ProductService
         if (!$currentOffer) {
             return null;
         }
-        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true);
+
+        foreach ($product->getOffers() as $itemOffer) {
+            $itemOffer->setColor();
+        }
+
+        $hasColours = (bool)$this->getColours($currentOffer)
+            && (bool)$currentOffer->getColor();
+
+        $clothingSizes = [];
+        foreach ($product->getOffers() as $itemOffer) {
+            $clothingSize = $itemOffer->getClothingSize();
+            if ($clothingSize) {
+                $clothingSizes[] = $clothingSize->getId();
+            }
+        }
+        $hasOnlyColourCombinations = false;
+        if ($hasColours && count($clothingSizes) <= 1) { // есть деление по цветам, но нет деления по размерам
+            $hasOnlyColourCombinations = true;
+        }
+
+
+        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true, $this->forceAtLeastOnePackingVariant, $hasOnlyColourCombinations);
 
         // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
         $fullProduct->setIsAvailable(true);
@@ -270,12 +408,27 @@ class ProductService
             throw new NotFoundProductException();
         }
         $product = $offer->getProduct();
+        $colours = $this->getColours($offer);
+        $hasColours = (bool)$colours;
 
-        $fullProduct = $this->convertToFullProduct($product, $offer, true);
+        $clothingSizes = [];
+        foreach ($product->getOffers() as $itemOffer) {
+            $clothingSize = $itemOffer->getClothingSize();
+            if ($clothingSize) {
+                $clothingSizes[] = $clothingSize->getId();
+            }
+        }
+        $hasOnlyColourCombinations = false;
+        if ($hasColours && count($clothingSizes) <= 1) { // есть деление по цветам, но нет деления по размерам
+            $hasOnlyColourCombinations = true;
+        }
+
+        $fullProduct = $this->convertToFullProduct($product, $offer, true, true, $hasOnlyColourCombinations);
         $fullProduct->setIsAvailable($offer->isAvailable()); // returns ShortProduct
         $fullProduct
             ->setSpecialOffer($this->getSpecialOffer($offer))           // акция
             ->setFlavours($this->getFlavours($offer))                   // вкус
+            ->setColours($colours)                                      // цвет
             ->setAvailability($offer->getAvailabilityText())            // товар под заказ
             ->setDelivery($this->getDeliveryText($offer))               // товар под заказ
             ->setPickup($this->getPickupText($offer))                   // товар под заказ
@@ -376,13 +529,19 @@ class ProductService
         return (new Tag())->setTitle($title);
     }
 
+
     /**
      * @param Product $product
      * @param Offer $offer
      * @param int $quantity
      * @return ShortProduct
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteErrorException
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteException
      */
     public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1): ShortProduct
     {
@@ -392,15 +551,13 @@ class ProductService
             ->setXmlId($offer->getXmlId())
             ->setBrandName($product->getBrandName())
             ->setWebPage($offer->getCanonicalPageUrl())
+            ->setColor($offer->getColorProp())
             ;
 
         // большая картинка
-        if ($images = $offer->getImages()) {
+        if ($images = $offer->getResizeImages(static::DETAIL_PICTURE_WIDTH, static::DETAIL_PICTURE_HEIGHT)) {
             /** @var Image $picture */
-            $picture = $images->first();
-            if ($pictureSrc = \CFile::getPath($picture->getId())) {
-                $shortProduct->setPicture($pictureSrc);
-            }
+            $shortProduct->setPicture($images->first());
         }
 
         // картинка ресайз (возможно не используется, но это не точно)
@@ -411,7 +568,8 @@ class ProductService
         // цена
         $price = (new Price())
             ->setActual($offer->getPrice())
-            ->setOld($offer->getOldPrice());
+            ->setOld($offer->getOldPrice())
+            ->setSubscribe($offer->getSubscribePrice());
         $shortProduct->setPrice($price);
 
 
@@ -433,6 +591,76 @@ class ProductService
         $shortProduct->setBonusAll($offer->getBonusCount(3, $quantity));
         $shortProduct->setBonusUser($offer->getBonusCount($this->userService->getDiscount(), $quantity));
 
+        //Округлить до упаковки
+        $shortProduct->setInPack(intval($offer->getMultiplicity()));
+
+        if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
+            // уровни скидок за марки
+            $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
+            $exchangeRules = $this->stampService::EXCHANGE_RULES[$shortProduct->getXmlId()];
+
+            if (!$exchangeRules) {
+                $exchangeRules = [];
+            }
+
+            $stampLevels = [];
+            $maxCanUse = 0;
+
+            // учитывание корзины
+//            $maxStampsLevelValue = false;
+
+            // ищем товар в корзизе
+            /** @var BasketItem $basketItem */
+//            foreach ($this->appBasketService->getBasket()->getBasketItems() as $basketItem) {
+//                if ($basketItem->getProductId() == $offer->getId()) {
+//                    if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
+//                        $maxStampsLevelValue = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE']);
+//                    }
+//                }
+//            }
+
+            // если товар не нашли, то считаем сколько марок пользователь может потратить на один товар
+//            if (!$maxStampsLevelValue) {
+//                $extendedAttributeCollection = new ArrayCollection();
+//                foreach ($exchangeRules as $exchangeRule) {
+//                    $extendedAttributeCollection->add(
+//                        (new ExtendedAttribute())->setKey($exchangeRule['title'])->setValue(1)
+//                    );
+//                }
+//
+//                $maxStampsLevelValue = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $this->stampService->getActiveStampsCount());
+//            }
+//
+//            foreach ($exchangeRules as $exchangeRule) {
+//                if ($exchangeRule['title'] === $maxStampsLevelValue['key']) {
+//                    $exchangeRule['isMaxLevel'] = true;
+//                }
+//
+//                $stampLevels[] = $serializer->fromArray($exchangeRule, StampLevel::class);
+//            }
+
+            foreach ($exchangeRules as $exchangeRule) {
+                try {
+                    $stamps = $this->stampService->getActiveStampsCount();
+                } catch (\Exception $e) {
+                    $stamps = 0;
+                }
+
+                if (($exchangeRule['stamps'] <= $stamps) && ($exchangeRule['stamps'] > $maxCanUse)) {
+                    $maxCanUse = $exchangeRule['stamps'];
+                }
+            }
+
+            foreach ($exchangeRules as $exchangeRule) {
+                $exchangeRule['isMaxLevel'] = ($exchangeRule['stamps'] == $maxCanUse);
+                $stampLevels[] = $serializer->fromArray($exchangeRule, StampLevel::class);
+            }
+
+            ini_set('serialize_precision', -1); // костыль, чтобы не "портились" price в StampLevel при сериализации
+
+            $shortProduct->setStampLevels($stampLevels); //TODO get stampLevels from Manzana. If Manzana doesn't answer then set no levels
+        }
+
         return $shortProduct;
     }
 
@@ -440,12 +668,20 @@ class ProductService
      * @param Product $product
      * @param Offer $offer
      * @param bool $needPackingVariants
+     * @param bool|null $showVariantsIfOneVariant
+     * @param bool|null $hasOnlyColourCombinations
      * @return FullProduct
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteErrorException
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteException
      */
-    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false): FullProduct
+    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true, ?bool $hasOnlyColourCombinations = false): FullProduct
     {
+        $offer->setColor();
         $shortProduct = $this->convertToShortProduct($product, $offer);
         $detailText = $product->getDetailText()->getText();
         $detailText = ImageHelper::appendDomainToSrc($detailText);
@@ -470,10 +706,18 @@ class ProductService
             ->setBonusUser($shortProduct->getBonusUser())
             ->setIsByRequest($shortProduct->getIsByRequest())
             ->setIsAvailable($shortProduct->getIsAvailable())
-            ->setPickupOnly($shortProduct->getPickupOnly());
+            ->setPickupOnly($shortProduct->getPickupOnly())
+            ->setInPack($shortProduct->getInPack())
+            ->setStampLevels($shortProduct->getStampLevels());
+        $fullProduct->setColor($shortProduct->getColor());
 
         if ($needPackingVariants) {
-            $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct));   // фасовки
+            if ($hasOnlyColourCombinations) {
+                $fullProduct->setColourVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // цвета
+                $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant, true));
+            } else {
+                $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // фасовки
+            }
         }
 
         return $fullProduct;
@@ -554,23 +798,39 @@ class ProductService
 
     /**
      * Фасовки товара
+     *
      * @param Product $product
      * @param FullProduct $currentFullProduct
-     * @return FullProduct[]
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @param bool|null $showVariantsIfOneVariant
+     * @param bool|null $onlyCurrentOffer
+     *
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
-    public function getPackingVariants(Product $product, FullProduct $currentFullProduct): array
+    public function getPackingVariants(Product $product, FullProduct $currentFullProduct, ?bool $showVariantsIfOneVariant = true, ?bool $onlyCurrentOffer = false): array
     {
         $offers = $product->getOffersSorted();
         // если в предложениях только текущий продукт
         $hasOnlyCurrentOffer = (count($offers) === 1 && $offers->current()->getId() === $currentFullProduct->getId());
-        if (empty($offers) ||  $hasOnlyCurrentOffer) {
+        if ($hasOnlyCurrentOffer && $showVariantsIfOneVariant) {
+            return [$fullProduct = $this->convertToFullProduct($product, $offers->current())];
+        }
+        if (empty($offers) || ($hasOnlyCurrentOffer && !$showVariantsIfOneVariant)
+            || ($onlyCurrentOffer && !$showVariantsIfOneVariant)
+        ) {
             return [];
         }
 
         $packingVariants = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
+            if ($onlyCurrentOffer && $offer->getId() != $currentFullProduct->getId()) {
+                continue;
+            }
             // if ($offer->getId() === $currentFullProduct->getId()) {
                 // toDo если переиспользовать $currentFullProduct - в массиве $packingVariants в итоге попадает null вместо объекта
             //    $fullProduct = clone $currentFullProduct;
@@ -604,8 +864,8 @@ class ProductService
         $specialOffer
             ->setId($specialOfferModel->getId())
             ->setName($specialOfferModel->getName())
-            ->setDescription($specialOfferModel->getPreviewText())
-            ->setImage($specialOfferModel->getPreviewPictureSrc());
+            ->setDescription(strip_tags(html_entity_decode($specialOfferModel->getPreviewText())));
+        $specialOffer->setImage($specialOfferModel->getDetailPictureSrc());
 
         if ($specialOfferModel->getDateActiveFrom() && $specialOfferModel->getDateActiveTo()) {
             $dateFrom = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveFrom()->format('d #n# Y'), DateHelper::GENITIVE);
@@ -638,6 +898,52 @@ class ProductService
                         ->setTitle($flavourWithWeight);
                 }
                 return $flavours;
+            }
+        }
+        return [];
+    }
+
+    /**
+     * Цвета товара
+     * @param Offer $offer
+     * @return FullProduct\Flavour[]
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getColours(Offer $offer): array
+    {
+        if (!empty($offer->getColourCombination()) && $offer->getColor()) {
+            $unionOffers = $this->getOffersByUnion('color', $offer->getColourCombinationXmlId());
+            if (!$unionOffers->isEmpty()) {
+                $unionOffersSorted = [];
+                /** @var Offer $unionOffer */
+                foreach ($unionOffers as $unionOffer) {
+                    $unionOffersSorted[$unionOffer->getColorWithSize()] = $unionOffer;
+                }
+                $this->sortService->colorWithSizeSort($unionOffersSorted);
+
+                $colours = [];
+                foreach ($unionOffersSorted as $unionOffer) {
+                    $color = $unionOffer->getColor();
+                    $fullProductColour = (new FullProduct\Colour())
+                        ->setOfferId($unionOffer->getId())
+                        ->setTitle($unionOffer->getColorWithSize());
+                    if ($color) {
+                        $hexCode = $color->getColorCode();
+                        $imageUrl = $color->getFilePath();
+
+                        $fullProductColour
+                            ->setHexCode($hexCode);
+
+                        if ($imageUrl) {
+                            $fullProductColour
+                            ->setImageUrl((new FullHrefDecorator($imageUrl))->getFullPublicPath());
+                        }
+                    }
+                    $colours[] = $fullProductColour;
+                }
+                return $colours;
             }
         }
         return [];
@@ -802,13 +1108,78 @@ class ProductService
         $images = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
-            if ($offerImages = $offer->getImages()) {
+            if ($offerImages = $offer->getResizeImages(static::DETAIL_PICTURE_WIDTH, static::DETAIL_PICTURE_HEIGHT)) {
                 foreach ($offerImages as $image) {
                     $images[] = $image;
                 }
             }
         }
         return array_unique($images);
+    }
+
+    /**
+     * @param int $stockId
+     * @return array
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    public function getProductIdsByShareId(int $stockId)
+    {
+        $share = (new ShareQuery())
+            ->withFilter(['ID' => $stockId])
+            ->exec()
+            ->first();
+
+        $xmlIds = [];
+
+        if ($share) {
+            $xmlIds = $share->getPropertyProducts();
+        }
+
+        return $xmlIds;
+
+        $query = new ProductQuery();
+        $query->withFilter([
+            '=XML_ID'          => $xmlIds,
+            'IBLOCK_ID' => [IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS), IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
+        ])->withSelect(['ID']);
+        $productCollection = $query->exec();
+        $productIds = [];
+        foreach ($productCollection as $product) {
+            $productIds[] = $product->getId();
+        }
+        return $productIds;
+
+        $res = \CIBlockElement::GetProperty(IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES), $stockId, '', '',
+            ['CODE' => 'PRODUCTS']);
+        $xmlIds = [];
+        while ($item = $res->Fetch()) {
+            if (!empty($item['VALUE']) && !\in_array($item['VALUE'], $xmlIds, true)) {
+                $xmlIds[] = $item['VALUE'];
+            }
+        }
+
+        $query = new ProductQuery();
+        $productCollection = $query->withFilter([
+            '=XML_ID'          => $xmlIds,
+            'ACTIVE'           => 'Y',
+            '>CATALOG_PRICE_2' => 0,
+        ])->withSelect(['ID'])->exec();
+        $productIds = [];
+        foreach ($productCollection as $product) {
+            $productIds[] = $product->getId();
+        }
+        return $productIds;
+    }
+
+    /**
+     * @param $shareId
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    public function checkShareAccess($shareId)
+    {
+        return $this->basketRulesService->checkRegionAccess($shareId);
     }
 
 }

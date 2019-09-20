@@ -22,6 +22,10 @@ services:
     class: FourPaws\External\Manzana\Consumer\ManzanaContactConsumer
     arguments: ['@jms_serializer', '@manzana.service']
 
+  manzana.contact_mobile_update_consumer:
+    class: FourPaws\External\Manzana\Consumer\ManzanaContactMobileUpdateConsumer
+    arguments: ['@jms_serializer', '@manzana.service']
+
   manzana.referral_add_consumer:
     class: FourPaws\External\Manzana\Consumer\ManzanaReferralConsumer
     arguments: ['@jms_serializer', '@manzana.service']
@@ -46,6 +50,10 @@ services:
     class: FourPaws\External\Dostavista\Consumer\DostavistaOrdersCancelConsumer
     arguments: ['@jms_serializer', '@dostavista.service']
 
+  import.import_offers:
+     class: FourPaws\External\Import\Consumer\ImportOffersConsumer
+     arguments: ['@jms_serializer', '@import.service']
+
   search.service:
     class: FourPaws\Search\SearchService
     arguments:
@@ -64,8 +72,7 @@ services:
 
   manzana.guzzle:
     class: GuzzleHttp\Client
-    arguments:
-      - curl: '%manzana.guzzle.curl%'
+    arguments: ['%manzana.guzzle.proxy%']
 
   async.soap.factory:
     class: Meng\AsyncSoap\Guzzle\Factory
@@ -83,6 +90,12 @@ services:
   manzana.service:
     class: FourPaws\External\ManzanaService
     arguments: ['@jms_serializer', '@manzana.soap', '%manzana%']
+    calls:
+      - [setServiceLogger]
+
+  import.service:
+    class: FourPaws\External\ImportService
+    arguments: ['@jms_serializer']
     calls:
       - [setServiceLogger]
 
