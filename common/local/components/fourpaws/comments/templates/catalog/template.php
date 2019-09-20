@@ -230,7 +230,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                         <span class="b-icon b-icon--upload">
                             <?= new SvgDecorator('icon-upload', 69, 57) ?>
                         </span>
-                        <div class="b-registration__text b-registration__text--upload">Перетащите картинку сюда или
+                        <div class="btn-add-photos__text">Перетащите картинку сюда или
                             нажмите на область для выбора
                             файла
                         </div>
