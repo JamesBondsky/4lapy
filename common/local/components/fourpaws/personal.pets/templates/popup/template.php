@@ -129,8 +129,8 @@
                     <div class="b-input-line__label-wrapper">
                         <label class="b-input-line__label" for="size-pet">Размер</label>
                     </div>
-                    <div class="b-input b-input--registration-form">
-                        <select class="b-select__block b-select__block--subscribe-delivery js-pet-size js-no-valid"
+                    <div class="b-select b-select--size-pet">
+                        <select class="b-select__block b-select__block--size-pet js-pet-size js-no-valid"
                                 id="size-pet"
                                 name="UF_SIZE">
                             <option value="" disabled="disabled" selected="selected">Выберите из списка</option>
