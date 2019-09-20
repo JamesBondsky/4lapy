@@ -36,7 +36,7 @@ class GoodsItemByRequestResponse
      * @Serializer\SkipWhenEmpty()
      * @var string
      */
-    protected $availability = 'Нет в налчии';
+    protected $availability = 'Нет в наличии';
 
     /**
      * Информация по доставке (для товара под заказ)

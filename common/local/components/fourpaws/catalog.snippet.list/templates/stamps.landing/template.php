@@ -75,7 +75,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
 
                     $APPLICATION->IncludeComponent(
                         'fourpaws:catalog.element.snippet',
-                        'stamps',
+                        'stamps.landing',
                         [
                             'PRODUCT' => $product,
                             'OFFER_FILTER' => $arParams['OFFER_FILTER'] ?? [],

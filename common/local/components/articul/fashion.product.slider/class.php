@@ -38,7 +38,7 @@ class CFashionProductSlider extends \CBitrixComponent
     public function executeComponent()
     {
         if($this->startResultCache()){
-            $dbres = \CIBlockElement::GetList([], ['IBLOCK_ID' => $this->iblockId, 'ACTIVE' => 'Y']);
+            $dbres = \CIBlockElement::GetList(['SORT' => 'ASC'], ['IBLOCK_ID' => $this->iblockId, 'ACTIVE' => 'Y']);
             while($row = $dbres->GetNextElement()){
                 $element = $row->GetFields();
                 $element['PROPERTIES'] = $row->GetProperties();
