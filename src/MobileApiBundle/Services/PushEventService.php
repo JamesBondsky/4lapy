@@ -18,6 +18,7 @@ use FourPaws\MobileApiBundle\Entity\ApiPushMessage;
 use FourPaws\MobileApiBundle\Entity\ApiUserSession;
 use FourPaws\MobileApiBundle\Repository\ApiPushEventRepository;
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Repository\UserRepository;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializationContext;
@@ -490,25 +491,12 @@ class PushEventService
             ]);
 
         $foundPhoneNumbers = [];
+        /** @var User $user */
         foreach ($users as $user) {
-            $personalPhone = $user->getPersonalPhone();
-            $userSession = $this->apiUserSessionRepository->findBy([
-                '=USER_ID' => $user->getId(),
-            ], ['ID' => 'DESC'], 1)[0];
-
-            if (!$userSession) {
-                $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone нет сессий в мобильном приложении");
-            } else if (!($userSession->getPlatform() && $userSession->getPushToken())) {
-                $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone не установлено мобильное приложение");
-            } else {
-                if ($this->shouldSendPushMessage($user, $typeCode)) {
-                    $userIds[$user->getId()] = $user->getId();
-                } else {
-                    $this->log()->warning("PushEventService: пользователь с номером телефона $personalPhone отключил push уведомления");
-                }
+            if($this->canSendPushMessage($user, $typeCode, true)) {
+                $foundPhoneNumbers[] = $user->getPersonalPhone();
+                $userIds[] = $user->getId();
             }
-
-            $foundPhoneNumbers[] = $personalPhone;
         }
 
         $notFoundPhoneNumbers = array_diff($phoneNumbers, $foundPhoneNumbers);
@@ -519,6 +507,37 @@ class PushEventService
         }
 
         return array_values($userIds);
+    }
+
+    public function canSendPushMessage(User $user, $typeCode, $log = false) : bool
+    {
+        $result = true;
+
+        $personalPhone = $user->getPersonalPhone();
+        $userSession = $this->apiUserSessionRepository->findBy([
+            '=USER_ID' => $user->getId(),
+        ], ['ID' => 'DESC'], 1)[0];
+
+        if (!$userSession) {
+            $result = false;
+            if($log){
+                $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone нет сессий в мобильном приложении");
+            }
+        } else if (!($userSession->getPlatform() && $userSession->getPushToken())) {
+            $result = false;
+            if($log){
+                $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone не установлено мобильное приложение");
+            }
+        } else {
+            if (!$this->shouldSendPushMessage($user, $typeCode)) {
+                $result = false;
+                if($log){
+                    $this->log()->warning("PushEventService: пользователь с номером телефона $personalPhone отключил push уведомления");
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**

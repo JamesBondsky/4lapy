@@ -22,6 +22,7 @@ use FourPaws\External\ExpertSender\Dto\ForgotBasket;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
 use FourPaws\MobileApiBundle\Entity\ApiPushMessage;
+use FourPaws\MobileApiBundle\Services\PushEventService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\SaleBundle\Dto\Notification\ForgotBasketNotification;
@@ -30,6 +31,7 @@ use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\Notification\UnknownMessageTypeException;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializationContext;
 use LinguaLeo\ExpertSender\ExpertSenderException;
@@ -83,6 +85,16 @@ class NotificationService implements LoggerAwareInterface
     private $transformer;
 
     /**
+     * @var PushEventService
+     */
+    private $pushEventService;
+
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    private $userService;
+
+    /**
      * NotificationService constructor.
      * @param OrderService $orderService
      * @param SmsService $smsService
@@ -95,7 +107,9 @@ class NotificationService implements LoggerAwareInterface
         SmsService $smsService,
         StoreService $storeService,
         ExpertsenderService $emailService,
-        ArrayTransformerInterface $transformer
+        ArrayTransformerInterface $transformer,
+        PushEventService $pushEventService,
+        CurrentUserProviderInterface $userService
     )
     {
         $this->orderService = $orderService;
@@ -103,6 +117,8 @@ class NotificationService implements LoggerAwareInterface
         $this->storeService = $storeService;
         $this->emailService = $emailService;
         $this->transformer = $transformer;
+        $this->pushEventService = $pushEventService;
+        $this->userService = $userService;
 
         $container = Application::getInstance()->getContainer();
         /** @noinspection MissingService */
@@ -263,8 +279,19 @@ class NotificationService implements LoggerAwareInterface
         }
 
         if ($smsTemplate) {
-            $this->sendSms($smsTemplate, $parameters, true);
-            $this->addPushMessage($smsTemplate, $parameters);
+            // TODO: Здесь баг
+            $user = null;
+            try {
+                $user = $this->userService->getCurrentUser();
+            } catch (\Exception $e) {
+                // не надо нам здесь падать, если юзер не авторизован
+            }
+
+            if($user && $this->pushEventService->canSendPushMessage($user, 'status')){
+                $this->addPushMessage($smsTemplate, $parameters);
+            } else {
+                $this->sendSms($smsTemplate, $parameters, true);
+            }
         }
 
         $this->sendNewUserSms($parameters);
