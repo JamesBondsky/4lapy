@@ -151,6 +151,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
             </div>
         </div>
         <form class="b-form-review js-form-review js-form-validation js-review-query"
+              enctype="multipart/form-data"
               novalidate id="commentsFormCatalog" data-url="/ajax/comments/catalog/add/" method="post">
             <input type="hidden" name="UF_TYPE" value="<?= $arParams['TYPE'] ?>" class="js-no-valid">
             <input type="hidden" name="HL_ID" value="<?= $arParams['HL_ID'] ?>" class="js-no-valid">
@@ -216,9 +217,26 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                               maxlength="1000"></textarea>
                     <div class="b-error"><span class="js-message"></span></div>
                 </div>
-                <div id="dZUpload" class="dropzone">
-                    <div class="dz-default dz-message"></div>
+
+                <div class="b-form-review__add-photos" data-multiple-add-photo="true">
+                    <div class="list-add-photos" data-list-add-photos="true"></div>
+                    <div class="btn-add-photos" data-btn-multiple-add-photo="true">
+                        <input class="btn-add-photos__load js-no-valid js-multiple-drag-n-drop"
+                               type="file"
+                               name="UF_PHOTO"
+                               multiple
+                               data-max-add-photos="5"
+                               accept="image/*,image/jpeg" />
+                        <span class="b-icon b-icon--upload">
+                            <?= new SvgDecorator('icon-upload', 69, 57) ?>
+                        </span>
+                        <div class="b-registration__text b-registration__text--upload">Перетащите картинку сюда или
+                            нажмите на область для выбора
+                            файла
+                        </div>
+                    </div>
                 </div>
+
                 <? if (KioskService::isKioskMode()) { ?>
                     <div class="js-comments-captcha-block-<?= $uniqueCommentString ?>" style="display: none"></div>
                 <? } ?>
