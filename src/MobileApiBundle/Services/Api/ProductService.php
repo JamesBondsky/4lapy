@@ -1111,8 +1111,10 @@ class ProductService
         foreach ($offers as $offer) {
             if ($offerImages = $offer->getResizeImages(static::DETAIL_PICTURE_WIDTH, static::DETAIL_PICTURE_HEIGHT)) {
                 foreach ($offerImages as $image) {
-                    if ($currentOffer->getColor()->getColorCode() != $offer->getColor()->getColorCode()) {
-                        $images[] = $image;
+                    if ($currentOffer->getColor()) {
+                        if ($currentOffer->getColor()->getColorCode() != $offer->getColor()->getColorCode()) {
+                            $images[] = $image;
+                        }
                     } else {
                         $addInStart[] = $image;
                     }
