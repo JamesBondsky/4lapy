@@ -223,10 +223,10 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                     <div class="btn-add-photos" data-btn-multiple-add-photo="true">
                         <input class="btn-add-photos__load js-no-valid js-multiple-drag-n-drop"
                                type="file"
-                               name="UF_PHOTO[]"
+                               name="UF_PHOTOS[]"
                                multiple
                                data-max-add-photos="5"
-                               accept="image/*,image/jpeg" />
+                               accept="image/jpg,image/jpeg, image/png" />
                         <span class="b-icon b-icon--upload">
                             <?= new SvgDecorator('icon-upload', 69, 57) ?>
                         </span>

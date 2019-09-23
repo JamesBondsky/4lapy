@@ -3,11 +3,11 @@
 namespace Sprint\Migration;
 
 
-class AddFieldImagesCommentsHl20190913161819 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
+class AddFieldPhotosCommentsHl20190913161819 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
 {
     const HL_NAME = 'Comments';
 
-    const FIELD_NAME = 'UF_COMMENT_IMAGES';
+    const FIELD_NAME = 'UF_PHOTOS';
 
     protected $description = 'Добавление поля "Изображения" в highload комметарии';
 

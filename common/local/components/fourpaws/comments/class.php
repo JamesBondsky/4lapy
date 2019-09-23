@@ -25,6 +25,10 @@ use FourPaws\AppBundle\Exception\CaptchaErrorException;
 use FourPaws\AppBundle\Exception\EmptyUserDataComments;
 use FourPaws\AppBundle\Exception\ErrorAddComment;
 use FourPaws\AppBundle\Exception\UserNotFoundAddCommentException;
+use FourPaws\FormBundle\Exception\FileCountException;
+use FourPaws\FormBundle\Exception\FileSaveException;
+use FourPaws\FormBundle\Exception\FileSizeException;
+use FourPaws\FormBundle\Exception\FileTypeException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -58,18 +62,23 @@ class CCommentsComponent extends \CBitrixComponent
      * @param bool $addNotAuth
      *
      * @return bool
-     * @throws ErrorAddComment
-     * @throws CaptchaErrorException
-     * @throws SystemException
      * @throws ApplicationCreateException
-     * @throws ObjectException
+     * @throws ArgumentException
+     * @throws CaptchaErrorException
      * @throws EmptyUserDataComments
-     * @throws WrongPasswordException
-     * @throws UserNotFoundAddCommentException
-     * @throws WrongPhoneNumberException
-     * @throws WrongEmailException
+     * @throws ErrorAddComment
+     * @throws FileCountException
+     * @throws FileSaveException
+     * @throws FileSizeException
+     * @throws FileTypeException
      * @throws LoaderException
-     *
+     * @throws ObjectException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws UserNotFoundAddCommentException
+     * @throws WrongEmailException
+     * @throws WrongPasswordException
+     * @throws WrongPhoneNumberException
      */
     public static function addComment(bool $addNotAuth = false): bool
     {
@@ -271,13 +280,19 @@ class CCommentsComponent extends \CBitrixComponent
      * @param bool $addNotAuth
      *
      * @return array
-     * @throws ObjectException
+     * @throws ArgumentException
      * @throws EmptyUserDataComments
-     * @throws WrongPasswordException
-     * @throws UserNotFoundAddCommentException
-     * @throws WrongPhoneNumberException
-     * @throws WrongEmailException
+     * @throws FileCountException
+     * @throws FileSaveException
+     * @throws FileSizeException
+     * @throws FileTypeException
+     * @throws ObjectException
+     * @throws ObjectPropertyException
      * @throws SystemException
+     * @throws UserNotFoundAddCommentException
+     * @throws WrongEmailException
+     * @throws WrongPasswordException
+     * @throws WrongPhoneNumberException
      */
     public function getData(bool $addNotAuth = false): array
     {
@@ -286,7 +301,7 @@ class CCommentsComponent extends \CBitrixComponent
         unset($data['action'], $data['g-recaptcha-response']);
         if ($this->arResult['AUTH']) {
             $data['UF_USER_ID'] = $this->userCurrentUserService->getCurrentUserId();
-            $data['UF_COMMENT_IMAGES'] = $this->getPhotoData();
+            $data['UF_PHOTOS'] = $this->getPhotoData();
         } else {
             if (!$addNotAuth || ((!empty($data['EMAIL']) || !empty($data['PHONE'])) && !empty($data['PASSWORD']))) {
                 $userRepository = $this->userCurrentUserService->getUserRepository();
@@ -343,24 +358,28 @@ class CCommentsComponent extends \CBitrixComponent
 
     /**
      * @return array|null
+     * @throws FileCountException
+     * @throws FileSaveException
+     * @throws FileSizeException
+     * @throws FileTypeException
      * @throws SystemException
      */
     public function getPhotoData()
     {
         $fileList = Application::getInstance()->getContext()->getRequest()->getFileList()->toArray();
 
-        if (!isset($fileList['UF_PHOTO']) || empty($fileList['UF_PHOTO'])) {
+        if (!isset($fileList['UF_PHOTOS']) || empty($fileList['UF_PHOTOS'])) {
             return null;
         }
 
         $dataFiles = [];
 
-        $fileList = $fileList['UF_PHOTO'];
+        $fileList = $fileList['UF_PHOTOS'];
 
         $filesCount = count($fileList['name']);
 
         if (count($fileList['name']) > 5) {
-            throw new \Exception('too much');
+            throw new FileCountException('');
         }
 
         for ($i = 0; $i < $filesCount; $i++) {
@@ -373,15 +392,15 @@ class CCommentsComponent extends \CBitrixComponent
             ];
 
             if ($file['error'] !== 0) {
-                throw new \Exception('error');
+                throw new FileSaveException('');
             }
 
             if ($file['size'] > (5 * 1024 * 1024)) {
-                throw new \Exception('too big');
+                throw new FileSizeException('');
             }
 
             if (!\in_array($file['type'], ['image/jpeg', 'image/jpg', 'image/png'])) {
-                throw new \Exception('wrong format');
+                throw new FileTypeException('');
             }
 
             $dataFiles[] = [
