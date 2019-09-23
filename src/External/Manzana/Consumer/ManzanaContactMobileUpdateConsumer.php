@@ -63,7 +63,8 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
 
             if (strlen($client->firstName) > 50) {
                 $this->log()->error(sprintf(
-                    'Длина firstName больше 50 символов, разрешенных в Manzana. userId: %s. firstName: %s',
+                    '%s. Длина firstName больше 50 символов, разрешенных в Manzana. userId: %s. firstName: %s',
+                    __METHOD__,
                     $userId,
                     $client->firstName
                 ));

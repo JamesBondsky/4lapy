@@ -49,6 +49,15 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
                 throw new WrongContactMessageException('Неожиданное сообщение: контакт пуст.');
             }
 
+            if (strlen($contact->firstName) > 50) {
+                throw new WrongContactMessageException(sprintf(
+                    '%s. Длина firstName больше 50 символов, разрешенных в Manzana. contactId: %s. firstName: %s',
+                    __METHOD__,
+                    $contact->contactId,
+                    $contact->firstName
+                ));
+            }
+
             if ($contact->phone) {
                 $contact->phone = PhoneHelper::getManzanaPhone($contact->phone);
             }
@@ -92,6 +101,8 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
 
             sleep(5);
 
+            //FIXME Не очень корректное решение - приводит к зацикливанию выполнения метода в случае перманентных ошибок в данном сообщении
+            // (текущее сообщение бесконечно помечается как обработанное и заново добавляется в очередь)
             try {
                 $this->manzanaService->updateContactAsync($contact);
             } catch (ApplicationCreateException | ServiceNotFoundException | ServiceCircularReferenceException $e) {
