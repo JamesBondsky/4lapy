@@ -153,9 +153,16 @@ class FeedbackService
         } catch (\Exception $e) {
             // do nothing
         }
-        $sendResult = \Bitrix\Main\Mail\Event::sendImmediate($fields);
-        $sendSuccess = $sendResult === \Bitrix\Main\Mail\Event::SEND_RESULT_SUCCESS;
-        if (!$sendSuccess) {
+
+        \CModule::IncludeModule("form");
+
+        $form = (new \CForm())->getBySID('feedback')->Fetch();
+
+        $formResult = new \CFormResult;
+        if ($iResultId = $formResult->add($form['ID'], $fields['C_FIELDS'], 'N')) {
+            $formResult->setEvent($iResultId);
+            $formResult->mail($iResultId);
+        } else  {
             throw new RuntimeException('Ошибка отправки сообщения. ' . $GLOBALS['strError']);
         }
     }
