@@ -61,7 +61,13 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
             $client->haveMobileApp = true;
             $client->lastDateUseMobileApp = $currentDate->format(\DateTime::ATOM);
 
-            if ($client->phone) {
+            if (strlen($client->firstName) > 50) {
+                $this->log()->error(sprintf(
+                    'Длина firstName больше 50 символов, разрешенных в Manzana. userId: %s. firstName: %s',
+                    $userId,
+                    $client->firstName
+                ));
+            } elseif ($client->phone) {
                 $container = App::getInstance()->getContainer();
                 /** @var ManzanaService $manzanaService */
                 $manzanaService = $container->get('manzana.service');
@@ -87,18 +93,20 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
                     /** не перезапускаем очередь */
                 } catch (ManzanaServiceException $e) {
                     $this->log()->error(sprintf(
-                        'Manzana contact consumer error: %s, message: %s',
+                        'Manzana contact mobile update consumer error: %s, message: %s',
                         $e->getMessage(),
                         $message->getBody()
                     ));
 
                     sleep(5);
 
+                    //FIXME Не очень корректное решение - приводит к зацикливанию выполнения метода в случае перманентных ошибок в данном сообщении
+                    // (текущее сообщение бесконечно помечается как обработанное и заново добавляется в очередь)
                     try {
                         $this->manzanaService->updateContactMobileAsync($userData);
                     } catch (ApplicationCreateException | ServiceNotFoundException | ServiceCircularReferenceException $e) {
                         $this->log()->error(sprintf(
-                            'Manzana contact consumer /service/ error: %s, message: %s',
+                            'Manzana contact mobile update consumer /service/ error: %s, message: %s',
                             $e->getMessage(),
                             $message->getBody()
                         ));
