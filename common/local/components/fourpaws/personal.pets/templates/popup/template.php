@@ -92,6 +92,7 @@
                            id="birthday-pet"
                            placeholder=""
                            data-text="2"
+                           autocomplete="off"
                            name="UF_BIRTHDAY" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
