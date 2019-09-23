@@ -180,15 +180,15 @@ class SearchService implements LoggerAwareInterface
                 foreach ($productSearchResult->getProductCollection() as $key => $product){
                     $offers = $product->getOffers();
                     foreach ($offers as $offer){
-                        $remove = false;
-                        if(in_array('d', $availabilityFlags) && !$offer->isDeliverable()){
-                            $remove = true;
+                        $remove = true;
+                        if(in_array('d', $availabilityFlags) && $offer->isDeliverable()){
+                            $remove = false;
                         }
-                        if(in_array('p', $availabilityFlags) && !$offer->isPickupAvailable()){
-                            $remove = true;
+                        if(in_array('p', $availabilityFlags) && $offer->isPickupAvailable()){
+                            $remove = false;
                         }
-                        if(in_array('r', $availabilityFlags) && !$offer->isByRequest()){
-                            $remove = true;
+                        if(in_array('r', $availabilityFlags) && $offer->isByRequest()){
+                            $remove = false;
                         }
 
                         if($remove){
