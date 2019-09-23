@@ -44,13 +44,16 @@ use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundException as UserNotFoundException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
+use JMS\Serializer\SerializerInterface;
 use LinguaLeo\ExpertSender\Entities\Property;
 use LinguaLeo\ExpertSender\Entities\Receiver;
 use LinguaLeo\ExpertSender\Entities\Snippet;
@@ -149,9 +152,15 @@ class ExpertsenderService implements LoggerAwareInterface
      * @var SmsService
      */
     protected $smsService;
+    /**
+     * @var UserSearchInterface
+     */
+    protected $userService;
 
     /**
      * ExpertsenderService constructor.
+     * @param UserSearchInterface $userSearch
+     * @param SmsService $smsService
      */
     public function __construct(UserSearchInterface $userSearch, SmsService $smsService)
     {
@@ -164,6 +173,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $this->client = new ExpertSender($url, $key, $client);
 
         $this->smsService = $smsService;
+        $this->userService = $userSearch;
     }
 
     /**
@@ -512,7 +522,7 @@ class ExpertsenderService implements LoggerAwareInterface
 
             /** если не нашли id по почте регистрируем в сендере */
             return $this->sendEmailAfterRegister($user,
-                    ['isReg' => false, 'type' => 'email_subscribe', 'subscribe' => true]);
+                ['isReg' => false, 'type' => 'email_subscribe', 'subscribe' => true]);
         }
         return false;
     }
@@ -1606,22 +1616,55 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param User $user
-     * @param bool $newPetId
-     * @param bool $oldPetId
-     * @param array $params
-     * @return bool
-     * @throws ExpertsenderServiceException
-     * @throws ArgumentNullException
+     * @param CurrentUserProviderInterface $currentUser
+     * @param null $newPetId
+     * @param null $oldPetId
      */
-    public function sendAfterPetUpdate(User $user, $newPetId = null, $oldPetId = null, array $params = []): bool
+    public function sendAfterPetUpdateAsync($currentUser, $newPetId = null, $oldPetId = null)
     {
-        if (!$newPetId && !$oldPetId) {
-            throw new ArgumentNullException('Отсутвует Id питомца');
+        if (($newPetId == $oldPetId) || (!$newPetId && !$oldPetId) || !$currentUser) {
+            return;
         }
 
-        if ($newPetId == $oldPetId) {
-            return true;
+        try {
+            if (!$userId = $currentUser->getCurrentUserId()) {
+                return;
+            }
+        } catch (NotAuthorizedException $e) {
+            return;
+        }
+
+        $data = [
+            'USER_ID' => $userId,
+            'NEW_PET_ID' => $newPetId,
+            'OLD_PET_ID' => $oldPetId,
+        ];
+
+        /** @noinspection MissingService */
+        $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.expert_sender_send_pets_producer');
+
+        $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
+        $producer->publish($serializer->serialize($data, 'json'));
+    }
+
+
+    /**
+     * @param $userId
+     * @param bool $newPetId
+     * @param bool $oldPetId
+     * @return bool
+     * @throws ExpertsenderServiceException
+     */
+    public function sendAfterPetUpdate($userId = null, $newPetId = null, $oldPetId = null)
+    {
+        if (($newPetId == $oldPetId) || (!$newPetId && !$oldPetId) || !$userId) {
+            return false;
+        }
+
+        try {
+            $user = $this->userService->findOne($userId);
+        } catch (\Exception $e) {
+            return false;
         }
 
         if ($user->hasEmail()) {
