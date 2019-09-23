@@ -315,7 +315,7 @@ class KkmService implements LoggerAwareInterface
             }
 
             try {
-                $ch = curl_init(static::YANDEX_GEOCODE_URL . urlencode($query) . '&key=' . urlencode(static::YANDEX_API_KEY) . '&results=1');
+                $ch = curl_init(static::YANDEX_GEOCODE_URL . urlencode($query) . '&apikey=' . urlencode(static::YANDEX_API_KEY) . '&results=1');
                 curl_setopt_array($ch, static::YANDEX_REQUEST_PARAMS);
                 $content = curl_exec($ch);
                 curl_close($ch);

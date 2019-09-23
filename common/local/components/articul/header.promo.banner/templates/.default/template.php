@@ -12,17 +12,14 @@
         $arResult['IMAGES'][$arResult['ELEMENT']['TABLET_PICTURE']]
      */
     ?>
-    <div class="b-promo-top-full b-promo-top-full--fashion js-promo-top-full hide">
-        <div class="b-container b-promo-top-full__fashion-container">
-            <a href="<?= $arResult['ELEMENT']['LINK'] ?>" class="b-promo-top-full__fashion-inner">
-                <div class="b-promo-top-full__fashion-image-wrap">
-                    <img src="<?= $arResult['IMAGES'][$arResult['ELEMENT']['PICTURE']] ?>" alt="<?= $arResult['NAME'] ?>" class="b-promo-top-full__fashion-image"/>
-                    <img src="<?= $arResult['IMAGES'][$arResult['ELEMENT']['MOBILE_PICTURE']] ?>" alt="<?= $arResult['NAME'] ?>" class="b-promo-top-full__fashion-image b-promo-top-full__fashion-image--mobile"/>
-                </div>
-                <div class="b-promo-top-full__close-wrap js-close-promo-top-full">
-                    <div class="b-promo-top-full__close"></div>
-                </div>
+    <div class="b-promo-top-full js-promo-top-full hide">
+        <div class="b-container b-promo-top-full__container">
+            <a href="<?= $arResult['ELEMENT']['LINK'] ?>" class="b-promo-top-full__image-wrap">
+                <img src="<?= $arResult['IMAGES'][$arResult['ELEMENT']['PICTURE']] ?>" alt="<?= $arResult['NAME'] ?>" class="b-promo-top-full__image"/>
+                <img src="<?= $arResult['IMAGES'][$arResult['ELEMENT']['TABLET_PICTURE']] ?>" alt="<?= $arResult['NAME'] ?>" class="b-promo-top-full__image b-promo-top-full__image--tablet"/>
+                <img src="<?= $arResult['IMAGES'][$arResult['ELEMENT']['MOBILE_PICTURE']] ?>" alt="<?= $arResult['NAME'] ?>" class="b-promo-top-full__image b-promo-top-full__image--mobile"/>
             </a>
+            <div class="b-promo-top-full__close js-close-promo-top-full"></div>
         </div>
     </div>
 <?php } ?>
