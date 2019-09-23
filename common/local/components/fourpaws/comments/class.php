@@ -282,9 +282,11 @@ class CCommentsComponent extends \CBitrixComponent
     public function getData(bool $addNotAuth = false): array
     {
         $data = Application::getInstance()->getContext()->getRequest()->getPostList()->toArray();
+
         unset($data['action'], $data['g-recaptcha-response']);
         if ($this->arResult['AUTH']) {
             $data['UF_USER_ID'] = $this->userCurrentUserService->getCurrentUserId();
+            $data['UF_COMMENT_IMAGES'] = $this->getPhotoData();
         } else {
             if (!$addNotAuth || ((!empty($data['EMAIL']) || !empty($data['PHONE'])) && !empty($data['PASSWORD']))) {
                 $userRepository = $this->userCurrentUserService->getUserRepository();
@@ -337,6 +339,61 @@ class CCommentsComponent extends \CBitrixComponent
         $data['UF_DATE'] = new Date();
 
         return $data;
+    }
+
+    /**
+     * @return array|null
+     * @throws SystemException
+     */
+    public function getPhotoData()
+    {
+        $fileList = Application::getInstance()->getContext()->getRequest()->getFileList()->toArray();
+
+        if (!isset($fileList['UF_PHOTO']) || empty($fileList['UF_PHOTO'])) {
+            return null;
+        }
+
+        $dataFiles = [];
+
+        $fileList = $fileList['UF_PHOTO'];
+
+        $filesCount = count($fileList['name']);
+
+        if (count($fileList['name']) > 5) {
+            throw new \Exception('too much');
+        }
+
+        for ($i = 0; $i < $filesCount; $i++) {
+            $file = [
+                'name' => $fileList['name'][$i],
+                'type' => $fileList['type'][$i],
+                'tmp_name' => $fileList['tmp_name'][$i],
+                'error' => $fileList['error'][$i],
+                'size' => $fileList['size'][$i],
+            ];
+
+            if ($file['error'] !== 0) {
+                throw new \Exception('error');
+            }
+
+            if ($file['size'] > (5 * 1024 * 1024)) {
+                throw new \Exception('too big');
+            }
+
+            if (!\in_array($file['type'], ['image/jpeg', 'image/jpg', 'image/png'])) {
+                throw new \Exception('wrong format');
+            }
+
+            $dataFiles[] = [
+                'name' => $file['name'],
+                'size' => $file['size'],
+                'tmp_name' => $file['tmp_name'],
+                'type' => $file['type'],
+                'MODULE_ID' => 'iblock',
+            ];
+        }
+
+        return $dataFiles;
     }
 
     /**

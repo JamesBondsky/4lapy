@@ -223,7 +223,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                     <div class="btn-add-photos" data-btn-multiple-add-photo="true">
                         <input class="btn-add-photos__load js-no-valid js-multiple-drag-n-drop"
                                type="file"
-                               name="UF_PHOTO"
+                               name="UF_PHOTO[]"
                                multiple
                                data-max-add-photos="5"
                                accept="image/*,image/jpeg" />
