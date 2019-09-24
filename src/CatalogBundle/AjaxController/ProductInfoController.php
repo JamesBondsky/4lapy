@@ -33,6 +33,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use WebArch\BitrixCache\BitrixCache;
 
 /**
  * Class ProductInfoController
@@ -180,86 +181,116 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
      *
      * @return JsonResponse
      *
-     * @global \CMain            $APPLICATION
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws \Exception
+     * @global \CMain $APPLICATION
      */
     public function infoAction(ProductListRequest $productListRequest): JsonResponse
     {
+        $validator = $this->validator;
+        $getProductInfo = function ($product, $offer) {
+            $this->getProductInfo($product, $offer);
+        };
+
+        $locationCode = $this->locationService->getCurrentLocation();
+
         $response = [
             'products' => [],
         ];
 
-        $currentOffer = null;
+        $response = (new BitrixCache())
+            ->withId(__METHOD__ . '_' . md5(serialize($productListRequest)) . '_' . $locationCode)
+            ->withTag('infoAction')
+            ->withTime(600) // 10 минут
+            ->resultOf(
+                static function () use ($productListRequest, $response, $validator, $getProductInfo) {
+                    $currentOffer = null;
 
-        $cartItems = $this->basketService->getBasketProducts();
+                    if (!$validator->validate($productListRequest)->count()) {
+                        /** @var ProductSearchResult $result */
+                        /** для списка товаров дает небольой выйгрыш отдельное получение офферов*/
+                        $productIds = $productListRequest->getProductIds();
+                        /** исправляем проблему с сортировкой */
+                        sort($productIds, SORT_NUMERIC);
+                        $getProducts = function () use ($productIds) {
+                            $productCollection = (new ProductQuery())->withFilter(['=ID' => $productIds])->exec();
+                            /** @var Product $product */
+                            $products = [];
+                            if ($productCollection->count() === 1) {
+                                $product = $productCollection->first();
+                                $products[$product->getId()] = $product;
+                            } else {
+                                foreach ($productCollection as $product) {
+                                    $products[$product->getId()] = $product;
+                                }
+                            }
+                            return $products;
+                        };
 
-        if (!$this->validator->validate($productListRequest)->count()) {
-            /** @var ProductSearchResult $result */
-            /** для списка товаров дает небольой выйгрыш отдельное получение офферов*/
-            $productIds = $productListRequest->getProductIds();
-            /** исправляем проблему с сортировкой */
-            sort($productIds, SORT_NUMERIC);
-            $getProducts = function () use ($productIds) {
-                $productCollection = (new ProductQuery())->withFilter(['=ID' => $productIds])->exec();
-                /** @var Product $product */
-                $products = [];
-                if ($productCollection->count() === 1) {
-                    $product = $productCollection->first();
-                    $products[$product->getId()] = $product;
-                } else {
-                    foreach ($productCollection as $product) {
-                        $products[$product->getId()] = $product;
-                    }
-                }
-                return $products;
-            };
+                        $products = $getProducts();
 
-            $products = $getProducts();
+                        $offerCollection = (new OfferQuery())->withFilter([
+                            '=PROPERTY_CML2_LINK' => $productIds,
+                            'ACTIVE'              => 'Y',
+                            '>CATALOG_PRICE_2'    => 0,
+                        ])->exec();
 
-            $offerCollection = (new OfferQuery())->withFilter([
-                '=PROPERTY_CML2_LINK' => $productIds,
-                'ACTIVE'              => 'Y',
-                '>CATALOG_PRICE_2'    => 0,
-            ])->exec();
+                        /** @var Offer $offer */
+                        /** @var Product $product */
+                        /** добавляем офферы чтобы е было запроса по всем офферам */
+                        foreach ($offerCollection as $offer) {
+                            $product = $products[$offer->getCml2Link()];
+                            $product->addOffer($offer);
+                            $offer->setProduct($product);
+                        }
 
-            /** @var Offer $offer */
-            /** @var Product $product */
-            /** добавляем офферы чтобы е было запроса по всем офферам */
-            foreach ($offerCollection as $offer) {
-                $product = $products[$offer->getCml2Link()];
-                $product->addOffer($offer);
-                $offer->setProduct($product);
-            }
+                        /** @var Product $product */
+                        foreach ($products as $product) {
+                            $ratings = [];
+                            $sortedOffers = $product->getOffersSorted();
+                            foreach ($sortedOffers as $offer) {
+                                $rating = 0;
+                                if ($offer->isAvailable()) {
+                                    $rating++;
+                                    if (!$offer->isByRequest()) {
+                                        $rating++;
+                                    }
+                                }
+                                $ratings[$offer->getId()] = $rating;
+                            }
 
-            /** @var Product $product */
-            foreach ($products as $product) {
-                $ratings = [];
-                $sortedOffers = $product->getOffersSorted();
-                foreach ($sortedOffers as $offer) {
-                    $rating = 0;
-                    if ($offer->isAvailable()) {
-                        $rating++;
-                        if (!$offer->isByRequest()) {
-                            $rating++;
+                            /** @var Offer $activeOffer */
+                            $activeOffer = $sortedOffers->first();
+                            foreach ($sortedOffers as $offer) {
+                                if ($ratings[$activeOffer->getId()] < $ratings[$offer->getId()]) {
+                                    $activeOffer = $offer;
+                                }
+                            }
+
+                            foreach ($product->getOffers() as $offer) {
+                                $responseItem = $getProductInfo($product, $offer);
+                                //$responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
+                                $responseItem['active'] = $activeOffer->getId() === $offer->getId();
+                                $response['products'][$product->getId()][$offer->getId()] = $responseItem;
+                            }
                         }
                     }
-                    $ratings[$offer->getId()] = $rating;
-                }
 
-                /** @var Offer $activeOffer */
-                $activeOffer = $sortedOffers->first();
-                foreach ($sortedOffers as $offer) {
-                    if ($ratings[$activeOffer->getId()] < $ratings[$offer->getId()]) {
-                        $activeOffer = $offer;
-                    }
+                    return $response;
                 }
+        );
 
-                foreach ($product->getOffers() as $offer) {
-                    $responseItem = $this->getProductInfo($product, $offer);
-                    $responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
-                    $responseItem['active'] = $activeOffer->getId() === $offer->getId();
-                    $response['products'][$product->getId()][$offer->getId()] = $responseItem;
-                }
+        if ($response['products']) {
+            $cartItems = $this->basketService->getBasketProducts();
+        }
+
+        foreach ($response['products'] as $productId => $product) {
+            /** @var Offer $offer */
+            foreach ($product as $offerId => $offer) {
+                $response['products'][$productId][$offerId]['inCart'] = $cartItems[$offerId] ?? 0;
             }
+
         }
 
         return JsonSuccessResponse::createWithData('', $response);
