@@ -19,7 +19,10 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
+use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
+use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -108,6 +111,8 @@ class Event extends BaseServiceHandler
 
         /** очистка кеша пользователя */
         static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'clearUserCache'], 'main');
+        /** обновляем имя пользователя в order storage */
+        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'updateOrderStorage'], 'main');
 
         /** чистим кеш юзера при авторизации */
         static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'clearUserCache'], 'main');
@@ -788,5 +793,39 @@ class Event extends BaseServiceHandler
 
         // TODO: выбрасывает 500, но БД обновляет - нужно думать почему.
         // TODO: P.S при обновлении в битре полей также выкидывает эррор.
+    }
+
+    /**
+     * @param $arFields
+     */
+    public static function updateOrderStorage($arFields) : void
+    {
+        if (!isset($arFields['NAME']) || empty($arFields['NAME'])) {
+            return;
+        }
+
+        $container = App::getInstance()->getContainer();
+        /** @var OrderStorageService $orderStorageService */
+        $orderStorageService = $container->get(OrderStorageService::class);
+        /** @var CurrentUserProviderInterface $userService */
+        $userService = $container->get(CurrentUserProviderInterface::class);
+
+        try {
+            $storage = $orderStorageService->getStorage($userService->getCurrentFUserId());
+        } catch (OrderStorageSaveException $e) {
+            return;
+        }
+
+        if (!$storage) {
+            return;
+        }
+
+        $storage->setName($arFields['NAME']);
+
+        try {
+            $orderStorageService->updateStorage($storage);
+        } catch (OrderStorageValidationException $e) {
+            return;
+        }
     }
 }
