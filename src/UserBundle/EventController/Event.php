@@ -821,11 +821,11 @@ class Event extends BaseServiceHandler
         }
 
         if (isset($arFields['EMAIL']) && !empty($arFields['EMAIL'])) {
-            $storage->setName($arFields['EMAIL']);
+            $storage->setEmail($arFields['EMAIL']);
         }
 
         if (isset($arFields['PERSONAL_PHONE']) && !empty($arFields['PERSONAL_PHONE'])) {
-            $storage->setName($arFields['PERSONAL_PHONE']);
+            $storage->setPhone($arFields['PERSONAL_PHONE']);
         }
 
         try {
