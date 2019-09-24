@@ -235,6 +235,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                             файла
                         </div>
                     </div>
+                    <div class="b-error"><span class="js-message"></span></div>
                 </div>
 
                 <? if (KioskService::isKioskMode()) { ?>
