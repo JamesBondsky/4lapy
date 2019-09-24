@@ -6,6 +6,7 @@ $APPLICATION->SetPageProperty('description', '');
 $APPLICATION->SetTitle("Уютно жить");
 
 use FourPaws\Decorators\SvgDecorator;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType; ?>
 
@@ -114,9 +115,52 @@ use FourPaws\Enum\IblockType; ?>
         </div>
     </section>
 
-    <section class="fashion-interesting-clothes">
+    <section class="articles-comfortable-living">
         <div class="b-container">
             <h2 class="title-comfortable-living">Полезные статьи</h2>
+            <div class="articles-comfortable-living__content">
+                <?
+                $APPLICATION->IncludeComponent('fourpaws:items.list',
+                    'fashion',
+                    [
+                        'ACTIVE_DATE_FORMAT'     => 'j F Y',
+                        'AJAX_MODE'              => 'N',
+                        'AJAX_OPTION_ADDITIONAL' => '',
+                        'AJAX_OPTION_HISTORY'    => 'N',
+                        'AJAX_OPTION_JUMP'       => 'N',
+                        'AJAX_OPTION_STYLE'      => 'Y',
+                        'CACHE_FILTER'           => 'Y',
+                        'CACHE_GROUPS'           => 'N',
+                        'CACHE_TIME'             => '36000000',
+                        'CACHE_TYPE'             => 'A',
+                        'CHECK_DATES'            => 'Y',
+                        'FIELD_CODE'             => [
+                            '',
+                        ],
+                        'FILTER_NAME'            => 'arNewsFilter',
+                        'IBLOCK_ID'              => [
+                            IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::NEWS),
+                            IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),
+                        ],
+                        'IBLOCK_TYPE'            => IblockType::PUBLICATION,
+                        'NEWS_COUNT'             => '7',
+                        'PREVIEW_TRUNCATE_LEN'   => '',
+                        'PROPERTY_CODE'          => [
+                            'PUBLICATION_TYPE',
+                            'VIDEO',
+                        ],
+                        'SET_LAST_MODIFIED'      => 'N',
+                        'SORT_BY1'               => 'ACTIVE_FROM',
+                        'SORT_BY2'               => 'SORT',
+                        'SORT_ORDER1'            => 'DESC',
+                        'SORT_ORDER2'            => 'ASC',
+                    ],
+                    false,
+                    ['HIDE_ICONS' => 'Y']
+                );
+                ?>
+            </div>
+
         </div>
     </section>
 </div>
