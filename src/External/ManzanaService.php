@@ -176,7 +176,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 'arguments' => $arguments,
             ]);
 
-            if ($contract == 'client_search') {
+            if ($contract == 'client_search' && getenv('ENABLE_CACHE_MANZANA') == 'Y') {
                 $result = $this->getClientSearchInCache($parameters, $arguments);
             } else {
                 $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
