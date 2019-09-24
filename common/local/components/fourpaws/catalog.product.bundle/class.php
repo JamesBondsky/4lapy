@@ -19,6 +19,7 @@ use FourPaws\Catalog\Model\BundleItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -47,6 +48,7 @@ class CatalogDetailBundle extends CBitrixComponent
         parent::__construct($component);
 
         $container = Application::getInstance()->getContainer();
+        /** @var UserService $percent */
         $this->userService = $container->get(CurrentUserProviderInterface::class);
     }
 
@@ -89,7 +91,8 @@ class CatalogDetailBundle extends CBitrixComponent
         /** @var BundleItem $item */
         $products = $bundle->getProducts();
         if (\is_array($products) && !empty($products)) {
-            $percent = $this->userService->getCurrentUserBonusPercent();
+//            $percent = $this->userService->getCurrentUserBonusPercent();
+            $percent = $this->userService->getCurrentUser()->getDiscount(); //берем скидку из поля профиля. Обновляется каждый при каждой авторизации
             foreach ($products as $item) {
                 $offer = $item->getOffer();
                 $this->arResult['SUM'] += $offer->getCatalogPrice() * $item->getQuantity();
