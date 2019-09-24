@@ -54,6 +54,14 @@ class OrderCalculate
     protected $promoCodeResult = '';
 
     /**
+     * Можно ли связаться с клиентом по телефону
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("isPhoneCallAvailable")
+     * @var bool
+     */
+    protected $isPhoneCallAvailable = true;
+
+    /**
      * @return Price
      */
     public function getTotalPrice(): Price
@@ -146,5 +154,23 @@ class OrderCalculate
     {
         $this->promoCodeResult = $promoCodeResult;
         return $this;
+    }
+
+    /**
+     * @param bool $isPhoneCallAvailable
+     * @return OrderCalculate
+     */
+    public function setIsPhoneCallAvailable(bool $isPhoneCallAvailable): OrderCalculate
+    {
+        $this->isPhoneCallAvailable = $isPhoneCallAvailable;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPhoneCallAvailable(): bool
+    {
+        return $this->isPhoneCallAvailable;
     }
 }
