@@ -46,6 +46,7 @@ use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserSearchInterface;
+use FourPaws\UserBundle\Service\UserService;
 use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -157,6 +158,23 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 'parameters' => $parameters,
             ];
 
+            $userId = 0;
+
+            $container = App::getInstance()->getContainer();
+
+            try {
+                /** @var UserService $userCurrentUserService */
+                $userCurrentUserService = $container->get(CurrentUserProviderInterface::class);
+                $currentUser = $userCurrentUserService->getCurrentUser();
+                $userId = $currentUser->getId();
+            } catch (Exception $e) {}
+
+            $this->logger->info('Manzana query', [
+                'user_id' => $userId,
+                'method' => $contract,
+                'arguments' => $arguments,
+            ]);
+
             $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
         } catch (Exception $e) {
             try {
@@ -244,6 +262,23 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         ];
 
         try {
+            $userId = 0;
+
+            $container = App::getInstance()->getContainer();
+
+            try {
+                /** @var UserService $userCurrentUserService */
+                $userCurrentUserService = $container->get(CurrentUserProviderInterface::class);
+                $currentUser = $userCurrentUserService->getCurrentUser();
+                $userId = $currentUser->getId();
+            } catch (Exception $e) {}
+
+            $this->logger->info('Manzana query', [
+                'user_id' => $userId,
+                'method' => self::METHOD_AUTHENTICATE,
+                'arguments' => $arguments,
+            ]);
+
             $this->sessionId = $this->client->call(
                 self::METHOD_AUTHENTICATE,
                 ['request_options' => $arguments]
