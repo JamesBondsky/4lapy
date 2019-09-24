@@ -92,7 +92,12 @@ class CatalogDetailBundle extends CBitrixComponent
         $products = $bundle->getProducts();
         if (\is_array($products) && !empty($products)) {
 //            $percent = $this->userService->getCurrentUserBonusPercent();
-            $percent = $this->userService->getCurrentUser()->getDiscount(); //берем скидку из поля профиля. Обновляется каждый при каждой авторизации
+            try {
+                $percent = $this->userService->getCurrentUser()->getDiscount(); //берем скидку из поля профиля. Обновляется каждый при каждой авторизации
+            } catch (\Exception $e) {
+                $percent = UserService::BASE_DISCOUNT;
+            }
+
             foreach ($products as $item) {
                 $offer = $item->getOffer();
                 $this->arResult['SUM'] += $offer->getCatalogPrice() * $item->getQuantity();
