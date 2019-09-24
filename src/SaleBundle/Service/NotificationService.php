@@ -279,7 +279,6 @@ class NotificationService implements LoggerAwareInterface
         }
 
         if ($smsTemplate) {
-            // TODO: Здесь баг
             $user = null;
             try {
                 $user = $this->userService->getCurrentUser();
