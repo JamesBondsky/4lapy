@@ -800,10 +800,6 @@ class Event extends BaseServiceHandler
      */
     public static function updateOrderStorage($arFields) : void
     {
-        if (!isset($arFields['NAME']) || empty($arFields['NAME'])) {
-            return;
-        }
-
         $container = App::getInstance()->getContainer();
         /** @var OrderStorageService $orderStorageService */
         $orderStorageService = $container->get(OrderStorageService::class);
@@ -820,7 +816,17 @@ class Event extends BaseServiceHandler
             return;
         }
 
-        $storage->setName($arFields['NAME']);
+        if (isset($arFields['NAME']) && !empty($arFields['NAME'])) {
+            $storage->setName($arFields['NAME']);
+        }
+
+        if (isset($arFields['EMAIL']) && !empty($arFields['EMAIL'])) {
+            $storage->setName($arFields['EMAIL']);
+        }
+
+        if (isset($arFields['PERSONAL_PHONE']) && !empty($arFields['PERSONAL_PHONE'])) {
+            $storage->setName($arFields['PERSONAL_PHONE']);
+        }
 
         try {
             $orderStorageService->updateStorage($storage);
