@@ -190,7 +190,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
     {
         $validator = $this->validator;
         $getProductInfo = function ($product, $offer) {
-            $this->getProductInfo($product, $offer);
+            return $this->getProductInfo($product, $offer);
         };
 
         $locationCode = $this->locationService->getCurrentLocation();
