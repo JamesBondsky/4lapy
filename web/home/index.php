@@ -25,13 +25,17 @@ use FourPaws\Enum\IblockType; ?>
                             <span class="bold">супер-приз</span> победителю!
                         </div>
                         <div class="contest-comfortable-living__links">
-                            <a href="" class="contest-comfortable-living__link-img">
-                                <span>Скачать рисунок</span>
-                                <span class="b-icon">
+                            <div class="contest-comfortable-living__links-item">
+                                <a href="" class="contest-comfortable-living__link-img">
+                                    <span>Скачать рисунок</span>
+                                    <span class="b-icon">
                                     <?= new SvgDecorator('icon-download', 15, 14) ?>
                                 </span>
-                            </a>
-                            <a href="" class="contest-comfortable-living__link-conditions">Подробные условия</a>
+                                </a>
+                            </div>
+                            <div class="contest-comfortable-living__links-item">
+                                <a href="" class="contest-comfortable-living__link-conditions">Подробные условия</a>
+                            </div>
                         </div>
                     </div>
                 </div>
