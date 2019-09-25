@@ -13,8 +13,41 @@ use FourPaws\Enum\IblockType; ?>
 <div class="comfortable-living-page">
 
     <section class="contest-comfortable-living">
-        <div class="b-container">
-            <h2 class="title-comfortable-living">Как накопить марки и купить домик, лежак или когтеточку со скидкой до - 30%</h2>
+        <div class="b-container contest-comfortable-living__container">
+            <div class="contest-comfortable-living__content">
+                <div class="contest-comfortable-living__info">
+                    <div class="contest-comfortable-living__animals"></div>
+                    <div class="contest-comfortable-living__boy"></div>
+                    <div class="contest-comfortable-living__label"></div>
+
+                    <div class="contest-comfortable-living__info-bottom">
+                        <div class="contest-comfortable-living__title">
+                            <span class="bold">супер-приз</span> победителю!
+                        </div>
+                        <div class="contest-comfortable-living__links">
+                            <a href="" class="contest-comfortable-living__link-img">Скачать рисунок</a>
+                            <a href="" class="contest-comfortable-living__link-conditions">Подробные условия</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="contest-comfortable-living__steps">
+                    <div class="contest-comfortable-living__steps-title">Конкурс &laquo;Уютно жить&raquo;</div>
+                    <ol class="contest-comfortable-living__steps-list">
+                        <li>Скачай и&nbsp;раскрась картинку</li>
+                        <li>Сфотографируйся с&nbsp;этой картинкой и&nbsp;своим питомцем</li>
+                        <li>Зарегистрируйся и&nbsp;загрузи фото</li>
+                        <li>Следи за&nbsp;итогами в&nbsp;социальных сетях</li>
+                    </ol>
+                    <?if ($USER->IsAuthorized()) {?>
+                        <form class="">
+
+                        </form>
+                    <? } else { ?>
+                        <div class="contest-comfortable-living__btn-registr js-open-popup" data-popup-id="authorization">Зарегистрироваться</div>
+                    <? } ?>
+                </div>
+            </div>
         </div>
     </section>
 
