@@ -1511,6 +1511,29 @@ class PaymentService implements LoggerAwareInterface
                 }
             }
 
+            if ($bonusAmount) {
+                $sumItem = null;
+
+                foreach ($xmlIdsItems as $xmlIdItem) {
+                    foreach ($newItemArr[$xmlIdItem] as $productItem) {
+                        if ($bonusAmount) {
+                            $sumItem = $productItem->getPrice() * $productItem->getQuantity();
+
+                            $discountSum = (round($sumItem) - 1);
+
+                            if ($discountSum > $bonusAmount) {
+                                $discountSum = $bonusAmount;
+                            }
+
+                            $productItemsPrices[$productItem->getId()] = $sumItem - $discountSum;
+                            $bonusAmount -= $discountSum;
+                        }
+
+                        break;
+                    }
+                }
+            }
+
 
             foreach ($xmlIdsItems as $xmlIdItem) {
                 /** @var \FourPaws\SapBundle\Dto\In\ConfirmPayment\Item $newItem */
