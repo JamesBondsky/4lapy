@@ -1205,17 +1205,17 @@ class SearchService implements LoggerAwareInterface
 
                 if(in_array('d', $availabilityFlags)
                     && !$offer->getProduct()->isDeliveryForbidden()
-                    && $stockCollection->filterByOffer($offer)->filterByStores($stores['delivery'])
+                    && !$stockCollection->filterByOffer($offer)->filterByStores($stores['delivery'])->isEmpty()
                 ){
                     $remove = false;
                 }
                 if(in_array('p', $availabilityFlags)
-                    && $stockCollection->filterByOffer($offer)->filterByStores($stores['pickup'])
+                    && !$stockCollection->filterByOffer($offer)->filterByStores($stores['pickup'])->isEmpty()
                 ){
                     $remove = false;
                 }
                 if(in_array('r', $availabilityFlags)
-                    && $stockCollection->filterByOffer($offer)->filterByStores($stores['request'])
+                    && !$stockCollection->filterByOffer($offer)->filterByStores($stores['request'])->isEmpty()
                 ){
                     $remove = false;
                 }
