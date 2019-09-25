@@ -158,8 +158,51 @@ class FeedbackService
 
         $form = (new \CForm())->getBySID('feedback')->Fetch();
 
+        $isFiltered = false;
+
+        $res = (new \CFormField)->getList(
+            $form['ID'],
+            'N',
+            $by='s_id',
+            $order='asc',
+            [],
+            $isFiltered
+        );
+
+        $formValues = [];
+
+        while ($question = $res->Fetch()) {
+            $isAnswersFiltered = false;
+            $answerVariant = (new \CFormAnswer())->GetList(
+                $question['ID'],
+                $by='s_id',
+                $order='asc',
+                [],
+                $isAnswersFiltered
+            )->fetch();
+            $fieldName = 'form_' . $answerVariant['FIELD_TYPE'] . '_' . $answerVariant['ID'];
+            $value = null;
+            switch ($question['SID']) {
+                case 'name':
+                    $value = ($user ? $user->getId() : '');
+                    break;
+                case 'email':
+                    $value = ($user ? $user->getEmail() : '');
+                    break;
+                case 'phone':
+                    $value = ($user ? $user->getPersonalPhone() : '');
+                    break;
+                case 'message':
+                    $value = $reportRequest->getSummary();
+                    break;
+            }
+            if ($value) {
+                $formValues[$fieldName] = $value;
+            }
+        }
+
         $formResult = new \CFormResult;
-        if ($iResultId = $formResult->add($form['ID'], $fields['C_FIELDS'], 'N')) {
+        if ($iResultId = $formResult->add($form['ID'], $formValues, 'N')) {
             $formResult->setEvent($iResultId);
             $formResult->mail($iResultId);
         } else  {
