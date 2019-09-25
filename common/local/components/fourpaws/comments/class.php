@@ -486,8 +486,8 @@ class CCommentsComponent extends \CBitrixComponent
             }
             $items[$item['ID']] = $item;
 
-            if ($item['UF_COMMENT_IMAGES'] && is_array($item['UF_COMMENT_IMAGES']) && !empty($item['UF_COMMENT_IMAGES'])) {
-                $imageIds = array_merge($imageIds, $item['UF_COMMENT_IMAGES']);
+            if ($item['UF_PHOTOS'] && is_array($item['UF_PHOTOS']) && !empty($item['UF_PHOTOS'])) {
+                $imageIds = array_merge($imageIds, $item['UF_PHOTOS']);
             }
         }
         if (!empty($userIds)) {
