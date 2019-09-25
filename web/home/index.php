@@ -25,7 +25,12 @@ use FourPaws\Enum\IblockType; ?>
                             <span class="bold">супер-приз</span> победителю!
                         </div>
                         <div class="contest-comfortable-living__links">
-                            <a href="" class="contest-comfortable-living__link-img">Скачать рисунок</a>
+                            <a href="" class="contest-comfortable-living__link-img">
+                                <span>Скачать рисунок</span>
+                                <span class="b-icon">
+                                    <?= new SvgDecorator('icon-download', 15, 14) ?>
+                                </span>
+                            </a>
                             <a href="" class="contest-comfortable-living__link-conditions">Подробные условия</a>
                         </div>
                     </div>
@@ -34,18 +39,23 @@ use FourPaws\Enum\IblockType; ?>
                 <div class="contest-comfortable-living__steps">
                     <div class="contest-comfortable-living__steps-title">Конкурс &laquo;Уютно жить&raquo;</div>
                     <ol class="contest-comfortable-living__steps-list">
-                        <li>Скачай и&nbsp;раскрась картинку</li>
-                        <li>Сфотографируйся с&nbsp;этой картинкой и&nbsp;своим питомцем</li>
-                        <li>Зарегистрируйся и&nbsp;загрузи фото</li>
-                        <li>Следи за&nbsp;итогами в&nbsp;социальных сетях</li>
+                        <li class="item">Скачай и&nbsp;раскрась картинку</li>
+                        <li class="item">Сфотографируйся с&nbsp;этой картинкой и&nbsp;своим питомцем</li>
+                        <li class="item">Зарегистрируйся и&nbsp;загрузи фото</li>
+                        <li class="item">Следи за&nbsp;итогами в&nbsp;социальных&nbsp;сетях</li>
                     </ol>
-                    <?if ($USER->IsAuthorized()) {?>
-                        <form class="">
-
-                        </form>
-                    <? } else { ?>
-                        <div class="contest-comfortable-living__btn-registr js-open-popup" data-popup-id="authorization">Зарегистрироваться</div>
-                    <? } ?>
+                    <div class="contest-comfortable-living__steps-panel">
+                        <?if ($USER->IsAuthorized()) {?>
+                            <form class="contest-comfortable-living__form" enctype="multipart/form-data" method="post" data-form-photo-comfortable-living-landing="true">
+                                <div class="contest-comfortable-living__steps-btn">
+                                    <span>Загрузить фото</span>
+                                    <input class="contest-comfortable-living__photo" type="file" name="PHOTO" accept="image/*,image/jpeg" data-photo-comfortable-living-landing="true">
+                                </div>
+                            </form>
+                        <? } else { ?>
+                            <div class="contest-comfortable-living__steps-btn js-open-popup" data-popup-id="authorization">Зарегистрироваться</div>
+                        <? } ?>
+                    </div>
                 </div>
             </div>
         </div>
