@@ -141,13 +141,10 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                 <?php }
                 /** @noinspection PhpUnhandledExceptionInspection */
                 $frame->end(); ?>
-                <?php if ($arResult['AUTH']) { ?>
-                    <button class="b-button b-button--link-feedback js-add-review">Оставить отзыв</button>
-                <?php } else { ?>
-                    <a class="js-open-popup js-toggle-popover-mobile-header" href="javascript:void(0);" title="Войти" data-popup-id="authorization">
-                        <button class="b-button b-button--link-feedback">Оставить отзыв</button>
-                    </a>
-                <?php } ?>
+                <button class="b-button b-button--link-feedback js-add-review js-authorized-review-button" style="display: none">Оставить отзыв</button>
+                <a class="js-open-popup js-toggle-popover-mobile-header js-not-authorized-review-button" href="javascript:void(0);" title="Войти" data-popup-id="authorization">
+                    <button class="b-button b-button--link-feedback">Оставить отзыв</button>
+                </a>
             </div>
         </div>
         <form class="b-form-review js-form-review js-form-validation js-review-query"
@@ -158,7 +155,8 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
             <input type="hidden" name="UF_OBJECT_ID" value="<?= $arParams['OBJECT_ID'] ?>" class="js-no-valid">
             <input type="hidden" name="action" value="add" class="js-no-valid">
             <?php /** @noinspection PhpUnhandledExceptionInspection */
-            $frame = $this->createFrame()->begin(''); ?>
+//            $frame = $this->createFrame()->begin(''); ?>
+            <? /*
             <div class="b-form-review__wrapper-blocks js-comments-auth-form-<?= $uniqueCommentString ?>"
                  style="display: none">
                 <p class="b-form-review__text-block b-form-review__text-block--account">Укажите телефон или
@@ -186,9 +184,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
-            </div>
+            </div> */ ?>
             <?php /** @noinspection PhpUnhandledExceptionInspection */
-            $frame->end(); ?>
+//            $frame->end(); ?>
             <div class="b-form-review__wrapper-blocks">
                 <div class="b-form-review__sub-heading">Оценка</div>
                 <div class="b-rating b-rating--large b-rating--form-review">
