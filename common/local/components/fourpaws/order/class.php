@@ -353,7 +353,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         try {
             $order = $this->orderService->initOrder($storage);
-        } catch (OrderCreateException $e) {
+        } catch (OrderCreateException | \FourPaws\SaleBundle\Exception\NotFoundException $e) {
             if ($this->currentStep === OrderStorageEnum::PAYMENT_STEP && $_SESSION['ORDER_PAYMENT_URL']) {
                 $url = $_SESSION['ORDER_PAYMENT_URL'];
                 unset($_SESSION['ORDER_PAYMENT_URL']);
