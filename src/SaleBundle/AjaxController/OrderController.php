@@ -617,7 +617,7 @@ class OrderController extends Controller implements LoggerAwareInterface
             $errors[] = $e->getMessage();
         }
 
-        if (empty($errors)) {
+        if (empty($errors) && false) { // todo tm-36460 при валидации не проставился delivery date у доставки
             // проверка на корректность даты доставки
             try {
                 if (!$this->orderStorageService->validateDeliveryDate($storage)) {
