@@ -31,7 +31,7 @@ class StampService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    public const MARK_RATE = 400;
+    public const MARK_RATE = 500;
     public const MARKS_PER_RATE = 1;
 
     public const IS_STAMPS_OFFER_ACTIVE = true;
@@ -482,6 +482,11 @@ class StampService implements LoggerAwareInterface
         // для отладки марок
         //$this->activeStampsCount = 27;
         return $this->activeStampsCount;
+    }
+
+    public function getStampLevels()
+    {
+        return self::STAMP_LEVELS;
     }
 
     public function getExchangeRules($offerXmlId = false)
