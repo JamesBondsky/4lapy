@@ -12,7 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var CMain $APPLICATION */
 /** @noinspection PhpUnhandledExceptionInspection */
 $template = MainTemplate::getInstance(Application::getInstance()->getContext()); ?>
-<div class="b-popup-wrapper js-popup-wrapper">
+<div class="b-popup-wrapper js-popup-wrapper <?php $APPLICATION->ShowViewContent('is_active_popup'); ?>">
     <?php
     /**
      * Область для вставки инлайновых попапов
@@ -47,6 +47,10 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     }
     if ($template->hasFastOrder()) {
         $APPLICATION->IncludeComponent('fourpaws:fast.order', '', [], null, ['HIDE_ICONS' => 'Y']);
+    }
+
+    if ($template->isIndex() || $template->isCatalog()) {
+        $APPLICATION->IncludeComponent('articul:delivery.warning', '');
     }
 
     if ($template->isOrderCompletePage()) {
