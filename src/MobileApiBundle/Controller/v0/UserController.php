@@ -258,7 +258,7 @@ class UserController extends BaseController
                     . "\n\n3. Выбери игру и добавь в корзину, нажми \"списать марки\";"
                     . "\n\n4. Получи игру со скидкой и развивай питомца!",
                 'stampCategories' => $this->apiProductService->getStampsCategories(),
-                'actionID' => 999999,
+                'actionID' => 0,
                 'discount' => sprintf('%s%%', $this->stampService->getCurrentDiscount()),
                 'textNext' => $textNext,
             ],
