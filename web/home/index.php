@@ -12,13 +12,23 @@ use FourPaws\Enum\IblockType; ?>
 
 <div class="comfortable-living-page">
     <section class="promo-comfortable-living">
-        <div class="b-container">
+        <div class="b-container promo-comfortable-living__container">
             <div class="promo-comfortable-living__content">
                 <div class="promo-comfortable-living__img-wrap">
-                    <img src="" class="promo-comfortable-living__img">
-                    <img src="" class="promo-comfortable-living__img promo-comfortable-living__img--mobile">
+                    <img src="/home/img/promo-comfortable-living.png" class="promo-comfortable-living__img">
+                    <img src="/home/img/promo-comfortable-living_mobile.png" class="promo-comfortable-living__img promo-comfortable-living__img--mobile">
                 </div>
-                <ul class="promo-comfortable-living__list"></ul>
+                <ol class="promo-comfortable-living__list">
+                    <li class="item">
+                        <span class="bold">Покупай</span><br/> любые товары
+                    </li>
+                    <li class="item item_short">
+                        <span class="bold">Копи марки</span><br/> 1&nbsp;марка за&nbsp;каждые 500Р&nbsp;в&nbsp;чеке
+                    </li>
+                    <li class="item">
+                        <span class="bold">Меняй марки</span><br/> на&nbsp;скидки до&nbsp;30%
+                    </li>
+                </ol>
             </div>
         </div>
     </section>
