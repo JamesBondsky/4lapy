@@ -138,7 +138,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
         </div>
     </section>
 
-    <? $APPLICATION->IncludeComponent('articul:fashion.product.footer', '') ?>
+    <? $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'filter', ['SECTION_CODE' => 'fashion', 'TYPE' => 'filter']) ?>
 
     <section class="fashion-info-banner">
         <div class="fashion-info-banner__title">
@@ -155,7 +155,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
         </div>
     </section>
 
-    <? $APPLICATION->IncludeComponent('articul:fashion.product.footer', 'rungo', ['SECTION_CODE' => 'rungo', 'TYPE' => 'rungo']) ?>
+    <? $APPLICATION->IncludeComponent('articul:catalog.section.slider', '', ['SECTION_CODE' => 'rungo']) ?>
 
     <section class="fashion-measure-dog" data-measure-dog-fashion="true">
         <?

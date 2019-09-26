@@ -55,5 +55,7 @@ class IblockCode
     public const STAMPS_PRODUCTS = 'stamps_products';
 
     public const FASHION_SLIDER_PRODUCTS = 'fashion_slider_product';
-    public const FASHION_FOOTER_PRODUCTS = 'fashion_footer_product';
+    public const CATALOG_SLIDER_PRODUCTS = 'fashion_footer_product';
+
+    public const HOME_FAQ = 'home_faq';
 }
