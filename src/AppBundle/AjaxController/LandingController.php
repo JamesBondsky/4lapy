@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Type\DateTime;
+use CUser;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -353,6 +354,75 @@ class LandingController extends Controller
             $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_FESTIVAL_REQUEST_ADD);
             $token['value'] = $token['token'];
             unset($token['token']);
+
+            return $e->getJsonResponse()->extendData($token);
+        }
+    }
+
+    /**
+     * @param Request $request
+     */
+    public function uploadDrawImageAction(Request $request)
+    {
+        global $USER;
+
+        try {
+
+            if (!$USER->IsAuthorized()) {
+                throw new JsonResponseException($this->ajaxMess->getNotAuthorizedException());
+            }
+
+//            if ($landingType == self::$grandinLanding && $request->get('sum') < 1800 || $landingType == self::$royalCaninLanding && $request->get('sum') < 1000 || $landingType == self::$mealfeelLanding && $request->get('sum') < 1500) {
+//                throw new JsonResponseException($this->ajaxMess->getWrongDataError());
+//            }
+
+            $files = $_FILES;
+            $userId = $USER->GetID();
+            $userFields = \CUser::GetByID($USER->GetID())->Fetch();
+
+            $requestIblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::HOME_IMAGES);
+
+            $iblockElement = new \CIBlockElement();
+            $resultAdd = $iblockElement->Add([
+                'IBLOCK_ID' => $requestIblockId,
+                'NAME' => 'Заявка ' . implode(' ', [$USER->GetID(), $userFields['LAST_NAME'], $userFields['FIRST_NAME']]),
+                'IBLOCK_SECTION_ID' => false,
+                'PREVIEW_PICTURE' => $_FILES['PHOTO'],
+                'PROPERTY_VALUES' => [
+                    'USER_ID' => $userId,
+                    'LOGIN' => $userFields['LOGIN'],
+                    'FIO' => implode(' ', array_filter([$userFields['LAST_NAME'], $userFields['FIRST_NAME'], $userFields['SECOND_NAME']])),
+                    'PHONE' => $userFields['PERSONAL_PHONE'],
+                    'EMAIL' => $userFields['EMAIL']
+                ],
+            ]);
+
+            if (!$resultAdd) {
+                throw new JsonResponseException($this->ajaxMess->getAddError($iblockElement->LAST_ERROR));
+            }
+
+//            try {
+//                $sender = App::getInstance()->getContainer()->get('expertsender.service');
+//                $sender->sendAfterCheckReg([
+//                    'userEmail' => $email,
+//                    'userId' => $userId,
+//                    'landingType' => $landingType
+//                ]);
+//            }
+//            catch (\Exception $exception)
+//            {
+//                $logger = LoggerFactory::create('expertSender');
+//                $logger->error(sprintf(
+//                    'Error while sending mail. %s exception: %s',
+//                    __METHOD__,
+//                    $exception->getMessage()
+//                ));
+//            }
+
+            $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD);
+            return JsonSuccessResponse::create('Заявка успешно отправлена!');
+
+        } catch (JsonResponseException $e) {
 
             return $e->getJsonResponse()->extendData($token);
         }

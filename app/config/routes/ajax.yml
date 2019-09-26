@@ -87,8 +87,8 @@ personal-offers.email.send:
   defaults: { _controller: '\FourPaws\AppBundle\AjaxController\PersonalOffersController::sendEmailAction' }
   methods: [POST]
 
-landing.home.email.send:
-  path: /personal-offers/email/send/
-  defaults: { _controller: '\FourPaws\AppBundle\AjaxController\PersonalOffersController::sendEmailAction' }
+landing.home.draw.add:
+  path: /landing/home/add
+  defaults: { _controller: '\FourPaws\AppBundle\AjaxController\LandingController::uploadDrawImageAction' }
   methods: [POST]
 

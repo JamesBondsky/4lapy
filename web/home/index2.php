@@ -95,7 +95,7 @@ use FourPaws\Enum\IblockType; ?>
                         </div>
                         <div class="contest-comfortable-living__links">
                             <div class="contest-comfortable-living__links-item">
-                                <a href="" class="contest-comfortable-living__link-img">
+                                <a href="/home/img/draw.jpg" class="contest-comfortable-living__link-img" target="_blank" download="draw.jpg">
                                     <span>Скачать рисунок</span>
                                     <span class="b-icon">
                                     <?= new SvgDecorator('icon-download', 15, 14) ?>
@@ -119,7 +119,7 @@ use FourPaws\Enum\IblockType; ?>
                     </ol>
                     <div class="contest-comfortable-living__steps-panel">
                         <?if ($USER->IsAuthorized()) {?>
-                            <form class="contest-comfortable-living__form" enctype="multipart/form-data" method="post" action="" data-form-photo-comfortable-living-landing="true">
+                            <form class="contest-comfortable-living__form" enctype="multipart/form-data" method="post" action="/ajax/landing/home/add" data-form-photo-comfortable-living-landing="true">
                                 <div class="contest-comfortable-living__steps-btn">
                                     <span>Загрузить фото</span>
                                     <input class="contest-comfortable-living__photo" type="file" name="PHOTO" accept="image/*,image/jpeg" data-photo-comfortable-living-landing="true">
