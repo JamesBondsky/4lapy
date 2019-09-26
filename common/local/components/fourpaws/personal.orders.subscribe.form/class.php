@@ -649,14 +649,11 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     }
 
                     $orderSubscribe->setDeliveryId($deliveryId)
-                        ->setDeliveryPlace($deliveryPlace);
+                        ->setDeliveryPlace($deliveryPlace)
+                        ->setLocationId($this->getLocationService()->getCurrentLocation());
                 }
 
-                if($this->arResult['FIELD_VALUES']['subscribeBonus']){
-                    $orderSubscribe->setPayWithbonus(true);
-                } else {
-                    $orderSubscribe->setPayWithbonus(false);
-                }
+                $orderSubscribe->setPayWithbonus($this->arResult['FIELD_VALUES']['subscribeBonus'] ? true : false);
 
                 if($this->getActionReal() == 'renewalSubmit'){
                     $orderSubscribe->setActive(true);
@@ -1027,7 +1024,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     }
                 }
 
-                if($this->deliveryService->isDelivery($selectedDelivery)){
+                if($this->deliveryService->isDelivery($selectedDelivery) && $this->getLocationService()->getCurrentLocation() == $this->getOrderSubscribe()->getLocationId()){
                     $this->arResult['ADDRESS'] = $this->getLocationService()->splitAddress($this->getOrderSubscribe()->getDeliveryPlace());
                 }
 
