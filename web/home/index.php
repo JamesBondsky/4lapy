@@ -12,6 +12,76 @@ use FourPaws\Enum\IblockType; ?>
 
 <div class="comfortable-living-page">
 
+    <section class="marks-comfortable-living">
+        <div class="b-container">
+            <div class="marks-comfortable-living__content">
+                <div class="marks-comfortable-living__marks">
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active item_discount">
+                        <div class="item__title">-10%</div>
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_discount">
+                        <div class="item__title">-20%</div>
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_discount">
+                        <div class="item__title">-30%</div>
+                        <div class="item__mark"></div>
+                    </div>
+                </div>
+                <div class="balance-comfortable-living">
+                    <div class="balance-comfortable-living__info">
+                        <?if ($USER->IsAuthorized()) {?>
+                            <div class="balance-comfortable-living__user-mark">
+                                <span>Мои марки</span>
+                                <span class="count">10</span>
+                                <span class="b-icon b-icon--mark">
+                                    <?= new SvgDecorator('icon-mark', 24, 24) ?>
+                                </span>
+                            </div>
+                            <div class="balance-comfortable-living__discount">Моя скидка - 20%</div>
+                        <? } else { ?>
+                            <div class="balance-comfortable-living__text">Узнайте ваш баланс марок</div>
+                            <div class="balance-comfortable-living__btn js-open-popup" data-popup-id="authorization">Войти</div>
+                        <? } ?>
+                    </div>
+                    <?if ($USER->IsAuthorized()) {?>
+                        <div class="balance-comfortable-living__primary">
+                            до - 30% осталось 2 марки
+                        </div>
+                    <? } ?>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section class="contest-comfortable-living">
         <div class="b-container contest-comfortable-living__container">
             <div class="contest-comfortable-living__content">
