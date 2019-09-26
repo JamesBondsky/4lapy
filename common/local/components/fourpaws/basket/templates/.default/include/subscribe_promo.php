@@ -66,7 +66,7 @@ use FourPaws\Helpers\WordHelper;
                     </div>
                     <div class="b-price-subscribe-delivery-cart__value">
                         <div class="b-price b-price--subscribe-cart b-price--result-subscribe-cart">
-                            <? if($arResult['TOTAL_PRICE'] != $arResult['SUBSCRIBE_PRICE']) { ?>
+                            <? if($arResult['TOTAL_PRICE'] > $arResult['SUBSCRIBE_PRICE']) { ?>
                                 <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
                                                     <span class="b-old-price__old"><?= WordHelper::numberFormat($arResult['TOTAL_BASE_PRICE']); ?></span>
                                                     <span class="b-ruble">₽</span>
