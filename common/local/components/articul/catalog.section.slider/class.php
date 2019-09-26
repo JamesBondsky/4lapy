@@ -1,10 +1,12 @@
 <?php
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use FourPaws\App\Application as App;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\PersonalBundle\Service\StampService;
 
 /**
  * Created by PhpStorm.
@@ -13,7 +15,7 @@ use FourPaws\Enum\IblockType;
  * Time: 12:31
  */
 
-class CFashionProductFooter extends \CBitrixComponent
+class CCatalogSectionSlider extends \CBitrixComponent
 {
     private $iblockId;
     private $productXmlIds;
@@ -31,7 +33,7 @@ class CFashionProductFooter extends \CBitrixComponent
             $params['CACHE_TIME'] = 86400;
         }
         $params['TYPE'] = $params['TYPE'] ?: 'default';
-        $this->iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::FASHION_FOOTER_PRODUCTS);
+        $this->iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::CATALOG_SLIDER_PRODUCTS);
         return parent::onPrepareComponentParams($params);
     }
 

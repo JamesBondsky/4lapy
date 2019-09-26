@@ -17,7 +17,7 @@ class FashionFooterPropSectionLink20190906133132 extends \Adv\Bitrixtools\Migrat
     {
         $helper = new HelperManager();
 
-        $iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::FASHION_FOOTER_PRODUCTS);
+        $iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::CATALOG_SLIDER_PRODUCTS);
 
         $helper->Iblock()->addPropertyIfNotExists($iblockId, array(
             'NAME' => 'Ссылка в каталог',
