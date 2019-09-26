@@ -11,6 +11,17 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType; ?>
 
 <div class="comfortable-living-page">
+    <section class="promo-comfortable-living">
+        <div class="b-container">
+            <div class="promo-comfortable-living__content">
+                <div class="promo-comfortable-living__img-wrap">
+                    <img src="" class="promo-comfortable-living__img">
+                    <img src="" class="promo-comfortable-living__img promo-comfortable-living__img--mobile">
+                </div>
+                <ul class="promo-comfortable-living__list"></ul>
+            </div>
+        </div>
+    </section>
 
     <section class="section-marks-comfortable-living">
         <div class="b-container">
