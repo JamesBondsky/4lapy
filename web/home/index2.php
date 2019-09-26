@@ -134,7 +134,12 @@ use FourPaws\Enum\IblockType; ?>
         </div>
     </section>
 
-    <? $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', ['SECTION_CODE' => 'home']) ?>
+    <section class="products-comfortable-living" data-products-comfortable-living="true">
+        <div class="b-container">
+            <h2 class="title-comfortable-living">Уютный интерьер со скидкой -30%</h2>
+        </div>
+        <? $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', ['SECTION_CODE' => 'home']) ?>
+    </section>
 
     <section class="info-comfortable-living">
         <div class="b-container">

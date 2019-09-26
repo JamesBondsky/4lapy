@@ -10,7 +10,7 @@ use FourPaws\Decorators\SvgDecorator;
 
 <div class="landing-category-rungo">
     <? foreach($arResult['ELEMENTS'] as $i => $element) { ?>
-        <div class="item-category-landing item-category-landing--rungo active" data-item-filter-category-fashion="<?=$i?>" data-url="/ajax/catalog/product-info/">
+        <div class="item-category-landing item-category-landing--rungo active" data-item-filter-category-landing="<?=$i?>" data-url="/ajax/catalog/product-info/">
             <div class="b-container">
                 <a href="<?= $component->getSectionLink($element['ID']) ?>" class="item-category-landing__title" target="_blank"><?=$element['NAME']?></a>
                 <div class="item-category-landing__content">
@@ -20,7 +20,7 @@ use FourPaws\Decorators\SvgDecorator;
                         </a>
                     </div>
 
-                    <div class="item-category-landing__slider" data-slider-category-fashion="true">
+                    <div class="item-category-landing__slider" data-slider-category-landing="true">
                         <?php
                         foreach ($element['PROPERTIES']['PRODUCTS']['VALUE'] as $xmlId){
                             $product = $component->getProduct($xmlId);
