@@ -35,7 +35,7 @@ class FourPawsPersonalCabinetStampsComponent extends FourPawsComponent
         parent::__construct($component);
         $container = App::getInstance()->getContainer();
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-        $this->stampService = $container->get('stamp.service');
+        $this->stampService = $container->get(StampService::class);
     }
 
 	/**
