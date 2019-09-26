@@ -38,6 +38,7 @@ use FourPaws\External\Manzana\Model\Result;
 use FourPaws\External\Manzana\Model\ResultXmlFactory;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\MobileApiBundle\Tables\ManzanaContactIdTable;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -129,7 +130,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $bag = new ParameterBag(
             [
                 'maxresultsnumber' => '1',
-                'mobilephone' => $phone,
+                'mobilephone' => PhoneHelper::getManzanaPhone($phone),
             ]
         );
 
@@ -175,7 +176,11 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 'arguments' => $arguments,
             ]);
 
-            $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
+            if ($contract == 'client_search' && getenv('ENABLE_CACHE_MANZANA') == 'Y') {
+                $result = $this->getClientSearchInCache($parameters, $arguments);
+            } else {
+                $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
+            }
         } catch (Exception $e) {
             try {
                 /** @noinspection PhpUndefinedFieldInspection */
@@ -433,7 +438,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $bag = new ParameterBag(
             [
                 'maxresultsnumber' => '5',
-                'mobilephone' => $phone,
+                'mobilephone' => PhoneHelper::getManzanaPhone($phone),
             ]
         );
 
@@ -1039,5 +1044,31 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     private function sqlHeartBeat()
     {
         BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
+    }
+
+    private function getClientSearchInCache($parameters, $arguments)
+    {
+        $findPhone = null;
+        foreach ($parameters as $itemParameters) {
+            if ($itemParameters['Name'] == 'mobilephone') {
+                $findPhone = $itemParameters['Value'];
+            }
+        }
+        //find in db
+        $checkContactid = null;
+        if ($findPhone) {
+            $checkContactid = ManzanaContactIdTable::query()->setSelect(['ID', 'CONTACT_DATA'])->addFilter('=USER_PHONE', $findPhone)->exec()->fetch();
+        }
+        if ($checkContactid) {
+            $result = unserialize($checkContactid['CONTACT_DATA']);
+        } else {
+            $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
+            ManzanaContactIdTable::add([
+                'USER_PHONE' => $findPhone,
+                'CONTACT_DATA' => serialize($result)
+            ]);
+        }
+
+        return $result;
     }
 }
