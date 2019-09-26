@@ -12,10 +12,10 @@ use FourPaws\Enum\IblockType; ?>
 
 <div class="comfortable-living-page">
 
-    <section class="marks-comfortable-living">
+    <section class="section-marks-comfortable-living">
         <div class="b-container">
-            <div class="marks-comfortable-living__content">
-                <div class="marks-comfortable-living__marks">
+            <div class="section-marks-comfortable-living__content">
+                <div class="marks-comfortable-living">
                     <div class="item item_active">
                         <div class="item__mark"></div>
                     </div>
