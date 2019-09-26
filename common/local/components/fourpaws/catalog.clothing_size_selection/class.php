@@ -36,7 +36,6 @@ class FourPawsClothingSizeSelection extends FourPawsComponent
         parent::__construct($component);
         $this->hlSizeSelection = Application::getInstance()->getContainer()->get('bx.hlblock.clothingsizeselection');
         $this->hlSize = Application::getInstance()->getContainer()->get('bx.hlblock.clothingsize');
-
     }
 
     /**
