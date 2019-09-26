@@ -268,6 +268,14 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
             </div>
         </section>
     <? } ?>
+
+    <div class="fashion-btn-up__wrap" data-scroll-up-fashion="true">
+        <div class="fashion-btn-up" data-scroll-up-fashion="true">
+            <div class="fashion-btn-up__content">
+                Вверх
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>

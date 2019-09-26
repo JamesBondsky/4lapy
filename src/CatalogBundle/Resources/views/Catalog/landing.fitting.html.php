@@ -1,6 +1,7 @@
 <?php
 
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use Symfony\Component\Templating\PhpEngine;
 
 global $APPLICATION;
@@ -11,7 +12,9 @@ global $USER;
 
 /**
  * @var PhpEngine $view
+ * @var DeliveryResultInterface  $availableDelivery
  */ ?>
+
 <div class="measure_dog__wrapper js-measure-dog <?=($USER->IsAuthorized() ? 'js-measure-dog--with-lk-modal' : '')?>">
     <div class="measure_dog measure_dog--start_size">
         <div class="content_dropdown js-content-dropdown-trigger mobile_mq">
@@ -26,24 +29,24 @@ global $USER;
             <div class="measure_dog__title tablet_up_mq">Как узнать размер собаки</div>
             <div class="measure_dog__info">
                 <style>
-                  .measure_dog__video-iframe {
-                    position: relative;
-                    padding-bottom: 56.25%;
-                    height: 0;
-                  }
+                    .measure_dog__video-iframe {
+                        position: relative;
+                        padding-bottom: 56.25%;
+                        height: 0;
+                    }
 
-                  .measure_dog__video-iframe iframe {
-                  	position: absolute;
-                  	top: 0;
-                  	left: 0;
-                  	width: 100%;
-                  	height: 100%;
-                  }
+                    .measure_dog__video-iframe iframe {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                    }
                 </style>
 
                 <div class="measure_dog__video">
                     <div class="measure_dog__video-iframe">
-                      <iframe src="https://www.youtube.com/embed/BxWcZ6uN7mQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                        <iframe src="https://www.youtube.com/embed/BxWcZ6uN7mQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"></iframe>
                     </div>
 
                     <?/*<video controls="" poster="/static/build/images/inhtml/preview-size-dog.jpg">
@@ -212,119 +215,138 @@ global $USER;
         // $('[data-measure-dog-lk-save-popup="wrapper"]').addClass('active');
         // $('[data-measure-dog-lk-save-popup="step1"]').fadeIn();
     </script>
-    
+
 <? endif ?>
 
 <? if(!$hide_info) { ?>
-<div class="free_fitting__wrapper">
-    <div class="free_fitting">
-        <div class="content_dropdown mobile_mq js-content-dropdown-trigger">
-            <div class="content_dropdown__title">Бесплатная примерка
-                <div class="content_dropdown__arrow">
-                    <?= new SvgDecorator('icon-up-arrow') ?>
-                </div>
-            </div>
-        </div>
-        <div class="content_dropdown__content js-content-dropdown-content">
-            <div class="free_fitting__title_wrapper">
-                <div class="free_fitting__title tablet_up_mq">Бесплатная примерка</div>
-                <div class="sub_navigation__wrapper">
-                    <div class="sub_navigation js-sub-navigation">
-                        <div class="sub_navigation__item--active js-sub-navigation-item" data-view="shop">В
-                            магазине
-                        </div>
-                        <div class="sub_navigation__item js-sub-navigation-item" data-view="home">Дома</div>
+    <div class="free_fitting__wrapper">
+        <div class="free_fitting">
+            <div class="content_dropdown mobile_mq js-content-dropdown-trigger">
+                <div class="content_dropdown__title">Бесплатная примерка
+                    <div class="content_dropdown__arrow">
+                        <?= new SvgDecorator('icon-up-arrow') ?>
                     </div>
                 </div>
             </div>
-            <div class="free_fitting_step__wrapper">
-                <div class="free_fitting_step js-free-fitting-view-shop">
-                    <div class="free_fitting_step__item">
-                        <div class="free_fitting_step__icon">
-                            <?= new SvgDecorator('free_fitting__location') ?>
-                        </div>
-                        <div class="free_fitting_step__title">1. Проверьте наличие<br>товара в магазинах
-                        </div>
-                        <div class="free_fitting_step__paragraph">Наличие в магазинах вы можете посмотреть в карточке
-                            товара
-                        </div>
-                        <div class="free_fitting_step__paragraph">Так же вы можете посмотреть<br><a
-                                    href="/shops/">список всех магазинов</a> в вашем городе
-                        </div>
-                    </div>
-                    <div class="free_fitting_step__item">
-                        <div class="free_fitting_step__icon">
-                            <?= new SvgDecorator('free_fitting__shop') ?>
-                        </div>
-                        <div class="free_fitting_step__title">2. Оформите<br>самовывоз заказа</div>
-                        <div class="free_fitting_step__paragraph">Оформите самовывоз в любой удобный для вас
-                            магазин, в котором выбранный товар есть в наличии
-                        </div>
-                    </div>
-                    <div class="free_fitting_step__item">
-                        <div class="free_fitting_step__icon">
-                            <?= new SvgDecorator('free_fitting__dog') ?>
-                        </div>
-                        <div class="free_fitting_step__title">3. Приезжайте с питомцем<br>и примерьте на
-                            него одежду
-                        </div>
-                        <div class="free_fitting_step__paragraph">Вы можете приехать в выбранный магазин в
-                            любое время его работы и примерить одежду на вашего питомца
-                        </div>
-                        <div class="free_fitting_step__paragraph">Услуга бесплатная</div>
-                    </div>
-                    <div class="free_fitting_step__item">
-                        <div class="free_fitting_step__icon">
-                            <?= new SvgDecorator('free_fitting__card') ?>
-                        </div>
-                        <div class="free_fitting_step__title">4. Купите только то,<br>что подошло</div>
-                        <div class="free_fitting_step__paragraph">Товары, которые не подошли по размеру или
-                            фасону, вы можете вернуть продавцу
+            <div class="content_dropdown__content js-content-dropdown-content">
+                <div class="free_fitting__title_wrapper">
+                    <div class="free_fitting__title tablet_up_mq">Бесплатная примерка</div>
+                    <div class="sub_navigation__wrapper">
+                        <div class="sub_navigation js-sub-navigation">
+                            <div class="sub_navigation__item--active js-sub-navigation-item" data-view="shop">В
+                                магазине
+                            </div>
+                            <div class="sub_navigation__item js-sub-navigation-item" data-view="home">Дома</div>
                         </div>
                     </div>
                 </div>
-                <div class="free_fitting_step--home js-free-fitting-view-home">
-                    <div class="free_fitting_step__item">
-                        <div class="free_fitting_step__icon">
-                            <?= new SvgDecorator('free_fitting__basket') ?>
+                <div class="free_fitting_step__wrapper">
+                    <div class="free_fitting_step js-free-fitting-view-shop">
+                        <div class="free_fitting_step__item">
+                            <div class="free_fitting_step__icon">
+                                <?= new SvgDecorator('free_fitting__location') ?>
+                            </div>
+                            <div class="free_fitting_step__title">1. Проверьте наличие<br>товара в магазинах
+                            </div>
+                            <div class="free_fitting_step__paragraph">Наличие в магазинах вы можете посмотреть в карточке
+                                товара
+                            </div>
+                            <div class="free_fitting_step__paragraph">Так же вы можете посмотреть<br><a
+                                        href="/shops/">список всех магазинов</a> в вашем городе
+                            </div>
                         </div>
-                        <div class="free_fitting_step__title">1. Оформите заказ</div>
-                        <div class="free_fitting_step__paragraph">Вы можете заказать несколько разных
-                            моделей или одну модель в разных размерах
+                        <div class="free_fitting_step__item">
+                            <div class="free_fitting_step__icon">
+                                <?= new SvgDecorator('free_fitting__shop') ?>
+                            </div>
+                            <div class="free_fitting_step__title">2. Оформите<br>самовывоз заказа</div>
+                            <div class="free_fitting_step__paragraph">Оформите самовывоз в любой удобный для вас
+                                магазин, в котором выбранный товар есть в наличии
+                            </div>
+                        </div>
+                        <div class="free_fitting_step__item">
+                            <div class="free_fitting_step__icon">
+                                <?= new SvgDecorator('free_fitting__dog') ?>
+                            </div>
+                            <div class="free_fitting_step__title">3. Приезжайте с питомцем<br>и примерьте на
+                                него одежду
+                            </div>
+                            <div class="free_fitting_step__paragraph">Вы можете приехать в выбранный магазин в
+                                любое время его работы и примерить одежду на вашего питомца
+                            </div>
+                            <div class="free_fitting_step__paragraph">Услуга бесплатная</div>
+                        </div>
+                        <div class="free_fitting_step__item">
+                            <div class="free_fitting_step__icon">
+                                <?= new SvgDecorator('free_fitting__card') ?>
+                            </div>
+                            <div class="free_fitting_step__title">4. Купите только то,<br>что подошло</div>
+                            <div class="free_fitting_step__paragraph">Товары, которые не подошли по размеру или
+                                фасону, вы можете вернуть продавцу
+                            </div>
                         </div>
                     </div>
-                    <div class="free_fitting_step__item">
-                        <div class="free_fitting_step__icon">
-                            <?= new SvgDecorator('free_fitting__delivery') ?>
+                    <div class="free_fitting_step--home js-free-fitting-view-home">
+                        <div class="free_fitting_step__item">
+                            <div class="free_fitting_step__icon">
+                                <?= new SvgDecorator('free_fitting__basket') ?>
+                            </div>
+                            <div class="free_fitting_step__title">1. Оформите заказ</div>
+                            <div class="free_fitting_step__paragraph">Вы можете заказать несколько разных
+                                моделей или одну модель в разных размерах
+                            </div>
                         </div>
-                        <div class="free_fitting_step__title">2. Закажите<br>доставку курьером</div>
-                        <div class="free_fitting_step__paragraph">Стоимость доставки — 200 ₽<br>Бесплатно
-                            при заказе от 2 000 ₽
+                        <div class="free_fitting_step__item">
+                            <div class="free_fitting_step__icon">
+                                <?= new SvgDecorator('free_fitting__delivery') ?>
+                            </div>
+                            <div class="free_fitting_step__title">2. Закажите<br>доставку курьером</div>
+                            <div class="free_fitting_step__paragraph">
+                                <?php if ($availableDelivery) { ?>
+                                    <?php
+                                    $deliveryFreeFrom = (int)$availableDelivery->getFreeFrom();
+                                    $deliveryPrice = (int)$availableDelivery->getDeliveryPrice();
+                                    ?>
+                                    <?php switch (true) {
+                                        case ($deliveryPrice === 0): ?>
+                                            Бесплатная доставка
+                                            <?php break;
+                                        case (($deliveryFreeFrom === 0) && ($deliveryPrice !== 0)): ?>
+                                            Стоимость доставки — <?= \FourPaws\Helpers\WordHelper::numberFormat($deliveryPrice, 0) ?> ₽<br>
+                                            <?php break;
+                                        case (($deliveryFreeFrom !== 0) && ($deliveryPrice !== 0)): ?>
+                                            Стоимость доставки — <?= \FourPaws\Helpers\WordHelper::numberFormat($deliveryPrice, 0) ?> ₽<br>
+                                            Бесплатно при заказе от <?= \FourPaws\Helpers\WordHelper::numberFormat($deliveryFreeFrom, 0) ?> ₽
+                                            <?php break;
+                                    } ?>
+                                <?php } else { ?>
+                                    В вашем регионе отсутствует доставка курьером
+                                <?php } ?>
+                            </div>
                         </div>
-                    </div>
-                    <div class="free_fitting_step__item">
-                        <div class="free_fitting_step__icon">
-                            <?= new SvgDecorator('free_fitting__dog') ?>
+                        <div class="free_fitting_step__item">
+                            <div class="free_fitting_step__icon">
+                                <?= new SvgDecorator('free_fitting__dog') ?>
+                            </div>
+                            <div class="free_fitting_step__title">3. Примерьте одежду <br>на вашего питомца
+                            </div>
+                            <div class="free_fitting_step__paragraph">Время примерки — 15 минут<br>Услуга
+                                бесплатная
+                            </div>
                         </div>
-                        <div class="free_fitting_step__title">3. Примерьте одежду <br>на вашего питомца
-                        </div>
-                        <div class="free_fitting_step__paragraph">Время примерки — 15 минут<br>Услуга
-                            бесплатная
-                        </div>
-                    </div>
-                    <div class="free_fitting_step__item">
-                        <div class="free_fitting_step__icon">
-                            <?= new SvgDecorator('free_fitting__card') ?>
-                        </div>
-                        <div class="free_fitting_step__title">4. Купите только то,<br>что подошло</div>
-                        <div class="free_fitting_step__paragraph">Товары, которые не подошли по размеру или
-                            фасону, вы можете вернуть курьеру
+                        <div class="free_fitting_step__item">
+                            <div class="free_fitting_step__icon">
+                                <?= new SvgDecorator('free_fitting__card') ?>
+                            </div>
+                            <div class="free_fitting_step__title">4. Купите только то,<br>что подошло</div>
+                            <div class="free_fitting_step__paragraph">Товары, которые не подошли по размеру или
+                                фасону, вы можете вернуть курьеру
+                            </div>
                         </div>
                     </div>
                 </div>
+                <input class="free_fitting__button js-scroll-to-catalog" type="submit" value="Перейти в каталог">
             </div>
-            <input class="free_fitting__button js-scroll-to-catalog" type="submit" value="Перейти в каталог">
         </div>
     </div>
-</div>
 <? } ?>

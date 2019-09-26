@@ -184,7 +184,7 @@ class OrderSubscribeCopyParams
     public function saveNewOrder(): \Bitrix\Sale\Result
     {
         $this->doCopyOrder();
-        $this->getOrderCopyHelper()->doFinalAction();
+        $this->getOrderCopyHelper()->doFinalAction(false);
 
         $this->realDeliveryDate = null;
 

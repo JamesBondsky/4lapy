@@ -184,6 +184,12 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
                 $storage->setSubscribe(false);
                 $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
             }
+
+            // сбрасывает еще подписку у элементов корзины
+            foreach ($basket->getBasketItems() as $basketItem) {
+                $this->basketService->setBasketItemPropertyValue($basketItem, 'SUBSCRIBE_PRICE', '0');
+            }
+
             $order = Order::create(SITE_ID, $userId);
             $order->setBasket($basket);
             // но иногда он так просто не запускается
