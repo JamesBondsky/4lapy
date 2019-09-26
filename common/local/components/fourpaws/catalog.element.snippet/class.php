@@ -122,36 +122,8 @@ class CatalogElementSnippet extends CBitrixComponent
                 $this->arResult['CURRENT_OFFER'] = $currentOffer = $this->getCurrentOffer($product);
 
                 if (StampService::IS_STAMPS_OFFER_ACTIVE && $currentOffer) {
-//                    $this->arResult['EXCHANGE_RULE'] = $this->getExchangeRule($currentOffer); марки с учетом корзины
-                    $stampLevels = [];
-                    $maxCanUse = 0;
-
-                    $exchangeRules = StampService::EXCHANGE_RULES[$currentOffer->getXmlId()] ?? false;
-
-                    if (!$exchangeRules) {
-                        $exchangeRules = [];
-                    }
-
-                    try {
-                        $activeStampsCount = $this->stampService->getActiveStampsCount();
-                    } catch (\Exception $e) {
-                        $activeStampsCount = 0;
-                    }
-                    foreach ($exchangeRules as $exchangeRule) {
-                        if (($exchangeRule['stamps'] <= $activeStampsCount) && ($exchangeRule['stamps'] > $maxCanUse)) {
-                            $maxCanUse = $exchangeRule['stamps'];
-                        }
-                    }
-
-                    foreach ($exchangeRules as $exchangeRule) {
-                        $stampLevels[] = [
-                            'price' => $exchangeRule['price'],
-                            'stamps' => $exchangeRule['stamps'],
-                            'is_max_level' => ($exchangeRule['stamps'] == $maxCanUse)
-                        ];
-                    }
-
-                    $this->arResult['EXCHANGE_RULE'] = $stampLevels;
+//                    $this->arResult['EXCHANGE_RULE'] = $this->getExchangeRuleWithBasket($currentOffer); марки с учетом корзины
+                    $this->arResult['EXCHANGE_RULE'] = $this->getExchangeRule($currentOffer);
                 }
 
                 if ($category && $product->getIblockSectionId() !== $category->getId()) {
@@ -239,13 +211,54 @@ class CatalogElementSnippet extends CBitrixComponent
     /**
      * @param Offer $currentOffer
      * @return array
+     */
+    protected function getExchangeRule($currentOffer)
+    {
+        $stampLevels = [];
+        $maxCanUse = 0;
+
+        $exchangeRules = $this->stampService->getExchangeRules($currentOffer->getXmlId());
+
+        if (!$exchangeRules) {
+            return $stampLevels;
+        }
+
+        try {
+            $activeStampsCount = $this->stampService->getActiveStampsCount();
+        } catch (\Exception $e) {
+            $activeStampsCount = 0;
+        }
+
+        foreach ($exchangeRules as $exchangeRule) {
+            if (($exchangeRule['stamps'] <= $activeStampsCount) && ($exchangeRule['stamps'] > $maxCanUse)) {
+                $maxCanUse = $exchangeRule['stamps'];
+            }
+        }
+
+        foreach ($exchangeRules as $exchangeRule) {
+            $stampLevels[] = [
+                'price' => $exchangeRule['price'],
+                'stamps' => $exchangeRule['stamps'],
+                'is_max_level' => ($exchangeRule['stamps'] == $maxCanUse)
+            ];
+        }
+
+       return $stampLevels;
+    }
+
+
+
+    /**
+     * получить уровни марок с учетом корзины (максимальный уровень выставляется с учетом уже списанных марок)
+     *
+     * @param Offer $currentOffer
+     * @return array
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws NotImplementedException
-     * @throws ExecuteErrorException
      * @throws ExecuteException
      */
-    protected function getExchangeRule($currentOffer)
+    protected function getExchangeRuleWithBasket($currentOffer)
     {
         $stampLevels = [];
         $maxStampsLevelValue = false;

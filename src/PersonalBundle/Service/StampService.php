@@ -503,7 +503,7 @@ class StampService implements LoggerAwareInterface
     protected function fillExchangeRules()
     {
         try {
-            $iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::FASHION_FOOTER_PRODUCTS);
+            $iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::CATALOG_SLIDER_PRODUCTS);
         } catch (IblockNotFoundException | \Exception $e) {
             return;
         }

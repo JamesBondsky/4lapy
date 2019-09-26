@@ -47,15 +47,19 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
     <hr class="b-hr" />
 
     <?php
-        $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', 'stamps', array(
-            'OFFER_FILTER' => [
-                '=XML_ID' => $arParams['PRODUCTS_XML_ID'],
-            ],
-            'COUNT' => 500,
-            'TITLE' => 'Товары, участвующие в акции',
-	        'CACHE_TIME' => 3600000,
-	        'ONLY_PRODUCTS_XML_ID' => $arParams['PRODUCTS_XML_ID'], // показывать только указанные ТП, а не все в родительских товарах
-        ), $this->getComponent());
+    $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', [
+        'SECTION_CODE' => 'stamps'
+    ]);
+
+//        $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', 'stamps', array(
+//            'OFFER_FILTER' => [
+//                '=XML_ID' => $arParams['PRODUCTS_XML_ID'],
+//            ],
+//            'COUNT' => 500,
+//            'TITLE' => 'Товары, участвующие в акции',
+//	        'CACHE_TIME' => 3600000,
+//	        'ONLY_PRODUCTS_XML_ID' => $arParams['PRODUCTS_XML_ID'], // показывать только указанные ТП, а не все в родительских товарах
+//        ), $this->getComponent());
 
         /*$APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', array(
             'OFFER_FILTER' => [
