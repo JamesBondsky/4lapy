@@ -852,16 +852,25 @@ class OrderCopy
 
     /**
      * Пересчет заказа
+     * $extendedDiscounts - отключает расчёт скидок,
+     *                      но если он отключен, то бонусы (HAS_BONUS) не считаются
      *
      * @throws ArgumentNullException
      * @throws ObjectNotFoundException
      * @throws OrderCreateException
      */
-    public function doFinalAction()
+    public function doFinalAction($extendedDiscounts = true)
     {
-        $this->extendedDiscountsBlockManagerStart();
+        if($extendedDiscounts){
+            $this->extendedDiscountsBlockManagerStart();
+        }
+
         $tmpResult = $this->newOrder->doFinalAction(true);
-        $this->extendedDiscountsBlockManagerEnd();
+
+        if($extendedDiscounts){
+            $this->extendedDiscountsBlockManagerEnd();
+        }
+
         if (!$tmpResult->isSuccess()) {
             throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 800);
         }
