@@ -436,8 +436,17 @@ class KkmService implements LoggerAwareInterface
             $quantities = [];
             $offerXmlIds = [];
             foreach ($products as $product) {
-                $offerXmlIds[] = $product['uid'];
-                $quantities[$product['uid']] = $product['count'];
+                if (strripos($product['uid'], '300') !== 0) {
+                    $offerXmlIds[] = $product['uid'];
+                    $quantities[$product['uid']] = $product['count'];
+                }
+            }
+
+            if (!$offerXmlIds) {
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['syntax_error']['message'] . ': не найдены товары',
+                    static::RESPONSE_STATUSES['syntax_error']['code']
+                );
             }
 
             /** @var OfferCollection $offers */
