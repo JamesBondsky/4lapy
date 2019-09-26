@@ -49,7 +49,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         $APPLICATION->IncludeComponent('fourpaws:fast.order', '', [], null, ['HIDE_ICONS' => 'Y']);
     }
 
-    if ($template->isIndex() || $template->isCatalog()) {
+    if (!$template->isBasket() && !$template->isOrderPage()) {
         $APPLICATION->IncludeComponent('articul:delivery.warning', '');
     }
 
