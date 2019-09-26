@@ -12,6 +12,8 @@ use FourPaws\Enum\IblockType; ?>
 
 <div class="comfortable-living-page">
 
+    <? $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', ['SECTION_CODE' => 'home']) ?>
+
     <section class="contest-comfortable-living">
         <div class="b-container contest-comfortable-living__container">
             <div class="contest-comfortable-living__content">
@@ -75,122 +77,57 @@ use FourPaws\Enum\IblockType; ?>
         </div>
     </section>
 
-    <section class="questions-comfortable-living">
-        <div class="b-container">
-            <h2 class="title-comfortable-living title-comfortable-living_questions">Вопросы и ответы</h2>
-            <div class="questions-comfortable-living__accordion">
-                <div class="item-accordion">
-                    <div class="item-accordion__header js-toggle-accordion">
-                        <span class="item-accordion__header-inner">Как накопить марки?</span>
-                    </div>
-                    <div class="item-accordion__block js-dropdown-block">
-                        <div class="item-accordion__block-content">
-                            <div class="item-accordion__block-text">
-                                Покупай Taft в магазинах сети «Лента» с 1 по 30 сентября и получай
-                                гарантированно 30 баллов на карту лояльности, а также участвуй
-                                в розыгрыше Beauty Box.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="item-accordion">
-                    <div class="item-accordion__header js-toggle-accordion">
-                        <span class="item-accordion__header-inner">Какие будут подарки</span>
-                    </div>
-                    <div class="item-accordion__block js-dropdown-block">
-                        <div class="item-accordion__block-content">
-                            <div class="item-accordion__block-text">
-                                Покупай Taft в магазинах сети «Лента» с 1 по 30 сентября и получай
-                                гарантированно 30 баллов на карту лояльности, а также участвуй
-                                в розыгрыше Beauty Box.
-                            </div>
-                            <div class="item-accordion__block-img">
-                                <img src="/home/img/questions.png" alt="" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="item-accordion">
-                    <div class="item-accordion__header js-toggle-accordion">
-                        <span class="item-accordion__header-inner">Как принять участие</span>
-                    </div>
-                    <div class="item-accordion__block js-dropdown-block">
-                        <div class="item-accordion__block-content">
-                            <div class="item-accordion__block-text">
-                                Покупай Taft в магазинах сети «Лента» с 1 по 30 сентября и получай
-                                гарантированно 30 баллов на карту лояльности, а также участвуй
-                                в розыгрыше Beauty Box.
-                            </div>
-                            <div class="item-accordion__block-img">
-                                <img src="/home/img/questions.png" alt="" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="item-accordion">
-                    <div class="item-accordion__header js-toggle-accordion">
-                        <span class="item-accordion__header-inner">Ещё какие-то вопросы</span>
-                    </div>
-                    <div class="item-accordion__block js-dropdown-block">
-                        <div class="item-accordion__block-content">
-                            <div class="item-accordion__block-text">
-                                Покупай Taft в магазинах сети «Лента» с 1 по 30 сентября и получай
-                                гарантированно 30 баллов на карту лояльности, а также участвуй
-                                в розыгрыше Beauty Box.
-                            </div>
-                            <div class="item-accordion__block-img">
-                                <img src="/home/img/questions.png" alt="" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <? $APPLICATION->IncludeComponent('articul:home.faq', '', []) ?>
 
     <section class="articles-comfortable-living">
         <div class="b-container">
             <h2 class="title-comfortable-living">Полезные статьи</h2>
             <div class="articles-comfortable-living__content">
                 <?
-                $APPLICATION->IncludeComponent('fourpaws:items.list',
-                    'fashion',
-                    [
-                        'ACTIVE_DATE_FORMAT'     => 'j F Y',
-                        'AJAX_MODE'              => 'N',
-                        'AJAX_OPTION_ADDITIONAL' => '',
-                        'AJAX_OPTION_HISTORY'    => 'N',
-                        'AJAX_OPTION_JUMP'       => 'N',
-                        'AJAX_OPTION_STYLE'      => 'Y',
-                        'CACHE_FILTER'           => 'Y',
-                        'CACHE_GROUPS'           => 'N',
-                        'CACHE_TIME'             => '36000000',
-                        'CACHE_TYPE'             => 'A',
-                        'CHECK_DATES'            => 'Y',
-                        'FIELD_CODE'             => [
-                            '',
+                $section = CIBlockSection::GetList([], ['CODE' => 'home'])->Fetch();
+                if($section) {
+                    global $arNewsFilter;
+                    $arNewsFilter = ['SECTION_ID' => [$section['ID']]];
+
+                    $APPLICATION->IncludeComponent('fourpaws:items.list',
+                        'home',
+                        [
+                            'ACTIVE_DATE_FORMAT'     => 'j F Y',
+                            'AJAX_MODE'              => 'N',
+                            'AJAX_OPTION_ADDITIONAL' => '',
+                            'AJAX_OPTION_HISTORY'    => 'N',
+                            'AJAX_OPTION_JUMP'       => 'N',
+                            'AJAX_OPTION_STYLE'      => 'Y',
+                            'CACHE_FILTER'           => 'Y',
+                            'CACHE_GROUPS'           => 'N',
+                            'CACHE_TIME'             => '36000000',
+                            'CACHE_TYPE'             => 'A',
+                            'CHECK_DATES'            => 'Y',
+                            'FIELD_CODE'             => [
+                                '',
+                            ],
+                            'FILTER_NAME'            => 'arNewsFilter',
+                            'IBLOCK_ID'              => [
+                                IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::NEWS),
+                                IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),
+                            ],
+                            'IBLOCK_TYPE'            => IblockType::PUBLICATION,
+                            'NEWS_COUNT'             => '7',
+                            'PREVIEW_TRUNCATE_LEN'   => '',
+                            'PROPERTY_CODE'          => [
+                                'PUBLICATION_TYPE',
+                                'VIDEO',
+                            ],
+                            'SET_LAST_MODIFIED'      => 'N',
+                            'SORT_BY1'               => 'ACTIVE_FROM',
+                            'SORT_BY2'               => 'SORT',
+                            'SORT_ORDER1'            => 'DESC',
+                            'SORT_ORDER2'            => 'ASC',
                         ],
-                        'FILTER_NAME'            => 'arNewsFilter',
-                        'IBLOCK_ID'              => [
-                            IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::NEWS),
-                            IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),
-                        ],
-                        'IBLOCK_TYPE'            => IblockType::PUBLICATION,
-                        'NEWS_COUNT'             => '7',
-                        'PREVIEW_TRUNCATE_LEN'   => '',
-                        'PROPERTY_CODE'          => [
-                            'PUBLICATION_TYPE',
-                            'VIDEO',
-                        ],
-                        'SET_LAST_MODIFIED'      => 'N',
-                        'SORT_BY1'               => 'ACTIVE_FROM',
-                        'SORT_BY2'               => 'SORT',
-                        'SORT_ORDER1'            => 'DESC',
-                        'SORT_ORDER2'            => 'ASC',
-                    ],
-                    false,
-                    ['HIDE_ICONS' => 'Y']
-                );
+                        false,
+                        ['HIDE_ICONS' => 'Y']
+                    );
+                }
                 ?>
             </div>
 
