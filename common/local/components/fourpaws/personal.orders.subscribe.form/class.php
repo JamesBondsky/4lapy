@@ -215,7 +215,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $basketService = $this->getBasketService();
         $deliveryService = $this->getDeliveryService();
         $storeService = $this->getStoreService();
-        $store = $storeService->getStoreByXmlId($storeXmlId);
 
         // запрос может прийти без товаров из оформления заказов
         // в таком случае value это id-шник службы доставки из массива getNextDeliveries
@@ -226,14 +225,26 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $isOrder = true;
         }
 
-        $deliveries = $deliveryService->getByBasket($basket, '', [DeliveryService::INNER_PICKUP_CODE]);
+        $deliveries = $deliveryService->getByBasket($basket, '', [DeliveryService::INNER_PICKUP_CODE, DeliveryService::DPD_PICKUP_CODE]);
         if(empty($deliveries)){
             throw new Exception("Не удалось сформировать службы доставки");
         }
 
         /** @var PickupResult $pickup */
         $pickup = current($deliveries);
-        $pickup->setSelectedShop($store);
+
+        if ($deliveryService->isPickup($pickup)) {
+            try {
+                $store = $storeService->getStoreByXmlId($storeXmlId);
+            } catch (\Exception $e) {
+                // если склад не найден - попробуем найти его в DPD
+                $store = $deliveryService->getDpdTerminalByCode($storeXmlId);
+                if (!$store) {
+                    throw new \FourPaws\PersonalBundle\Exception\NotFoundException(sprintf("Склад с XML_ID=%s не найден в DPD", $storeXmlId));
+                }
+            }
+            $pickup->setSelectedStore($store);
+        }
 
         $nextDeliveries = $deliveryService->getNextDeliveries($pickup, 10);
         foreach($nextDeliveries as $i => $delivery){
