@@ -26,6 +26,7 @@ use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\Search\Model\HitMetaInfoAwareInterface;
 use FourPaws\Search\Model\HitMetaInfoAwareTrait;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -637,8 +638,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @var array
      * @Type("array<string>")
-     * @Accessor(getter="getFullDeliveryAvailabilityForFilter")
-     * @Groups({"elastic"})
      */
     protected $deliveryAvailability;
 
@@ -669,7 +668,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $PROPERTY_DC_SPECIAL_AREA_STORAGE = false;
 
     /**
-     * @var string
+     * @var array
      * @Type("array<string>")
      * @Groups({"elastic"})
      * @Accessor(getter="getAvailableStores")
@@ -2136,6 +2135,13 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         $this->offers->add($offer);
     }
 
+    public function removeOffer(int $offerId)
+    {
+        $this->offers = $this->offers->filter(function(Offer $offer) use($offerId) {
+           return $offer->getId() !== $offerId;
+        });
+    }
+
     /**
      * @return string
      */
@@ -2186,6 +2192,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                || $this->isLicenseRequired();
     }
 
+
+
     /**
      * @throws ApplicationCreateException
      * @return array
@@ -2197,6 +2205,12 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             /** @var DeliveryService $deliveryService */
             $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
             $zones = array_keys($deliveryService->getAllZones());
+            $offerCollection = $this->getOffers();
+            $quantities = [];
+            foreach ($offerCollection as $offer){
+                $quantities[$offer->getXmlId()] = 1;
+            }
+
             foreach ($zones as $zone) {
                 $result = [];
                 foreach ($deliveryService->getByZone($zone) as $deliveryCode) {
@@ -2213,6 +2227,35 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
                 $this->fullDeliveryAvailability[$zone] = $result;
             }
+
+              // новый вариант индексации, которые не взлетел - слишком долго отрабатывает
+//            $canDeliver = !$this->isDeliveryForbidden();
+//            /** @var LocationService $locationService */
+//            $locationService = Application::getInstance()->getContainer()->get('location.service');
+//            $locationGroups = $locationService->getLocationGroups();
+//
+//            $result = [];
+//            foreach ($locationGroups as $locationGroup) {
+//                if(empty($locationGroup['LOCATIONS'])) continue;
+//                $location = array_pop($locationGroup['LOCATIONS']);
+//                foreach ($this->getOffers() as $offer) {
+//                    if(!in_array(static::AVAILABILITY_DELIVERY, $result[$locationGroup['CODE']])
+//                        && $canDeliver
+//                        && $offer->isDeliverable($location)
+//                    ){
+//                        $result[$locationGroup['CODE']][] = static::AVAILABILITY_DELIVERY;
+//                    }
+//
+//                    if(!in_array(static::AVAILABILITY_PICKUP, $result[$locationGroup['CODE']])
+//                        && $canDeliver
+//                        && $offer->isPickupAvailable($location)
+//                    ){
+//                        $result[$locationGroup['CODE']][] = static::AVAILABILITY_PICKUP;
+//                    }
+//                }
+//            }
+//
+//            $this->fullDeliveryAvailability = $result;
         }
 
         return $this->fullDeliveryAvailability;
