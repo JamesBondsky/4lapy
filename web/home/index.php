@@ -12,7 +12,75 @@ use FourPaws\Enum\IblockType; ?>
 
 <div class="comfortable-living-page">
 
-    <? $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', ['SECTION_CODE' => 'home']) ?>
+    <section class="marks-comfortable-living">
+        <div class="b-container">
+            <div class="marks-comfortable-living__content">
+                <div class="marks-comfortable-living__marks">
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active item_discount">
+                        <div class="item__title">-10%</div>
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_discount">
+                        <div class="item__title">-20%</div>
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_discount">
+                        <div class="item__title">-30%</div>
+                        <div class="item__mark"></div>
+                    </div>
+                </div>
+                <div class="balance-comfortable-living">
+                    <div class="balance-comfortable-living__info">
+                        <?if ($USER->IsAuthorized()) {?>
+                            <div class="balance-comfortable-living__user-mark">
+                                <span>Мои марки</span>
+                                <span class="count">10</span>
+                                <span class="b-icon b-icon--mark">
+                                    <?= new SvgDecorator('icon-mark', 24, 24) ?>
+                                </span>
+                            </div>
+                            <div class="balance-comfortable-living__discount">Моя скидка - 20%</div>
+                        <? } else { ?>
+                            <div class="balance-comfortable-living__text">Узнайте ваш баланс марок</div>
+                            <div class="balance-comfortable-living__btn js-open-popup" data-popup-id="authorization">Войти</div>
+                        <? } ?>
+                    </div>
+                    <?if ($USER->IsAuthorized()) {?>
+                        <div class="balance-comfortable-living__primary">
+                            до - 30% осталось 2 марки
+                        </div>
+                    <? } ?>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <section class="contest-comfortable-living">
         <div class="b-container contest-comfortable-living__container">
@@ -27,8 +95,17 @@ use FourPaws\Enum\IblockType; ?>
                             <span class="bold">супер-приз</span> победителю!
                         </div>
                         <div class="contest-comfortable-living__links">
-                            <a href="" class="contest-comfortable-living__link-img">Скачать рисунок</a>
-                            <a href="" class="contest-comfortable-living__link-conditions">Подробные условия</a>
+                            <div class="contest-comfortable-living__links-item">
+                                <a href="" class="contest-comfortable-living__link-img">
+                                    <span>Скачать рисунок</span>
+                                    <span class="b-icon">
+                                    <?= new SvgDecorator('icon-download', 15, 14) ?>
+                                </span>
+                                </a>
+                            </div>
+                            <div class="contest-comfortable-living__links-item">
+                                <a href="" class="contest-comfortable-living__link-conditions">Подробные условия</a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -36,18 +113,23 @@ use FourPaws\Enum\IblockType; ?>
                 <div class="contest-comfortable-living__steps">
                     <div class="contest-comfortable-living__steps-title">Конкурс &laquo;Уютно жить&raquo;</div>
                     <ol class="contest-comfortable-living__steps-list">
-                        <li>Скачай и&nbsp;раскрась картинку</li>
-                        <li>Сфотографируйся с&nbsp;этой картинкой и&nbsp;своим питомцем</li>
-                        <li>Зарегистрируйся и&nbsp;загрузи фото</li>
-                        <li>Следи за&nbsp;итогами в&nbsp;социальных сетях</li>
+                        <li class="item">Скачай и&nbsp;раскрась картинку</li>
+                        <li class="item">Сфотографируйся с&nbsp;этой картинкой и&nbsp;своим питомцем</li>
+                        <li class="item">Зарегистрируйся и&nbsp;загрузи фото</li>
+                        <li class="item">Следи за&nbsp;итогами в&nbsp;социальных&nbsp;сетях</li>
                     </ol>
-                    <?if ($USER->IsAuthorized()) {?>
-                        <form class="">
-
-                        </form>
-                    <? } else { ?>
-                        <div class="contest-comfortable-living__btn-registr js-open-popup" data-popup-id="authorization">Зарегистрироваться</div>
-                    <? } ?>
+                    <div class="contest-comfortable-living__steps-panel">
+                        <?if ($USER->IsAuthorized()) {?>
+                            <form class="contest-comfortable-living__form" enctype="multipart/form-data" method="post" data-form-photo-comfortable-living-landing="true">
+                                <div class="contest-comfortable-living__steps-btn">
+                                    <span>Загрузить фото</span>
+                                    <input class="contest-comfortable-living__photo" type="file" name="PHOTO" accept="image/*,image/jpeg" data-photo-comfortable-living-landing="true">
+                                </div>
+                            </form>
+                        <? } else { ?>
+                            <div class="contest-comfortable-living__steps-btn js-open-popup" data-popup-id="authorization">Зарегистрироваться</div>
+                        <? } ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -77,57 +159,122 @@ use FourPaws\Enum\IblockType; ?>
         </div>
     </section>
 
-    <? $APPLICATION->IncludeComponent('articul:home.faq', '', []) ?>
+    <section class="questions-comfortable-living">
+        <div class="b-container">
+            <h2 class="title-comfortable-living title-comfortable-living_questions">Вопросы и ответы</h2>
+            <div class="questions-comfortable-living__accordion">
+                <div class="item-accordion">
+                    <div class="item-accordion__header js-toggle-accordion">
+                        <span class="item-accordion__header-inner">Как накопить марки?</span>
+                    </div>
+                    <div class="item-accordion__block js-dropdown-block">
+                        <div class="item-accordion__block-content">
+                            <div class="item-accordion__block-text">
+                                Покупай Taft в магазинах сети «Лента» с 1 по 30 сентября и получай
+                                гарантированно 30 баллов на карту лояльности, а также участвуй
+                                в розыгрыше Beauty Box.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="item-accordion">
+                    <div class="item-accordion__header js-toggle-accordion">
+                        <span class="item-accordion__header-inner">Какие будут подарки</span>
+                    </div>
+                    <div class="item-accordion__block js-dropdown-block">
+                        <div class="item-accordion__block-content">
+                            <div class="item-accordion__block-text">
+                                Покупай Taft в магазинах сети «Лента» с 1 по 30 сентября и получай
+                                гарантированно 30 баллов на карту лояльности, а также участвуй
+                                в розыгрыше Beauty Box.
+                            </div>
+                            <div class="item-accordion__block-img">
+                                <img src="/home/img/questions.png" alt="" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="item-accordion">
+                    <div class="item-accordion__header js-toggle-accordion">
+                        <span class="item-accordion__header-inner">Как принять участие</span>
+                    </div>
+                    <div class="item-accordion__block js-dropdown-block">
+                        <div class="item-accordion__block-content">
+                            <div class="item-accordion__block-text">
+                                Покупай Taft в магазинах сети «Лента» с 1 по 30 сентября и получай
+                                гарантированно 30 баллов на карту лояльности, а также участвуй
+                                в розыгрыше Beauty Box.
+                            </div>
+                            <div class="item-accordion__block-img">
+                                <img src="/home/img/questions.png" alt="" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="item-accordion">
+                    <div class="item-accordion__header js-toggle-accordion">
+                        <span class="item-accordion__header-inner">Ещё какие-то вопросы</span>
+                    </div>
+                    <div class="item-accordion__block js-dropdown-block">
+                        <div class="item-accordion__block-content">
+                            <div class="item-accordion__block-text">
+                                Покупай Taft в магазинах сети «Лента» с 1 по 30 сентября и получай
+                                гарантированно 30 баллов на карту лояльности, а также участвуй
+                                в розыгрыше Beauty Box.
+                            </div>
+                            <div class="item-accordion__block-img">
+                                <img src="/home/img/questions.png" alt="" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <section class="articles-comfortable-living">
         <div class="b-container">
             <h2 class="title-comfortable-living">Полезные статьи</h2>
             <div class="articles-comfortable-living__content">
                 <?
-                $section = CIBlockSection::GetList([], ['CODE' => 'home'])->Fetch();
-                if($section) {
-                    global $arNewsFilter;
-                    $arNewsFilter = ['SECTION_ID' => [$section['ID']]];
-
-                    $APPLICATION->IncludeComponent('fourpaws:items.list',
-                        'home',
-                        [
-                            'ACTIVE_DATE_FORMAT'     => 'j F Y',
-                            'AJAX_MODE'              => 'N',
-                            'AJAX_OPTION_ADDITIONAL' => '',
-                            'AJAX_OPTION_HISTORY'    => 'N',
-                            'AJAX_OPTION_JUMP'       => 'N',
-                            'AJAX_OPTION_STYLE'      => 'Y',
-                            'CACHE_FILTER'           => 'Y',
-                            'CACHE_GROUPS'           => 'N',
-                            'CACHE_TIME'             => '36000000',
-                            'CACHE_TYPE'             => 'A',
-                            'CHECK_DATES'            => 'Y',
-                            'FIELD_CODE'             => [
-                                '',
-                            ],
-                            'FILTER_NAME'            => 'arNewsFilter',
-                            'IBLOCK_ID'              => [
-                                IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::NEWS),
-                                IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),
-                            ],
-                            'IBLOCK_TYPE'            => IblockType::PUBLICATION,
-                            'NEWS_COUNT'             => '7',
-                            'PREVIEW_TRUNCATE_LEN'   => '',
-                            'PROPERTY_CODE'          => [
-                                'PUBLICATION_TYPE',
-                                'VIDEO',
-                            ],
-                            'SET_LAST_MODIFIED'      => 'N',
-                            'SORT_BY1'               => 'ACTIVE_FROM',
-                            'SORT_BY2'               => 'SORT',
-                            'SORT_ORDER1'            => 'DESC',
-                            'SORT_ORDER2'            => 'ASC',
+                $APPLICATION->IncludeComponent('fourpaws:items.list',
+                    'fashion',
+                    [
+                        'ACTIVE_DATE_FORMAT'     => 'j F Y',
+                        'AJAX_MODE'              => 'N',
+                        'AJAX_OPTION_ADDITIONAL' => '',
+                        'AJAX_OPTION_HISTORY'    => 'N',
+                        'AJAX_OPTION_JUMP'       => 'N',
+                        'AJAX_OPTION_STYLE'      => 'Y',
+                        'CACHE_FILTER'           => 'Y',
+                        'CACHE_GROUPS'           => 'N',
+                        'CACHE_TIME'             => '36000000',
+                        'CACHE_TYPE'             => 'A',
+                        'CHECK_DATES'            => 'Y',
+                        'FIELD_CODE'             => [
+                            '',
                         ],
-                        false,
-                        ['HIDE_ICONS' => 'Y']
-                    );
-                }
+                        'FILTER_NAME'            => 'arNewsFilter',
+                        'IBLOCK_ID'              => [
+                            IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::NEWS),
+                            IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),
+                        ],
+                        'IBLOCK_TYPE'            => IblockType::PUBLICATION,
+                        'NEWS_COUNT'             => '7',
+                        'PREVIEW_TRUNCATE_LEN'   => '',
+                        'PROPERTY_CODE'          => [
+                            'PUBLICATION_TYPE',
+                            'VIDEO',
+                        ],
+                        'SET_LAST_MODIFIED'      => 'N',
+                        'SORT_BY1'               => 'ACTIVE_FROM',
+                        'SORT_BY2'               => 'SORT',
+                        'SORT_ORDER1'            => 'DESC',
+                        'SORT_ORDER2'            => 'ASC',
+                    ],
+                    false,
+                    ['HIDE_ICONS' => 'Y']
+                );
                 ?>
             </div>
 
