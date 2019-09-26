@@ -157,7 +157,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
 
     <? $APPLICATION->IncludeComponent('articul:fashion.product.footer', 'rungo', ['SECTION_CODE' => 'rungo', 'TYPE' => 'rungo']) ?>
 
-    <section class="fashion-measure-dog" data-measure-dog-fashion="true">
+    <section class="fashion-measure-dog" data-measure-dog-fashion="true" id="fashion-dog-size">
         <?
         $filesystemLoader = new FilesystemLoader($_SERVER['DOCUMENT_ROOT'].'/../src/CatalogBundle/Resources/views/Catalog/%name%');
         $templating = new PhpEngine(new TemplateNameParser(), $filesystemLoader);
