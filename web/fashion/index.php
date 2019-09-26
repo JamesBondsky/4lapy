@@ -19,7 +19,7 @@ use Symfony\Component\Templating\PhpEngine;
 use Symfony\Component\Templating\Loader\FilesystemLoader;
 
 ?>
-<div class="fashion-page">
+<div class="fashion-page" data-fashion-page="true">
     <section class="fashion-main-banner">
         <? $sectionFashion = CIBlockSection::GetList([], ['CODE' => 'fashion'], false, ['ID', 'NAME'])->Fetch();
         if($sectionFashion){
