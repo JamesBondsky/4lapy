@@ -19,23 +19,21 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
                         </a>
                     </div>
 
-                    <div class="item-category-fashion__slider" data-slider-category-fashion="true">
-                        <?php
-                        $APPLICATION->IncludeComponent(
-                            'fourpaws:catalog.snippet.list',
-                            'stamps',
-                            [
-                                'OFFER_FILTER' => [
-                                    '=XML_ID' => $element['PROPERTIES']['PRODUCTS']['VALUE'],
-                                ],
-                                'COUNT' => 500,
-                                'TITLE' => 'Товары, участвующие в акции',
-                                'CACHE_TIME' => 3600000,
-                                'ONLY_PRODUCTS_XML_ID' => $element['PROPERTIES']['PRODUCTS']['VALUE'], // показывать только указанные ТП, а не все в родительских товарах
-                            ]
-                        );
-                        ?>
-                    </div>
+                    <?php
+                    $APPLICATION->IncludeComponent(
+                        'fourpaws:catalog.snippet.list',
+                        'stamps',
+                        [
+                            'OFFER_FILTER' => [
+                                '=XML_ID' => $element['PROPERTIES']['PRODUCTS']['VALUE'],
+                            ],
+                            'COUNT' => 500,
+                            'TITLE' => 'Товары, участвующие в акции',
+                            'CACHE_TIME' => 3600000,
+                            'ONLY_PRODUCTS_XML_ID' => $element['PROPERTIES']['PRODUCTS']['VALUE'], // показывать только указанные ТП, а не все в родительских товарах
+                        ]
+                    );
+                    ?>
                 </div>
             </div>
         </div>

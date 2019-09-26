@@ -11,8 +11,75 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType; ?>
 
 <div class="comfortable-living-page">
-
-    <? $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', ['SECTION_CODE' => 'home']) ?>
+    <section class="section-marks-comfortable-living">
+        <div class="b-container">
+            <div class="section-marks-comfortable-living__content">
+                <div class="marks-comfortable-living">
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active item_discount">
+                        <div class="item__title">-10%</div>
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_active">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_discount">
+                        <div class="item__title">-20%</div>
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item">
+                        <div class="item__mark"></div>
+                    </div>
+                    <div class="item item_discount">
+                        <div class="item__title">-30%</div>
+                        <div class="item__mark"></div>
+                    </div>
+                </div>
+                <div class="balance-comfortable-living">
+                    <div class="balance-comfortable-living__info">
+                        <?if ($USER->IsAuthorized()) {?>
+                            <div class="balance-comfortable-living__user-mark">
+                                <span>Мои марки</span>
+                                <span class="count">10</span>
+                                <span class="b-icon b-icon--mark">
+                                    <?= new SvgDecorator('icon-mark', 24, 24) ?>
+                                </span>
+                            </div>
+                            <div class="balance-comfortable-living__discount">Моя скидка - 20%</div>
+                        <? } else { ?>
+                            <div class="balance-comfortable-living__text">Узнайте ваш баланс марок</div>
+                            <div class="balance-comfortable-living__btn js-open-popup" data-popup-id="authorization">Войти</div>
+                        <? } ?>
+                    </div>
+                    <?if ($USER->IsAuthorized()) {?>
+                        <div class="balance-comfortable-living__primary">
+                            до - 30% осталось 2 марки
+                        </div>
+                    <? } ?>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <section class="contest-comfortable-living">
         <div class="b-container contest-comfortable-living__container">
@@ -27,8 +94,17 @@ use FourPaws\Enum\IblockType; ?>
                             <span class="bold">супер-приз</span> победителю!
                         </div>
                         <div class="contest-comfortable-living__links">
-                            <a href="" class="contest-comfortable-living__link-img">Скачать рисунок</a>
-                            <a href="" class="contest-comfortable-living__link-conditions">Подробные условия</a>
+                            <div class="contest-comfortable-living__links-item">
+                                <a href="" class="contest-comfortable-living__link-img">
+                                    <span>Скачать рисунок</span>
+                                    <span class="b-icon">
+                                    <?= new SvgDecorator('icon-download', 15, 14) ?>
+                                </span>
+                                </a>
+                            </div>
+                            <div class="contest-comfortable-living__links-item">
+                                <a href="" class="contest-comfortable-living__link-conditions">Подробные условия</a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -36,22 +112,29 @@ use FourPaws\Enum\IblockType; ?>
                 <div class="contest-comfortable-living__steps">
                     <div class="contest-comfortable-living__steps-title">Конкурс &laquo;Уютно жить&raquo;</div>
                     <ol class="contest-comfortable-living__steps-list">
-                        <li>Скачай и&nbsp;раскрась картинку</li>
-                        <li>Сфотографируйся с&nbsp;этой картинкой и&nbsp;своим питомцем</li>
-                        <li>Зарегистрируйся и&nbsp;загрузи фото</li>
-                        <li>Следи за&nbsp;итогами в&nbsp;социальных сетях</li>
+                        <li class="item">Скачай и&nbsp;раскрась картинку</li>
+                        <li class="item">Сфотографируйся с&nbsp;этой картинкой и&nbsp;своим питомцем</li>
+                        <li class="item">Зарегистрируйся и&nbsp;загрузи фото</li>
+                        <li class="item">Следи за&nbsp;итогами в&nbsp;социальных&nbsp;сетях</li>
                     </ol>
-                    <?if ($USER->IsAuthorized()) {?>
-                        <form class="">
-
-                        </form>
-                    <? } else { ?>
-                        <div class="contest-comfortable-living__btn-registr js-open-popup" data-popup-id="authorization">Зарегистрироваться</div>
-                    <? } ?>
+                    <div class="contest-comfortable-living__steps-panel">
+                        <?if ($USER->IsAuthorized()) {?>
+                            <form class="contest-comfortable-living__form" enctype="multipart/form-data" method="post" action="" data-form-photo-comfortable-living-landing="true">
+                                <div class="contest-comfortable-living__steps-btn">
+                                    <span>Загрузить фото</span>
+                                    <input class="contest-comfortable-living__photo" type="file" name="PHOTO" accept="image/*,image/jpeg" data-photo-comfortable-living-landing="true">
+                                </div>
+                            </form>
+                        <? } else { ?>
+                            <div class="contest-comfortable-living__steps-btn js-open-popup" data-popup-id="authorization">Зарегистрироваться</div>
+                        <? } ?>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
+
+    <? $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', ['SECTION_CODE' => 'home']) ?>
 
     <section class="info-comfortable-living">
         <div class="b-container">
