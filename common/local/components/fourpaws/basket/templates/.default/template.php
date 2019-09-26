@@ -516,10 +516,12 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
 	                          </div>
 	                      </div>
 
-	                      <button class="b-button b-button--start-order <?= $sViewportCookie === null ? 'b-button--bottom-indent' : '' ?>"
-	                         title="Начать оформление" <?= (((int)$arResult['TOTAL_PRICE'] === 0) || (!$arResult['HAS_DELIVERY'])) ? ' disabled' : '' ?>>
-	                          Начать оформление
-	                      </button>
+                            <?php $disableButton = (((int)$arResult['TOTAL_PRICE'] === 0) || (!$arResult['HAS_DELIVERY'])); ?>
+
+                            <button class="b-button <?= ($disableButton) ? 'b-button--order-disable' : 'b-button--start-order' ?> <?= $sViewportCookie === null ? 'b-button--bottom-indent' : '' ?>"
+                                    title="Начать оформление" <?= ($disableButton) ? ' disabled' : '' ?>>
+                                Начать оформление
+                            </button>
 
                             <?php if (!$arResult['HAS_DELIVERY']) { ?>
                                 <div class="b-information-order__delivery-empty">
