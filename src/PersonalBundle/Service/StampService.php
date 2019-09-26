@@ -4,11 +4,17 @@
 namespace FourPaws\PersonalBundle\Service;
 
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Sale\BasketItem;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
+use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\Catalog\Model\Variant;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\External\Manzana\Dto\BalanceRequest;
 use FourPaws\External\Manzana\Dto\ExtendedAttribute;
 use FourPaws\External\Manzana\Exception\ExecuteErrorException;
@@ -19,6 +25,7 @@ use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use Psr\Log\LoggerAwareInterface;
+use WebArch\BitrixCache\BitrixCache;
 
 class StampService implements LoggerAwareInterface
 {
@@ -70,10 +77,10 @@ class StampService implements LoggerAwareInterface
 
     // todo первые 4 товара в личном кабинете и 4 товара, которых не должно быть в карусели на лендинге
     public const FIRST_PRODUCT_XML_ID = [
-      '1035430',
-      '1021198',
-      '1035432',
-      '1031456',
+        '1035430',
+        '1021198',
+        '1035432',
+        '1031456',
     ];
 
     public const EXCHANGE_RULES = [
@@ -379,6 +386,21 @@ class StampService implements LoggerAwareInterface
         ],
     ];
 
+    protected const STAMP_LEVELS = [
+        [
+            'stamps' => 6,
+            'discount' => 10,
+        ],
+        [
+            'stamps' => 9,
+            'discount' => 20,
+        ],
+        [
+            'stamps' => 12,
+            'discount' => 30,
+        ],
+    ];
+
 
     /**
      * @var UserService
@@ -392,12 +414,17 @@ class StampService implements LoggerAwareInterface
      * @var int
      */
     protected $activeStampsCount;
+    /**
+     * @var array
+     */
+    protected $exchangeRules = [];
 
     public function __construct()
     {
         $container = Application::getInstance()->getContainer();
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
         $this->manzanaPosService = Application::getInstance()->getContainer()->get('manzana.pos.service');
+        $this->fillExchangeRules();
     }
 
 
@@ -455,6 +482,121 @@ class StampService implements LoggerAwareInterface
         // для отладки марок
         //$this->activeStampsCount = 27;
         return $this->activeStampsCount;
+    }
+
+    public function getExchangeRules($offerXmlId = false)
+    {
+        if ($offerXmlId !== false) {
+            if (isset($this->exchangeRules[$offerXmlId])) {
+                return $this->exchangeRules[$offerXmlId];
+            } else {
+                return null;
+            }
+        } else {
+            return $this->exchangeRules;
+        }
+    }
+
+    /**
+     * заполняем уровни марок
+     */
+    protected function fillExchangeRules()
+    {
+        try {
+            $iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::FASHION_FOOTER_PRODUCTS);
+        } catch (IblockNotFoundException | \Exception $e) {
+            return;
+        }
+
+        $getExchangeRules = function () use ($iblockId) {
+            $exchangeRules = [];
+            $sectionIds = [];
+
+            // получаем разделы товаров, которые участвуют в акции
+            $rsElement = \CIBlockElement::GetList(['SORT' => SORT_ASC], ['IBLOCK_ID' => $iblockId, '=ACTIVE' => BaseEntity::BITRIX_TRUE, '=SECTION_CODE' => 'stamps'], false, false, ['ID', 'IBLOCK_ID', 'PROPERTY_SECTION']);
+
+            while ($arElement = $rsElement->Fetch()) {
+                if ($arElement['PROPERTY_SECTION_VALUE']) {
+                    $sectionIds[] = $arElement['PROPERTY_SECTION_VALUE'];
+                }
+            }
+
+            if (empty($sectionIds)) {
+                return [];
+            }
+
+            // получаем все товары из акции
+            $productIds = [];
+
+            $rsProduct = \CIBlockElement::GetList(false, [
+                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+                '=SECTION_ID' => $sectionIds,
+                '=ACTIVE' => BaseEntity::BITRIX_TRUE,
+            ],
+                false, false,
+                ['ID', 'IBLOCK_ID']
+            );
+
+            while ($arProduct = $rsProduct->Fetch()) {
+                if ($arProduct['ID']) {
+                    $productIds[] = $arProduct['ID'];
+                }
+            }
+
+            if (empty($productIds)) {
+                return [];
+            }
+
+            // получаем торговые предложения из акции
+            $rsOffer = \CIBlockElement::GetList(false, [
+                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                '=PROPERTY_CML2_LINK' => $productIds,
+                '=ACTIVE' => BaseEntity::BITRIX_TRUE,
+                '>CATALOG_PRICE_2' => 0,
+            ],
+                false, false,
+                ['ID', 'XML_ID', 'PROPERTY_CML2_LINK']
+            );
+
+            while ($arOffer = $rsOffer->Fetch()) {
+                // добавление уровня скидки
+                if (!$price = $arOffer['CATALOG_PRICE_2']) {
+                    continue;
+                }
+
+                $offerXmlId = $arOffer['XML_ID'];
+
+                $exchangeRule = [];
+
+                foreach (self::STAMP_LEVELS as $stampLevel) {
+                    $exchangeRule[] = [
+                        'title' => sprintf('Stamps_exchange_%s_%s*%s*P', $offerXmlId, $stampLevel['discount'], $stampLevel['stamps']),
+                        'stamps' => $stampLevel['stamps'],
+                        'price' => ($price * (100 - $stampLevel['discount']) / 100),
+                    ];
+                }
+
+                $exchangeRules[$offerXmlId] = $exchangeRule;
+            }
+
+            return [
+                'exchange_rules' => $exchangeRules
+            ];
+        };
+
+        /** @var Variant[] $variants */
+        try {
+            $result = (new BitrixCache())->withId(__METHOD__ . $iblockId)
+                ->withTime(60* 60 * 24 * 7)
+                ->withIblockTag($iblockId)
+                ->resultOf($getExchangeRules);
+
+            if (isset($result['exchange_rules']) && is_array($result['exchange_rules'])) {
+                $this->exchangeRules = $result['exchange_rules'];
+            }
+        } catch (\Exception $e) {
+            $this->exchangeRules = [];
+        }
     }
 
     /**
