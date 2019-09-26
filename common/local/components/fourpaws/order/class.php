@@ -414,7 +414,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['URL'][$key] = $route->getPath();
         }
 
-        if (!$this->orderStorageService->validateDeliveryDate($storage)) {
+        if (!$this->orderStorageService->validateDeliveryDate($storage) && false) {  // todo tm-36460 при валидации не проставился delivery date у доставки
             $storage = $this->orderStorageService->clearDeliveryDate($storage);
             $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
 
