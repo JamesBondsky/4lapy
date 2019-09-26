@@ -19,54 +19,75 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  */
 
 $marksDeclension = new Declension('марку', 'марки', 'марок');
-
 ?>
+
 <div class="b-kopilka b-kopilka--exchange-discount">
     <h2 class="b-title b-kopilka__title">Марки</h2>
 
-    <img src="kek">
+    <img src="картинка слева">
     <div class="b-kopilka__details">
         <div class="b-kopilka__ticket-mark">
             <div>Мои марки</div>
             <div class="title-ticket-mark"><?= $arResult['ACTIVE_STAMPS_COUNT'] ?></div>
             <div class="descr-ticket-mark">
-               Моя скидка -
+                Моя скидка - <?= $arResult['CURRENT_DISCOUNT'] ?>%
             </div>
         </div>
         <div class="b-kopilka__info">
-            <h3>Вместе за парту!</h3>
-            <p>Наступает осенняя пора, дети идут в школу, начинаются учебные будни. Вы можете вместе с питомцем тоже начать учиться</p>
-            <h3>Условия акции</h3>
-            <p>1. Делай покупки, получай марки: 1 марка  = <?= StampService::MARK_RATE ?> руб.;</p>
-            <p>2. Отслеживай марки где удобно:<br>
-                на чеке, в личном кабинете на сайте и в приложении;</p>
-            <p>3. Выбери игру и добавь в корзину, нажми "списать марки";</p>
-            <p>4. Получи игру со скидкой и развивай питомца!</p>
-            <a href="/iqgames/">Подробные условия акции</a>
-        </div>
-    </div>
-
-    <div class="b-kopilka__details">
-        <div class="b-kopilka__ticket-mark">
-            <div class="title-ticket-mark"><?= $arResult['ACTIVE_STAMPS_COUNT'] . ' ' . $marksDeclension->get($arResult['ACTIVE_STAMPS_COUNT']) ?></div>
+            <?php if ($arResult['NEXT_DISCOUNT']) { ?>
+                <div>
+                    До скидки -<?= $arResult['NEXT_DISCOUNT'] ?>% осталось <?= $arResult['NEXT_DISCOUNT_STAMPS_NEED'] . ' ' . $marksDeclension->get($arResult['NEXT_DISCOUNT_STAMPS_NEED']) ?>
+                </div>
+            <?php } ?>
             <div class="descr-ticket-mark">
-                Период начисления марок <nobr>1.09.19</nobr>&nbsp;&mdash; <nobr>30.09.19</nobr>
+                С
+                <nobr>1 окт</nobr>&nbsp;по
+                <nobr>15 дек</nobr>
+                2019 г
             </div>
-        </div>
-        <div class="b-kopilka__info">
-	        <h3>Вместе за парту!</h3>
-	        <p>Наступает осенняя пора, дети идут в школу, начинаются учебные будни. Вы можете вместе с питомцем тоже начать учиться</p>
-	        <h3>Условия акции</h3>
-	        <p>1. Делай покупки, получай марки: 1 марка  = <?= StampService::MARK_RATE ?> руб.;</p>
-	        <p>2. Отслеживай марки где удобно:<br>
-		        на чеке, в личном кабинете на сайте и в приложении;</p>
-	        <p>3. Выбери игру и добавь в корзину, нажми "списать марки";</p>
-	        <p>4. Получи игру со скидкой и развивай питомца!</p>
-	        <a href="/iqgames/">Подробные условия акции</a>
+            <div>
+                Покупай домики, лежаки и когтеточки со скидкой до -<?= $arResult['MAX_DISCOUNT'] ?>
+            </div>
+            <div>
+                <?php foreach ($arResult['STAMP_LEVELS'] as $stamps => $discount) { ?>
+                    <?= $stamps ?> - <?= $discount ?>%
+                <?php } ?>
+            </div>
+            <div>
+                Копи марки с 1 окт до 30 ноября 2019
+            </div>
+            <div>
+                1 за <?= StampService::MARK_RATE ?> ₽ в чеке
+            </div>
+            <a href="/home/">Пордобные условия</a>
+
+            <div>
+                <?php for ($i = 1; $i <= $arResult['MAX_STAMPS_COUNT']; $i++) { ?>
+                    <?php $isBonus = isset($arResult['STAMP_LEVELS'][$i]); ?>
+                    <?php $isAvailable = ($arResult['ACTIVE_STAMPS_COUNT'] >= $i) ?>
+
+                    <?php if ($isBonus) { ?>
+                        - <?= $arResult['STAMP_LEVELS'][$i] ?>%
+                    <?php } ?>
+
+                    <div class="<?= ($isBonus) ? 'bonus' : '' ?>">
+                        <?php if ($isAvailable) { ?>
+                            кружок марки
+                        <?php } else { ?>
+                            <?php if ($isBonus) { ?>
+                                значок подарка
+                            <?php } else { ?>
+                                белый кружок
+                            <?php } ?>
+                        <?php } ?>
+                    </div>
+                <?php } ?>
+            </div>
         </div>
     </div>
 
-    <hr class="b-hr" />
+
+    <hr class="b-hr"/>
 
     <?php
     $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', [
@@ -74,4 +95,14 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
     ]);
     ?>
 
+    <div>
+        картинка
+
+        1. Делай любые покупки, копи марки 1 (значок марки) = <?= StampService::MARK_RATE ?>₽
+        2. Отслеживай баланс марок: на чеке, в личном кабинете и в приложении
+        3. Покупай со скидкой до - <?= $arResult['MAX_DISCOUNT'] ?>
+
+        - на сайте и в приложении: добавь товар в корзину, нажми "списать марки"
+        - в магазине: предъяви буклет или сообщи кассиру номер телефона подробнее
+    </div>
 </div>

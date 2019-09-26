@@ -38,10 +38,10 @@ class FourPawsPersonalCabinetStampsComponent extends FourPawsComponent
         $this->stampService = $container->get(StampService::class);
     }
 
-	/**
-	 * @param $params
-	 * @return array
-	 */
+    /**
+     * @param $params
+     * @return array
+     */
     public function onPrepareComponentParams($params): array
     {
         $params['MARK_RATE'] = $this->stampService::MARK_RATE;
@@ -70,35 +70,31 @@ class FourPawsPersonalCabinetStampsComponent extends FourPawsComponent
             return;
         }
 
-        $this->arResult['STAMP_LEVELS'] = $this->stampService->getStampLevels();
+        $this->arResult['STAMP_LEVELS'] = [];
 
-        $maxStampsCount = 0;
-        $currentDiscount = 0;
-        $nextDiscount = false;
-        $nextDiscountStampsNeed = 0;
+        $this->arResult['MAX_STAMPS_COUNT'] = 0;
+        $this->arResult['MAX_DISCOUNT'] = 0;
 
-        foreach ($this->arResult['STAMP_LEVELS'] as $stampLevel) {
-            if ($stampLevel['stamps'] > $maxStampsCount) {
-                $maxStampsCount = $stampLevel['stamps'];
+        $this->arResult['CURRENT_DISCOUNT'] = 0;
+        $this->arResult['NEXT_DISCOUNT'] = false;
+        $this->arResult['NEXT_DISCOUNT_STAMPS_NEED'] = 0;
+
+        foreach ($this->stampService->getStampLevels() as $stampLevel) {
+            if ($stampLevel['stamps'] >  $this->arResult['MAX_STAMPS_COUNT']) {
+                $this->arResult['MAX_STAMPS_COUNT'] = $stampLevel['stamps'];
+                $this->arResult['MAX_DISCOUNT'] = $stampLevel['discount'];
             }
 
             if ($this->arResult['ACTIVE_STAMPS_COUNT'] > $stampLevel['stamps']) {
-                $currentDiscount = $stampLevel['discount'];
+                $this->arResult['CURRENT_DISCOUNT'] = $stampLevel['discount'];
             }
 
-            if (!$nextDiscount && ($stampLevel['stamps'] > $this->arResult['ACTIVE_STAMPS_COUNT'])) {
-                $nextDiscount = $stampLevel['discount'];
-                $nextDiscountStampsNeed = $stampLevel['stamps'] - $this->arResult['ACTIVE_STAMPS_COUNT'];
+            if (!$this->arResult['NEXT_DISCOUNT'] && ($stampLevel['stamps'] > $this->arResult['ACTIVE_STAMPS_COUNT'])) {
+                $this->arResult['NEXT_DISCOUNT'] = $stampLevel['discount'];
+                $this->arResult['NEXT_DISCOUNT_STAMPS_NEED'] = $stampLevel['stamps'] - $this->arResult['ACTIVE_STAMPS_COUNT'];
             }
+
+            $this->arResult['STAMP_LEVELS'][$stampLevel['stamps']] = $stampLevel['discount'];
         }
-
-        $this->arResult['MAX_STAMPS_COUNT'] = $maxStampsCount;
-
-        $this->arResult['CURRENT_DISCOUNT'] = $currentDiscount;
-        $this->arResult['NEXT_DISCOUNT'] = $nextDiscount;
-        $this->arResult['NEXT_DISCOUNT_STAMPS_NEED'] = $nextDiscountStampsNeed;
-
-        $this->arResult['PROGRESS_BAR_STAMPS'] = ($this->arResult['ACTIVE_STAMPS_COUNT'] > $maxStampsCount) ? $maxStampsCount : $this->arResult['ACTIVE_STAMPS_COUNT'];
-
     }
 }
