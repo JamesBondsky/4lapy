@@ -62,6 +62,7 @@ use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Repository\StockRepository;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserService;
@@ -1581,10 +1582,10 @@ class Offer extends IblockElement
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
      */
-    public function isDeliverable(): bool
+    public function isDeliverable($locationId = ''): bool
     {
-        if (null === $this->isDeliverable) {
-            $this->isDeliverable = ($this->getAvailableAmount('', DeliveryService::DELIVERY_CODES) > 0);
+        if (null === $this->isDeliverable || $locationId != '') {
+            $this->isDeliverable = ($this->getAvailableAmount($locationId, DeliveryService::DELIVERY_CODES) > 0);
         }
 
         return $this->isDeliverable;
@@ -1605,10 +1606,10 @@ class Offer extends IblockElement
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
      */
-    public function isPickupAvailable(): bool
+    public function isPickupAvailable($locationId = ''): bool
     {
-        if (null === $this->isPickupAvailable) {
-            $this->isPickupAvailable = ($this->getAvailableAmount('', DeliveryService::PICKUP_CODES) > 0);
+        if (null === $this->isPickupAvailable || $locationId != '') {
+            $this->isPickupAvailable = ($this->getAvailableAmount($locationId, DeliveryService::PICKUP_CODES) > 0);
         }
 
         return $this->isPickupAvailable;
@@ -1621,7 +1622,7 @@ class Offer extends IblockElement
      */
     public function getAllStocks(): StockCollection
     {
-        if (!$this->allStocks) {
+        if (!$this->allStocks || is_array($this->allStocks)) {
             /** @var StockService $stockService */
             $stockService = Application::getInstance()->getContainer()->get(StockService::class);
             $this->withAllStocks($stockService->getStocksByOffer($this));
@@ -1999,7 +2000,7 @@ class Offer extends IblockElement
 
         $this->withPrice($price)
              ->withOldPrice($oldPrice)
-             ->withDiscount(round(100 * $oldPrice / $price));
+             ->withDiscount(round(100 - (100*$price / $oldPrice)));
         $this->isCounted = true;
     }
 

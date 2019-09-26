@@ -184,6 +184,12 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
                 $storage->setSubscribe(false);
                 $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
             }
+
+            // сбрасывает еще подписку у элементов корзины
+            foreach ($basket->getBasketItems() as $basketItem) {
+                $this->basketService->setBasketItemPropertyValue($basketItem, 'SUBSCRIBE_PRICE', '0');
+            }
+
             $order = Order::create(SITE_ID, $userId);
             $order->setBasket($basket);
             // но иногда он так просто не запускается
@@ -399,6 +405,8 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
         $haveOrder = $basket->getOrder() instanceof Order;
         $deliveries = $this->getDeliveryService()->getByLocation();
 
+        $this->arResult['HAS_DELIVERY'] = (empty($deliveries)) ? false : true;
+
         $delivery = null;
         foreach ($deliveries as $calculationResult) {
             if ($this->getDeliveryService()->isDelivery($calculationResult)) {
@@ -431,6 +439,7 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
             } else {
                 if (
                     ($basketItem->getPrice() > 0 || $basketItem->getBasePrice() > 0)
+                    && $this->arResult['HAS_DELIVERY']
                     &&
                     (
                         (null === $delivery) ||

@@ -25,6 +25,10 @@ use FourPaws\AppBundle\Exception\CaptchaErrorException;
 use FourPaws\AppBundle\Exception\EmptyUserDataComments;
 use FourPaws\AppBundle\Exception\ErrorAddComment;
 use FourPaws\AppBundle\Exception\UserNotFoundAddCommentException;
+use FourPaws\FormBundle\Exception\FileCountException;
+use FourPaws\FormBundle\Exception\FileSaveException;
+use FourPaws\FormBundle\Exception\FileSizeException;
+use FourPaws\FormBundle\Exception\FileTypeException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -58,18 +62,23 @@ class CCommentsComponent extends \CBitrixComponent
      * @param bool $addNotAuth
      *
      * @return bool
-     * @throws ErrorAddComment
-     * @throws CaptchaErrorException
-     * @throws SystemException
      * @throws ApplicationCreateException
-     * @throws ObjectException
+     * @throws ArgumentException
+     * @throws CaptchaErrorException
      * @throws EmptyUserDataComments
-     * @throws WrongPasswordException
-     * @throws UserNotFoundAddCommentException
-     * @throws WrongPhoneNumberException
-     * @throws WrongEmailException
+     * @throws ErrorAddComment
+     * @throws FileCountException
+     * @throws FileSaveException
+     * @throws FileSizeException
+     * @throws FileTypeException
      * @throws LoaderException
-     *
+     * @throws ObjectException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws UserNotFoundAddCommentException
+     * @throws WrongEmailException
+     * @throws WrongPasswordException
+     * @throws WrongPhoneNumberException
      */
     public static function addComment(bool $addNotAuth = false): bool
     {
@@ -249,6 +258,7 @@ class CCommentsComponent extends \CBitrixComponent
                 $comments = $this->getComments();
                 $this->arResult['COMMENTS'] = $comments['ITEMS'];
                 $this->arResult['COUNT_COMMENTS'] = $comments['COUNT'];
+                $this->arResult['COMMENT_IMAGES'] = $comments['IMAGES'];
             } catch (ArgumentException $e) {
                 $this->abortResultCache();
                 $tagCache->abortTagCache();
@@ -270,20 +280,28 @@ class CCommentsComponent extends \CBitrixComponent
      * @param bool $addNotAuth
      *
      * @return array
-     * @throws ObjectException
+     * @throws ArgumentException
      * @throws EmptyUserDataComments
-     * @throws WrongPasswordException
-     * @throws UserNotFoundAddCommentException
-     * @throws WrongPhoneNumberException
-     * @throws WrongEmailException
+     * @throws FileCountException
+     * @throws FileSaveException
+     * @throws FileSizeException
+     * @throws FileTypeException
+     * @throws ObjectException
+     * @throws ObjectPropertyException
      * @throws SystemException
+     * @throws UserNotFoundAddCommentException
+     * @throws WrongEmailException
+     * @throws WrongPasswordException
+     * @throws WrongPhoneNumberException
      */
     public function getData(bool $addNotAuth = false): array
     {
         $data = Application::getInstance()->getContext()->getRequest()->getPostList()->toArray();
+
         unset($data['action'], $data['g-recaptcha-response']);
         if ($this->arResult['AUTH']) {
             $data['UF_USER_ID'] = $this->userCurrentUserService->getCurrentUserId();
+            $data['UF_PHOTOS'] = $this->getPhotoData();
         } else {
             if (!$addNotAuth || ((!empty($data['EMAIL']) || !empty($data['PHONE'])) && !empty($data['PASSWORD']))) {
                 $userRepository = $this->userCurrentUserService->getUserRepository();
@@ -336,6 +354,65 @@ class CCommentsComponent extends \CBitrixComponent
         $data['UF_DATE'] = new Date();
 
         return $data;
+    }
+
+    /**
+     * @return array|null
+     * @throws FileCountException
+     * @throws FileSaveException
+     * @throws FileSizeException
+     * @throws FileTypeException
+     * @throws SystemException
+     */
+    public function getPhotoData()
+    {
+        $fileList = Application::getInstance()->getContext()->getRequest()->getFileList()->toArray();
+
+        if (!isset($fileList['UF_PHOTOS']) || empty($fileList['UF_PHOTOS'])) {
+            return null;
+        }
+
+        $dataFiles = [];
+
+        $fileList = $fileList['UF_PHOTOS'];
+
+        $filesCount = count($fileList['name']);
+
+        if (count($fileList['name']) > 5) {
+            throw new FileCountException('');
+        }
+
+        for ($i = 0; $i < $filesCount; $i++) {
+            $file = [
+                'name' => $fileList['name'][$i],
+                'type' => $fileList['type'][$i],
+                'tmp_name' => $fileList['tmp_name'][$i],
+                'error' => $fileList['error'][$i],
+                'size' => $fileList['size'][$i],
+            ];
+
+            if ($file['error'] !== 0) {
+                throw new FileSaveException('');
+            }
+
+            if ($file['size'] > (5 * 1024 * 1024)) {
+                throw new FileSizeException('');
+            }
+
+            if (!\in_array($file['type'], ['image/jpeg', 'image/jpg', 'image/png'])) {
+                throw new FileTypeException('');
+            }
+
+            $dataFiles[] = [
+                'name' => $file['name'],
+                'size' => $file['size'],
+                'tmp_name' => $file['tmp_name'],
+                'type' => $file['type'],
+                'MODULE_ID' => 'iblock',
+            ];
+        }
+
+        return $dataFiles;
     }
 
     /**
@@ -396,6 +473,8 @@ class CCommentsComponent extends \CBitrixComponent
         $res = $query->exec();
         $items = [];
         $userIds = [];
+        $imageIds = [];
+
         while ($item = $res->fetch()) {
             if ($item['UF_DATE'] instanceof Date) {
                 $item['DATE_FORMATED'] = $item['UF_DATE']->format($this->arParams['ACTIVE_DATE_FORMAT']);
@@ -406,6 +485,10 @@ class CCommentsComponent extends \CBitrixComponent
                 $item['USER_NAME'] = 'Анонимно';
             }
             $items[$item['ID']] = $item;
+
+            if ($item['UF_PHOTOS'] && is_array($item['UF_PHOTOS']) && !empty($item['UF_PHOTOS'])) {
+                $imageIds = array_merge($imageIds, $item['UF_PHOTOS']);
+            }
         }
         if (!empty($userIds)) {
             $users = $this->userCurrentUserService->getUserRepository()->findBy(['ID' => array_unique($userIds)]);
@@ -421,8 +504,19 @@ class CCommentsComponent extends \CBitrixComponent
             }
         }
 
+        $imageIds = array_filter($imageIds);
+        $images = [];
+        if (!empty($imageIds)) {
+            $rsFile = CFile::GetList(false, ['@ID' => array_unique($imageIds)]);
+
+            while ($arFile = $rsFile->GetNext()) {
+                $images[$arFile['ID']] = CFile::GetFileSRC($arFile);
+            }
+        }
+
         return [
             'ITEMS' => $items,
+            'IMAGES' => $images,
             'COUNT' => $res->getCount(),
         ];
     }

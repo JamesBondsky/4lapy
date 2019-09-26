@@ -12,6 +12,7 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\MobileApiBundle\Dto\Request\FeedbackRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ReportRequest;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
 
 class FeedbackService
@@ -119,11 +120,7 @@ class FeedbackService
             $phone = PhoneHelper::formatPhone($normPhone, PhoneHelper::FORMAT_URL);
 
             if ($phone) {
-                $callbackService = Application::getInstance()->getContainer()->get('callback.service');
-                $callbackService->send(
-                    $phone,
-                    (new DateTime())->format('Y-m-d H:i:s')
-                );
+                $this->sendCallCenter($phone);
             }
         } else {
             /** $strError - глобальная переменная @see \CAllFormResult::add */
@@ -156,10 +153,71 @@ class FeedbackService
         } catch (\Exception $e) {
             // do nothing
         }
-        $sendResult = \Bitrix\Main\Mail\Event::sendImmediate($fields);
-        $sendSuccess = $sendResult === \Bitrix\Main\Mail\Event::SEND_RESULT_SUCCESS;
-        if (!$sendSuccess) {
+
+        \CModule::IncludeModule("form");
+
+        $form = (new \CForm())->getBySID('feedback')->Fetch();
+
+        $isFiltered = false;
+
+        $res = (new \CFormField)->getList(
+            $form['ID'],
+            'N',
+            $by='s_id',
+            $order='asc',
+            [],
+            $isFiltered
+        );
+
+        $formValues = [];
+
+        while ($question = $res->Fetch()) {
+            $isAnswersFiltered = false;
+            $answerVariant = (new \CFormAnswer())->GetList(
+                $question['ID'],
+                $by='s_id',
+                $order='asc',
+                [],
+                $isAnswersFiltered
+            )->fetch();
+            $fieldName = 'form_' . $answerVariant['FIELD_TYPE'] . '_' . $answerVariant['ID'];
+            $value = null;
+            switch ($question['SID']) {
+                case 'name':
+                    $value = ($user ? $user->getId() : '');
+                    break;
+                case 'email':
+                    $value = ($user ? $user->getEmail() : '');
+                    break;
+                case 'phone':
+                    $value = ($user ? $user->getPersonalPhone() : '');
+                    break;
+                case 'message':
+                    $value = $reportRequest->getSummary();
+                    break;
+            }
+            if ($value) {
+                $formValues[$fieldName] = $value;
+            }
+        }
+
+        $formResult = new \CFormResult;
+        if ($iResultId = $formResult->add($form['ID'], $formValues, 'N')) {
+            $formResult->setEvent($iResultId);
+            $formResult->mail($iResultId);
+        } else  {
             throw new RuntimeException('Ошибка отправки сообщения. ' . $GLOBALS['strError']);
+        }
+    }
+
+    private function sendCallCenter($phone)
+    {
+        if ($phone) {
+            $callbackService = Application::getInstance()->getContainer()->get('callback.service');
+            $callbackService->send(
+                $phone,
+                (new DateTime())->format('Y-m-d H:i:s')
+            );
         }
     }
 }

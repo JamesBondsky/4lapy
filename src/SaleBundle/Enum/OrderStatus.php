@@ -56,4 +56,9 @@ class OrderStatus
      * Заказ отменен (для самовывоза)
      */
     public const STATUS_CANCEL_PICKUP = 'K';
+
+    /**
+     * Перезвонить (приходит из SAP, конда клиент не подошел за три попытки)
+     */
+    public const STATUS_CALL_BACK = 'B';
 }

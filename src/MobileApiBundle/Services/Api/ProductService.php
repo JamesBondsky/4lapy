@@ -433,9 +433,8 @@ class ProductService
             ->setDelivery($this->getDeliveryText($offer))               // товар под заказ
             ->setPickup($this->getPickupText($offer))                   // товар под заказ
             // ->setCrossSale($this->getCrossSale($offer))              // похожие товары
-            ->setBundle($this->getBundle($offer))                       // с этим товаром покупают
-            ->setPictureList($this->getPictureList($product))           // картинки
-            ;
+            ->setBundle($this->getBundle($offer));                       // с этим товаром покупают
+            $fullProduct->setPictureList($this->getPictureList($product, $offer));           // картинки
 
         if ($product->getNormsOfUse()->getText() || $product->getLayoutRecommendations()->getText()) {
             if ($product->getLayoutRecommendations()->getText() != '' && $product->getLayoutRecommendations()->getText() != null) {
@@ -1098,7 +1097,7 @@ class ProductService
         return $unionOffers[$type][$val];
     }
 
-    protected function getPictureList(Product $product)
+    protected function getPictureList(Product $product, ?Offer $currentOffer)
     {
         $offers = $product->getOffersSorted();
         if (empty($offers)) {
@@ -1106,14 +1105,31 @@ class ProductService
         }
 
         $images = [];
+        $addInStart = [];
+
         /** @var Offer $offer */
         foreach ($offers as $offer) {
             if ($offerImages = $offer->getResizeImages(static::DETAIL_PICTURE_WIDTH, static::DETAIL_PICTURE_HEIGHT)) {
                 foreach ($offerImages as $image) {
-                    $images[] = $image;
+                    if ($currentOffer->getColor()) {
+                        if ($currentOffer->getColor()->getColorCode() != $offer->getColor()->getColorCode()) {
+                            $images[] = $image;
+                        }
+                    } else {
+                        $addInStart[] = $image;
+                    }
                 }
             }
         }
+
+        if (!empty($addInStart)) {
+            $addInStart = array_unique($addInStart);
+
+            foreach ($addInStart as $addInStartItem) {
+                array_unshift($images, $addInStartItem);
+            }
+        }
+
         return array_unique($images);
     }
 
