@@ -28,7 +28,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
                                 '=XML_ID' => $element['PROPERTIES']['PRODUCTS']['VALUE'],
                             ],
                             'COUNT' => 500,
-                            'TITLE' => 'Товары, участвующие в акции',
                             'CACHE_TIME' => 3600000,
                             'ONLY_PRODUCTS_XML_ID' => $element['PROPERTIES']['PRODUCTS']['VALUE'], // показывать только указанные ТП, а не все в родительских товарах
                         ]
