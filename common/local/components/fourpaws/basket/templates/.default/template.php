@@ -76,10 +76,13 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                     <div class="b-panel-subscribe-cart__content">
                         <div class="b-panel-subscribe-cart__info">
                             Получите <span class="orange">скидку <?= ($subscribePriceDiff > 0) ? WordHelper::numberFormat($subscribePriceDiff, 2).' ₽' : ''?></span> на&nbsp;вашу корзину&nbsp;&mdash; используйте
-                            <nobr><a href="javascript:void(0);" class="b-link" data-show-subscribe-delivery-cart="true">
-                                <span class="logo-subscr"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
-                                Подписку
-                            </a></nobr> на доставку
+
+                            <nobr class="b-link">
+                              <span class="logo-subscr"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
+                              Подписку
+                            </nobr>
+
+                            на доставку
                         </div>
                     </div>
                 </div>
@@ -551,7 +554,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
         }*/ ?>
 
         <script id="gtag-cart">
-            let offers = [];
+            var offers = [];
             $('a.b-common-item__description-wrap.b-common-item__description-wrap--shopping span.b-common-item__variant.b-common-item__variant--shopping-cart.b-common-item__variant--shopping span').each(function() {
                 if(/^\d+$/.test($(this).html())) offers.push($(this).html());
             });
