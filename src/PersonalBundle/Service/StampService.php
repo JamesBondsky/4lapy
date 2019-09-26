@@ -418,6 +418,18 @@ class StampService implements LoggerAwareInterface
      * @var array
      */
     protected $exchangeRules = [];
+    /**
+     * @var null|int
+     */
+    protected $currentDiscount = null;
+    /**
+     * @var null|int
+     */
+    protected $nextDiscount = null;
+    /**
+     * @var null|int
+     */
+    protected $nextDiscountStampsNeed = null;
 
     public function __construct()
     {
@@ -480,7 +492,7 @@ class StampService implements LoggerAwareInterface
         }
 
         // для отладки марок
-//        $this->activeStampsCount = 4;
+//        $this->activeStampsCount = 13;
         return $this->activeStampsCount;
     }
 
@@ -501,6 +513,66 @@ class StampService implements LoggerAwareInterface
             return $this->exchangeRules;
         }
     }
+
+    public function getCurrentDiscount() : int
+    {
+        if ($this->currentDiscount === null) {
+            try {
+                $activeStampsCount = $this->getActiveStampsCount();
+            } catch (ExecuteException $e) {
+                $activeStampsCount = 0;
+            }
+
+            $this->currentDiscount = 0;
+            foreach ($this->getStampLevels() as $stampLevel) {
+                if (($stampLevel['stamps'] < $activeStampsCount) && ($stampLevel['discount'] > $this->currentDiscount)) {
+                    $this->currentDiscount = $stampLevel['discount'];
+                }
+            }
+        }
+
+        return $this->currentDiscount;
+    }
+
+    public function getNextDiscount()
+    {
+        if ($this->nextDiscount === null) {
+            try {
+                $activeStampsCount = $this->getActiveStampsCount();
+            } catch (ExecuteException $e) {
+                $activeStampsCount = 0;
+            }
+
+            foreach ($this->getStampLevels() as $stampLevel) {
+                if (($this->nextDiscount === null) && ($stampLevel['stamps'] > $activeStampsCount)) {
+                    $this->nextDiscount = $stampLevel['discount'];
+                    $this->nextDiscountStampsNeed = $stampLevel['stamps'] - $activeStampsCount;
+                }
+            }
+        }
+
+        return $this->nextDiscount;
+    }
+
+    public function getNextDiscountStampsNeed()
+    {
+        if ($this->nextDiscountStampsNeed === null) {
+            try {
+                $activeStampsCount = $this->getActiveStampsCount();
+            } catch (ExecuteException $e) {
+                $activeStampsCount = 0;
+            }
+
+            foreach ($this->getStampLevels() as $stampLevel) {
+                if ($this->getNextDiscount() === ($stampLevel['discount'])) {
+                    $this->nextDiscountStampsNeed = $stampLevel['stamps'] - $activeStampsCount;
+                }
+            }
+        }
+
+        return$this->nextDiscountStampsNeed;
+    }
+
 
     /**
      * заполняем уровни марок
