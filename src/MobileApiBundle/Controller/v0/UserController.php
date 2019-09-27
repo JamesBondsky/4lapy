@@ -6,6 +6,9 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Grid\Declension;
 use CEvent;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
@@ -68,7 +71,7 @@ class UserController extends BaseController
      * @param LoginRequest $loginRequest
      * @return ApiResponse
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \Bitrix\Main\Db\SqlQueryException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
@@ -110,7 +113,7 @@ class UserController extends BaseController
      *
      * @return ApiResponse
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
@@ -132,7 +135,7 @@ class UserController extends BaseController
      * @param PostUserInfoRequest $userInfoRequest
      * @return ApiResponse
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
@@ -161,7 +164,7 @@ class UserController extends BaseController
      * @param LoginExistRequest $loginExistRequest
      * @return ApiResponse
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
@@ -180,7 +183,7 @@ class UserController extends BaseController
      * @Rest\View()
      *
      * @return PersonalBonusResponse
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
@@ -226,7 +229,8 @@ class UserController extends BaseController
      *
      * @return ApiResponse
      * @throws ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
+     * @throws IblockNotFoundException
      */
     public function getStampsInfoAction(): ApiResponse
     {
@@ -236,11 +240,12 @@ class UserController extends BaseController
             $stamps = 0;
         }
 
-        $exchangeRules = StampService::EXCHANGE_RULES;
-        $productsXmlIds = array_keys($exchangeRules);
+        $textNext = '';
 
-        $productsListCollection = $this->apiProductService->getListFromXmlIds($productsXmlIds, true);
-        $productsList = $productsListCollection->get(0) ?? [];
+        if ($this->stampService->getNextDiscount() !== null) {
+            $marksDeclension = new Declension('марку', 'марки', 'марок');
+            $textNext = sprintf('До скидки -%s%% осталось %s %s', $this->stampService->getNextDiscount(), $this->stampService->getNextDiscountStampsNeed(), $marksDeclension->get($this->stampService->getNextDiscountStampsNeed()));
+        }
 
         return (new ApiResponse())->setData([
             'stamps' => [
@@ -252,7 +257,10 @@ class UserController extends BaseController
                     . "\n\n2. Отслеживай марки где удобно: на чеке, в личном кабинете на сайте и в приложении;"
                     . "\n\n3. Выбери игру и добавь в корзину, нажми \"списать марки\";"
                     . "\n\n4. Получи игру со скидкой и развивай питомца!",
-                'goods' => $productsList,
+                'stampCategories' => $this->apiProductService->getStampsCategories(),
+                'actionID' => 0,
+                'discount' => sprintf('%s%%', $this->stampService->getCurrentDiscount()),
+                'textNext' => $textNext,
             ],
         ]);
     }
