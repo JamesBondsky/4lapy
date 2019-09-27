@@ -492,7 +492,7 @@ class StampService implements LoggerAwareInterface
         }
 
         // для отладки марок
-//        $this->activeStampsCount = 13;
+        $this->activeStampsCount = 7;
         return $this->activeStampsCount;
     }
 

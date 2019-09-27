@@ -1,6 +1,6 @@
 <?php
 
-use Bitrix\Main\Grid\Declension;
+use FourPaws\Decorators\SvgDecorator;
 use FourPaws\PersonalBundle\Service\StampService;
 
 
@@ -17,18 +17,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $templateName
  * @var string $componentPath
  */
-
-$marksDeclension = new Declension('марку', 'марки', 'марок');
 ?>
 
-<div class="b-kopilka b-kopilka--exchange-discount">
-    <h2 class="b-title b-kopilka__title">Марки</h2>
-    <?php
-    $APPLICATION->IncludeComponent('articul:stamps.progress.bar', 'personal', []);
-    ?>
-</div>
-
-<hr class="b-hr"/>
+<?php
+$APPLICATION->IncludeComponent('articul:stamps.progress.bar', 'personal', []);
+?>
 
 <?php
 $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', [
@@ -36,13 +29,27 @@ $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', [
 ]);
 ?>
 
-<div>
-    картинка
+<section class="info-comfortable-living">
+    <div class="b-container" style="max-width: 100%;">
+        <h2 class="title-comfortable-living">Как накопить марки и купить домик, лежак или когтеточку со скидкой до - 30%</h2>
+        <div class="info-comfortable-living__content">
+            <div class="info-comfortable-living__img-wrap">
+                <div class="info-comfortable-living__img" style="background-image: url('/home/img/steps-info.jpg')"></div>
+            </div>
+            <ol class="info-comfortable-living__steps">
+                <li class="item">Совершай любые покупки, копи марки в&nbsp;буклете
+                    или Личном кабинете: 1&nbsp;<span class="b-icon b-icon--mark"><?= new SvgDecorator('icon-mark', 24, 24) ?></span>&nbsp;=&nbsp;<?= StampService::MARK_RATE ?>&nbsp;Р
+                </li>
+                <li class="item">Отслеживай баланс марок: на&nbsp;чеке, в&nbsp;буклете <a href="/personal/marki/" target="_blank">в&nbsp;личном&nbsp;кабинете</a> и&nbsp;в&nbsp;приложении</li>
+                <li class="item">
+                    Покупай лежаки и&nbsp;когтеточки со&nbsp;скидкой до&nbsp;-30%
 
-    1. Делай любые покупки, копи марки 1 (значок марки) = <?= StampService::MARK_RATE ?>₽
-    2. Отслеживай баланс марок: на чеке, в личном кабинете и в приложении
-    3. Покупай со скидкой до - <?= $arResult['MAX_DISCOUNT'] ?>
-
-    - на сайте и в приложении: добавь товар в корзину, нажми "списать марки"
-    - в магазине: предъяви буклет или сообщи кассиру номер телефона подробнее
-</div>
+                    <ul class="item__list">
+                        <li>&mdash;&nbsp;на&nbsp;сайте и&nbsp;в&nbsp;приложении: добавь товар в&nbsp;корзину, нажми &laquo;списать марки&raquo;</li>
+                        <li>&mdash;&nbsp;в&nbsp;магазине: предъяви буклет или сообщи кассиру номер телефона</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+    </div>
+</section>
