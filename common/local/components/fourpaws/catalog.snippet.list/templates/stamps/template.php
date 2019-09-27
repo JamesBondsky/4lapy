@@ -24,38 +24,8 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
     echo $arResult['ECOMMERCE_VIEW_SCRIPT'];
 } ?>
 
-<section class="b-common-section" data-url="/ajax/catalog/product-info/">
 
-    <? if(!empty($arParams['TITLE'])) { ?>
-        <div class="b-common-section__title-box b-common-section__title-box--sale">
-            <h2 class="b-title b-title--sale"><?= $arParams['TITLE'] ?></h2>
-            <?php
-            /**
-             * Ссылка "Показать все" потребуется в случае добавления отдельной страницы с распродажей
-             *
-             * <a class="b-link b-link--title b-link--title" href="javascript:void(0)"
-             * title="Показать все"><span class="b-link__text b-link__text--title">Показать все</span><span
-             * class="b-link__mobile b-link__mobile--title">Все</span><span class="b-icon">
-             * <svg class="b-icon__svg" viewBox="0 0 6 10 " width="6px" height="10px">
-             * <use class="b-icon__use" xlink:href="icons.svg#icon-arrow-right" href="icons.svg#icon-arrow-right">
-             * </use>
-             * </svg></span></a>
-             */
-            ?>
-            <? if (!empty($arParams['ALL_LINK'])): ?>
-                <a class="b-link b-link--title b-link--title" href="<?= $arParams['ALL_LINK']; ?>" title="Показать все">
-                    <span class="b-link__text b-link__text--title">Показать все</span>
-                    <span class="b-link__mobile b-link__mobile--title">Все</span><span class="b-icon">
-                            <svg class="b-icon__svg" viewBox="0 0 6 10 " width="6px" height="10px">
-                                <use class="b-icon__use" xlink:href="icons.svg#icon-arrow-right" href="icons.svg#icon-arrow-right"></use>
-                            </svg>
-                        </span>
-                </a>
-            <? endif; ?>
-        </div>
-    <? } ?>
-
-    <div class="b-common-section__content b-common-section__content--sale b-common-section__content--main-sale js-popular-product">
+<div class="item-category-landing__slider" data-slider-category-landing="true">
         <?php
         $i = 0;
         $onlyProductsXmlIds = $arParams['ONLY_PRODUCTS_XML_ID'] ?? false;
@@ -128,5 +98,4 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
             }
         }
         ?>
-    </div>
-</section>
+</div>
