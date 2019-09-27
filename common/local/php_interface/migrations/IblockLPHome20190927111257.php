@@ -261,7 +261,7 @@ class IblockLPHome20190927111257 extends \Adv\Bitrixtools\Migration\SprintMigrat
             "DESCRIPTION" => "",
             "DESCRIPTION_TYPE" => "text",
             "SEARCHABLE_CONTENT" => "УЮТНО ЖИТЬ",
-            "CODE" => "home",
+            "CODE" => "stamps",
             "XML_ID" => "",
             "TMP_ID" => "",
             "DETAIL_PICTURE" => "",
@@ -299,7 +299,7 @@ class IblockLPHome20190927111257 extends \Adv\Bitrixtools\Migration\SprintMigrat
         ];
 
         $helper = new HelperManager();
-        $iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::CATALOG_SLIDER_PRODUCTS);
+        $iblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES);
         $helper->Iblock()->addSectionIfNotExists($iblockId, $section);
     }
 

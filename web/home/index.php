@@ -39,7 +39,7 @@ use FourPaws\Enum\IblockType; ?>
         <div class="b-container">
             <h2 class="title-comfortable-living">Уютный интерьер со скидкой -30%</h2>
         </div>
-        <? $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', ['SECTION_CODE' => 'home']) ?>
+        <? $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', ['SECTION_CODE' => 'stamps']) ?>
     </section>
 
     <section class="contest-comfortable-living">
