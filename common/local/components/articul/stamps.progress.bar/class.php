@@ -36,18 +36,18 @@ class CStampsProgressBar extends FourPawsComponent
      */
     public function prepareResult(): void
     {
+        $this->arResult['ACTIVE_STAMPS_COUNT'] = 0;
+
         try {
             $userId = $this->currentUserProvider->getCurrentUserId();
 
             try {
                 $this->arResult['ACTIVE_STAMPS_COUNT'] = $this->stampService->getActiveStampsCount(); //TODO переделать(?) на вывод значения, сохраненного в профиле пользователя (для этого нужно его заранее асинхронно обновлять)ddd
             } catch (Exception $e) {
-                $this->arResult['ACTIVE_STAMPS_COUNT'] = 0;
             }
         } catch (NotAuthorizedException $e) {
-            define('NEED_AUTH', true);
-
-            return;
+            //define('NEED_AUTH', true);
+            //return;
         }
 
         $maxStampsCount = 0;
