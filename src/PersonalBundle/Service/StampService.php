@@ -556,7 +556,7 @@ class StampService implements LoggerAwareInterface
 
             $this->currentDiscount = 0;
             foreach ($this->getStampLevels() as $stampLevel) {
-                if (($stampLevel['stamps'] < $activeStampsCount) && ($stampLevel['discount'] > $this->currentDiscount)) {
+                if (($stampLevel['stamps'] <= $activeStampsCount) && ($stampLevel['discount'] > $this->currentDiscount)) {
                     $this->currentDiscount = $stampLevel['discount'];
                 }
             }
