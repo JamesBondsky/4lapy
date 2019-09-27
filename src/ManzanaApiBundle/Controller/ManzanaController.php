@@ -56,10 +56,8 @@ class ManzanaController extends Controller
     public function couponsIssue(Request $request): JsonResponse
     {
         try {
-            parse_str($request->getContent(), $requestObject);
-
             /** @var CouponsIssueRequest $couponsIssueRequest */
-            $couponsIssueRequest = $this->arrayTransformer->fromArray($requestObject, CouponsIssueRequest::class);
+            $couponsIssueRequest = $this->arrayTransformer->fromArray(json_decode($request->getContent(), true), CouponsIssueRequest::class);
 
             $result = $this->manzanaApiService->addOrUpdateCouponIssue($couponsIssueRequest->getCouponsIssues());
 
@@ -87,10 +85,8 @@ class ManzanaController extends Controller
     public function couponsAdd(Request $request): JsonResponse
     {
         try {
-            parse_str($request->getContent(), $requestObject);
-
             /** @var CouponsAddRequest $couponsAddRequest */
-            $couponsAddRequest = $this->arrayTransformer->fromArray($requestObject, CouponsAddRequest::class);
+            $couponsAddRequest = $this->arrayTransformer->fromArray(json_decode($request->getContent(), true), CouponsAddRequest::class);
 
             $result = $this->manzanaApiService->addCoupons($couponsAddRequest->getCoupons());
 
@@ -118,10 +114,8 @@ class ManzanaController extends Controller
     public function couponsSetUsed(Request $request): JsonResponse
     {
         try {
-            parse_str($request->getContent(), $requestObject);
-
             /** @var CouponsSetUsedRequest $couponsSetUsedRequest */
-            $couponsSetUsedRequest = $this->arrayTransformer->fromArray($requestObject, CouponsSetUsedRequest::class);
+            $couponsSetUsedRequest = $this->arrayTransformer->fromArray(json_decode($request->getContent(), true), CouponsSetUsedRequest::class);
 
             // Установка
             $result = $this->manzanaApiService->setCouponsUsed($couponsSetUsedRequest->getCoupons());
