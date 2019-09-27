@@ -376,7 +376,6 @@ class LandingController extends Controller
 //                throw new JsonResponseException($this->ajaxMess->getWrongDataError());
 //            }
 
-            $files = $_FILES;
             $userId = $USER->GetID();
             $userFields = \CUser::GetByID($USER->GetID())->Fetch();
 
@@ -391,7 +390,7 @@ class LandingController extends Controller
                 'PROPERTY_VALUES' => [
                     'USER_ID' => $userId,
                     'LOGIN' => $userFields['LOGIN'],
-                    'FIO' => implode(' ', array_filter([$userFields['LAST_NAME'], $userFields['FIRST_NAME'], $userFields['SECOND_NAME']])),
+                    'FIO' => implode(' ', array_filter([$userFields['LAST_NAME'], $userFields['NAME'], $userFields['SECOND_NAME']])),
                     'PHONE' => $userFields['PERSONAL_PHONE'],
                     'EMAIL' => $userFields['EMAIL']
                 ],
@@ -419,7 +418,7 @@ class LandingController extends Controller
 //                ));
 //            }
 
-            $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD);
+            // $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD);
             return JsonSuccessResponse::create('Заявка успешно отправлена!');
 
         } catch (JsonResponseException $e) {

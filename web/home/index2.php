@@ -11,75 +11,29 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType; ?>
 
 <div class="comfortable-living-page">
-    <section class="section-marks-comfortable-living">
-        <div class="b-container">
-            <div class="section-marks-comfortable-living__content">
-                <div class="marks-comfortable-living">
-                    <div class="item item_active">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_active">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_active">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_active">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_active">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_active item_discount">
-                        <div class="item__title">-10%</div>
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_active">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_discount">
-                        <div class="item__title">-20%</div>
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_discount">
-                        <div class="item__title">-30%</div>
-                        <div class="item__mark"></div>
-                    </div>
+    <section class="promo-comfortable-living">
+        <div class="b-container promo-comfortable-living__container">
+            <div class="promo-comfortable-living__content">
+                <div class="promo-comfortable-living__img-wrap">
+                    <img src="/home/img/promo-comfortable-living.png" class="promo-comfortable-living__img">
+                    <img src="/home/img/promo-comfortable-living_mobile.png" class="promo-comfortable-living__img promo-comfortable-living__img--mobile">
                 </div>
-                <div class="balance-comfortable-living">
-                    <div class="balance-comfortable-living__info">
-                        <?if ($USER->IsAuthorized()) {?>
-                            <div class="balance-comfortable-living__user-mark">
-                                <span>Мои марки</span>
-                                <span class="count">10</span>
-                                <span class="b-icon b-icon--mark">
-                                    <?= new SvgDecorator('icon-mark', 24, 24) ?>
-                                </span>
-                            </div>
-                            <div class="balance-comfortable-living__discount">Моя скидка - 20%</div>
-                        <? } else { ?>
-                            <div class="balance-comfortable-living__text">Узнайте ваш баланс марок</div>
-                            <div class="balance-comfortable-living__btn js-open-popup" data-popup-id="authorization">Войти</div>
-                        <? } ?>
-                    </div>
-                    <?if ($USER->IsAuthorized()) {?>
-                        <div class="balance-comfortable-living__primary">
-                            до - 30% осталось 2 марки
-                        </div>
-                    <? } ?>
-                </div>
+                <ol class="promo-comfortable-living__list">
+                    <li class="item">
+                        <span class="bold">Покупай</span><br/> любые товары
+                    </li>
+                    <li class="item item_short">
+                        <span class="bold">Копи марки</span><br/> 1&nbsp;марка за&nbsp;каждые 500Р&nbsp;в&nbsp;чеке
+                    </li>
+                    <li class="item">
+                        <span class="bold">Меняй марки</span><br/> на&nbsp;скидки до&nbsp;30%
+                    </li>
+                </ol>
             </div>
         </div>
     </section>
+
+    <? $APPLICATION->IncludeComponent('articul:stamps.progress.bar', 'home', []) ?>
 
     <section class="contest-comfortable-living">
         <div class="b-container contest-comfortable-living__container">
