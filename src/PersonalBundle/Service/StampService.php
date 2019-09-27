@@ -84,6 +84,41 @@ class StampService implements LoggerAwareInterface
     ];
 
     public const EXCHANGE_RULES = [
+        1032492 => [
+            [
+                'title' => 'Stamps_exchange_1035430_30*5*P',
+                'price' => 979.30,
+                'stamps' => 5,
+            ],
+        ],
+        1032491 => [
+            [
+                'title' => 'Stamps_exchange_1035430_30*5*P',
+                'price' => 979.30,
+                'stamps' => 5,
+            ],
+        ],
+        1032489 => [
+            [
+                'title' => 'Stamps_exchange_1035430_30*5*P',
+                'price' => 979.30,
+                'stamps' => 5,
+            ],
+        ],
+        1032488 => [
+            [
+                'title' => 'Stamps_exchange_1035430_30*5*P',
+                'price' => 979.30,
+                'stamps' => 5,
+            ],
+        ],
+        1018535 => [
+            [
+                'title' => 'Stamps_exchange_1035430_30*5*P',
+                'price' => 979.30,
+                'stamps' => 5,
+            ],
+        ],
         1035430 => [ // 1399 руб
             [
                 'title' => 'Stamps_exchange_1035430_30*5*P',

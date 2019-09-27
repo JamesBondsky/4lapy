@@ -13,6 +13,7 @@ use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\ActionsFilter;
 use FourPaws\Catalog\Model\Filter\BrandFilter;
+use FourPaws\Catalog\Model\Filter\DeliveryAvailabilityFilter;
 use FourPaws\Catalog\Model\Filter\ClothingSizeFilter;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Model\Filter\InternalFilter;
@@ -185,4 +186,21 @@ class FilterCollection extends ObjectArrayCollection
         $allFilters = array_merge($sortedFilters, $otherFilters);
         return new FilterCollection($allFilters);
     }
+
+    /**
+     * @return DeliveryAvailabilityFilter|null
+     */
+    public function getDeliveryAvailabilityFilter()
+    {
+        $filterCollection = $this
+            ->getVisibleFilters()
+            ->filter(function (FilterInterface $filter) {
+                if ($filter instanceof DeliveryAvailabilityFilter) {
+                    return $filter;
+                }
+            });
+
+        return !$filterCollection->isEmpty() ? $filterCollection->first() : null;
+    }
+
 }

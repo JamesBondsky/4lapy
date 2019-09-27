@@ -397,6 +397,9 @@ class NotificationService implements LoggerAwareInterface
             case OrderStatus::STATUS_FINISHED:
                 $sendCompleteEmail = true;
                 break;
+            case OrderStatus::STATUS_CALL_BACK:
+                $smsTemplate = 'FourPawsSaleBundle:Sms:order.status.callback.html.php';
+                break;
         }
 
         if ($sendCompleteEmail &&

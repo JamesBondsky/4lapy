@@ -1692,4 +1692,28 @@ class BasketService implements LoggerAwareInterface
         $magnets = $this->getDobrolapMagnets();
         return $alt ? $magnets[BasketService::GIFT_DOBROLAP_XML_ID_ALT] : $magnets[BasketService::GIFT_DOBROLAP_XML_ID];
     }
+
+    /**
+     * возвращает массив offerId => quantity склеивая разделеные товары
+     *
+     * @return array
+     * @throws ArgumentNullException
+     */
+    public function getItemsForSubscribe()
+    {
+        $result = [];
+
+        $items = $this->getBasket()->getBasketItems();
+
+        /** @var BasketItem $basketItem */
+        foreach ($items as $basketItem) {
+            if (isset($result[$basketItem->getProductId()])) {
+                $result[$basketItem->getProductId()] += $basketItem->getQuantity();
+            } else {
+                $result[$basketItem->getProductId()] = $basketItem->getQuantity();
+            }
+        }
+
+        return $result;
+    }
 }

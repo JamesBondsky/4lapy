@@ -24,10 +24,12 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Manzana;
@@ -81,6 +83,14 @@ class BasketController extends Controller implements LoggerAwareInterface
      * @var SalePreset
      */
     private $salePreset;
+    /**
+     * @var DeliveryService
+     */
+    private $deliveryService;
+    /**
+     * @var LocationService
+     */
+    private $locationService;
 
     /**
      * BasketController constructor.
@@ -91,6 +101,8 @@ class BasketController extends Controller implements LoggerAwareInterface
      * @param CouponStorageInterface $couponStorage
      * @param GoogleEcommerceService $ecommerceService
      * @param SalePreset $salePreset
+     * @param DeliveryService $deliveryService
+     * @param LocationService $locationService
      */
     public function __construct(
         BasketService $basketService,
@@ -98,7 +110,9 @@ class BasketController extends Controller implements LoggerAwareInterface
         Manzana $manzana,
         CouponStorageInterface $couponStorage,
         GoogleEcommerceService $ecommerceService,
-        SalePreset $salePreset
+        SalePreset $salePreset,
+        DeliveryService $deliveryService,
+        LocationService $locationService
     )
     {
         $this->basketService = $basketService;
@@ -107,6 +121,8 @@ class BasketController extends Controller implements LoggerAwareInterface
         $this->couponStorage = $couponStorage;
         $this->ecommerceService = $ecommerceService;
         $this->salePreset = $salePreset;
+        $this->deliveryService = $deliveryService;
+        $this->locationService = $locationService;
     }
 
     /**
@@ -138,7 +154,7 @@ class BasketController extends Controller implements LoggerAwareInterface
             $data = [
                 'remainQuantity' => 10,
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
-                'disableAdd' => false
+                'disableAdd' => false,
             ];
 
             $temporaryItem = clone $basketItem;
@@ -148,8 +164,23 @@ class BasketController extends Controller implements LoggerAwareInterface
                 false
             );
 
+            // проверка на доступность доставки данного товара в текущем регионе
+            $locationCode = $this->locationService->getCurrentLocation();
+
+            $availableDelivery = true;
+            if ($locationCode) {
+                $deliveries = $this->deliveryService->getByProduct($this->basketService->getOfferCollection()->get($offerId), $locationCode);
+                if (empty($deliveries)) {
+                    $availableDelivery = false;
+                }
+            }
+
+            $data['warning'] = !$availableDelivery;
+
+            $message = ($availableDelivery) ? 'Товар добавлен в корзину' : 'Обратите внимание, что доставка в ваш регион не осуществляется.';
+
             $response = JsonSuccessResponse::createWithData(
-                'Товар добавлен в корзину',
+                $message,
                 $data,
                 200,
                 ['reload' => false]

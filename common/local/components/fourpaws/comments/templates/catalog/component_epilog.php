@@ -52,22 +52,28 @@ $request = Application::getInstance()->getContext()->getRequest();
     $recaptchaService = SymfoniApplication::getInstance()->getContainer()->get(ReCaptchaInterface::class); ?>
 
     epilogHandlers.add(function () {
-        if ($('.js-comments-auth-block-<?=$uniqueCommentString?>').length > 0) {
-            $('.js-comments-auth-block-<?=$uniqueCommentString?>').css('display', 'block');
-        }
-        if ($('.js-comments-auth-form-<?=$uniqueCommentString?>').length > 0) {
-            $('.js-comments-auth-form-<?=$uniqueCommentString?>').css('display', 'block');
-        }
-        if ($('.js-comments-captcha-block-<?=$uniqueCommentString?>').length > 0) {
-            $('.js-comments-captcha-block-<?=$uniqueCommentString?>').html('<?=$recaptchaService->getCaptcha();?>').css('display', 'block');
-        }
+        //if ($('.js-comments-auth-block-<?//=$uniqueCommentString?>//').length > 0) {
+        //    $('.js-comments-auth-block-<?//=$uniqueCommentString?>//').css('display', 'block');
+        // }
+        //if ($('.js-comments-auth-form-<?//=$uniqueCommentString?>//').length > 0) {
+        //    $('.js-comments-auth-form-<?//=$uniqueCommentString?>//').css('display', 'block');
+        // }
+        //if ($('.js-comments-captcha-block-<?//=$uniqueCommentString?>//').length > 0) {
+        //    $('.js-comments-captcha-block-<?//=$uniqueCommentString?>//').html('<?//=$recaptchaService->getCaptcha();?>//').css('display', 'block');
+        // }
+
+        $('.js-authorized-review-button').remove();
+
     });
 
     <?php } else { ?>
     epilogHandlers.add(function () {
-        if ($('.js-comments-auth-form-<?=$uniqueCommentString?>').length > 0) {
-            $('.js-comments-auth-form-<?=$uniqueCommentString?>').remove();
-        }
+        //if ($('.js-comments-auth-form-<?//=$uniqueCommentString?>//').length > 0) {
+        //    $('.js-comments-auth-form-<?//=$uniqueCommentString?>//').remove();
+        // }
+
+        $('.js-authorized-review-button').css('display', 'block');
+        $('.js-not-authorized-review-button').remove();
     });
     <?php } ?>
 

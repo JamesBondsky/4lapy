@@ -195,7 +195,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
             if ($isRequired && $value === '') {
                 $this->setFieldError($fieldName, 'Значение не задано', 'empty');
             } elseif ($value !== '') {
-                if (strlen($value) < 3 || preg_match('/[^а-яА-ЯёЁ\-\s]/u', $value)) {
+                if (strlen($value) < 1 || preg_match('/[^а-яА-ЯёЁ\-\s]/u', $value)) {
                     $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
                 }
             }

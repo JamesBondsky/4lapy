@@ -43,6 +43,12 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
     /** @var CurrentUserProviderInterface */
     private $currentUserProvider;
 
+    private $hlSizeSelection;
+    private $hlSize;
+
+    // тип питомца собаки
+    const DOG_TYPE = 'sobaki';
+
     /**
      * AutoloadingIssuesInspection constructor.
      *
@@ -67,6 +73,8 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
         $this->petService = $container->get('pet.service');
         $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+        $this->hlSizeSelection = $container->get('bx.hlblock.clothingsizeselection');
+        $this->hlSize = $container->get('bx.hlblock.clothingsize');
     }
 
     public function onPrepareComponentParams($params): array
@@ -106,11 +114,18 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
             ]);
 
             $this->arResult['ITEMS'] = $this->petService->getCurUserPets();
+
             /** получение пола */
             $this->setGenderVals();
 
             /** получение типов питомцев */
             $this->setPetTypes();
+
+            /** получение размеров питомца */
+            $this->setPetSizes();
+
+            /** получение размеров для определения размера */
+            $this->setSizesForJs();
 
             $this->includeComponentTemplate();
         }
@@ -149,10 +164,61 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
                 [
                     'ID',
                     'UF_NAME',
+                    'UF_CODE'
                 ]
             )->setOrder(['UF_SORT' => 'asc'])->exec();
         while ($item = $res->fetch()) {
             $this->arResult['PET_TYPES'][] = $item;
+        }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function setPetSizes(): void
+    {
+        $this->arResult['PET_SIZES'] = [];
+        $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
+            [
+                'FIELD_NAME' => 'UF_SIZE',
+                'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
+            ]
+        )->exec()->fetch()['ID'];
+        $userFieldEnum = new \CUserFieldEnum();
+        $res = $userFieldEnum->GetList([], ['USER_FIELD_ID' => $userFieldId]);
+        while ($item = $res->Fetch()) {
+            if($item['XML_ID'] == 'n'){
+                continue;
+            }
+
+            $this->arResult['PET_SIZES'][$item['XML_ID']] = $item;
+        }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function setSizesForJs(): void
+    {
+        $sizes = $this->hlSizeSelection::query()->setSelect(['*', 'UF_*'])->exec()->fetchAll();
+        $sizeInfo = [];
+
+        $dbres = $this->hlSize::query()->setSelect(['*', 'UF_*'])->exec();
+        while($size = $dbres->fetch()){
+            $sizeInfo[$size['UF_NAME']] = $size;
+        }
+
+        foreach ($sizes as $size) {
+            $this->arResult['JS_SIZES'][] = [
+                'name'      => $size['UF_CODE'],
+                'back_min'  => $size['UF_BACK_MIN'],
+                'back_max'  => $size['UF_BACK_MAX'],
+                'chest_min' => $size['UF_CHEST_MIN'],
+                'chest_max' => $size['UF_CHEST_MAX'],
+                'neck_min'  => $size['UF_NECK_MIN'],
+                'neck_max'  => $size['UF_NECK_MAX'],
+                'code'      => $sizeInfo[$size['UF_CODE']]['UF_XML_ID']
+            ];
         }
     }
 }
