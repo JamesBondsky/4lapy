@@ -116,18 +116,26 @@ $bonus = $arResult['BONUS'];
             </li>
         </ul>
         <?php if (!$bonus->getCard()->isReal()) { ?>
-            <div class="b-account-bonus__title b-account-bonus__title--bonus">Зачем бонусная карта, если есть
-                виртуальная?
+            <div class="b-account-bonus__title b-account-bonus__title--bonus">
+                У&nbsp;Вас виртуальная бонусная карта!
+            </div>
+            <div class="b-account-bonus__title b-account-bonus__title--bonus">
+                Что это значит?
             </div>
             <ul class="b-account-bonus__list-bonus">
-                <li class="b-account-bonus__item">Не надо записывать номер виртуальной карты, чтобы предъявить ее в
-                    магазине
+                <li class="b-account-bonus__item">
+                    Как только Вы&nbsp;зарегистрировались на&nbsp;сайте или в&nbsp;мобильном приложении, Вам автоматически была
+                    выдана эта виртуальная бонусная карта. Её&nbsp;Вы&nbsp;и&nbsp;видите здесь!
                 </li>
-                <li class="b-account-bonus__item">Вы можете передавать друзьям и родственникам</li>
-                <li class="b-account-bonus__item">После привязки, баланс и размер бонуса с виртуальной карты добавляются
-                    к физической
+                <li class="b-account-bonus__item">
+                    Чтобы получать бонусы с&nbsp;каждой покупки, на&nbsp;кассе сообщите ваш номер телефона или просто покажите номер этой
+                    карты из&nbsp;личного кабинета на&nbsp;сайте или из&nbsp;мобильного приложения.
                 </li>
-                <li class="b-account-bonus__item">Ее можно потрогать</li>
+                <li class="b-account-bonus__item">
+                    Если у&nbsp;вас есть пластиковая бонусная карта (физическая, выданная в&nbsp;магазине), то&nbsp;вы&nbsp;можете
+                    привязать её&nbsp;сюда, нажав кнопку &laquo;Привязать бонусную карту&raquo;.
+                    Баланс бонусов будет равен сумме <nobr>2-х</nobr> карт: виртуальной и&nbsp;пластиковой.
+                </li>
             </ul>
         <?php }
         if ($bonus->getCard()->isReal()) {?>

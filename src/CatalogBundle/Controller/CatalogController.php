@@ -12,11 +12,13 @@ use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
 use FourPaws\CatalogBundle\Exception\RuntimeException as CatalogRuntimeException;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
@@ -61,6 +63,14 @@ class CatalogController extends Controller
      * @var DataLayerService
      */
     private $dataLayerService;
+    /**
+     * @var LocationService;
+     */
+    private $locationService;
+    /**
+     * @var DeliveryService;
+     */
+    private $deliveryService;
 
     /**
      * CatalogController constructor.
@@ -71,8 +81,19 @@ class CatalogController extends Controller
      * @param CatalogLandingService  $landingService
      * @param RetailRocketService    $retailRocketService
      * @param DataLayerService       $dataLayerService
+     * @param LocationService        $locationService
+     * @param DeliveryService        $deliveryService
      */
-    public function __construct(SearchService $searchService, ValidatorInterface $validator, GoogleEcommerceService $ecommerceService, CatalogLandingService $landingService, RetailRocketService $retailRocketService, DataLayerService $dataLayerService)
+    public function __construct(
+        SearchService $searchService,
+        ValidatorInterface $validator,
+        GoogleEcommerceService $ecommerceService,
+        CatalogLandingService $landingService,
+        RetailRocketService $retailRocketService,
+        DataLayerService $dataLayerService,
+        LocationService $locationService,
+        DeliveryService $deliveryService
+    )
     {
         $this->searchService = $searchService;
         $this->validator = $validator;
@@ -80,6 +101,8 @@ class CatalogController extends Controller
         $this->retailRocketService = $retailRocketService;
         $this->landingService = $landingService;
         $this->dataLayerService = $dataLayerService;
+        $this->locationService = $locationService;
+        $this->deliveryService = $deliveryService;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection
@@ -259,6 +282,20 @@ class CatalogController extends Controller
             }
         }
 
+        // для блока "бесплатная примерка" определяем доступную доставку, чтобы в блоке вывести цены
+        $availableDelivery = null;
+        $locationCode = $this->locationService->getCurrentLocation();
+        $deliveries = $this->deliveryService->getByLocation($locationCode);
+
+        if ($deliveries && !empty($deliveries)) {
+            foreach ($this->deliveryService->getByLocation($locationCode) as $delivery) {
+                if ($this->deliveryService->isDelivery($delivery)) {
+                    $availableDelivery = $delivery;
+                    break;
+                }
+            }
+        }
+
         try {
             $productWithMinPrice = $this->searchService->searchOneWithMinPrice($category->getFilters());
         } catch (Throwable $e) {
@@ -284,7 +321,8 @@ class CatalogController extends Controller
             'landingService'         => $this->landingService,
             'dataLayerService'       => $this->dataLayerService,
             'retailRocketViewScript' => $retailRocketViewScript,
-            'productWithMinPrice'    => $productWithMinPrice
+            'productWithMinPrice'    => $productWithMinPrice,
+            'availableDelivery'      => $availableDelivery,
         ]);
     }
 }

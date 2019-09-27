@@ -5,6 +5,7 @@ namespace FourPaws\Search;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Highloadblock\DataManager;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Type\Collection;
 use Elastica\Exception\InvalidException;
 use Elastica\Query;
 use Elastica\Query\AbstractQuery;
@@ -16,10 +17,16 @@ use Elastica\Suggest;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\FilterCollection;
+use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Model\Filter\DeliveryAvailabilityFilter;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Model\Sorting;
+use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Service\SortService;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Search\Enum\DocumentType;
 use FourPaws\Search\Helper\AggsHelper;
 use FourPaws\Search\Helper\IndexHelper;
@@ -27,6 +34,10 @@ use FourPaws\Search\Model\CombinedSearchResult;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\Model\ProductSuggestResult;
+use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Service\StockService;
+use FourPaws\StoreBundle\Service\StoreService;
 use InvalidArgumentException;
 use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
@@ -96,15 +107,16 @@ class SearchService implements LoggerAwareInterface
      * аггрегации: и фильтры соответствующим образом "схлопываются", обеспечивая настоящий фасетный поиск по каталогу.
      *
      * @param FilterCollection $filters
-     * @param Sorting          $sorting
-     * @param Navigation       $navigation
-     * @param string           $searchString
+     * @param Sorting $sorting
+     * @param Navigation $navigation
+     * @param string $searchString
      *
      * @return ProductSearchResult
      * @throws InvalidException
      * @throws ApplicationCreateException
      * @throws InvalidArgumentException
      * @throws ArgumentException
+     * @throws \Bitrix\Main\SystemException
      */
     public function searchProducts(
         FilterCollection $filters,
@@ -124,6 +136,10 @@ class SearchService implements LoggerAwareInterface
                 $search->getQuery()->setMinScore(0.9);
             }
         }
+
+        //$queryBuilder = new QueryBuilder();
+        //$termsQuery = $queryBuilder->query()->multi_match();
+        //$queryRule->addParam('filter', $termsQuery);
 
         $search->getQuery()
             ->setFrom($navigation->getFrom())
@@ -158,7 +174,17 @@ class SearchService implements LoggerAwareInterface
             $this->getAggsHelper()->collapseFilters($filters, $resultSet);
         }
 
-        return new ProductSearchResult($resultSet, $navigation, $queryTerm);
+        $productSearchResult = new ProductSearchResult($resultSet, $navigation, $queryTerm);
+
+        // фильтр доступности
+        if (!$filters->isEmpty()) {
+            $filterAvaliable = $filters->getDeliveryAvailabilityFilter();
+            if($filterAvaliable && $filterAvaliable->hasCheckedVariants()){
+                $productSearchResult = $this->filterByDeliveryAvailability($productSearchResult, $filterAvaliable);
+            }
+        }
+
+        return $productSearchResult;
     }
 
     /**
@@ -1069,5 +1095,137 @@ class SearchService implements LoggerAwareInterface
         $this->searchUrl = $route->getPath();
 
         return $this->searchUrl;
+    }
+
+    /**
+     * Фильтрует товары, удаляя из них конкретные офферы, не подходящие по фильтру
+     *
+     * @param ProductSearchResult $productSearchResult
+     * @param DeliveryAvailabilityFilter $filterAvaliable
+     * @return ProductSearchResult
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    protected function filterByDeliveryAvailability(ProductSearchResult $productSearchResult, DeliveryAvailabilityFilter $filterAvaliable) : ProductSearchResult
+    {
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
+        /** @var StockService $stockService */
+        $stockService = App::getInstance()->getContainer()->get(StockService::class);
+
+        $variants = $filterAvaliable->getCheckedVariants();
+        $availabilityFlags = [];
+        /** @var Variant $variant */
+        foreach ($variants as $variant){
+            $availabilityFlags[] = substr($variant->getValue(), -1);
+        }
+
+//                $delivery = null;
+//                $pickup = null;
+//                $deliveryZone = $deliveryService->getCurrentDeliveryZone();
+//
+//                $quantities = [];
+//                $offers = [];
+//                foreach ($productSearchResult->getProductCollection() as $key => $product) {
+//                    $offers = $product->getOffers();
+//                    foreach ($offers as $offer){
+//                        $offers[] = $offer;
+//                        $quantities[$offer->getXmlId()] = 1;
+//                    }
+//                }
+//
+//                $deliveries = $deliveryService->getByOfferCollection($offers, $quantities);
+
+        $offerIds = [];
+        foreach ($productSearchResult->getProductCollection() as $key => $product) {
+            $offers = $product->getOffers();
+            foreach ($offers as $offer){
+                $offerIds[] = $offer->getId();
+            }
+        }
+
+        $stores = [
+            'delivery' => new StoreCollection(),
+            'pickup'   => new StoreCollection(),
+            'request'  => new StoreCollection(),
+        ];
+        $storeIdsAll = [];
+        $delivery = null;
+        $pickup = null;
+        $deliveryZone = $deliveryService->getCurrentDeliveryZone();
+        $deliveries = $deliveryService->getByLocation();
+
+        /** @var CalculationResultInterface $calculationResult */
+        foreach($deliveries as $calculationResult){
+            if(!$delivery && $deliveryService->isDelivery($calculationResult)){
+                $delivery = $calculationResult;
+            }
+            if(!$pickup && $deliveryService->isPickup($calculationResult)){
+                $pickup = $calculationResult;
+            }
+        }
+
+        if(in_array('d', $availabilityFlags) && $delivery){
+            $storesAvailable = DeliveryHandlerBase::getAvailableStores($delivery->getDeliveryCode(), $deliveryZone);
+            /** @var Store $store */
+            foreach ($storesAvailable as $store){
+                $stores['delivery']->add($store);
+                $storeIdsAll[] = $store->getId();
+            }
+        }
+        if(in_array('p', $availabilityFlags) && $pickup){
+            $storesAvailable = DeliveryHandlerBase::getAvailableStores($pickup->getDeliveryCode(), $deliveryZone);
+            /** @var Store $stock */
+            foreach ($storesAvailable as $store){
+                $stores['pickup']->add($store);
+                $storeIdsAll[] = $store->getId();
+            }
+        }
+        if(in_array('r', $availabilityFlags)){
+            /** @var StoreService $storeService */
+            $storeService = App::getInstance()->getContainer()->get('store.service');
+            $storesAvailable = $storeService->getStores(StoreService::TYPE_SUPPLIER);
+
+            /** @var Store $stock */
+            foreach ($storesAvailable as $store){
+                $stores['request']->add($store);
+                $storeIdsAll[] = $store->getId();
+            }
+        }
+
+        $stockCollection = $stockService->getStocksByOfferIds($offerIds, $storeIdsAll);
+
+        /** @var Product $product */
+        foreach ($productSearchResult->getProductCollection() as $key => $product){
+            $offers = $product->getOffers();
+            foreach ($offers as $offer){
+                $remove = true;
+
+                if(in_array('d', $availabilityFlags)
+                    && !$offer->getProduct()->isDeliveryForbidden()
+                    && !$stockCollection->filterByOffer($offer)->filterByStores($stores['delivery'])->isEmpty()
+                ){
+                    $remove = false;
+                }
+                if(in_array('p', $availabilityFlags)
+                    && !$stockCollection->filterByOffer($offer)->filterByStores($stores['pickup'])->isEmpty()
+                ){
+                    $remove = false;
+                }
+                if(in_array('r', $availabilityFlags)
+                    && !$stockCollection->filterByOffer($offer)->filterByStores($stores['request'])->isEmpty()
+                ){
+                    $remove = false;
+                }
+
+                if($remove){
+                    $productSearchResult->getProductCollection()->get($key)->removeOffer($offer->getId());
+                }
+            }
+        }
+
+        return $productSearchResult;
     }
 }
