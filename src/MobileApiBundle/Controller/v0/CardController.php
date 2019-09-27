@@ -157,10 +157,16 @@ class CardController extends BaseController
             ->setCard((new ClientCard())
                 ->setNumber($userAddCartRequest->getNewCardNumber())
             )
-            ->setFirstName($userAddCartRequest->getFirstName())
-            ->setLastName($userAddCartRequest->getLastName())
             ->setBirthDate($userAddCartRequest->getBirthDate()->format('d.m.Y'))
             ->setPhone($userAddCartRequest->getPhone());
+
+        if ($firstName = $userAddCartRequest->getFirstName()) {
+            $user->setFirstName($firstName);
+        }
+
+        if ($lastName = $userAddCartRequest->getLastName()) {
+            $user->setLastName($lastName);
+        }
 
         if ($middleName = $userAddCartRequest->getSecondName()) {
             $user->setMidName($middleName);

@@ -80,4 +80,33 @@ class StockService implements LoggerAwareInterface
 
         return new StockCollection();
     }
+
+    /**
+     * @param Offer $offer
+     *
+     * @return StockCollection
+     */
+    public function getStocksByOfferIds(array $offerIds, array $storeIds = [], bool $onlyAvailable = true): Collection
+    {
+        try {
+            $filter = ['PRODUCT_ID' => $offerIds];
+
+            if($onlyAvailable){
+                $filter['>AMOUNT'] = 0;
+            }
+
+            if(!empty($stores)){
+                $filter['STORE_ID'] = $storeIds;
+            }
+
+            return $this->stockRepository->findBy($filter);
+        } catch (\Exception $e) {
+            $this->logger->error(
+                sprintf('failed to get stocks for offer: %s', $e->getMessage()),
+                ['offer' => implode(', ', $offerIds)]
+            );
+        }
+
+        return new StockCollection();
+    }
 }

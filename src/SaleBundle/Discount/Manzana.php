@@ -352,7 +352,7 @@ class Manzana implements LoggerAwareInterface
                                     $maxStampsLevelProperty->save();
                                 }
                             }
-                            $basketPropertyCollection->save();
+                           // $basketPropertyCollection->save(); при сохранении всех свойств, сохраняется свойство SUBSCRIBE_PRICE
 
                             //TODO set USE_STAMPS=false & MAX_STAMPS_LEVEL=false instead (или заменить на максимальный из тех уровней, на который хватит марок), если пользователь уже выбрал обмен марок у других товаров и на этот обмен марок не хватит
                         }
@@ -425,7 +425,7 @@ class Manzana implements LoggerAwareInterface
                                 ]);
                                 $maxStampsLevelProperty->save();
                             }
-                            $basketPropertyCollection->save();
+                            // $basketPropertyCollection->save();   see line 355
                             $item->setPropertyCollection($basketPropertyCollection);
                         }
                     });

@@ -59,4 +59,6 @@ class IblockCode
 
     public const HOME_FAQ = 'home_faq';
     public const HOME_IMAGES = 'home_images';
+
+    public const HEADER_PROMO_BANNER = 'header_promo_banner';
 }

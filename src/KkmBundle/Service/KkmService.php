@@ -52,7 +52,7 @@ class KkmService implements LoggerAwareInterface
         CURLOPT_TIMEOUT        => 60,    //time-out on response
     ];
 
-    const YANDEX_API_KEY = 'ad666cd3-80be-4111-af2d-209dddf2c55e';
+    const YANDEX_API_KEY = '8bb38591-0ddc-44f1-a86c-7e5d50e8cac3';
 
     const DELIVERY_CODES = [
         DeliveryService::INNER_DELIVERY_CODE
@@ -436,8 +436,17 @@ class KkmService implements LoggerAwareInterface
             $quantities = [];
             $offerXmlIds = [];
             foreach ($products as $product) {
-                $offerXmlIds[] = $product['uid'];
-                $quantities[$product['uid']] = $product['count'];
+                if (strripos($product['uid'], '300') !== 0) {
+                    $offerXmlIds[] = $product['uid'];
+                    $quantities[$product['uid']] = $product['count'];
+                }
+            }
+
+            if (!$offerXmlIds) {
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['syntax_error']['message'] . ': не найдены товары',
+                    static::RESPONSE_STATUSES['syntax_error']['code']
+                );
             }
 
             /** @var OfferCollection $offers */

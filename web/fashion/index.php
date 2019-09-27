@@ -19,7 +19,7 @@ use Symfony\Component\Templating\PhpEngine;
 use Symfony\Component\Templating\Loader\FilesystemLoader;
 
 ?>
-<div class="fashion-page">
+<div class="fashion-page" data-fashion-page="true">
     <section class="fashion-main-banner">
         <? $sectionFashion = CIBlockSection::GetList([], ['CODE' => 'fashion'], false, ['ID', 'NAME'])->Fetch();
         if($sectionFashion){
@@ -157,7 +157,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
 
     <? $APPLICATION->IncludeComponent('articul:catalog.section.slider', '', ['SECTION_CODE' => 'rungo']) ?>
 
-    <section class="fashion-measure-dog" data-measure-dog-fashion="true">
+    <section class="fashion-measure-dog" data-measure-dog-fashion="true" id="fashion-dog-size">
         <?
         $filesystemLoader = new FilesystemLoader($_SERVER['DOCUMENT_ROOT'].'/../src/CatalogBundle/Resources/views/Catalog/%name%');
         $templating = new PhpEngine(new TemplateNameParser(), $filesystemLoader);
@@ -268,6 +268,14 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
             </div>
         </section>
     <? } ?>
+
+    <div class="fashion-btn-up__wrap" data-scroll-up-fashion="true">
+        <div class="fashion-btn-up" data-scroll-up-fashion="true">
+            <div class="fashion-btn-up__content">
+                Вверх
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
