@@ -421,15 +421,15 @@ class StampService implements LoggerAwareInterface
     /**
      * @var null|int
      */
-    protected $currentDiscount = null;
+    protected $currentDiscount;
     /**
      * @var null|int
      */
-    protected $nextDiscount = null;
+    protected $nextDiscount;
     /**
      * @var null|int
      */
-    protected $nextDiscountStampsNeed = null;
+    protected $nextDiscountStampsNeed;
 
     public function __construct()
     {
@@ -496,7 +496,7 @@ class StampService implements LoggerAwareInterface
         return $this->activeStampsCount;
     }
 
-    public function getStampLevels()
+    public function getStampLevels(): array
     {
         return self::STAMP_LEVELS;
     }
@@ -504,14 +504,10 @@ class StampService implements LoggerAwareInterface
     public function getExchangeRules($offerXmlId = false)
     {
         if ($offerXmlId !== false) {
-            if (isset($this->exchangeRules[$offerXmlId])) {
-                return $this->exchangeRules[$offerXmlId];
-            } else {
-                return null;
-            }
-        } else {
-            return $this->exchangeRules;
+            return $this->exchangeRules[$offerXmlId] ?? null;
         }
+
+        return $this->exchangeRules;
     }
 
     public function getCurrentDiscount() : int
@@ -577,7 +573,7 @@ class StampService implements LoggerAwareInterface
     /**
      * заполняем уровни марок
      */
-    protected function fillExchangeRules()
+    protected function fillExchangeRules(): void
     {
         try {
             $iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::CATALOG_SLIDER_PRODUCTS);
