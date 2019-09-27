@@ -53,6 +53,8 @@ class LandingController extends Controller
     static $festivalLanding = 'festival';
     static $mealfeelLanding = 'mealfeel';
 
+    const MAX_FILE_SIZE = 5000000; // 5 Мб
+
     /** @var AjaxMess */
     private $ajaxMess;
 
@@ -372,9 +374,10 @@ class LandingController extends Controller
                 throw new JsonResponseException($this->ajaxMess->getNotAuthorizedException());
             }
 
-//            if ($landingType == self::$grandinLanding && $request->get('sum') < 1800 || $landingType == self::$royalCaninLanding && $request->get('sum') < 1000 || $landingType == self::$mealfeelLanding && $request->get('sum') < 1500) {
-//                throw new JsonResponseException($this->ajaxMess->getWrongDataError());
-//            }
+            // < 5 Мб
+            if ($_FILES['PHOTO']['size'] > self::MAX_FILE_SIZE) {
+                throw new JsonResponseException($this->ajaxMess->getFileSizeError(self::MAX_FILE_SIZE/1000000));
+            }
 
             $userId = $USER->GetID();
             $userFields = \CUser::GetByID($USER->GetID())->Fetch();
@@ -422,8 +425,15 @@ class LandingController extends Controller
             return JsonSuccessResponse::create('Заявка успешно отправлена!');
 
         } catch (JsonResponseException $e) {
+            $logger = LoggerFactory::create('expertSender');
+            $logger->error(sprintf(
+                'Ошибка добавления заявки LP Уютно жить: %s exception: %s, user_id: %s',
+                __METHOD__,
+                $e->getMessage(),
+                $userFields['ID']
+            ));
 
-            return $e->getJsonResponse()->extendData($token);
+            return JsonSuccessResponse::create('Произошла ошибка, пожалуйста, обратитесь к администратору!');
         }
     }
 

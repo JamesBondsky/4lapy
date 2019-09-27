@@ -33,74 +33,13 @@ use FourPaws\Enum\IblockType; ?>
         </div>
     </section>
 
-    <section class="section-marks-comfortable-living">
+    <? $APPLICATION->IncludeComponent('articul:stamps.progress.bar', 'home', []) ?>
+
+    <section class="products-comfortable-living" data-products-comfortable-living="true">
         <div class="b-container">
-            <div class="section-marks-comfortable-living__content">
-                <div class="marks-comfortable-living">
-                    <div class="item item_active">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_active">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_active">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_active">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_active">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_active item_discount">
-                        <div class="item__title">-10%</div>
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_active">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_discount">
-                        <div class="item__title">-20%</div>
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item">
-                        <div class="item__mark"></div>
-                    </div>
-                    <div class="item item_discount">
-                        <div class="item__title">-30%</div>
-                        <div class="item__mark"></div>
-                    </div>
-                </div>
-                <div class="balance-comfortable-living">
-                    <div class="balance-comfortable-living__info">
-                        <?if ($USER->IsAuthorized()) {?>
-                            <div class="balance-comfortable-living__user-mark">
-                                <span>Мои марки</span>
-                                <span class="count">10</span>
-                                <span class="b-icon b-icon--mark">
-                                    <?= new SvgDecorator('icon-mark', 24, 24) ?>
-                                </span>
-                            </div>
-                            <div class="balance-comfortable-living__discount">Моя скидка - 20%</div>
-                        <? } else { ?>
-                            <div class="balance-comfortable-living__text">Узнайте ваш баланс марок</div>
-                            <div class="balance-comfortable-living__btn js-open-popup" data-popup-id="authorization">Войти</div>
-                        <? } ?>
-                    </div>
-                    <?if ($USER->IsAuthorized()) {?>
-                        <div class="balance-comfortable-living__primary">
-                            до - 30% осталось 2 марки
-                        </div>
-                    <? } ?>
-                </div>
-            </div>
+            <h2 class="title-comfortable-living">Уютный интерьер со скидкой -30%</h2>
         </div>
+        <? $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', ['SECTION_CODE' => 'home']) ?>
     </section>
 
     <section class="contest-comfortable-living">
@@ -117,7 +56,7 @@ use FourPaws\Enum\IblockType; ?>
                         </div>
                         <div class="contest-comfortable-living__links">
                             <div class="contest-comfortable-living__links-item">
-                                <a href="" class="contest-comfortable-living__link-img">
+                                <a href="/home/img/draw.jpg" class="contest-comfortable-living__link-img" target="_blank" download="draw.jpg">
                                     <span>Скачать рисунок</span>
                                     <span class="b-icon">
                                     <?= new SvgDecorator('icon-download', 15, 14) ?>
@@ -125,7 +64,7 @@ use FourPaws\Enum\IblockType; ?>
                                 </a>
                             </div>
                             <div class="contest-comfortable-living__links-item">
-                                <a href="" class="contest-comfortable-living__link-conditions">Подробные условия</a>
+                                <a href="/home/img/Правила_Акции_Уютно_жить_октябрь2019.pdf" class="contest-comfortable-living__link-conditions" target="_blank">Подробные условия</a>
                             </div>
                         </div>
                     </div>
@@ -141,10 +80,10 @@ use FourPaws\Enum\IblockType; ?>
                     </ol>
                     <div class="contest-comfortable-living__steps-panel">
                         <?if ($USER->IsAuthorized()) {?>
-                            <form class="contest-comfortable-living__form" enctype="multipart/form-data" method="post" data-form-photo-comfortable-living-landing="true">
+                            <form class="contest-comfortable-living__form" enctype="multipart/form-data" method="post" action="/ajax/landing/home/add" data-form-photo-comfortable-living-landing="true">
                                 <div class="contest-comfortable-living__steps-btn">
                                     <span>Загрузить фото</span>
-                                    <input class="contest-comfortable-living__photo" type="file" name="PHOTO" accept="image/*,image/jpeg" data-photo-comfortable-living-landing="true">
+                                    <input class="contest-comfortable-living__photo" type="file" name="PHOTO" accept="image/*, image/jpeg, image/png" data-photo-comfortable-living-landing="true">
                                 </div>
                             </form>
                         <? } else { ?>
@@ -180,127 +119,73 @@ use FourPaws\Enum\IblockType; ?>
         </div>
     </section>
 
-    <section class="questions-comfortable-living">
-        <div class="b-container">
-            <h2 class="title-comfortable-living title-comfortable-living_questions">Вопросы и ответы</h2>
-            <div class="questions-comfortable-living__accordion">
-                <div class="item-accordion">
-                    <div class="item-accordion__header js-toggle-accordion">
-                        <span class="item-accordion__header-inner">Как накопить марки?</span>
-                    </div>
-                    <div class="item-accordion__block js-dropdown-block">
-                        <div class="item-accordion__block-content">
-                            <div class="item-accordion__block-text">
-                                Покупай Taft в магазинах сети «Лента» с 1 по 30 сентября и получай
-                                гарантированно 30 баллов на карту лояльности, а также участвуй
-                                в розыгрыше Beauty Box.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="item-accordion">
-                    <div class="item-accordion__header js-toggle-accordion">
-                        <span class="item-accordion__header-inner">Какие будут подарки</span>
-                    </div>
-                    <div class="item-accordion__block js-dropdown-block">
-                        <div class="item-accordion__block-content">
-                            <div class="item-accordion__block-text">
-                                Покупай Taft в магазинах сети «Лента» с 1 по 30 сентября и получай
-                                гарантированно 30 баллов на карту лояльности, а также участвуй
-                                в розыгрыше Beauty Box.
-                            </div>
-                            <div class="item-accordion__block-img">
-                                <img src="/home/img/questions.png" alt="" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="item-accordion">
-                    <div class="item-accordion__header js-toggle-accordion">
-                        <span class="item-accordion__header-inner">Как принять участие</span>
-                    </div>
-                    <div class="item-accordion__block js-dropdown-block">
-                        <div class="item-accordion__block-content">
-                            <div class="item-accordion__block-text">
-                                Покупай Taft в магазинах сети «Лента» с 1 по 30 сентября и получай
-                                гарантированно 30 баллов на карту лояльности, а также участвуй
-                                в розыгрыше Beauty Box.
-                            </div>
-                            <div class="item-accordion__block-img">
-                                <img src="/home/img/questions.png" alt="" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="item-accordion">
-                    <div class="item-accordion__header js-toggle-accordion">
-                        <span class="item-accordion__header-inner">Ещё какие-то вопросы</span>
-                    </div>
-                    <div class="item-accordion__block js-dropdown-block">
-                        <div class="item-accordion__block-content">
-                            <div class="item-accordion__block-text">
-                                Покупай Taft в магазинах сети «Лента» с 1 по 30 сентября и получай
-                                гарантированно 30 баллов на карту лояльности, а также участвуй
-                                в розыгрыше Beauty Box.
-                            </div>
-                            <div class="item-accordion__block-img">
-                                <img src="/home/img/questions.png" alt="" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <? $APPLICATION->IncludeComponent('articul:home.faq', '', []) ?>
 
     <section class="articles-comfortable-living">
         <div class="b-container">
             <h2 class="title-comfortable-living">Полезные статьи</h2>
             <div class="articles-comfortable-living__content">
                 <?
-                $APPLICATION->IncludeComponent('fourpaws:items.list',
-                    'fashion',
-                    [
-                        'ACTIVE_DATE_FORMAT'     => 'j F Y',
-                        'AJAX_MODE'              => 'N',
-                        'AJAX_OPTION_ADDITIONAL' => '',
-                        'AJAX_OPTION_HISTORY'    => 'N',
-                        'AJAX_OPTION_JUMP'       => 'N',
-                        'AJAX_OPTION_STYLE'      => 'Y',
-                        'CACHE_FILTER'           => 'Y',
-                        'CACHE_GROUPS'           => 'N',
-                        'CACHE_TIME'             => '36000000',
-                        'CACHE_TYPE'             => 'A',
-                        'CHECK_DATES'            => 'Y',
-                        'FIELD_CODE'             => [
-                            '',
+                $section = CIBlockSection::GetList([], ['CODE' => 'home'])->Fetch();
+                if($section) {
+                    global $arNewsFilter;
+                    $arNewsFilter = ['SECTION_ID' => [$section['ID']]];
+
+                    $APPLICATION->IncludeComponent('fourpaws:items.list',
+                        'home',
+                        [
+                            'ACTIVE_DATE_FORMAT'     => 'j F Y',
+                            'AJAX_MODE'              => 'N',
+                            'AJAX_OPTION_ADDITIONAL' => '',
+                            'AJAX_OPTION_HISTORY'    => 'N',
+                            'AJAX_OPTION_JUMP'       => 'N',
+                            'AJAX_OPTION_STYLE'      => 'Y',
+                            'CACHE_FILTER'           => 'Y',
+                            'CACHE_GROUPS'           => 'N',
+                            'CACHE_TIME'             => '36000000',
+                            'CACHE_TYPE'             => 'A',
+                            'CHECK_DATES'            => 'Y',
+                            'FIELD_CODE'             => [
+                                '',
+                            ],
+                            'FILTER_NAME'            => 'arNewsFilter',
+                            'IBLOCK_ID'              => [
+                                IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::NEWS),
+                                IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),
+                            ],
+                            'IBLOCK_TYPE'            => IblockType::PUBLICATION,
+                            'NEWS_COUNT'             => '7',
+                            'PREVIEW_TRUNCATE_LEN'   => '',
+                            'PROPERTY_CODE'          => [
+                                'PUBLICATION_TYPE',
+                                'VIDEO',
+                            ],
+                            'SET_LAST_MODIFIED'      => 'N',
+                            'SORT_BY1'               => 'ACTIVE_FROM',
+                            'SORT_BY2'               => 'SORT',
+                            'SORT_ORDER1'            => 'DESC',
+                            'SORT_ORDER2'            => 'ASC',
                         ],
-                        'FILTER_NAME'            => 'arNewsFilter',
-                        'IBLOCK_ID'              => [
-                            IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::NEWS),
-                            IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),
-                        ],
-                        'IBLOCK_TYPE'            => IblockType::PUBLICATION,
-                        'NEWS_COUNT'             => '7',
-                        'PREVIEW_TRUNCATE_LEN'   => '',
-                        'PROPERTY_CODE'          => [
-                            'PUBLICATION_TYPE',
-                            'VIDEO',
-                        ],
-                        'SET_LAST_MODIFIED'      => 'N',
-                        'SORT_BY1'               => 'ACTIVE_FROM',
-                        'SORT_BY2'               => 'SORT',
-                        'SORT_ORDER1'            => 'DESC',
-                        'SORT_ORDER2'            => 'ASC',
-                    ],
-                    false,
-                    ['HIDE_ICONS' => 'Y']
-                );
+                        false,
+                        ['HIDE_ICONS' => 'Y']
+                    );
+                }
                 ?>
             </div>
 
         </div>
     </section>
 </div>
+
+<script>
+    window.addEventListener('load', function() {
+        var items = document.querySelectorAll('a.js-item-link, a.b-news-item__link');
+
+        for (var i = 0; i < items.length; i++) {
+            items[i].setAttribute('target', '_blank');
+            items[i].target = '_blank';
+        }
+    });
+</script>
 
 <?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'; ?>
