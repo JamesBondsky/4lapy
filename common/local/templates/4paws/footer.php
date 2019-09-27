@@ -158,5 +158,8 @@ if ($template->hasMainWrapper()) {
         $.get('/ajax/sale/forgot-basket/close-page/');
     }
 </script>
+<?php if (MainTemplate::getInstance()->isStampsPage()) {
+    $APPLICATION->IncludeComponent('articul:stamps.exchange.rules', '');
+} ?>
 </body>
 </html>

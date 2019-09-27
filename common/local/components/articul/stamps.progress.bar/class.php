@@ -8,7 +8,6 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
-
 class CStampsProgressBar extends FourPawsComponent
 {
     /** @var object CurrentUserProviderInterface */

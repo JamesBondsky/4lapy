@@ -423,6 +423,10 @@ class StampService implements LoggerAwareInterface
      */
     protected $currentDiscount;
     /**
+     * @var int
+     */
+    protected $currentStampsLevel = 0;
+    /**
      * @var null|int
      */
     protected $nextDiscount;
@@ -492,7 +496,7 @@ class StampService implements LoggerAwareInterface
         }
 
         // для отладки марок
-//        $this->activeStampsCount = 7;
+//        $this->activeStampsCount = 6;
         return $this->activeStampsCount;
     }
 
@@ -567,6 +571,20 @@ class StampService implements LoggerAwareInterface
         }
 
         return$this->nextDiscountStampsNeed;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCurrentStampLevel() : int
+    {
+        foreach ($this->getStampLevels() as $stampLevel) {
+            if ($stampLevel['discount'] === $this->getCurrentDiscount()) {
+                $this->currentStampsLevel = $stampLevel['stamps'];
+            }
+        }
+
+        return $this->currentStampsLevel;
     }
 
 
