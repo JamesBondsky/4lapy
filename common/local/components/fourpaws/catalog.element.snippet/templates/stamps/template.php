@@ -256,23 +256,23 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                     <span class="b-ruble">₽</span>
                     <span class="title-subscr">Подписка</span>
                 </a>
-            <? }
+            <?php }
 
             if ($arResult['EXCHANGE_RULE']) { ?>
                 <span class="b-common-item__title">С использованием марок</span>
                 <ul class="b-common-item__marks">
-                    <? foreach ($arResult['EXCHANGE_RULE'] as $exchangeRule): ?>
-                        <li class="b-common-item__item-mark<?= ($exchangeRule['is_max_level']) ? ' is-active' : '' ?>">
+                    <?php foreach ($arResult['EXCHANGE_RULE'] as $exchangeRule): ?>
+                        <li class="b-common-item__item-mark js-exchange-rule-<?= $exchangeRule['stamps'] ?>">
                             <?= WordHelper::numberFormat($exchangeRule['price']) ?>
                             <span>₽</span>
-                            — <?= $exchangeRule['stamps'] ?>
+                            + <?= $exchangeRule['stamps'] ?>
                             <span class="b-icon b-icon--mark">
                                 <?= new SvgDecorator('icon-mark', 16, 16) ?>
                             </span>
                         </li>
-                    <? endforeach; ?>
+                    <?php endforeach; ?>
                 </ul>
-            <? }
+            <?php }
 
             if ($currentOffer->isByRequest()) {
                 ?>

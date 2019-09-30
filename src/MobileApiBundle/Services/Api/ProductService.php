@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
@@ -16,6 +17,7 @@ use Bitrix\Sale\BasketItem;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Share;
@@ -148,7 +150,7 @@ class ProductService
      * @param string $searchQuery
      * @return ArrayCollection
      * @throws CategoryNotFoundException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \Exception
@@ -224,7 +226,7 @@ class ProductService
     /**
      * @param int[] $ids
      * @return ArrayCollection
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\Catalog\Exception\CategoryNotFoundException
@@ -317,7 +319,7 @@ class ProductService
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws SystemException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      * @throws \Bitrix\Main\ObjectPropertyException
      */
     protected function mapProductForList(Product $product)
@@ -536,7 +538,7 @@ class ProductService
      * @return ShortProduct
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\External\Manzana\Exception\ExecuteErrorException
@@ -596,62 +598,12 @@ class ProductService
         if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
             // уровни скидок за марки
             $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
-            $exchangeRules = $this->stampService::EXCHANGE_RULES[$shortProduct->getXmlId()];
-
-            if (!$exchangeRules) {
-                $exchangeRules = [];
-            }
+            $currentStampsLevel = $this->stampService->getCurrentStampLevel();
 
             $stampLevels = [];
-            $maxCanUse = 0;
 
-            // учитывание корзины
-//            $maxStampsLevelValue = false;
-
-            // ищем товар в корзизе
-            /** @var BasketItem $basketItem */
-//            foreach ($this->appBasketService->getBasket()->getBasketItems() as $basketItem) {
-//                if ($basketItem->getProductId() == $offer->getId()) {
-//                    if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
-//                        $maxStampsLevelValue = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE']);
-//                    }
-//                }
-//            }
-
-            // если товар не нашли, то считаем сколько марок пользователь может потратить на один товар
-//            if (!$maxStampsLevelValue) {
-//                $extendedAttributeCollection = new ArrayCollection();
-//                foreach ($exchangeRules as $exchangeRule) {
-//                    $extendedAttributeCollection->add(
-//                        (new ExtendedAttribute())->setKey($exchangeRule['title'])->setValue(1)
-//                    );
-//                }
-//
-//                $maxStampsLevelValue = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $this->stampService->getActiveStampsCount());
-//            }
-//
-//            foreach ($exchangeRules as $exchangeRule) {
-//                if ($exchangeRule['title'] === $maxStampsLevelValue['key']) {
-//                    $exchangeRule['isMaxLevel'] = true;
-//                }
-//
-//                $stampLevels[] = $serializer->fromArray($exchangeRule, StampLevel::class);
-//            }
-
-            foreach ($exchangeRules as $exchangeRule) {
-                try {
-                    $stamps = $this->stampService->getActiveStampsCount();
-                } catch (\Exception $e) {
-                    $stamps = 0;
-                }
-
-                if (($exchangeRule['stamps'] <= $stamps) && ($exchangeRule['stamps'] > $maxCanUse)) {
-                    $maxCanUse = $exchangeRule['stamps'];
-                }
-            }
-
-            foreach ($exchangeRules as $exchangeRule) {
-                $exchangeRule['isMaxLevel'] = ($exchangeRule['stamps'] == $maxCanUse);
+            foreach ($this->stampService->getExchangeRules($offer->getXmlId()) as $exchangeRule) {
+                $exchangeRule['isMaxLevel'] = ($exchangeRule['stamps'] === $currentStampsLevel);
                 $stampLevels[] = $serializer->fromArray($exchangeRule, StampLevel::class);
             }
 
@@ -673,7 +625,7 @@ class ProductService
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws SystemException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \FourPaws\External\Manzana\Exception\ExecuteErrorException
      * @throws \FourPaws\External\Manzana\Exception\ExecuteException
@@ -806,7 +758,7 @@ class ProductService
      * @return array
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
@@ -1111,10 +1063,8 @@ class ProductService
         foreach ($offers as $offer) {
             if ($offerImages = $offer->getResizeImages(static::DETAIL_PICTURE_WIDTH, static::DETAIL_PICTURE_HEIGHT)) {
                 foreach ($offerImages as $image) {
-                    if ($currentOffer->getColor()) {
-                        if ($currentOffer->getColor()->getColorCode() != $offer->getColor()->getColorCode()) {
-                            $images[] = $image;
-                        }
+                    if ($currentOffer->getColor() && ($currentOffer->getColor()->getColorCode() !== $offer->getColor()->getColorCode())) {
+                        $images[] = $image;
                     } else {
                         $addInStart[] = $image;
                     }
@@ -1136,7 +1086,7 @@ class ProductService
     /**
      * @param int $stockId
      * @return array
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      */
     public function getProductIdsByShareId(int $stockId)
     {
@@ -1191,11 +1141,80 @@ class ProductService
      * @param $shareId
      * @return bool
      * @throws ApplicationCreateException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      */
     public function checkShareAccess($shareId)
     {
         return $this->basketRulesService->checkRegionAccess($shareId);
     }
 
+    /**
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws IblockNotFoundException
+     */
+    public function getStampsCategories()
+    {
+        $elementIblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::CATALOG_SLIDER_PRODUCTS);
+
+        // получаем id разделов и xml_id торговых предложений
+        $sectionOffersXmlIds = []; // массив соответсвия раздела и его ТП
+        $offerXmlIds = []; // массив для дальнейшего получения ТП
+
+        $rsElement = \CIBlockElement::GetList(['SORT' => SORT_ASC], ['IBLOCK_ID' => $elementIblockId, '=ACTIVE' => BaseEntity::BITRIX_TRUE, '=SECTION_CODE' => 'stamps'], false, false, ['ID', 'IBLOCK_ID', 'NAME', 'PROPERTY_SECTION', 'PROPERTY_PRODUCTS']);
+
+        $sections = [];
+        while ($arElement = $rsElement->Fetch()) {
+            if ($arElement['PROPERTY_SECTION_VALUE']) {
+                if (!isset($sectionOffersXmlIds[$arElement['PROPERTY_SECTION_VALUE']])) {
+                    $sectionOffersXmlIds[$arElement['PROPERTY_SECTION_VALUE']] = [];
+                }
+
+                if (!isset($sections[$arElement['PROPERTY_SECTION_VALUE']])) {
+                    $sections[$arElement['PROPERTY_SECTION_VALUE']] = $arElement['NAME'];
+                }
+
+
+                if ($arElement['PROPERTY_PRODUCTS_VALUE']) {
+                    $sectionOffersXmlIds[$arElement['PROPERTY_SECTION_VALUE']][] = $arElement['PROPERTY_PRODUCTS_VALUE'];
+                    $offerXmlIds[] = $arElement['PROPERTY_PRODUCTS_VALUE'];
+                }
+            }
+        }
+
+        // получаем торговые предложения
+        $offers = [];
+
+        if (!empty($offerXmlIds)) {
+            $offersListCollection = $this->getListFromXmlIds($offerXmlIds, true);
+            $offersList = $offersListCollection->get(0) ?? [];
+
+            /** @var Offer $offer */
+            foreach ($offersList as $offer) {
+                $offers[$offer->getXmlId()] = $offer;
+            }
+        }
+
+        // заполняем итоговый массив
+        $stampCategories = [];
+
+        foreach ($sectionOffersXmlIds as $sectionId => $offerXmlIds) {
+            $goods = [];
+
+            foreach ($offerXmlIds as $offerXmlId) {
+                if (isset($offers[$offerXmlId])) {
+                    $goods[] = $offers[$offerXmlId];
+                }
+            }
+
+            $stampCategories[] = [
+                'id' => $sectionId,
+                'title' => $sections[$sectionId],
+                'goods' => $goods,
+            ];
+        }
+
+        return $stampCategories;
+    }
 }
