@@ -257,8 +257,8 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                         <div class="b-mark-order-price__list">
                             <?php foreach ($stampInfo['STAMP_LEVELS'] as $stampLevel) { ?>
 	                            <?php
-                                $discountType = $stampLevel["discountType"];
-                                $discountValue = $stampLevel["discount"];
+                                $discountType = $stampLevel['discountType'];
+                                $discountValue = $stampLevel['discount'];
 	                            if ($discountType === StampService::DISCOUNT_TYPE_PERCENTAGE) {
 	                                $stampDiscountedPrice = $currentPrice * (1 - $discountValue / 100);
 	                            } elseif ($discountType === StampService::DISCOUNT_TYPE_VALUE) {
