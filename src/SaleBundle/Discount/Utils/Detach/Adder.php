@@ -427,7 +427,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                         'params' => [
                             'apply_count' => $usedStampsLevel['productQuantity'],
                             'discount_value' => $usedStampsLevel['discountValue'],
-                            'percent' => $usedStampsLevel['discountType'] === 'P',
+                            'percent' => $usedStampsLevel['discountType'] === $stampService::DISCOUNT_TYPE_PERCENTAGE,
                         ]
                     ];
                     $applyResultBasket[$basketItem->getId()][] = [

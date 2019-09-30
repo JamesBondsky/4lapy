@@ -36,6 +36,9 @@ class StampService implements LoggerAwareInterface
 
     public const IS_STAMPS_OFFER_ACTIVE = true;
 
+    public const DISCOUNT_TYPE_PERCENTAGE = 'P';
+    public const DISCOUNT_TYPE_VALUE = 'V'; // скидка в рублях
+
     /*public const EXCHANGE_RULES = [ // dev-манзана
         1000002 => [
             [
@@ -859,6 +862,8 @@ class StampService implements LoggerAwareInterface
 
                 $stampLevels[] = [
                     'price' => $discountPrice,
+                    'discount' => $stampLevelInfo['discountValue'],
+                    'discountType' => $stampLevelInfo['discountType'],
                     'stamps' => $stampLevelInfo['discountStamps'],
                 ];
             }
