@@ -368,7 +368,7 @@ class Manzana implements LoggerAwareInterface
             $availableStamps = $activeStampsCount;
             foreach ($basket as $item) {
                 $offerXmlId = explode('#', $item->getField('PRODUCT_XML_ID'))[1];
-                if (!$offerXmlId || !isset($this->stampService::EXCHANGE_RULES[$offerXmlId])) {
+                if (!$offerXmlId || !($this->stampService->getExchangeRules($offerXmlId))) {
                     continue;
                 }
                 $basketPropertyCollection = $item->getPropertyCollection();
@@ -393,7 +393,7 @@ class Manzana implements LoggerAwareInterface
 
             foreach ($basket as $item) {
                 $offerXmlId = explode('#', $item->getField('PRODUCT_XML_ID'))[1];
-                if (!$offerXmlId || !isset($this->stampService::EXCHANGE_RULES[$offerXmlId])) {
+                if (!$offerXmlId || !($this->stampService->getExchangeRules($offerXmlId))) {
                     continue;
                 }
                 $basketCode = (int)str_replace('n', '', $item->getBasketCode());

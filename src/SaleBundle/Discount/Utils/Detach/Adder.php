@@ -61,6 +61,9 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
      */
     public function processOrder(): void
     {
+        /** @var StampService $stampService */
+        $stampService = App::getInstance()->getContainer()->get(StampService::class);
+
         /**
          * 1. Региональные скидки
          * 2. количества и свойства
