@@ -246,6 +246,17 @@ class BasketService
                     }
                 }
 
+                /** @var StampLevel $stampLevelObj */
+                foreach ($stampLevels as $stampLevelKey => $stampLevelObj) {
+                    $oldShortProduct = $product->getShortProduct();
+                    $oldPrice = $oldShortProduct->getPrice()->getActual();
+                    if ($stampLevelObj->getDiscountType() === $this->stampService::DISCOUNT_TYPE_PERCENTAGE) {
+                        $stampLevels[$stampLevelKey]->setPrice($oldPrice * (1 - $stampLevelObj->getDiscountValue() / 100));
+                    } elseif ($stampLevelObj->getDiscountType() === $this->stampService::DISCOUNT_TYPE_VALUE) {
+                        $stampLevels[$stampLevelKey]->setPrice($oldPrice - $stampLevelObj->getDiscountValue());
+                    }
+                }
+                //FIXME можно убрать лишние параметры из $stampLevels (discountValue и discountType)
                 $shortProduct->setStampLevels($stampLevels); //TODO get stampLevels from Manzana. If Manzana doesn't answer then set no levels
             }
 

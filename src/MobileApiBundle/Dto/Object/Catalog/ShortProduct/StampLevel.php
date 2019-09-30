@@ -30,6 +30,24 @@ class StampLevel
     protected $stamps;
 
     /**
+     * Размер скидки
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("discountValue")
+     * @var int
+     */
+    private $discountValue;
+
+    /**
+     * Тип скидки:
+     * P - в процентах
+     * V - в рублях
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("discountType")
+     * @var string
+     */
+    private $discountType;
+
+    /**
      * Будет ли применен этот уровень
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("isMaxLevel")
@@ -88,6 +106,42 @@ class StampLevel
     public function setIsMaxLevel(bool $isMaxLevel): StampLevel
     {
         $this->isMaxLevel = $isMaxLevel;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDiscountValue(): int
+    {
+        return $this->discountValue;
+    }
+
+    /**
+     * @param int $discountValue
+     * @return StampLevel
+     */
+    public function setDiscountValue(int $discountValue): StampLevel
+    {
+        $this->discountValue = $discountValue;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDiscountType(): string
+    {
+        return $this->discountType;
+    }
+
+    /**
+     * @param string $discountType
+     * @return StampLevel
+     */
+    public function setDiscountType(string $discountType): StampLevel
+    {
+        $this->discountType = $discountType;
         return $this;
     }
 }
