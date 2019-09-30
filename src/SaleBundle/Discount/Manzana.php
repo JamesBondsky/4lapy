@@ -374,7 +374,7 @@ class Manzana implements LoggerAwareInterface
                 $basketPropertyCollection = $item->getPropertyCollection();
                 $usedStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'USED_STAMPS_LEVEL');
                 //$maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
-                if ($usedStampsLevelProperty && $usedStamps = unserialize($usedStampsLevelProperty->getField('VALUE'), null)['stampsUsed']) {
+                if ($usedStampsLevelProperty && $usedStamps = unserialize($usedStampsLevelProperty->getField('VALUE'))['stampsUsed']) {
                     $availableStamps -= $usedStamps;
                 }
 
