@@ -507,13 +507,13 @@ class StampService implements LoggerAwareInterface
     public function parseLevelKey(string $key): array
     {
         $keyArray = [];
-        preg_match('/(\d+)\*(\d+)\*([VP])$/', $key, $discount);
+        preg_match('/(\d+)\*(\d+)(\*([VP]))?$/', $key, $discount);
 
-        if ($discount[1] && $discount[2] && $discount[3]) {
+        if ($discount[1] && $discount[2]) {
             $keyArray = [
                 'discountValue' => $discount[1],
                 'discountStamps' => $discount[2],
-                'discountType' => $discount[3],
+                'discountType' => $discount[4] ?? 'P',
             ];
         }
 
