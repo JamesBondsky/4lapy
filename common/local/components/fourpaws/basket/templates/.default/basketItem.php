@@ -16,6 +16,7 @@ use FourPaws\Components\BasketComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Service\BasketService;
 
 $basketUpdateUrl = '/ajax/sale/basket/update/';
@@ -210,13 +211,14 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     <?php } ?>
                 </select>
             </div>
+	        <?php
+	        $currentPrice = $arResult['ROWS_MAP'][$basketItem->getBasketCode()]['TOTAL_PRICE']
+                ??
+                $basketItem->getPrice() * $basketItem->getQuantity();
+            ?>
             <div class="b-price">
                     <span class="b-price__current">
-                        <?= WordHelper::numberFormat(
-                            $arResult['ROWS_MAP'][$basketItem->getBasketCode()]['TOTAL_PRICE']
-                            ??
-                            $basketItem->getPrice() * $basketItem->getQuantity()
-                        ) ?>
+                        <?= WordHelper::numberFormat($currentPrice) ?>
                     </span>
                 <span class="b-ruble">₽</span>
                 <?php
@@ -249,12 +251,22 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                 </div>
             <?php } ?>
             <?php if ($stampInfo['HAS_STAMPS']) { ?>
-                <div class="b-mark-order-price"><? //TODO correct values in this block and conditions to show it ?>
+                <div class="b-mark-order-price">
                     <?php if (count($stampInfo['STAMP_LEVELS'])) { ?>
                         <div class="b-mark-order-price__list">
                             <?php foreach ($stampInfo['STAMP_LEVELS'] as $stampLevel) { ?>
+	                            <?php
+                                $discountType = $stampLevel["discountType"];
+                                $discountValue = $stampLevel["discount"];
+	                            if ($discountType === StampService::DISCOUNT_TYPE_PERCENTAGE) {
+	                                $stampDiscountedPrice = $currentPrice * (1 - $discountValue / 100);
+	                            } elseif ($discountType === StampService::DISCOUNT_TYPE_VALUE) {
+                                    $stampDiscountedPrice = $currentPrice - $discountValue;
+	                            }
+	                            //TODO почему отличаются значения в копейках? 2599 - 15% = 2209.10 (вместо .15)!
+	                            ?>
                                 <div class="b-mark-order-price__item">
-                                    <?= WordHelper::numberFormat($stampLevel['price']) ?> ₽ — <?= $stampLevel['stamps'] ?>
+                                    <?= WordHelper::numberFormat($stampDiscountedPrice) ?> ₽ — <?= $stampLevel['stamps'] ?>
                                     <span class="b-icon b-icon--mark">
                                          <?= new   SvgDecorator('icon-mark', 12, 12) ?>
                                     </span>
