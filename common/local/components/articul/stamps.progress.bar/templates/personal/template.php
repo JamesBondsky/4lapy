@@ -56,10 +56,23 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
             <?php } ?>
         </div>
 
+	    <div class="balance-comfortable-living__buy-dates">
+		    <b>Копи марки</b> c 1 окт. до 30 ноября 2019<br>
+		    <div class="balance-comfortable-living-legend__item">
+			    <div class="balance-comfortable-living-legend__num balance-comfortable-living-legend__text">1</div>
+			    <div class="balance-comfortable-living-legend__icon">
+                            <span class="b-icon b-icon--mark">
+                                <?= new SvgDecorator('icon-mark', 24, 24) ?>
+                            </span>
+			    </div>
+			    <div class="balance-comfortable-living-legend__discount balance-comfortable-living-legend__text">за <?= StampService::MARK_RATE ?> Р в чеке</div>
+		    </div>
+	    </div>
+
         <div class="balance-comfortable-living__buy-dates">
-            С 1 окт. до 15 дек. 2019 г.
-            <br>
-            <b>покупай домики, лежаки и когтеточки со скидкой до -<?= $arResult['MAX_DISCOUNT'] ?>%</b>
+	        <b>Покупай домики, лежаки и когтеточки со скидкой до -<?= $arResult['MAX_DISCOUNT'] ?>%</b>
+	        <br>
+	        С 1 окт. до 15 дек. 2019 г.
         </div>
 
         <div class="balance-comfortable-living__legend balance-comfortable-living-legend">
@@ -74,19 +87,6 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
                     <div class="balance-comfortable-living-legend__discount balance-comfortable-living-legend__text">= <?= $discount ?>%</div>
                 </div>
             <?php } ?>
-        </div>
-
-        <div class="balance-comfortable-living__buy-dates">
-            <b>Копи марки</b> c 1 окт. до 30 ноября 2019<br>
-            <div class="balance-comfortable-living-legend__item">
-                <div class="balance-comfortable-living-legend__num balance-comfortable-living-legend__text">1</div>
-                <div class="balance-comfortable-living-legend__icon">
-                            <span class="b-icon b-icon--mark">
-                                <?= new SvgDecorator('icon-mark', 24, 24) ?>
-                            </span>
-                </div>
-                <div class="balance-comfortable-living-legend__discount balance-comfortable-living-legend__text">за <?= StampService::MARK_RATE ?> Р в чеке</div>
-            </div>
         </div>
 
         <?php if ($arResult['ACTION_LINK']) { ?>
