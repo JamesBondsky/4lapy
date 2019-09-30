@@ -279,11 +279,11 @@ class UserController extends BaseController
             $stamps = 0;
         }
 
-        $textNext = '';
-
         if ($this->stampService->getNextDiscount() !== null) {
             $marksDeclension = new Declension('марку', 'марки', 'марок');
             $textNext = sprintf('До скидки -%s%% осталось %s %s', $this->stampService->getNextDiscount(), $this->stampService->getNextDiscountStampsNeed(), $marksDeclension->get($this->stampService->getNextDiscountStampsNeed()));
+        } else {
+            $textNext = 'Ваша скидка - 30%';
         }
 
         return (new ApiResponse())->setData([
