@@ -265,7 +265,7 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                         <li class="b-common-item__item-mark js-exchange-rule-<?= $exchangeRule['stamps'] ?>">
                             <?= WordHelper::numberFormat($exchangeRule['price']) ?>
                             <span>₽</span>
-                            — <?= $exchangeRule['stamps'] ?>
+                            + <?= $exchangeRule['stamps'] ?>
                             <span class="b-icon b-icon--mark">
                                 <?= new SvgDecorator('icon-mark', 16, 16) ?>
                             </span>
