@@ -17,6 +17,7 @@ use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Service\StampService;
+use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\SaleBundle\Service\BasketService;
 
 $basketUpdateUrl = '/ajax/sale/basket/update/';
@@ -263,7 +264,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
 	                            } elseif ($discountType === StampService::DISCOUNT_TYPE_VALUE) {
                                     $stampDiscountedPrice = $currentPrice - $discountValue;
 	                            }
-	                            //TODO почему отличаются значения в копейках? 2599 - 15% = 2209.10 (вместо .15)!
+                                $stampDiscountedPrice = PriceHelper::roundPrice($stampDiscountedPrice);
 	                            ?>
                                 <div class="b-mark-order-price__item">
                                     <?= WordHelper::numberFormat($stampDiscountedPrice) ?> ₽ — <?= $stampLevel['stamps'] ?>
