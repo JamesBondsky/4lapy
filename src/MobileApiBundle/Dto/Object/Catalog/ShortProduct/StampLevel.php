@@ -2,6 +2,7 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 
+use FourPaws\SaleBundle\Helper\PriceHelper;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -31,8 +32,9 @@ class StampLevel
 
     /**
      * Размер скидки
+     * @Serializer\Groups(groups={"read"})
      * @Serializer\Type("int")
-     * @Serializer\SerializedName("discountValue")
+     * @Serializer\SerializedName("discount")
      * @var int
      */
     private $discountValue;
@@ -41,6 +43,7 @@ class StampLevel
      * Тип скидки:
      * P - в процентах
      * V - в рублях
+     * @Serializer\Groups(groups={"read"})
      * @Serializer\Type("string")
      * @Serializer\SerializedName("discountType")
      * @var string
@@ -69,7 +72,7 @@ class StampLevel
      */
     public function setPrice(float $price): StampLevel
     {
-        $this->price = $price;
+        $this->price = PriceHelper::roundPrice($price);
         return $this;
     }
 
