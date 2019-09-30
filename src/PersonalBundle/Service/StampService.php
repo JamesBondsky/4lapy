@@ -884,9 +884,9 @@ class StampService implements LoggerAwareInterface
 
         $basketItemPrice = $basketItem->getBasePrice();
 
-        if ($stampLevelInfo['discountType'] === 'V') {
+        if ($stampLevelInfo['discountType'] === $this::DISCOUNT_TYPE_VALUE) {
             $discountPrice = $basketItemPrice - $stampLevelInfo['discountValue'];
-        } else if ($stampLevelInfo['discountType'] === 'P') {
+        } else if ($stampLevelInfo['discountType'] === $this::DISCOUNT_TYPE_PERCENTAGE) {
             $discountPrice = $basketItemPrice * (1 - ($stampLevelInfo['discountValue'] / 100));
         }
 
