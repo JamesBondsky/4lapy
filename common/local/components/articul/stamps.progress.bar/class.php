@@ -81,8 +81,6 @@ class CStampsProgressBar extends FourPawsComponent
                 'AVAILABLE' => ($this->arResult['ACTIVE_STAMPS_COUNT'] >= $i),
             ];
         }
-
-        $this->arResult['ACTION_LINK'] = $this->getActionLink();
     }
 
     public function getActionLink()

@@ -42,9 +42,9 @@ $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', [
             </div>
             <ol class="info-comfortable-living__steps">
                 <li class="item">Совершай любые покупки, копи марки в&nbsp;буклете
-                    или личном кабинете: 1&nbsp;<span class="b-icon b-icon--mark"><?= new SvgDecorator('icon-mark', 24, 24) ?></span>&nbsp;=&nbsp;<?= StampService::MARK_RATE ?>&nbsp;Р
+                    или личном кабинете: 1&nbsp;<span class="b-icon b-icon--mark"><?= new SvgDecorator('icon-mark', 24, 24) ?></span>&nbsp;=&nbsp;<?= StampService::MARK_RATE ?>&nbsp;₽
                 </li>
-                <li class="item">Отслеживай баланс марок: на&nbsp;чеке, в&nbsp;буклете, <a href="/personal/marki/" target="_blank">в&nbsp;личном&nbsp;кабинете</a> и&nbsp;в&nbsp;приложении</li>
+                <li class="item">Отслеживай баланс марок: на&nbsp;чеке, в&nbsp;буклете, в&nbsp;личном&nbsp;кабинете и&nbsp;в&nbsp;приложении</li>
                 <li class="item">
                     Покупай лежаки и&nbsp;когтеточки со&nbsp;скидкой до&nbsp;-30%
 

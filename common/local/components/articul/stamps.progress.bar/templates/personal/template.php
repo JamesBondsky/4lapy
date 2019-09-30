@@ -57,7 +57,7 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
         </div>
 
 	    <div class="balance-comfortable-living__buy-dates">
-		    <b>Копи марки</b> c 1 окт. до 30 ноября 2019<br>
+		    <b>Копи марки</b> c 1 октября до 30 ноября 2019 г.<br>
 		    <div class="balance-comfortable-living-legend__item">
 			    <div class="balance-comfortable-living-legend__num balance-comfortable-living-legend__text">1</div>
 			    <div class="balance-comfortable-living-legend__icon">
@@ -65,14 +65,14 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
                                 <?= new SvgDecorator('icon-mark', 24, 24) ?>
                             </span>
 			    </div>
-			    <div class="balance-comfortable-living-legend__discount balance-comfortable-living-legend__text">за <?= StampService::MARK_RATE ?> Р в чеке</div>
+			    <div class="balance-comfortable-living-legend__discount balance-comfortable-living-legend__text">за <?= StampService::MARK_RATE ?> ₽ в чеке</div>
 		    </div>
 	    </div>
 
         <div class="balance-comfortable-living__buy-dates">
 	        <b>Покупай домики, лежаки и когтеточки со скидкой до -<?= $arResult['MAX_DISCOUNT'] ?>%</b>
 	        <br>
-	        С 1 окт. до 15 дек. 2019 г.
+	        с 1 октября до 15 декабря 2019 г.
         </div>
 
         <div class="balance-comfortable-living__legend balance-comfortable-living-legend">
@@ -89,10 +89,8 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
             <?php } ?>
         </div>
 
-        <?php if ($arResult['ACTION_LINK']) { ?>
-            <div class="balance-comfortable-living__conditions-wrap">
-                <a href="<?= $arResult['ACTION_LINK'] ?>" target="_blank" class="balance-comfortable-living__conditions">Подробные условия</a>
-            </div>
-        <?php } ?>
+        <div class="balance-comfortable-living__conditions-wrap">
+            <a href="/home/" target="_blank" class="balance-comfortable-living__conditions">Подробные условия</a>
+        </div>
     </div>
 </div>
