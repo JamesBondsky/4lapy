@@ -94,7 +94,7 @@ class CStampsProgressBar extends FourPawsComponent
             return null;
         }
 
-        $arAction = \CIBlockElement::GetList(false, ['IBLOCK_ID' => $actionIblockId, '=CODE' => $actionCode], false, false, ['ID', 'IBLOCK_ID', 'DETAIL_PAGE_URL'])->Fetch();
+        $arAction = \CIBlockElement::GetList(false, ['IBLOCK_ID' => $actionIblockId, '=CODE' => $actionCode], false, false, ['ID', 'IBLOCK_ID', 'DETAIL_PAGE_URL'])->GetNext();
 
         if ($arAction) {
             return $arAction['DETAIL_PAGE_URL'];
