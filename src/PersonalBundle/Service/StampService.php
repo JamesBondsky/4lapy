@@ -700,6 +700,8 @@ class StampService implements LoggerAwareInterface
                 foreach (self::STAMP_LEVELS as $stampLevel) {
                     $exchangeRule[] = [
                         'title' => sprintf('Stamps_exchange_%s_%s*%s', $offerXmlId, $stampLevel['discount'], $stampLevel['stamps']),
+                        'discount' => $stampLevel['discount'],
+                        'discountType' => $this::DISCOUNT_TYPE_PERCENTAGE,
                         'stamps' => $stampLevel['stamps'],
                         'price' => ($price * (100 - $stampLevel['discount']) / 100),
                     ];
