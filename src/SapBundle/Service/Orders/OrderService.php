@@ -578,7 +578,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 if ($useStamps) {
                     $maxStampsLevel = $this->getBasketPropertyValueByCode($basketItem, 'MAX_STAMPS_LEVEL');
                     if ($maxStampsLevelArr = unserialize($maxStampsLevel)) {
-                        $offer->setExchangeName($maxStampsLevelArr['key'] . '*P');
+                        $offer->setExchangeName($maxStampsLevelArr['key']);
                         $discountStamps = $this->stampService->parseLevelKey($maxStampsLevelArr['key'])['discountStamps'];
                     } else {
                         $useStamps = false;
