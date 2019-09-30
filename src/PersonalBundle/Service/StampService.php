@@ -490,6 +490,7 @@ class StampService implements LoggerAwareInterface
      */
     public function getActiveStampsCount(?bool $withoutCache = false): int
     {
+        return 6;
         if (!$this->currentUserProvider->isAuthorized()) {
             $this->activeStampsCount = 0;
             return $this->activeStampsCount;
@@ -534,7 +535,6 @@ class StampService implements LoggerAwareInterface
         }
 
         // для отладки марок
-//        $this->activeStampsCount = 6;
         return $this->activeStampsCount;
     }
 

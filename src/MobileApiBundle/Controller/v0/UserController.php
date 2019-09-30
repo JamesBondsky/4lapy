@@ -7,6 +7,7 @@
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Grid\Declension;
 use CEvent;
@@ -15,6 +16,8 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\External\Manzana\Exception\ExecuteErrorException;
 use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\LoginExistRequest;
@@ -286,6 +289,10 @@ class UserController extends BaseController
             $textNext = 'Доступна максимальная скидка';
         }
 
+        $actionCode = 'kopi-marki-pokupay-lezhaki-i-kogtetochki-so-skidkoy-30-';
+        $actionIblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES);
+        $arAction = \CIBlockElement::GetList(false, ['IBLOCK_ID' => $actionIblockId, '=CODE' => $actionCode], false, false, ['ID', 'IBLOCK_ID'])->Fetch();
+
         return (new ApiResponse())->setData([
             'stamps' => [
                 'amount' => $stamps,
@@ -297,7 +304,7 @@ class UserController extends BaseController
                     . "\n\n- на сайте и в приложении: добавь товар в корзину, нажми \"списать марки\";"
                     . "\n\n- в магазине: предъяви буклет или сообщи кассиру номер телефона;",
                 'stampCategories' => $this->apiProductService->getStampsCategories(),
-                'actionID' => 102019, //todo поставить id нужной акции
+                'actionID' => ($arAction) ? $arAction['ID'] : 102862,
                 'discount' => sprintf('%s%%', $this->stampService->getCurrentDiscount()),
                 'textNext' => $textNext,
             ],

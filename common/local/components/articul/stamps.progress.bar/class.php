@@ -1,7 +1,10 @@
 <?php
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\App\Application as App;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -78,5 +81,25 @@ class CStampsProgressBar extends FourPawsComponent
                 'AVAILABLE' => ($this->arResult['ACTIVE_STAMPS_COUNT'] >= $i),
             ];
         }
+
+        $this->arResult['ACTION_LINK'] = $this->getActionLink();
+    }
+
+    public function getActionLink()
+    {
+        $actionCode = 'kopi-marki-pokupay-lezhaki-i-kogtetochki-so-skidkoy-30-';
+        try {
+            $actionIblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES);
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        $arAction = \CIBlockElement::GetList(false, ['IBLOCK_ID' => $actionIblockId, '=CODE' => $actionCode], false, false, ['ID', 'IBLOCK_ID'])->Fetch();
+
+        if ($arAction) {
+            return $arAction['DETAIL_PAGE_URL'];
+        }
+
+        return null;
     }
 }
