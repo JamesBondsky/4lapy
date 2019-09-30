@@ -51,9 +51,13 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
                         <div class="balance-comfortable-living__btn js-open-popup" data-popup-id="authorization">Войти</div>
                     <? } ?>
                 </div>
-                <?if ($USER->IsAuthorized() && $arResult['NEXT_DISCOUNT'] > 0) {?>
+                <? if ($USER->IsAuthorized()) { ?>
                     <div class="balance-comfortable-living__primary">
-                        до - <?=$arResult['NEXT_DISCOUNT']?>% осталось <?=$arResult['NEXT_DISCOUNT_STAMPS_NEED']?> марки
+                        <? if ($arResult['NEXT_DISCOUNT'] > 0) { ?>
+                            До скидки -<?= $arResult['NEXT_DISCOUNT'] ?>% осталось <?= $arResult['NEXT_DISCOUNT_STAMPS_NEED'] ?> <?= $marksDeclension->get($arResult['NEXT_DISCOUNT_STAMPS_NEED']) ?>
+                        <? } else { ?>
+                            Доступна максимальная скидка
+                        <? } ?>
                     </div>
                 <? } ?>
             </div>
