@@ -1159,37 +1159,30 @@ class ProductService
     public function getStampsCategories()
     {
         $elementIblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::CATALOG_SLIDER_PRODUCTS);
-        $productsIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
 
         // получаем id разделов и xml_id торговых предложений
         $sectionOffersXmlIds = []; // массив соответсвия раздела и его ТП
         $offerXmlIds = []; // массив для дальнейшего получения ТП
 
-        $rsElement = \CIBlockElement::GetList(['SORT' => SORT_ASC], ['IBLOCK_ID' => $elementIblockId, '=ACTIVE' => BaseEntity::BITRIX_TRUE, '=SECTION_CODE' => 'stamps'], false, false, ['ID', 'IBLOCK_ID', 'PROPERTY_SECTION', 'PROPERTY_PRODUCTS']);
+        $rsElement = \CIBlockElement::GetList(['SORT' => SORT_ASC], ['IBLOCK_ID' => $elementIblockId, '=ACTIVE' => BaseEntity::BITRIX_TRUE, '=SECTION_CODE' => 'stamps'], false, false, ['ID', 'IBLOCK_ID', 'NAME', 'PROPERTY_SECTION', 'PROPERTY_PRODUCTS']);
 
+        $sections = [];
         while ($arElement = $rsElement->Fetch()) {
             if ($arElement['PROPERTY_SECTION_VALUE']) {
                 if (!isset($sectionOffersXmlIds[$arElement['PROPERTY_SECTION_VALUE']])) {
                     $sectionOffersXmlIds[$arElement['PROPERTY_SECTION_VALUE']] = [];
                 }
 
+                if (!isset($sections[$arElement['PROPERTY_SECTION_VALUE']])) {
+                    $sections[$arElement['PROPERTY_SECTION_VALUE']] = $arElement['NAME'];
+                }
+
+
                 if ($arElement['PROPERTY_PRODUCTS_VALUE']) {
                     $sectionOffersXmlIds[$arElement['PROPERTY_SECTION_VALUE']][] = $arElement['PROPERTY_PRODUCTS_VALUE'];
                     $offerXmlIds[] = $arElement['PROPERTY_PRODUCTS_VALUE'];
                 }
             }
-        }
-
-        // получаем разделы
-        if (empty($sectionOffersXmlIds)) {
-            return [];
-        }
-
-        $rsSection = \CIBlockSection::GetList(false, ['IBLOCK_ID' => $productsIblockId, '=ACTIVE' => BaseEntity::BITRIX_TRUE, '=ID' => array_keys($sectionOffersXmlIds)], false, ['ID', 'IBLOCK_ID', 'NAME']);
-        $sections = [];
-
-        while ($arSection = $rsSection->Fetch()) {
-            $sections[$arSection['ID']] = $arSection['NAME'];
         }
 
         // получаем торговые предложения
