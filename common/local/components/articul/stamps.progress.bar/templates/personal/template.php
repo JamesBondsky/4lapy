@@ -48,7 +48,7 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
             </div>
             <div class="balance-comfortable-living__discount">Моя скидка - <?= $arResult['CURRENT_DISCOUNT'] ?>%</div>
         </div>
-        <div class="balance-comfortable-living__primary">
+        <div class="balance-comfortable-living__primary" style="color: #f15e3a;">
             <?php if ($arResult['NEXT_DISCOUNT'] > 0) { ?>
                 До скидки -<?= $arResult['NEXT_DISCOUNT'] ?>% осталось <?= $arResult['NEXT_DISCOUNT_STAMPS_NEED'] ?> <?= $marksDeclension->get($arResult['NEXT_DISCOUNT_STAMPS_NEED']) ?>
             <?php } else { ?>
