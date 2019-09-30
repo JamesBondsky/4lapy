@@ -35,18 +35,18 @@ class FourPawsPersonalCabinetStampsComponent extends FourPawsComponent
         parent::__construct($component);
         $container = App::getInstance()->getContainer();
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-        $this->stampService = $container->get('stamp.service');
+        $this->stampService = $container->get(StampService::class);
     }
 
-	/**
-	 * @param $params
-	 * @return array
-	 */
+    /**
+     * @param $params
+     * @return array
+     */
     public function onPrepareComponentParams($params): array
     {
         $params['MARK_RATE'] = $this->stampService::MARK_RATE;
         $params['MARKS_PER_RATE'] = $this->stampService::MARKS_PER_RATE;
-        $params['PRODUCTS_XML_ID'] = array_keys($this->stampService::EXCHANGE_RULES); //TODO do $params['EXCHANGE_RULES'] (to show them on page) instead of $params['PRODUCTS_XML_ID']
+
 
         return parent::onPrepareComponentParams($params);
     }
@@ -68,6 +68,33 @@ class FourPawsPersonalCabinetStampsComponent extends FourPawsComponent
             define('NEED_AUTH', true);
 
             return;
+        }
+
+        $this->arResult['STAMP_LEVELS'] = [];
+
+        $this->arResult['MAX_STAMPS_COUNT'] = 0;
+        $this->arResult['MAX_DISCOUNT'] = 0;
+
+        $this->arResult['CURRENT_DISCOUNT'] = 0;
+        $this->arResult['NEXT_DISCOUNT'] = false;
+        $this->arResult['NEXT_DISCOUNT_STAMPS_NEED'] = 0;
+
+        foreach ($this->stampService->getStampLevels() as $stampLevel) {
+            if ($stampLevel['stamps'] >  $this->arResult['MAX_STAMPS_COUNT']) {
+                $this->arResult['MAX_STAMPS_COUNT'] = $stampLevel['stamps'];
+                $this->arResult['MAX_DISCOUNT'] = $stampLevel['discount'];
+            }
+
+            if ($this->arResult['ACTIVE_STAMPS_COUNT'] > $stampLevel['stamps']) {
+                $this->arResult['CURRENT_DISCOUNT'] = $stampLevel['discount'];
+            }
+
+            if (!$this->arResult['NEXT_DISCOUNT'] && ($stampLevel['stamps'] > $this->arResult['ACTIVE_STAMPS_COUNT'])) {
+                $this->arResult['NEXT_DISCOUNT'] = $stampLevel['discount'];
+                $this->arResult['NEXT_DISCOUNT_STAMPS_NEED'] = $stampLevel['stamps'] - $this->arResult['ACTIVE_STAMPS_COUNT'];
+            }
+
+            $this->arResult['STAMP_LEVELS'][$stampLevel['stamps']] = $stampLevel['discount'];
         }
     }
 }

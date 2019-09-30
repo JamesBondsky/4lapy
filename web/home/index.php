@@ -23,7 +23,7 @@ use FourPaws\Enum\IblockType; ?>
                         <span class="bold">Покупай</span><br/> любые товары
                     </li>
                     <li class="item item_short">
-                        <span class="bold">Копи марки</span><br/> 1&nbsp;марка за&nbsp;каждые 500Р&nbsp;в&nbsp;чеке
+                        <span class="bold">Копи марки</span><br/> 1&nbsp;марка за&nbsp;каждые 500₽&nbsp;в&nbsp;чеке
                     </li>
                     <li class="item">
                         <span class="bold">Меняй марки</span><br/> на&nbsp;скидки до&nbsp;30%
@@ -104,7 +104,7 @@ use FourPaws\Enum\IblockType; ?>
                 </div>
                  <ol class="info-comfortable-living__steps">
                      <li class="item">Совершай любые покупки, копи марки в&nbsp;буклете
-                         или Личном кабинете: 1&nbsp;<span class="b-icon b-icon--mark"><?= new SvgDecorator('icon-mark', 24, 24) ?></span>&nbsp;=&nbsp;500&nbsp;Р</li>
+                         или Личном кабинете: 1&nbsp;<span class="b-icon b-icon--mark"><?= new SvgDecorator('icon-mark', 24, 24) ?></span>&nbsp;=&nbsp;500&nbsp;₽</li>
                      <li class="item">Отслеживай баланс марок: на&nbsp;чеке, в&nbsp;буклете <a href="/personal/marki/" target="_blank">в&nbsp;личном&nbsp;кабинете</a> и&nbsp;в&nbsp;приложении</li>
                      <li class="item">
                          Покупай лежаки и&nbsp;когтеточки со&nbsp;скидкой до&nbsp;-30%
