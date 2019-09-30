@@ -279,11 +279,11 @@ class UserController extends BaseController
             $stamps = 0;
         }
 
-        $textNext = '';
-
         if ($this->stampService->getNextDiscount() !== null) {
             $marksDeclension = new Declension('марку', 'марки', 'марок');
             $textNext = sprintf('До скидки -%s%% осталось %s %s', $this->stampService->getNextDiscount(), $this->stampService->getNextDiscountStampsNeed(), $marksDeclension->get($this->stampService->getNextDiscountStampsNeed()));
+        } else {
+            $textNext = 'Доступна максимальная скидка';
         }
 
         return (new ApiResponse())->setData([
@@ -292,10 +292,10 @@ class UserController extends BaseController
                 'rate_val' => StampService::MARK_RATE,
                 //IMPORTANT: В description переносы строк должны быть разделены с помощью \n\n
                 'description' => '1. Делай любые покупки, копи марки: 1 марка  = ' . StampService::MARK_RATE . ' руб.;'
-                    . "\n\n2. Отслеживай баланс маркок: на чеке, в личном кабинете и в приложении;"
+                    . "\n\n2. Отслеживай баланс марок: на чеке, в личном кабинете и в приложении;"
                     . "\n\n3. Покупай со скидкой до -30%;"
                     . "\n\n- на сайте и в приложении: добавь товар в корзину, нажми \"списать марки\";"
-                    . "\n\n- в магазине: предъяви буклет или сообщи кассиру номер телефона подробнее;",
+                    . "\n\n- в магазине: предъяви буклет или сообщи кассиру номер телефона;",
                 'stampCategories' => $this->apiProductService->getStampsCategories(),
                 'actionID' => 102019, //todo поставить id нужной акции
                 'discount' => sprintf('%s%%', $this->stampService->getCurrentDiscount()),
