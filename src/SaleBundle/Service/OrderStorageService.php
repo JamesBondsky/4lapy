@@ -6,14 +6,11 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\Error;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
-use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
-use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
@@ -28,10 +25,6 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Service\IntervalService;
-use FourPaws\PersonalBundle\Entity\OrderSubscribe;
-use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
-use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -789,7 +782,7 @@ class OrderStorageService
      * @throws StoreNotFoundException
      * @throws UserMessageException
      */
-    public function validateDeliveryDate($storage)
+    public function validateDeliveryDate($storage): bool
     {
         if ($selectedDelivery = $this->getSelectedDelivery($storage)) {
             if ($this->deliveryService->isPickup($selectedDelivery)) {
@@ -798,11 +791,7 @@ class OrderStorageService
 
             $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, 10)[$storage->getDeliveryDate()];
 
-            if ($selectedDelivery->getDeliveryDate()->getTimestamp() < (new \DateTime())->getTimestamp()) {
-                return false;
-            } else {
-                return true;
-            }
+            return !($selectedDelivery->getDeliveryDate()->getTimestamp() < (new \DateTime())->getTimestamp());
         }
 
         return true;
