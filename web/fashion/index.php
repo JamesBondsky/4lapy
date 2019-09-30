@@ -106,8 +106,8 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
                     <div class="fashion-item-info__descr">2000&nbsp;новинок из&nbsp;категорий <br /> одежда и&nbsp;обувь</div>
                 </div>
                 <div class="fashion-item-info">
-                    <div class="fashion-item-info__title">скидки до&nbsp;15%</div>
-                    <div class="fashion-item-info__descr">при покупке <nobr>2-х</nobr> вещей&nbsp;&mdash; 7%,<br/> <nobr>3-х</nobr> вещей&nbsp;&mdash; 10%, <nobr>4-х</nobr>&nbsp;&mdash; 15%</div>
+                    <div class="fashion-item-info__title">Двойные бонусы за покупку!</div>
+                    <div class="fashion-item-info__descr">Начисляются в октябре при покупке любой одежды и обуви</div>
                 </div>
                 <div class="fashion-item-info fashion-item-info_full hide-xs">
                     <div class="fashion-item-info__title">бесплатная доставка и&nbsp;примерка</div>
