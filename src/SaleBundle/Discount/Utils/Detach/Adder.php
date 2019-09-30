@@ -61,9 +61,6 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
      */
     public function processOrder(): void
     {
-        /** @var StampService $stampService */
-        $stampService = App::getInstance()->getContainer()->get(StampService::class);
-
         /**
          * 1. Региональные скидки
          * 2. количества и свойства
@@ -80,31 +77,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         $skippedDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
         $skippedDiscounts = array_merge($skippedDiscounts, $this->getExcludedDiscounts($applyResult['DISCOUNT_LIST']));
 
-        if ($stampService::IS_STAMPS_OFFER_ACTIVE) {
-            $basket = $this->order->getBasket();
-            /** @var BasketItem $basketItem */
-            foreach ($basket as $basketItem) {
-                $useStamps = $this->basketService->getBasketItemPropertyValue($basketItem, 'USE_STAMPS');
-                $usedStampsLevel = unserialize($this->basketService->getBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL'));
-                if ($useStamps && $usedStampsLevel) {
-                    $params = [
-                        'discountType' => 'DETACH',
-                        'params' => [
-                            'apply_count' => $usedStampsLevel['productQuantity'],
-                            'discount_value' => $usedStampsLevel['discountValue'],
-                            'percent' => $usedStampsLevel['discountType'] === 'P',
-                        ]
-                    ];
-                    $applyResult['RESULT']['BASKET'][$basketItem->getId()][] = [
-                        //'DISCOUNT_ID' => 0,
-                        'COUPON_ID' => '',
-                        'APPLY' => 'Y',
-                        'DESCR' => json_encode($params)
-                    ];
-                }
-            }
-            unset ($params);
-        }
+        $applyResult['RESULT']['BASKET'] = $this->applyStampsDiscounts($applyResult['RESULT']['BASKET']);
 
         if (is_iterable($applyResult['RESULT']['BASKET'])) {
             foreach ($applyResult['RESULT']['BASKET'] as $basketCode => $discounts) {
@@ -426,6 +399,45 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 ]);
             }
         }
+    }
+
+    /**
+     * Добавляет в $applyResultBasket скидки за марки и возвращает полученный массив скидок
+     * @param $applyResultBasket
+     * @return mixed
+     * @throws \Bitrix\Main\ArgumentNullException
+     */
+    private function applyStampsDiscounts($applyResultBasket)
+    {
+        /** @var StampService $stampService */
+        $stampService = App::getInstance()->getContainer()->get(StampService::class);
+
+        if ($stampService::IS_STAMPS_OFFER_ACTIVE) {
+            $basket = $this->order->getBasket();
+            /** @var BasketItem $basketItem */
+            foreach ($basket as $basketItem) {
+                $useStamps = $this->basketService->getBasketItemPropertyValue($basketItem, 'USE_STAMPS');
+                $usedStampsLevel = unserialize($this->basketService->getBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL'));
+                if ($useStamps && $usedStampsLevel) {
+                    $params = [
+                        'discountType' => 'DETACH',
+                        'params' => [
+                            'apply_count' => $usedStampsLevel['productQuantity'],
+                            'discount_value' => $usedStampsLevel['discountValue'],
+                            'percent' => $usedStampsLevel['discountType'] === 'P',
+                        ]
+                    ];
+                    $applyResultBasket[$basketItem->getId()][] = [
+                        //'DISCOUNT_ID' => 0,
+                        'COUPON_ID' => '',
+                        'APPLY' => 'Y',
+                        'DESCR' => json_encode($params)
+                    ];
+                }
+            }
+        }
+
+        return $applyResultBasket;
     }
 
     /**
