@@ -867,6 +867,7 @@ class StampService implements LoggerAwareInterface
                     'discount' => $stampLevelInfo['discountValue'],
                     'discountType' => $stampLevelInfo['discountType'],
                     'stamps' => $stampLevelInfo['discountStamps'],
+                    'isMaxLevel' => ($maxStampsLevelValue === $stampLevel['discountValue']),
                 ];
             }
         }

@@ -8,8 +8,6 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -31,10 +29,6 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Components\BasketComponent;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\Enum\IblockElementXmlId;
-use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockType;
-use FourPaws\Helpers\BxCollection;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\StampLevel;
@@ -215,11 +209,11 @@ class BasketService
                     $canUseStamps = (bool)$maxStampsLevelValue;
 
                     if ($useStamps) {
-                        if ($usedStamps = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'], null)['stampsUsed']) {
+                        if ($usedStamps = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'])['stampsUsed']) {
                             $canUseStampsAmount = $usedStamps;
                         }
                     } else {
-                        $canUseStampsObj = unserialize($maxStampsLevelValue, null);
+                        $canUseStampsObj = unserialize($maxStampsLevelValue);
                         $canUseStampsAmountKey = $canUseStampsObj ? $canUseStampsObj['key'] : false;
                         if ($canUseStampsAmountKey) {
                             $discount = $this->stampService->parseLevelKey($canUseStampsAmountKey);
@@ -246,7 +240,7 @@ class BasketService
 
             if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
                 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL'])) {
-                    $usedStampsLevel = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'], null);
+                    $usedStampsLevel = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE']);
                     if ($usedStampsLevel) {
                         $shortProduct->setUsedStamps((int)$usedStampsLevel['stampsUsed']);
                     }
@@ -256,7 +250,7 @@ class BasketService
                 $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
                 $maxStampsLevelDiscount = 0;
 
-                $maxStampsLevelKey = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'], null)['key'];
+                $maxStampsLevelKey = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'])['key'];
                 if ($maxStampsLevelKey) {
                     $maxStampsLevelDiscount = $this->stampService->parseLevelKey($maxStampsLevelKey)['discountStamps'];
                 }
