@@ -85,7 +85,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
             /** @var BasketItem $basketItem */
             foreach ($basket as $basketItem) {
                 $useStamps = $this->basketService->getBasketItemPropertyValue($basketItem, 'USE_STAMPS');
-                $usedStampsLevel = unserialize($this->basketService->getBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL'));
+                $usedStampsLevel = unserialize($this->basketService->getBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL'), null);
                 if ($useStamps && $usedStampsLevel) {
                     // Костыли, чтобы скидка не применялась повторно. Лучше вынести флаг о том, что скидка за марки применена, например, в отдельное свойство товара в корзине
                     $basketItem->setPrice($basketItem->getBasePrice());
@@ -107,7 +107,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                     ]];
                 } elseif (
                     ($xmlId = explode('#', $basketItem->getField('PRODUCT_XML_ID'))[1])
-                    && array_key_exists($xmlId, $stampService::EXCHANGE_RULES)
+                    && array_key_exists($xmlId, $stampService->getExchangeRules())
                 ) {
                     // Костыли, для отмены скидки. Лучше вынести флаг о том, что скидка за марки применена, например, в отдельное свойство товара в корзине
                     $basketItem->setPrice($basketItem->getBasePrice());
