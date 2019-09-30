@@ -291,7 +291,7 @@ class UserController extends BaseController
 
         $actionCode = 'kopi-marki-pokupay-lezhaki-i-kogtetochki-so-skidkoy-30-';
         $actionIblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES);
-        $arAction = \CIBlockElement::GetList(false, ['IBLOCK_ID' => $actionIblockId, '=CODE' => $actionCode], false, false, ['ID', 'IBLOCK_ID'])->Fetch();
+        $arAction = \CIBlockElement::GetList(false, ['IBLOCK_ID' => $actionIblockId, '=CODE' => $actionCode], false, false, ['ID', 'IBLOCK_ID'])->GetNext();
 
         return (new ApiResponse())->setData([
             'stamps' => [

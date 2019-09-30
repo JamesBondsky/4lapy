@@ -7,7 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 }
 ?>
 
-<div class="landing-category-rungo">
+<div class="landing-category-rungo products-comfortable-living" style="padding: 0;">
     <?php foreach($arResult['ELEMENTS'] as $i => $element) { ?>
         <div class="item-category-landing item-category-landing--rungo active" data-item-filter-category-landing="<?=$i?>" data-url="/ajax/catalog/product-info/">
             <div class="b-container" style="max-width: 100%;">

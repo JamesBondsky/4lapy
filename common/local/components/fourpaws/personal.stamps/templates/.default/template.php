@@ -23,6 +23,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $APPLICATION->IncludeComponent('articul:stamps.progress.bar', 'personal', []);
 ?>
 
+<div class="b-container" style="max-width: 100%;">
+    <h2 class="title-comfortable-living">Уютный интерьер со скидкой -30%</h2>
+</div>
+
 <?php
 $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', [
     'SECTION_CODE' => 'stamps'
