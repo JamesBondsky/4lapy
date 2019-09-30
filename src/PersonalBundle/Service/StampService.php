@@ -124,300 +124,300 @@ class StampService implements LoggerAwareInterface
         ],
         1035430 => [ // 1399 руб
             [
-                'title' => 'Stamps_exchange_1035430_30*5',
+                'title' => 'Stamps_exchange_1035430_30*5*P',
                 'price' => 979.30,
                 'stamps' => 5,
             ],
             [
-                'title' => 'Stamps_exchange_1035430_50*8',
+                'title' => 'Stamps_exchange_1035430_50*8*P',
                 'price' => 699.50,
                 'stamps' => 8,
             ],
         ],
         1021198 => [ // 2599 руб
             [
-                'title' => 'Stamps_exchange_1021198_30*8',
+                'title' => 'Stamps_exchange_1021198_30*8*P',
                 'price' => 1819.30,
                 'stamps' => 8,
             ],
             [
-                'title' => 'Stamps_exchange_1021198_50*12',
+                'title' => 'Stamps_exchange_1021198_50*12*P',
                 'price' => 1299.50,
                 'stamps' => 12,
             ],
         ],
         1035432 => [ // 1199 руб
             [
-                'title' => 'Stamps_exchange_1035432_30*5',
+                'title' => 'Stamps_exchange_1035432_30*5*P',
                 'price' => 839.30,
                 'stamps' => 5,
             ],
             [
-                'title' => 'Stamps_exchange_1035432_50*8',
+                'title' => 'Stamps_exchange_1035432_50*8*P',
                 'price' => 599.50,
                 'stamps' => 8,
             ],
         ],
         1031456 => [ // 2599 руб
             [
-                'title' => 'Stamps_exchange_1031456_30*8',
+                'title' => 'Stamps_exchange_1031456_30*8*P',
                 'price' => 1819.30,
                 'stamps' => 8,
             ],
             [
-                'title' => 'Stamps_exchange_1031456_50*12',
+                'title' => 'Stamps_exchange_1031456_50*12*P',
                 'price' => 1299.50,
                 'stamps' => 12,
             ],
         ],
         1021093 => [ // 2999.00 руб
             [
-                'title' => 'Stamps_exchange_1021093_30*4',
+                'title' => 'Stamps_exchange_1021093_30*4*P',
                 'price' => 2099.30,
                 'stamps' => 4,
             ],
         ],
         1021094 => [ // 2639.00 руб
             [
-                'title' => 'Stamps_exchange_1021094_30*4',
+                'title' => 'Stamps_exchange_1021094_30*4*P',
                 'price' => 1847.30,
                 'stamps' => 4,
             ],
         ],
         1007171 => [ // 925.00
             [
-                'title' => 'Stamps_exchange_1007171_30*4',
+                'title' => 'Stamps_exchange_1007171_30*4*P',
                 'price' => 647.50,
                 'stamps' => 4,
             ],
         ],
         1016779 => [ // 1425.00
             [
-                'title' => 'Stamps_exchange_1016779_30*4',
+                'title' => 'Stamps_exchange_1016779_30*4*P',
                 'price' => 997.50,
                 'stamps' => 4,
             ],
         ],
         1016780 => [ // 1647.00
             [
-                'title' => 'Stamps_exchange_1016780_30*4',
+                'title' => 'Stamps_exchange_1016780_30*4*P',
                 'price' => 1152.90,
                 'stamps' => 4,
             ],
         ],
         1016781 => [ // 629.00
             [
-                'title' => 'Stamps_exchange_1016781_30*4',
+                'title' => 'Stamps_exchange_1016781_30*4*P',
                 'price' => 440.30,
                 'stamps' => 4,
             ],
         ],
         1018875 => [ // 959.00
             [
-                'title' => 'Stamps_exchange_1018875_30*4',
+                'title' => 'Stamps_exchange_1018875_30*4*P',
                 'price' => 671.30,
                 'stamps' => 4,
             ],
         ],
         1032297 => [ // 3499.00
             [
-                'title' => 'Stamps_exchange_1032297_30*4',
+                'title' => 'Stamps_exchange_1032297_30*4*P',
                 'price' => 2449.30,
                 'stamps' => 4,
             ],
         ],
         1003335 => [ // 1499.00
             [
-                'title' => 'Stamps_exchange_1003335_30*4',
+                'title' => 'Stamps_exchange_1003335_30*4*P',
                 'price' => 1049.30,
                 'stamps' => 4,
             ],
         ],
         1005888 => [ // 1629.00
             [
-                'title' => 'Stamps_exchange_1005888_30*4',
+                'title' => 'Stamps_exchange_1005888_30*4*P',
                 'price' => 1140.30,
                 'stamps' => 4,
             ],
         ],
         1018157 => [ // 2229.00
             [
-                'title' => 'Stamps_exchange_1018157_30*4',
+                'title' => 'Stamps_exchange_1018157_30*4*P',
                 'price' => 1560.30,
                 'stamps' => 4,
             ],
         ],
         1021946 => [ // 1429.00
             [
-                'title' => 'Stamps_exchange_1021946_30*4',
+                'title' => 'Stamps_exchange_1021946_30*4*P',
                 'price' => 1000.30,
                 'stamps' => 4,
             ],
         ],
         1024525 => [ // 2165.00
             [
-                'title' => 'Stamps_exchange_1024525_30*4',
+                'title' => 'Stamps_exchange_1024525_30*4*P',
                 'price' => 1515.50,
                 'stamps' => 4,
             ],
         ],
         1024682 => [ // 1699.00
             [
-                'title' => 'Stamps_exchange_1024682_30*4',
+                'title' => 'Stamps_exchange_1024682_30*4*P',
                 'price' => 1189.30,
                 'stamps' => 4,
             ],
         ],
         1024683 => [ // 1285.00
             [
-                'title' => 'Stamps_exchange_1024683_30*4',
+                'title' => 'Stamps_exchange_1024683_30*4*P',
                 'price' => 899.50,
                 'stamps' => 4,
             ],
         ],
         1024685 => [ // 969.00
             [
-                'title' => 'Stamps_exchange_1024685_30*4',
+                'title' => 'Stamps_exchange_1024685_30*4*P',
                 'price' => 678.30,
                 'stamps' => 4,
             ],
         ],
         1029590 => [ // 1359.00
             [
-                'title' => 'Stamps_exchange_1029590_30*4',
+                'title' => 'Stamps_exchange_1029590_30*4*P',
                 'price' => 951.30,
                 'stamps' => 4,
             ],
         ],
         1009253 => [ // 1485.00
             [
-                'title' => 'Stamps_exchange_1009253_30*4',
+                'title' => 'Stamps_exchange_1009253_30*4*P',
                 'price' => 1039.50,
                 'stamps' => 4,
             ],
         ],
         1026366 => [ // 875.00
             [
-                'title' => 'Stamps_exchange_1026366_30*4',
+                'title' => 'Stamps_exchange_1026366_30*4*P',
                 'price' => 612.50,
                 'stamps' => 4,
             ],
         ],
         1026368 => [ // 1155.00
             [
-                'title' => 'Stamps_exchange_1026368_30*4',
+                'title' => 'Stamps_exchange_1026368_30*4*P',
                 'price' => 808.50,
                 'stamps' => 4,
             ],
         ],
         1026370 => [ // 1545.00
             [
-                'title' => 'Stamps_exchange_1026370_30*4',
+                'title' => 'Stamps_exchange_1026370_30*4*P',
                 'price' => 1081.50,
                 'stamps' => 4,
             ],
         ],
         1026899 => [ // 1249.00
             [
-                'title' => 'Stamps_exchange_1026899_30*4',
+                'title' => 'Stamps_exchange_1026899_30*4*P',
                 'price' => 874.30,
                 'stamps' => 4,
             ],
         ],
         1024781 => [ // 1999.00
             [
-                'title' => 'Stamps_exchange_1024781_30*4',
+                'title' => 'Stamps_exchange_1024781_30*4*P',
                 'price' => 1399.30,
                 'stamps' => 4,
             ],
         ],
         1013633 => [ // 2099.00
             [
-                'title' => 'Stamps_exchange_1013633_30*4',
+                'title' => 'Stamps_exchange_1013633_30*4*P',
                 'price' => 1469.30,
                 'stamps' => 4,
             ],
         ],
         1021195 => [ // 2199.00
             [
-                'title' => 'Stamps_exchange_1021195_30*4',
+                'title' => 'Stamps_exchange_1021195_30*4*P',
                 'price' => 1539.30,
                 'stamps' => 4,
             ],
         ],
         1021196 => [ // 1199.00
             [
-                'title' => 'Stamps_exchange_1021196_30*4',
+                'title' => 'Stamps_exchange_1021196_30*4*P',
                 'price' => 839.30,
                 'stamps' => 4,
             ],
         ],
         1021197 => [ // 899.00
             [
-                'title' => 'Stamps_exchange_1021197_30*4',
+                'title' => 'Stamps_exchange_1021197_30*4*P',
                 'price' => 629.30,
                 'stamps' => 4,
             ],
         ],
         1021199 => [ // 1599.00
             [
-                'title' => 'Stamps_exchange_1021199_30*4',
+                'title' => 'Stamps_exchange_1021199_30*4*P',
                 'price' => 1119.30,
                 'stamps' => 4,
             ],
         ],
         1021200 => [ // 1459.00
             [
-                'title' => 'Stamps_exchange_1021200_30*4',
+                'title' => 'Stamps_exchange_1021200_30*4*P',
                 'price' => 1021.30,
                 'stamps' => 4,
             ],
         ],
         1022335 => [ // 1629.00
             [
-                'title' => 'Stamps_exchange_1022335_30*4',
+                'title' => 'Stamps_exchange_1022335_30*4*P',
                 'price' => 1140.30,
                 'stamps' => 4,
             ],
         ],
         1022336 => [ // 1239.00
             [
-                'title' => 'Stamps_exchange_1022336_30*4',
+                'title' => 'Stamps_exchange_1022336_30*4*P',
                 'price' => 867.30,
                 'stamps' => 4,
             ],
         ],
         1022510 => [ // 2079.00
             [
-                'title' => 'Stamps_exchange_1022510_30*4',
+                'title' => 'Stamps_exchange_1022510_30*4*P',
                 'price' => 1455.30,
                 'stamps' => 4,
             ],
         ],
         1024483 => [ // 5929.00
             [
-                'title' => 'Stamps_exchange_1024483_30*4',
+                'title' => 'Stamps_exchange_1024483_30*4*P',
                 'price' => 4150.30,
                 'stamps' => 4,
             ],
         ],
         1028883 => [ // 829.00
             [
-                'title' => 'Stamps_exchange_1028883_30*4',
+                'title' => 'Stamps_exchange_1028883_30*4*P',
                 'price' => 580.30,
                 'stamps' => 4,
             ],
         ],
         1028908 => [ // 769.00
             [
-                'title' => 'Stamps_exchange_1028908_30*4',
+                'title' => 'Stamps_exchange_1028908_30*4*P',
                 'price' => 538.30,
                 'stamps' => 4,
             ],
         ],
         1035431 => [ // 1999.00
             [
-                'title' => 'Stamps_exchange_1035431_30*4',
+                'title' => 'Stamps_exchange_1035431_30*4*P',
                 'price' => 1399.30,
                 'stamps' => 4,
             ],
@@ -829,7 +829,14 @@ class StampService implements LoggerAwareInterface
 
                 // для отладки марок
                 //dump($offerXmlId . ' - ' . $maxStampsLevelValue);
-                $stampLevels = (boolval($exchangeRule) && !empty($exchangeRule)) ? $exchangeRule : [];
+                if ((bool)$exchangeRule && !empty($exchangeRule)) {
+                    foreach ($exchangeRule as $exchangeRuleKey => $exchangeRuleArray) {
+                        $levelKey = $this->parseLevelKey($exchangeRuleArray['title']);
+                        $exchangeRule[$exchangeRuleKey]['discountType'] = $levelKey['discountType'];
+                        $exchangeRule[$exchangeRuleKey]['discount'] = $levelKey['discountValue'];
+                    }
+                    $stampLevels = $exchangeRule;
+                }
             }
         }
 
