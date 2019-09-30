@@ -531,7 +531,7 @@ class StampService implements LoggerAwareInterface
         }
 
         // для отладки марок
-//        $this->activeStampsCount = 6;
+        $this->activeStampsCount = 6;
         return $this->activeStampsCount;
     }
 
@@ -792,13 +792,12 @@ class StampService implements LoggerAwareInterface
      * @param BasketItem $basketItem
      * @param $offerXmlId
      * @return array
-     * @throws ArgumentNullException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\NotImplementedException
      */
-    public function getBasketItemStampsInfo($basketItem, $offerXmlId)
+    public function getBasketItemStampsInfo($basketItem, $offerXmlId): array
     {
-        $hasStamps = isset(self::EXCHANGE_RULES[$offerXmlId]); // todo get from manzana
+        $exchangeRule = $this->getExchangeRules($offerXmlId);
 
         $stampLevels = [];
         $maxStampsLevelValue = 0;
@@ -806,18 +805,18 @@ class StampService implements LoggerAwareInterface
         $useStamps = false;
         $useStampsAmount = 0;
 
-        if ($hasStamps) {
+        if ($exchangeRule) {
             if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
                 $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
             }
 
             if ($useStamps) {
                 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL'])) {
-                    $useStampsAmount = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'])['stampsUsed'];
+                    $useStampsAmount = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'], null)['stampsUsed'];
                 }
             } else {
                 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
-                    $maxStampsLevelKey = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'])['key'];
+                    $maxStampsLevelKey = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'], null)['key'];
                     if ($maxStampsLevelKey) {
                         $maxStampsLevelValue = $this->parseLevelKey($maxStampsLevelKey)['discountStamps'];
                     }
@@ -825,12 +824,12 @@ class StampService implements LoggerAwareInterface
 
                 // для отладки марок
                 //dump($offerXmlId . ' - ' . $maxStampsLevelValue);
-                $stampLevels = $this->getBasketItemStampLevels($basketItem, $offerXmlId, $maxStampsLevelValue);
+                $stampLevels = (boolval($exchangeRule) && !empty($exchangeRule)) ? $exchangeRule : [];
             }
         }
 
         return [
-            'HAS_STAMPS' => $hasStamps,
+            'HAS_STAMPS' => boolval($exchangeRule),
             'STAMP_LEVELS' => $stampLevels,
             'CAN_USE_STAMPS' => (!$useStamps && $maxStampsLevelValue),
             'USE_STAMPS' => $useStamps,
@@ -845,11 +844,11 @@ class StampService implements LoggerAwareInterface
      * @return array
      * @throws ArgumentNullException
      */
-    public function getBasketItemStampLevels($basketItem, $offerXmlId, $maxStampsLevelValue)
+    public function getBasketItemStampLevels($basketItem, $offerXmlId, $maxStampsLevelValue): array
     {
         $stampLevels = [];
 
-        foreach (self::EXCHANGE_RULES[$offerXmlId] as $stampLevel) {
+        foreach ($this->getExchangeRules($offerXmlId) as $stampLevel) {
             $stampLevelInfo = $this->parseLevelKey($stampLevel['title']);
             if (is_array($stampLevelInfo) && ($stampLevelInfo['discountStamps'] >= $maxStampsLevelValue)) {
                 $discountPrice = $this->getBasketItemDiscountPrice($basketItem, $stampLevelInfo);
@@ -880,9 +879,9 @@ class StampService implements LoggerAwareInterface
 
         $basketItemPrice = $basketItem->getBasePrice();
 
-        if ($stampLevelInfo['discountType'] == 'V') {
+        if ($stampLevelInfo['discountType'] === 'V') {
             $discountPrice = $basketItemPrice - $stampLevelInfo['discountValue'];
-        } else if ($stampLevelInfo['discountType'] == 'P') {
+        } else if ($stampLevelInfo['discountType'] === 'P') {
             $discountPrice = $basketItemPrice * (1 - ($stampLevelInfo['discountValue'] / 100));
         }
 
