@@ -229,10 +229,49 @@ class UserController extends BaseController
      *
      * @return ApiResponse
      * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    public function getStampsInfoAction(): ApiResponse
+    {
+        try {
+            $stamps = $this->stampService->getActiveStampsCount();
+        } catch (\Exception $e) {
+            $stamps = 0;
+        }
+
+        $exchangeRules = StampService::EXCHANGE_RULES;
+        $productsXmlIds = array_keys($exchangeRules);
+
+        $productsListCollection = $this->apiProductService->getListFromXmlIds($productsXmlIds, true);
+        $productsList = $productsListCollection->get(0) ?? [];
+
+        return (new ApiResponse())->setData([
+            'stamps' => [
+                'actionID' => false,
+                'amount' => $stamps,
+                'rate_val' => StampService::MARK_RATE,
+                //IMPORTANT: В description переносы строк должны быть разделены с помощью \n\n
+                'description' => 'Наступает осенняя пора, дети идут в школу, начинаются учебные будни. Вы можете вместе с питомцем тоже начать учиться',
+                'second_description' => '1. Делай покупки, получай марки: 1 марка  = ' . StampService::MARK_RATE . ' руб.;'
+                    . "\n\n2. Отслеживай марки где удобно: на чеке, в личном кабинете на сайте и в приложении;"
+                    . "\n\n3. Выбери игру и добавь в корзину, нажми \"списать марки\";"
+                    . "\n\n4. Получи игру со скидкой и развивай питомца!",
+                'goods' => $productsList,
+            ],
+        ]);
+    }
+
+    /**
+     * @Rest\Get("/stamps_october/")
+     * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
+     *
+     * @return ApiResponse
+     * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws IblockNotFoundException
      */
-    public function getStampsInfoAction(): ApiResponse
+    public function getStampsOctoberInfoAction(): ApiResponse
     {
         try {
             $stamps = $this->stampService->getActiveStampsCount();
@@ -257,10 +296,6 @@ class UserController extends BaseController
                     . "\n\n3. Покупай со скидкой до -30%;"
                     . "\n\n- на сайте и в приложении: добавь товар в корзину, нажми \"списать марки\";"
                     . "\n\n- в магазине: предъяви буклет или сообщи кассиру номер телефона подробнее;",
-//                'second_description' => '1. Делай покупки, получай марки: 1 марка  = ' . StampService::MARK_RATE . ' руб.;'
-//                    . "\n\n2. Отслеживай марки где удобно: на чеке, в личном кабинете на сайте и в приложении;"
-//                    . "\n\n3. Выбери игру и добавь в корзину, нажми \"списать марки\";"
-//                    . "\n\n4. Получи игру со скидкой и развивай питомца!",
                 'stampCategories' => $this->apiProductService->getStampsCategories(),
                 'actionID' => 102019, //todo поставить id нужной акции
                 'discount' => sprintf('%s%%', $this->stampService->getCurrentDiscount()),
