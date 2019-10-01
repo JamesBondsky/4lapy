@@ -78,6 +78,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             $offerCollection = (new OfferQuery())->withFilter(['=ID' => $productIds])->exec();
         }
 
+        $iterator = 0;
         /** @var BasketItem $item */
         foreach ($basketItems as $k => $item) {
             if ($basketService->isGiftProduct($item)) {
@@ -93,9 +94,10 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             $sum += $item->getBasePrice() * $item->getQuantity();
             $sumDiscounted += $item->getPrice() * $item->getQuantity();
 
-            $basketCode = (int)\str_replace('n', '', $item->getBasketCode());
+            $item->getBasketCode(); // На всякий случай оставил, чтобы продолжали добавляться порядковые номера в базу
+
             $chequePosition =
-                (new ChequePosition())->setChequeItemNumber($basketCode)
+                (new ChequePosition())->setChequeItemNumber(++$iterator)
                     ->setSumm($item->getBasePrice() * $item->getQuantity())
                     ->setQuantity($item->getQuantity())
                     ->setPrice($item->getBasePrice())

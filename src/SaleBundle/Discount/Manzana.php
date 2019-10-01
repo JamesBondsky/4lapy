@@ -287,9 +287,10 @@ class Manzana implements LoggerAwareInterface
          */
         foreach ($basket as $item) {
             $basketCode = (int)str_replace('n', '', $item->getBasketCode());
+            $itemBasketIndex = $item->getInternalIndex();
 
-            $manzanaItems->map(function (ChequePosition $position) use ($basketCode, $item, $activeStampsCount) {
-                if ($position->getChequeItemNumber() === $basketCode) {
+            $manzanaItems->map(function (ChequePosition $position) use ($basketCode, $item, $activeStampsCount, $itemBasketIndex) {
+                if ($position->getChequeItemNumber() === $itemBasketIndex + 1) {
                     $price = PriceHelper::roundPrice($position->getSummDiscounted() / $position->getQuantity());
 
                     /** @noinspection PhpInternalEntityUsedInspection */
@@ -397,6 +398,7 @@ class Manzana implements LoggerAwareInterface
                     continue;
                 }
                 $basketCode = (int)str_replace('n', '', $item->getBasketCode());
+                $itemBasketIndex = $item->getInternalIndex();
 
                 $basketPropertyCollection = $item->getPropertyCollection();
                 $useStampsProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'USE_STAMPS');
@@ -407,8 +409,8 @@ class Manzana implements LoggerAwareInterface
                     //&&
                     (!$useStampsProperty || !$useStamps = $useStampsProperty->getField('VALUE'))
                 ) {
-                    $manzanaItems->map(function (ChequePosition $position) use ($basketCode, $item, $availableStamps, $basketPropertyCollection, $maxStampsLevelProperty) {
-                        if ($position->getChequeItemNumber() === $basketCode) {
+                    $manzanaItems->map(function (ChequePosition $position) use ($basketCode, $item, $availableStamps, $basketPropertyCollection, $maxStampsLevelProperty, $itemBasketIndex) {
+                        if ($position->getChequeItemNumber() === $itemBasketIndex + 1) {
                             $extendedAttributeCollection = $position->getExtendedAttribute();
                             $maxAvailableLevel = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $availableStamps);
 
