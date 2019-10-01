@@ -99,7 +99,7 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                             src="<?= $imageSrc; ?>"
                             class="b-common-item__image js-weight-img"
                          <? } else { ?>
-                            <? if($arParams['COUNTER'] < 5) { ?>
+                            <? if(true || $arParams['COUNTER'] < 5) { ?>
                         	src="<?= $imageSrc; ?>"
                             class="b-common-item__image js-weight-img"
                             <? } else { ?>
