@@ -90,17 +90,23 @@ class CityController extends Controller
      * @Route("/suggest/address", methods={"POST"}, name="location.city.suggest.address")
      * @param Request $request
      * @return JsonResponse
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
      */
     public function getAddress(Request $request)
     {
         $content = json_decode($request->getContent());
 
         $query = $content->query;
-        $limit = $content->count;
-        $exact = $limit == 1;
+        $limit = intval($content->count);
+
+        /**
+         * Баг, когда местоположения имеют одинаковые названия
+         * Специально фейлим запрос, чтобы инфромация о выбранном городе взялась в фронта, а не из этого запроса
+         */
+        if ($limit === 1) {
+            return new JsonResponse([]);
+        }
+
+        $exact = $limit === 1;
         $filter = [];
 
         $locations = $this->locationService->findLocationNew(
