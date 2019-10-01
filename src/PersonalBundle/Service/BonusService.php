@@ -233,9 +233,12 @@ class BonusService
             }
             if (!$cardBonus->isEmpty()) {
                 $cardBonusNumber = $cardBonus->getCardNumber();
-                $currentCard = $contact->getCards()->filter(function(\FourPaws\External\Manzana\Model\Card $card) use($cardBonusNumber) {
-                    return $card->cardNumber == $cardBonusNumber;
-                })->first();
+//                $currentCard = $contact->getCards()->filter(function(\FourPaws\External\Manzana\Model\Card $card) use($cardBonusNumber) {
+//                    return $card->cardNumber == $cardBonusNumber;
+//                })->first();
+
+                $currentCard = $cardBonus;
+
                 //$temporaryBonus = (float)$currentCard->balanceExtraNoLimit; // на тестовой Manzana
                 $temporaryBonus = (float)$currentCard->balanceExtraLimit; // на боевой Manzana
                 $activeBonus = (float)$contact->plActiveBalance;

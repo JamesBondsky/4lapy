@@ -89,7 +89,7 @@ services:
 
   manzana.service:
     class: FourPaws\External\ManzanaService
-    arguments: ['@jms_serializer', '@manzana.soap', '%manzana%']
+    arguments: ['@jms_serializer', '@manzana.soap', '%manzana%', '@manzana.guzzle']
     calls:
       - [setServiceLogger]
 

@@ -106,6 +106,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 	 */
 	public function getContractsDescription(): string
     {
+        return false;
 	    return $this->execute(self::CONTRACT_CONTRACT_DESCRIPTIONS);
     }
 
@@ -134,7 +135,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             ]
         );
 
-        $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
+        $result = $this->newExec(__METHOD__, func_get_args());
+//        $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
 
         return $result;
     }
@@ -343,7 +345,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $bag = new ParameterBag($data, ['ff_bird', 'ff_cat', 'ff_dog', 'ff_fish', 'ff_rodent', 'ff_others']);
 
         try {
-            $rawResult = $this->execute(self::CONTRACT_CONTACT_UPDATE, $bag->getParameters());
+            $rawResult = $this->newExec(__METHOD__, func_get_args());
+//            $rawResult = $this->execute(self::CONTRACT_CONTACT_UPDATE, $bag->getParameters());
             $result = ResultXmlFactory::getContactResultFromXml($this->serializer, $rawResult);
             if ($result->isError()) {
                 throw new ContactUpdateException($result->getResult());
@@ -443,9 +446,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         );
 
         try {
-            $result = $this->execute(self::CONTRACT_CLIENT_SEARCH, $bag->getParameters());
+            $result = $this->newExec(__METHOD__, func_get_args());
+//            $result = $this->execute(self::CONTRACT_CLIENT_SEARCH, $bag->getParameters());
 
-            $clients = $this->serializer->deserialize($result, Clients::class, 'xml');
+            $clients = $this->serializer->deserialize(json_encode(['Clients' => $result]), Clients::class, 'json');
         } catch (Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
@@ -632,9 +636,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $cardValidateResult = null;
         $bag = new ParameterBag(['cardnumber' => $this->prepareCardNumber($cardNumber)]);
         try {
-            $result = $this->execute(self::CONTRACT_CARD_VALIDATE, $bag->getParameters());
+            $result = $this->newExec(__METHOD__, func_get_args());
+//            $result = $this->execute(self::CONTRACT_CARD_VALIDATE, $bag->getParameters());
             /** @var CardValidateResult $cardValidateResult */
-            $cardValidateResult = $this->serializer->deserialize($result, CardValidateResult::class, 'xml');
+            $cardValidateResult = $this->serializer->deserialize(json_encode($result), CardValidateResult::class, 'json');
         } catch (\Throwable $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
@@ -661,8 +666,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $bag = new ParameterBag(['cardnumber' => $this->prepareCardNumber($cardNumber)]);
 
         try {
-            $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
-            $card = $this->serializer->deserialize($result, Cards::class, 'xml')->cards[0];
+            $result = $this->newExec(__METHOD__, func_get_args());
+//            $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
+            $card = $this->serializer->deserialize(json_encode(['Cards' => $result]), Cards::class, 'xml')->cards[0];
         } catch (Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
@@ -690,9 +696,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $bag = new ParameterBag(['contact_id' => $contactId]);
 
         try {
-            $result = $this->execute(self::CONTRACT_CONTACT, $bag->getParameters());
+            $result = $this->newExec(__METHOD__, func_get_args());
+//            $result = $this->execute(self::CONTRACT_CONTACT, $bag->getParameters());
 
-            $contact = $this->serializer->deserialize($result, Contacts::class, 'xml')->contacts[0];
+            $contact = $this->serializer->deserialize(json_encode(['Contacts' => $result]), Contacts::class, 'json')->contacts[0];
         } catch (Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
@@ -736,26 +743,11 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getCardsByContactId($contactId): array
     {
-        $this->sqlHeartBeat();
-        if (!empty($this->cards[$contactId])) {
-            $cards = $this->cards[$contactId];
-        } else {
-            $this->sqlHeartBeat();
-            $bag = new ParameterBag(['contact_id' => $contactId]);
-            $this->sqlHeartBeat();
-            try {
-                $this->sqlHeartBeat();
-                $result = $this->execute(self::CONTRACT_CARDS, $bag->getParameters());
-                $this->sqlHeartBeat();
-                /** @var CardsByContractCards $cards */
-                $this->cards[$contactId] =
-                $cards = $this->serializer->deserialize($result, CardsByContractCards::class, 'xml')->cards->toArray();
-            } catch (Exception $e) {
-                throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
-            }
-        }
+        $result = $this->newExec(__METHOD__, func_get_args());
+        $cards = $this->serializer->deserialize(json_encode(['Cards' => $result['Card']]), CardsByContractCards::class, 'json');
+        $cardsArray = $cards->cards->toArray();
 
-        return $cards;
+        return $cardsArray;
     }
 
     /**
@@ -769,9 +761,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         $bag = new ParameterBag(['contact_id' => $contactId]);
         try {
-            $result = $this->execute(self::CONTRACT_CONTACT_CHEQUES, $bag->getParameters());
+            $result = $this->newExec(__METHOD__, func_get_args());
+//            $result = $this->execute(self::CONTRACT_CONTACT_CHEQUES, $bag->getParameters());
             /** @var Cheques $resCheques */
-            $resCheques = $this->serializer->deserialize($result, Cheques::class, 'xml');
+            $resCheques = $this->serializer->deserialize(json_encode(['Cheques' => $result]), Cheques::class, 'json');
             /** @var $resCheques ->cheques $cheques */
             /** @noinspection PhpUndefinedMethodInspection */
             /** метод есть так как ArrayCollection */
@@ -794,9 +787,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         $bag = new ParameterBag(['card_id' => $cardId]);
         try {
-            $result = $this->execute(self::CONTRACT_CHEQUES, $bag->getParameters());
+            $result = $this->newExec(__METHOD__, func_get_args());
+//            $result = $this->execute(self::CONTRACT_CHEQUES, $bag->getParameters());
             $cheques =
-                $this->serializer->deserialize($result, ChequesByContractCheques::class, 'xml')->cheques->toArray();
+                $this->serializer->deserialize(json_encode(['Cheques' => $result]), ChequesByContractCheques::class, 'json')->cheques->toArray();
         } catch (Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
@@ -825,9 +819,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         $bag = new ParameterBag(['cheque_id' => $chequeId]);
         try {
-            $result = $this->execute(self::CONTRACT_CHEQUE_ITEMS, $bag->getParameters());
+//            $result = $this->execute(self::CONTRACT_CHEQUE_ITEMS, $bag->getParameters());
+            $result = $this->newExec(__METHOD__, func_get_args());
             /** @var ChequeItems $resChequeItems */
-            $resChequeItems = $this->serializer->deserialize($result, ChequeItems::class, 'xml');
+            $resChequeItems = $this->serializer->deserialize(json_encode(['ChequeItems' => $result]), ChequeItems::class, 'json');
             /** @var ChequeItem[] $resCheques ->cheques */
             /** @noinspection PhpUndefinedMethodInspection*/
             /** метод есть, так как ArrayCollection */
@@ -852,9 +847,21 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if ($contact->phone) {
             $contact->phone = PhoneHelper::getManzanaPhone($contact->phone);
         }
-        /** @noinspection MissingService */
-        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_update_producer');
-        $producer->publish($this->serializer->serialize($contact, 'json'));
+
+        /** @var \GuzzleHttp\Client $guzzleClient */
+        $guzzleClient = App::getInstance()->getContainer()->get('manzana.guzzle');
+        $resultBody = $guzzleClient->post('http://nginx/update', [
+            'headers' => [
+                'Host' => '4lapymanzana.local.articul.ru',
+            ],
+            'form_params' => [
+                'data' => $this->serializer->serialize($contact, 'json')
+            ],
+        ]);
+
+//        /** @noinspection MissingService */
+//        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_update_producer');
+//        $producer->publish($this->serializer->serialize($contact, 'json'));
     }
 
     /**
@@ -989,7 +996,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         try {
             $bag = new ParameterBag(['card_from' => $card_from, 'card_to' => $card_to]);
-            $rawResult = $this->execute(self::CONTRACT_CHANGE_CARD, $bag->getParameters());
+            $rawResult = $this->newExec(__METHOD__, func_get_args());
+//            $rawResult = $this->execute(self::CONTRACT_CHANGE_CARD, $bag->getParameters());
             /** @var Result $result */
             preg_match_all("/<result>(.+?)<\/result>/is", $rawResult, $matches);
             $result = end($matches);
@@ -1067,6 +1075,37 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 'USER_PHONE' => $findPhone,
                 'CONTACT_DATA' => serialize($result)
             ]);
+        }
+
+        return $result;
+    }
+
+    private function newExec($method, $body)
+    {
+        [$class, $method] = explode('::', $method);
+        /** @var \GuzzleHttp\Client $guzzleClient */
+        $guzzleClient = App::getInstance()->getContainer()->get('manzana.guzzle');
+        $resultBody = $guzzleClient->post('http://nginx', [
+            'headers' => [
+                'Host' => '4lapymanzana.local.articul.ru',
+            ],
+            'form_params' => [
+                'method' => $method,
+                'body' => $body
+            ],
+        ]);
+
+        try {
+            $result = (string)$resultBody->getBody();
+            $result = json_decode($result, true);
+        } catch (Exception $e) {
+            $result = '';
+        }
+
+        if ($result['success']) {
+            $result = $result['response'];
+        } else {
+            throw new Exception('Ошибка получения данных');
         }
 
         return $result;
