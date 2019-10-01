@@ -44,7 +44,7 @@ class CCatalogSectionSlider extends \CBitrixComponent
                 'SECTION_CODE' => $this->arParams['SECTION_CODE'] ?: false,
             ];
 
-            $dbres = \CIBlockElement::GetList([], $filter);
+            $dbres = \CIBlockElement::GetList(['SORT' => 'ASC'], $filter);
             while($row = $dbres->GetNextElement()){
                 $element = $row->GetFields();
                 $element['PROPERTIES'] = $row->GetProperties();
