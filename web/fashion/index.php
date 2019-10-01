@@ -106,7 +106,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
                     <div class="fashion-item-info__descr">2000&nbsp;новинок из&nbsp;категорий <br /> одежда и&nbsp;обувь</div>
                 </div>
                 <div class="fashion-item-info">
-                    <div class="fashion-item-info__title">Двойные бонусы за покупку!</div>
+                    <div class="fashion-item-info__title">Двойные бонусы</div>
                     <div class="fashion-item-info__descr">Начисляются в октябре при покупке любой одежды и обуви</div>
                 </div>
                 <div class="fashion-item-info fashion-item-info_full hide-xs">
