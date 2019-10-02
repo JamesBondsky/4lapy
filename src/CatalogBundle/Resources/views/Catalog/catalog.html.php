@@ -3,6 +3,7 @@
 use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Search\Model\ProductSearchResult;
@@ -12,15 +13,16 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
 /**
- * @var ChildCategoryRequest   $catalogRequest
- * @var ProductSearchResult    $productSearchResult
- * @var PhpEngine              $view
- * @var DataLayerService       $dataLayerService
- * @var GoogleEcommerceService $ecommerceService
- * @var CatalogLandingService  $landingService
- * @var string                 $retailRocketViewScript
- * @var Product|bool           $productWithMinPrice
- * @var CMain                  $APPLICATION
+ * @var ChildCategoryRequest     $catalogRequest
+ * @var ProductSearchResult      $productSearchResult
+ * @var PhpEngine                $view
+ * @var DataLayerService         $dataLayerService
+ * @var GoogleEcommerceService   $ecommerceService
+ * @var CatalogLandingService    $landingService
+ * @var string                   $retailRocketViewScript
+ * @var Product|bool             $productWithMinPrice
+ * @var DeliveryResultInterface  $availableDelivery
+ * @var CMain                    $APPLICATION
  */
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
@@ -155,7 +157,9 @@ if ($catalogRequest->isLanding()) {
     <?php
 
     if ($category->isShowFitting()) {
-        echo $view->render('FourPawsCatalogBundle:Catalog:landing.fitting.html.php');
+        echo $view->render('FourPawsCatalogBundle:Catalog:landing.fitting.html.php', [
+            'availableDelivery' => $availableDelivery,
+        ]);
     }
 
     if ($category->isLanding()) {

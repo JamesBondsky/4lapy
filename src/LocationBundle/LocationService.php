@@ -469,7 +469,7 @@ class LocationService
             if (!($queryParams instanceof Query)) {
                 /** сразу в селект не добалять позиции с join - получать их позже - для скорости
                  * поиск по коду и только по названию без родителя будет быстрее */
-                $query = LocationTable::query()->setFilter($queryParams)->setSelect([
+                $query = LocationTable::query()->setOrder(['SORT' => 'asc'])->setFilter($queryParams)->setSelect([
                     'ID',
                     'CODE',
                     'DEPTH_LEVEL',
@@ -556,7 +556,7 @@ class LocationService
             return (new BitrixCache())
                 ->withTag('location_finder')
                 ->withTime(360000)
-                ->withId(__METHOD__ . serialize($queryParams))
+                ->withId(__METHOD__ . serialize(['queryParams' => $queryParams, 'limit' => $limit]))
                 ->resultOf($cacheFinder);
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get location: %s', $e->getMessage()), [
@@ -757,7 +757,7 @@ class LocationService
             if (!isset($this->locationsByCode[$code])) {
                 $this->locationsByCode[$code] = reset($this->findLocationNew([
                     '=CODE'     => $code,
-                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE, static::TYPE_DISTRICT, static::TYPE_DISTRICT_MOSCOW],
+//                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE, static::TYPE_DISTRICT, static::TYPE_DISTRICT_MOSCOW],
                 ]));
             }
             if (!empty($this->locationsByCode[$code]) && !\is_bool($this->locationsByCode[$code])) {

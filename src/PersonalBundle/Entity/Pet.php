@@ -8,10 +8,12 @@ namespace FourPaws\PersonalBundle\Entity;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Bitrix\Main\Type\Date;
+use FourPaws\App\Application;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\PersonalBundle\Service\PetService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -92,6 +94,42 @@ class Pet extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $gender;
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_SIZE")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $size = 0;
+
+    /**
+     * @var float
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("UF_CHEST")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $chest = 0.0;
+
+    /**
+     * @var float
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("UF_BACK")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $back = 0.0;
+
+    /**
+     * @var float
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("UF_NECK")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $neck = 0.0;
 
     protected $stringGender = '';
 
@@ -474,4 +512,102 @@ class Pet extends BaseEntity
     {
         $this->codeGender = $codeGender;
     }
+
+
+    /**
+     * @return int
+     */
+    public function getSize(): int
+    {
+        return $this->size ?: 0;
+    }
+
+    /**
+     * @param int $size
+     * @return Pet
+     */
+    public function setSize(int $size): Pet
+    {
+        $this->size = $size;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getChest(): float
+    {
+        return $this->chest ?: 0;
+    }
+
+    /**
+     * @param float $chest
+     * @return Pet
+     */
+    public function setChest(float $chest): Pet
+    {
+        $this->chest = $chest;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getBack(): float
+    {
+        return $this->back ?: 0;
+    }
+
+    /**
+     * @param float $back
+     * @return Pet
+     */
+    public function setBack(float $back): Pet
+    {
+        $this->back = $back;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getNeck(): float
+    {
+        return $this->neck ?: 0;
+    }
+
+    /**
+     * @param float $neck
+     * @return Pet
+     */
+    public function setNeck(float $neck): Pet
+    {
+        $this->neck = $neck;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSizeTitle(): string
+    {
+        /** @var PetService $petService */
+        $petService = Application::getInstance()->getContainer()->get('pet.service');
+        $petSizeId = $this->getSize();
+        if(!$petSizeId){
+            return '';
+        }
+        $petSizeEnum = $petService->getSizeById($petSizeId);
+        $sizeTitle = $petSizeEnum->getValue();
+        return $sizeTitle ?: '';
+    }
+
+    public function deleteSizeInfo()
+    {
+        $this->setSize(0)
+            ->setBack(0)
+            ->setChest(0)
+            ->setNeck(0);
+    }
+
 }

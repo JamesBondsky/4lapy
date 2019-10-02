@@ -19,7 +19,7 @@ use Symfony\Component\Templating\PhpEngine;
 use Symfony\Component\Templating\Loader\FilesystemLoader;
 
 ?>
-<div class="fashion-page">
+<div class="fashion-page" data-fashion-page="true">
     <section class="fashion-main-banner">
         <? $sectionFashion = CIBlockSection::GetList([], ['CODE' => 'fashion'], false, ['ID', 'NAME'])->Fetch();
         if($sectionFashion){
@@ -106,8 +106,8 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
                     <div class="fashion-item-info__descr">2000&nbsp;новинок из&nbsp;категорий <br /> одежда и&nbsp;обувь</div>
                 </div>
                 <div class="fashion-item-info">
-                    <div class="fashion-item-info__title">скидки до&nbsp;15%</div>
-                    <div class="fashion-item-info__descr">при покупке <nobr>2-х</nobr> вещей&nbsp;&mdash; 7%,<br/> <nobr>3-х</nobr> вещей&nbsp;&mdash; 10%, <nobr>4-х</nobr>&nbsp;&mdash; 15%</div>
+                    <div class="fashion-item-info__title">Двойные бонусы</div>
+                    <div class="fashion-item-info__descr">Начисляются в октябре при покупке любой одежды и обуви</div>
                 </div>
                 <div class="fashion-item-info fashion-item-info_full hide-xs">
                     <div class="fashion-item-info__title">бесплатная доставка и&nbsp;примерка</div>
@@ -138,7 +138,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
         </div>
     </section>
 
-    <? $APPLICATION->IncludeComponent('articul:fashion.product.footer', '') ?>
+    <? $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'filter', ['SECTION_CODE' => 'fashion', 'TYPE' => 'filter']) ?>
 
     <section class="fashion-info-banner">
         <div class="fashion-info-banner__title">
@@ -155,9 +155,9 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
         </div>
     </section>
 
-    <? $APPLICATION->IncludeComponent('articul:fashion.product.footer', 'rungo', ['SECTION_CODE' => 'rungo', 'TYPE' => 'rungo']) ?>
+    <? $APPLICATION->IncludeComponent('articul:catalog.section.slider', '', ['SECTION_CODE' => 'rungo']) ?>
 
-    <section class="fashion-measure-dog" data-measure-dog-fashion="true">
+    <section class="fashion-measure-dog" data-measure-dog-fashion="true" id="fashion-dog-size">
         <?
         $filesystemLoader = new FilesystemLoader($_SERVER['DOCUMENT_ROOT'].'/../src/CatalogBundle/Resources/views/Catalog/%name%');
         $templating = new PhpEngine(new TemplateNameParser(), $filesystemLoader);
@@ -268,6 +268,14 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
             </div>
         </section>
     <? } ?>
+
+    <div class="fashion-btn-up__wrap" data-scroll-up-fashion="true">
+        <div class="fashion-btn-up" data-scroll-up-fashion="true">
+            <div class="fashion-btn-up__content">
+                Вверх
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>

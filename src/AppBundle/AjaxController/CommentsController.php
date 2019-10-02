@@ -21,6 +21,10 @@ use FourPaws\AppBundle\Exception\EmptyUserDataComments;
 use FourPaws\AppBundle\Exception\ErrorAddComment;
 use FourPaws\AppBundle\Exception\UserNotFoundAddCommentException;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\FormBundle\Exception\FileCountException;
+use FourPaws\FormBundle\Exception\FileSaveException;
+use FourPaws\FormBundle\Exception\FileSizeException;
+use FourPaws\FormBundle\Exception\FileTypeException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\UserBundle\Exception\WrongEmailException;
 use FourPaws\UserBundle\Exception\WrongPasswordException;
@@ -122,6 +126,14 @@ class CommentsController extends Controller
             $json = $this->ajaxMess->getEmptyDataError();
         } catch (ErrorAddComment $e) {
             $json = $this->ajaxMess->getAddError();
+        } catch (FileCountException $e) {
+            $json = $this->ajaxMess->getFileCountError(5);
+        } catch (FileSizeException $e) {
+            $json = $this->ajaxMess->getFileSizeError(5);
+        } catch (FileTypeException $e) {
+            $json = $this->ajaxMess->getFileTypeError(['jpeg', 'jpg', 'png']);
+        } catch (FileSaveException $e) {
+            $json = $this->ajaxMess->getFileSaveError();
         } catch (LoaderException|SystemException|ApplicationCreateException|ServiceCircularReferenceException|\LogicException|\RuntimeException|\Exception $e) {
             $logger = LoggerFactory::create('system');
             $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());

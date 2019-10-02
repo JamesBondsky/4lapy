@@ -440,6 +440,22 @@ class AjaxMess
     }
 
     /**
+     * @param int $count
+     *
+     * @return JsonResponse
+     */
+    public function getFileCountError(int $count): JsonResponse
+    {
+        return $this->getJsonError('fileCountError',
+            'Превышен максимальное допустимое количество файлов в: ' .$count . ' файлов');
+    }
+
+    public function getFileSaveError() : JsonResponse
+    {
+        return $this->getJsonError('fileSaveError', 'При загрузке файлов произошла ошибка');
+    }
+
+    /**
      * @return bool
      */
     public function isReloadRecaptcha(): bool
