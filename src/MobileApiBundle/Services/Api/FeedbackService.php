@@ -119,7 +119,7 @@ class FeedbackService
 
             $phone = PhoneHelper::formatPhone($normPhone, PhoneHelper::FORMAT_URL);
 
-            if ($phone) {
+            if ($phone && $feedbackRequest->getType() == 'callback') {
                 $this->sendCallCenter($phone);
             }
         } else {
