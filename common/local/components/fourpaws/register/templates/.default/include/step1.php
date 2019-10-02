@@ -29,6 +29,10 @@ $isKioskMode = $arResult['KIOSK'] || KioskService::isKioskMode();
           method="post">
         <input type="hidden" name="action" value="get">
         <input type="hidden" name="step" value="sendSmsCode">
+        <input type="hidden" name="userData[name]" value="<?= $request->get('name') ?>">
+        <input type="hidden" name="userData[last_name]" value="<?= $request->get('last_name') ?>">
+        <input type="hidden" name="userData[gender]" value="<?= $request->get('gender') ?>">
+        <input type="hidden" name="userData[birthday]" value="<?= $request->get('birthday') ?>">
         <?php if (!CatalogLandingService::isLandingPage()) { ?>
             <input type="hidden" name="backurl" value="<?= $backUrl ?>">
         <?php } ?>

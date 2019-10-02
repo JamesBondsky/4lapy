@@ -2,11 +2,16 @@
 namespace FourPaws\SocServ;
 
 
+use Bitrix\Main\Config\Option;
+use Bitrix\Socialservices\UserTable;
 use CModule;
 use CSocServAuthManager;
 use CVKontakteOAuthInterface;
 
 class CSocServVK2 extends \CSocServVKontakte {
+
+    use SocServiceHelper;
+
     const ID = "VK2";
     const CONTROLLER_URL = "https://www.bitrix24.ru/controller";
 
@@ -153,6 +158,7 @@ class CSocServVK2 extends \CSocServVKontakte {
     {
         $GLOBALS["APPLICATION"]->RestartBuffer();
         $bSuccess = SOCSERV_AUTHORISATION_ERROR;
+        $paramsProfile = [];
 
         if ((isset($_REQUEST["code"]) && $_REQUEST["code"] <> '') && CSocServAuthManager::CheckUniqueKey())
         {
@@ -168,7 +174,18 @@ class CSocServVK2 extends \CSocServVKontakte {
                 if (is_array($arVkUser) && ($arVkUser['response']['0']['id'] <> ''))
                 {
                     $arFields = $this->prepareUser($arVkUser);
-                    $bSuccess = $this->AuthorizeUser($arFields);
+                    $checkUser = $this->checkUser($arFields);
+                    if ($checkUser) {
+                        $paramsProfile = [];
+                        $bSuccess = $this->AuthorizeUser($arFields);
+                    } else {
+                        $paramsProfile = [
+                            'name' => $arFields['NAME'],
+                            'last_name' => $arFields['LAST_NAME'],
+                            'gender' => $arFields['PERSONAL_GENDER'],
+                            'birthday' => $arFields['PERSONAL_BIRTHDAY'],
+                        ];
+                    }
                 }
             }
         }
@@ -211,6 +228,10 @@ class CSocServVK2 extends \CSocServVKontakte {
         if (CModule::IncludeModule("socialnetwork") && strpos($url, "current_fieldset=") === false)
         {
             $url = (preg_match("/\?/", $url)) ? $url . "&current_fieldset=SOCSERV" : $url . "?current_fieldset=SOCSERV";
+        }
+
+        if (count($paramsProfile) > 0) {
+            $url = '/personal/register/?backurl=/&' . http_build_query($paramsProfile);
         }
 
         echo '

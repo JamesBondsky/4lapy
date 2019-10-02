@@ -4,6 +4,8 @@ namespace FourPaws\SocServ;
 
 class CSocServOK2 extends \CSocServOdnoklassniki
 {
+    use SocServiceHelper;
+
     const ID = 'OK2';
     public function Authorize()
     {
@@ -12,6 +14,7 @@ class CSocServOK2 extends \CSocServOdnoklassniki
         $APPLICATION->RestartBuffer();
         $bSuccess = SOCSERV_AUTHORISATION_ERROR;
         $bProcessState = false;
+        $paramsProfile = [];
 
         if((isset($_REQUEST["code"]) && $_REQUEST["code"] <> '') && \CSocServAuthManager::CheckUniqueKey())
         {
@@ -71,7 +74,19 @@ class CSocServOK2 extends \CSocServOdnoklassniki
                     if(strlen(SITE_ID) > 0)
                         $arFields["SITE_ID"] = SITE_ID;
 
-                    $bSuccess = $this->AuthorizeUser($arFields);
+//                    $bSuccess = $this->AuthorizeUser($arFields);
+                    $checkUser = $this->checkUser($arFields);
+                    if ($checkUser) {
+                        $paramsProfile = [];
+                        $bSuccess = $this->AuthorizeUser($arFields);
+                    } else {
+                        $paramsProfile = [
+                            'name' => $arFields['NAME'],
+                            'last_name' => $arFields['LAST_NAME'],
+                            'gender' => $arFields['PERSONAL_GENDER'],
+                            'birthday' => $arFields['PERSONAL_BIRTHDAY'],
+                        ];
+                    }
                 }
             }
         }
@@ -132,6 +147,11 @@ class CSocServOK2 extends \CSocServOdnoklassniki
             $url = (preg_match("/\?/", $url)) ? $url."&current_fieldset=SOCSERV" : $url."?current_fieldset=SOCSERV";
 
         $url = \CUtil::JSEscape($url);
+
+        if (count($paramsProfile) > 0) {
+            $url = '/personal/register/?backurl=/&' . http_build_query($paramsProfile);
+        }
+
         $location = ($mode == "opener") ? 'if(window.opener) window.opener.location = \''.$url.'\'; window.close();' : ' window.location = \''.$url.'\';';
 
         $JSScript = '

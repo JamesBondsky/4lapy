@@ -7,6 +7,8 @@ use CFacebookInterface;
 
 class CSocServFB2 extends \CSocServFacebook
 {
+    use SocServiceHelper;
+
     const ID = 'FB2';
     public function prepareUser($arFBUser, $short = false)
     {
@@ -152,5 +154,118 @@ class CSocServFB2 extends \CSocServFacebook
         }
 
         return $res;
+    }
+
+    public function Authorize()
+    {
+        global $APPLICATION;
+        $APPLICATION->RestartBuffer();
+
+        $authError = SOCSERV_AUTHORISATION_ERROR;
+        $paramsProfile = [];
+
+        if(
+            isset($_REQUEST["code"]) && $_REQUEST["code"] <> ''
+            && \CSocServAuthManager::CheckUniqueKey()
+        )
+        {
+            if(IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+            {
+                $redirect_uri = static::CONTROLLER_URL."/redirect.php";
+            }
+            else
+            {
+                $redirect_uri = $this->getEntityOAuth()->GetRedirectURI();
+            }
+
+            $this->entityOAuth = $this->getEntityOAuth($_REQUEST['code']);
+            if($this->entityOAuth->GetAccessToken($redirect_uri) !== false)
+            {
+                $arFBUser = $this->entityOAuth->GetCurrentUser();
+                if(is_array($arFBUser) && isset($arFBUser["id"]))
+                {
+//                    $arFields = self::prepareUser($arFBUser);
+                    $arFields = $this->prepareUser($arFBUser);
+                    $checkUser = $this->checkUser($arFields);
+                    if ($checkUser) {
+                        $paramsProfile = [];
+                        $authError = $this->AuthorizeUser($arFields);
+                    } else {
+                        $paramsProfile = [
+                            'name' => $arFields['NAME'],
+                            'last_name' => $arFields['LAST_NAME'],
+                            'gender' => $arFields['PERSONAL_GENDER'],
+                            'birthday' => $arFields['PERSONAL_BIRTHDAY'],
+                        ];
+                    }
+//                    $authError = $this->AuthorizeUser($arFields);
+                }
+            }
+        }
+
+        $bSuccess = $authError === true;
+
+        $url = ($APPLICATION->GetCurDir() == "/login/") ? "" : $APPLICATION->GetCurDir();
+        $aRemove = array("logout", "auth_service_error", "auth_service_id", "code", "error_reason", "error", "error_description", "check_key", "current_fieldset");
+
+        if(isset($_REQUEST["state"]))
+        {
+            $arState = array();
+            parse_str($_REQUEST["state"], $arState);
+
+            if(isset($arState['backurl']) || isset($arState['redirect_url']))
+            {
+                $url = !empty($arState['redirect_url']) ? $arState['redirect_url'] : $arState['backurl'];
+                if(substr($url, 0, 1) !== "#")
+                {
+                    $parseUrl = parse_url($url);
+
+                    $urlPath = $parseUrl["path"];
+                    $arUrlQuery = explode('&', $parseUrl["query"]);
+
+                    foreach($arUrlQuery as $key => $value)
+                    {
+                        foreach($aRemove as $param)
+                        {
+                            if(strpos($value, $param."=") === 0)
+                            {
+                                unset($arUrlQuery[$key]);
+                                break;
+                            }
+                        }
+                    }
+
+                    $url = (!empty($arUrlQuery)) ? $urlPath.'?'.implode("&", $arUrlQuery) : $urlPath;
+                }
+            }
+        }
+
+        if($authError === SOCSERV_REGISTRATION_DENY)
+        {
+            $url = (preg_match("/\?/", $url)) ? $url.'&' : $url.'?';
+            $url .= 'auth_service_id='.self::ID.'&auth_service_error='.$authError;
+        }
+        elseif($bSuccess !== true)
+        {
+            $url = (isset($urlPath)) ? $urlPath.'?auth_service_id='.self::ID.'&auth_service_error='.$authError : $GLOBALS['APPLICATION']->GetCurPageParam(('auth_service_id='.self::ID.'&auth_service_error='.$authError), $aRemove);
+        }
+
+        if(\CModule::IncludeModule("socialnetwork") && strpos($url, "current_fieldset=") === false)
+        {
+            $url .= ((strpos($url, "?") === false) ? '?' : '&')."current_fieldset=SOCSERV";
+        }
+
+
+        if (count($paramsProfile) > 0) {
+            $url = '/personal/register/?backurl=/&' . http_build_query($paramsProfile);
+        }
+        ?>
+        <script type="text/javascript">
+            if(window.opener)
+                window.opener.location = '<?=\CUtil::JSEscape($url)?>';
+            window.close();
+        </script>
+        <?
+        die();
     }
 }

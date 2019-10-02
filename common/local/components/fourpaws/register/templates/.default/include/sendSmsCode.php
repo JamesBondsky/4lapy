@@ -13,6 +13,12 @@ use FourPaws\Helpers\ProtectorHelper;
 $request = Application::getInstance()->getContext()->getRequest();
 $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
 
+$userData = $request->get('userData');
+
+if (!$userData) {
+    $userData = [];
+}
+
 /** @var string $phone
  * @var string $newAction
  */ ?>
@@ -39,6 +45,10 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
         <input type="hidden" name="step" value="step2">
         <input type="hidden" name="backurl" value="<?= $backUrl ?>">
         <input type="hidden" name="phone" value="<?= $phone ?>">
+        <input type="hidden" name="userData[name]" value="<?= $userData['name'] ?? '' ?>">
+        <input type="hidden" name="userData[last_name]" value="<?= $userData['last_name'] ?? '' ?>">
+        <input type="hidden" name="userData[gender]" value="<?= $userData['gender'] ?? '' ?>">
+        <input type="hidden" name="userData[birthday]" value="<?= $userData['birthday'] ?? '' ?>">
         <div class="b-input-line b-input-line--add-number js-phone3-resend js-resend">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="sms-code-3">SMS-код</label>
