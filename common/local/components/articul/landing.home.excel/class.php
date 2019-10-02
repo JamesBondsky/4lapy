@@ -90,8 +90,8 @@ class CLandingHomeExcelComponent extends \CBitrixComponent
                 "Id пользователя" => $item['PROPERTIES']['USER_ID']['VALUE'],
                 "Логин"           => $item['PROPERTIES']['LOGIN']['VALUE'],
                 "ФИО"             => $item['PROPERTIES']['FIO']['VALUE'],
-                "Телефон"         => $item['PROPERTIES']['USER_ID']['VALUE'],
-                "Email"           => $item['PROPERTIES']['USER_ID']['VALUE'],
+                "Телефон"         => $item['PROPERTIES']['PHONE']['VALUE'],
+                "Email"           => $item['PROPERTIES']['EMAIL']['VALUE'],
                 "Рисунок"         =>
                     [
                         'type'  => 'bitrix_img',
