@@ -13,7 +13,7 @@ use FourPaws\Enum\IblockType;
  * Time: 12:31
  */
 
-class CFashionProductFooter extends \CBitrixComponent
+class CCatalogSectionSlider extends \CBitrixComponent
 {
     private $iblockId;
     private $productXmlIds;
@@ -31,7 +31,7 @@ class CFashionProductFooter extends \CBitrixComponent
             $params['CACHE_TIME'] = 86400;
         }
         $params['TYPE'] = $params['TYPE'] ?: 'default';
-        $this->iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::FASHION_FOOTER_PRODUCTS);
+        $this->iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::CATALOG_SLIDER_PRODUCTS);
         return parent::onPrepareComponentParams($params);
     }
 
@@ -44,10 +44,34 @@ class CFashionProductFooter extends \CBitrixComponent
                 'SECTION_CODE' => $this->arParams['SECTION_CODE'] ?: false,
             ];
 
-            $dbres = \CIBlockElement::GetList([], $filter);
+            $dbres = \CIBlockElement::GetList(['SORT' => 'ASC'], $filter);
             while($row = $dbres->GetNextElement()){
                 $element = $row->GetFields();
                 $element['PROPERTIES'] = $row->GetProperties();
+
+                if(empty($element['PROPERTIES']['PRODUCTS']['VALUE'])){
+                    $filterInner = [
+                        'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+                        'SECTION_ID' => $element['PROPERTIES']['SECTION']['VALUE'],
+                        'ACTIVE' => 'Y',
+                        'INCLUDE_SUBSECTION' => 'Y'
+                    ];
+
+//                    $dbresInner = ElementTable::getList([
+//                        'select' => ['ID', 'XML_ID', 'NAME', 'IBLOCK_SECTION_ID'],
+//                        'filter' => [
+//                            'IBLOCK_SECTION_ID' => $element['PROPERTIES']['SECTION']['VALUE'],
+//                            'ACTIVE' => 'Y'
+//                        ],
+//                        'limit'  => 10
+//                    ]);
+
+                    $dbresInner = \CIBlockElement::GetList([], $filterInner, false, ['nTopCount' => 10], ['ID', 'NAME', 'XML_ID', 'IBLOCK_SECTION_ID']);
+
+                    while($rowInner = $dbresInner->Fetch()){
+                        $element['PROPERTIES']['PRODUCTS']['VALUE'][] = $rowInner['XML_ID'];
+                    }
+                }
 
                 foreach ($element['PROPERTIES']['PRODUCTS']['VALUE'] as $xmlId){
                     $this->productXmlIds[] = $xmlId;

@@ -791,6 +791,7 @@ class OrderStorageService
      */
     public function validateDeliveryDate($storage)
     {
+        return true; // временный фикс бага, пока не будет готово полноценное решение
         if ($selectedDelivery = $this->getSelectedDelivery($storage)) {
             if ($this->deliveryService->isPickup($selectedDelivery)) {
                 return true;
