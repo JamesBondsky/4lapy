@@ -141,17 +141,22 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                 <?php }
                 /** @noinspection PhpUnhandledExceptionInspection */
                 $frame->end(); ?>
-                <button class="b-button b-button--link-feedback js-add-review">Оставить отзыв</button>
+                <button class="b-button b-button--link-feedback js-add-review js-authorized-review-button" style="display: none">Оставить отзыв</button>
+                <a class="js-open-popup js-toggle-popover-mobile-header js-not-authorized-review-button" href="javascript:void(0);" title="Войти" data-popup-id="authorization">
+                    <button class="b-button b-button--link-feedback">Оставить отзыв</button>
+                </a>
             </div>
         </div>
         <form class="b-form-review js-form-review js-form-validation js-review-query"
+              enctype="multipart/form-data"
               novalidate id="commentsFormCatalog" data-url="/ajax/comments/catalog/add/" method="post">
             <input type="hidden" name="UF_TYPE" value="<?= $arParams['TYPE'] ?>" class="js-no-valid">
             <input type="hidden" name="HL_ID" value="<?= $arParams['HL_ID'] ?>" class="js-no-valid">
             <input type="hidden" name="UF_OBJECT_ID" value="<?= $arParams['OBJECT_ID'] ?>" class="js-no-valid">
             <input type="hidden" name="action" value="add" class="js-no-valid">
             <?php /** @noinspection PhpUnhandledExceptionInspection */
-            $frame = $this->createFrame()->begin(''); ?>
+//            $frame = $this->createFrame()->begin(''); ?>
+            <? /*
             <div class="b-form-review__wrapper-blocks js-comments-auth-form-<?= $uniqueCommentString ?>"
                  style="display: none">
                 <p class="b-form-review__text-block b-form-review__text-block--account">Укажите телефон или
@@ -179,9 +184,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
-            </div>
+            </div> */ ?>
             <?php /** @noinspection PhpUnhandledExceptionInspection */
-            $frame->end(); ?>
+//            $frame->end(); ?>
             <div class="b-form-review__wrapper-blocks">
                 <div class="b-form-review__sub-heading">Оценка</div>
                 <div class="b-rating b-rating--large b-rating--form-review">
@@ -210,6 +215,27 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                               maxlength="1000"></textarea>
                     <div class="b-error"><span class="js-message"></span></div>
                 </div>
+
+                <div class="b-form-review__add-photos" data-multiple-add-photo="true">
+                    <div class="list-add-photos" data-list-add-photos="true"></div>
+                    <div class="btn-add-photos" data-btn-multiple-add-photo="true">
+                        <input class="btn-add-photos__load js-no-valid js-multiple-drag-n-drop"
+                               type="file"
+                               name="UF_PHOTOS[]"
+                               multiple
+                               data-max-add-photos="5"
+                               accept="image/jpg,image/jpeg, image/png" />
+                        <span class="b-icon b-icon--upload">
+                            <?= new SvgDecorator('icon-upload', 69, 57) ?>
+                        </span>
+                        <div class="btn-add-photos__text">Перетащите картинку сюда или
+                            нажмите на область для выбора
+                            файла
+                        </div>
+                    </div>
+                    <div class="b-error"><span class="js-message"></span></div>
+                </div>
+
                 <? if (KioskService::isKioskMode()) { ?>
                     <div class="js-comments-captcha-block-<?= $uniqueCommentString ?>" style="display: none"></div>
                 <? } ?>
@@ -253,6 +279,17 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                                     <p><?= $comment['UF_TEXT'] ?></p>
                                 </div>
                             </div>
+                            <?php if ($comment['UF_PHOTOS']) { ?>
+                                <div class="b-review__list-img">
+                                    <?php foreach ($comment['UF_PHOTOS'] as $imageId) { ?>
+                                        <?php if ($commentImage = $arResult['COMMENT_IMAGES'][$imageId]) { ?>
+                                            <div class="b-review__img">
+                                                <img src="<?= $commentImage ?>" alt="">
+                                            </div>
+                                        <?php } ?>
+                                    <?php } ?>
+                                </div>
+                            <?php } ?>
                         </li>
                     <?php } ?>
                 </ul>

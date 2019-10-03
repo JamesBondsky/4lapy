@@ -8,9 +8,11 @@ namespace FourPaws\LocationBundle\AjaxController;
 
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\MobileApiBundle\Services\Api\CityService as ApiCityService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -29,9 +31,13 @@ class CityController extends Controller
     /**@var LocationService */
     protected $locationService;
 
-    public function __construct(LocationService $locationService)
+    /** @var ApiCityService */
+    private $apiCityService;
+
+    public function __construct(LocationService $locationService, ApiCityService $apiCityService)
     {
         $this->locationService = $locationService;
+        $this->apiCityService = $apiCityService;
     }
 
     /**
@@ -78,5 +84,56 @@ class CityController extends Controller
         return new JsonResponse([
             'html' => $html,
         ]);
+    }
+
+    /**
+     * @Route("/suggest/address", methods={"POST"}, name="location.city.suggest.address")
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getAddress(Request $request)
+    {
+        $content = json_decode($request->getContent());
+
+        $query = $content->query;
+        $limit = intval($content->count);
+
+        /**
+         * Баг, когда местоположения имеют одинаковые названия
+         * Специально фейлим запрос, чтобы инфромация о выбранном городе взялась в фронта, а не из этого запроса
+         */
+        if ($limit === 1) {
+            return new JsonResponse([]);
+        }
+
+        $exact = $limit === 1;
+        $filter = [];
+
+        $locations = $this->locationService->findLocationNew(
+            array_merge([($exact ? '=' : '?') . 'NAME.NAME_UPPER' => ToUpper($query)], $filter),
+            $limit
+        );
+
+        $result = $this->apiCityService->convertInDadataFormat($locations);
+
+        return new JsonResponse([
+            'suggestions' => $result,
+        ]);
+    }
+
+    /**
+     * @Route("/suggest/address", methods={"OPTIONS"})
+     */
+    public function getAddressOption()
+    {
+        return new JsonResponse([]);
+    }
+
+    /**
+     * @Route("/status/address", methods={"GET"})
+     */
+    public function getAddressGet()
+    {
+        return new JsonResponse([]);
     }
 }

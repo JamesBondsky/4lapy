@@ -77,6 +77,16 @@ class Item
     protected $salePrice;
 
     /**
+     * @Serializer\XmlElement(cdata=false, namespace="http://base.google.com/ns/1.0")
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("sale_price_effective_date")
+     *
+     * @var string
+     */
+    protected $salePriceDate;
+
+    /**
      * @Serializer\Type("string")
      * @Serializer\XmlElement(cdata=false, namespace="http://base.google.com/ns/1.0")
      * @Serializer\SerializedName("google_product_category")
@@ -326,5 +336,23 @@ class Item
         $this->gtin = $gtin;
 
         return $this;
+    }
+
+    /**
+     * @param string $salePriceDate
+     * @return Item
+     */
+    public function setSalePriceDate(string $salePriceDate): Item
+    {
+        $this->salePriceDate = $salePriceDate;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSalePriceDate(): string
+    {
+        return $this->salePriceDate;
     }
 }

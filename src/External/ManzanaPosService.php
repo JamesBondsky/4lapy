@@ -30,6 +30,8 @@ use FourPaws\Helpers\ArithmeticHelper;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
 use Psr\Log\LoggerAwareInterface;
 use Throwable;
 
@@ -76,6 +78,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             $offerCollection = (new OfferQuery())->withFilter(['=ID' => $productIds])->exec();
         }
 
+        $iterator = 0;
         /** @var BasketItem $item */
         foreach ($basketItems as $k => $item) {
             if ($basketService->isGiftProduct($item)) {
@@ -91,9 +94,10 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             $sum += $item->getBasePrice() * $item->getQuantity();
             $sumDiscounted += $item->getPrice() * $item->getQuantity();
 
-            $basketCode = (int)\str_replace('n', '', $item->getBasketCode());
+            $item->getBasketCode(); // На всякий случай оставил, чтобы продолжали добавляться порядковые номера в базу
+
             $chequePosition =
-                (new ChequePosition())->setChequeItemNumber($basketCode)
+                (new ChequePosition())->setChequeItemNumber(++$iterator)
                     ->setSumm($item->getBasePrice() * $item->getQuantity())
                     ->setQuantity($item->getQuantity())
                     ->setPrice($item->getBasePrice())
@@ -141,13 +145,13 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                 }
             }
 
-            if ($basketService->getBasketItemPropertyValue($item, 'USE_STAMPS') && ($maxStampsLevel = unserialize($basketService->getBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL')))) {
+//            if ($basketService->getBasketItemPropertyValue($item, 'USE_STAMPS') && ($maxStampsLevel = unserialize($basketService->getBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL')))) {
                 /*$chequePosition->setExtendedAttribute(new ArrayCollection([
                     (new ExtendedAttribute())->setKey($maxStampsLevel['key'])->setValue($maxStampsLevel['value'])
                 ]));*/ //TODO использовать, когда сделаем сохранение параметра первого запроса мягкого чека (до запроса на применение марок)
 
                 // Применение скидок пока реализовано на нашей стороне (исходя из ключей уровней, присланных из Manzana). см. \FourPaws\SaleBundle\Discount\Utils\Detach\Adder::processOrder
-            }
+//            }
 
             $chequePosition->setSignCharge((bool)$signCharge ? 1 : 0);
 
@@ -398,10 +402,27 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         $cacheKey = \json_encode(['items' => $items, 'bonus' => floor($chequeRequest->getPaidByBonus())]);
         if ($noCache || !$this->results[$cacheKey]) {
             try {
+                $userId = 0;
+
+                $container = App::getInstance()->getContainer();
+
+                try {
+                    /** @var UserService $userCurrentUserService */
+                    $userCurrentUserService = $container->get(CurrentUserProviderInterface::class);
+                    $currentUser = $userCurrentUserService->getCurrentUser();
+                    $userId = $currentUser->getId();
+                } catch (Exception $e) {}
+
+                $arguments = $this->buildParametersFromRequest($chequeRequest);
+
+                $this->logger->info('Manzana query pos', [
+                    'user_id' => $userId,
+                    'arguments' => $arguments,
+                ]);
                 $result = $this->buildResponseFromRawResponse(
                     $this->client->call(
                         self::METHOD_EXECUTE,
-                        $this->buildParametersFromRequest($chequeRequest)
+                        $arguments
                     )
                 );
             } catch (Exception $e) {

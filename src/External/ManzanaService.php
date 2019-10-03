@@ -38,6 +38,7 @@ use FourPaws\External\Manzana\Model\Result;
 use FourPaws\External\Manzana\Model\ResultXmlFactory;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\MobileApiBundle\Tables\ManzanaContactIdTable;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -46,6 +47,7 @@ use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserSearchInterface;
+use FourPaws\UserBundle\Service\UserService;
 use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -128,7 +130,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $bag = new ParameterBag(
             [
                 'maxresultsnumber' => '1',
-                'mobilephone' => $phone,
+                'mobilephone' => PhoneHelper::getManzanaPhone($phone),
             ]
         );
 
@@ -157,7 +159,28 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 'parameters' => $parameters,
             ];
 
-            $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
+            $userId = 0;
+
+            $container = App::getInstance()->getContainer();
+
+            try {
+                /** @var UserService $userCurrentUserService */
+                $userCurrentUserService = $container->get(CurrentUserProviderInterface::class);
+                $currentUser = $userCurrentUserService->getCurrentUser();
+                $userId = $currentUser->getId();
+            } catch (Exception $e) {}
+
+            $this->logger->info('Manzana query', [
+                'user_id' => $userId,
+                'method' => $contract,
+                'arguments' => $arguments,
+            ]);
+
+            if ($contract === self::CONTRACT_CLIENT_SEARCH && getenv('ENABLE_CACHE_MANZANA') === 'Y') {
+                $result = $this->getClientSearchInCache($parameters, $arguments);
+            } else {
+                $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
+            }
         } catch (Exception $e) {
             try {
                 /** @noinspection PhpUndefinedFieldInspection */
@@ -244,6 +267,23 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         ];
 
         try {
+            $userId = 0;
+
+            $container = App::getInstance()->getContainer();
+
+            try {
+                /** @var UserService $userCurrentUserService */
+                $userCurrentUserService = $container->get(CurrentUserProviderInterface::class);
+                $currentUser = $userCurrentUserService->getCurrentUser();
+                $userId = $currentUser->getId();
+            } catch (Exception $e) {}
+
+            $this->logger->info('Manzana query', [
+                'user_id' => $userId,
+                'method' => self::METHOD_AUTHENTICATE,
+                'arguments' => $arguments,
+            ]);
+
             $this->sessionId = $this->client->call(
                 self::METHOD_AUTHENTICATE,
                 ['request_options' => $arguments]
@@ -398,7 +438,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $bag = new ParameterBag(
             [
                 'maxresultsnumber' => '5',
-                'mobilephone' => $phone,
+                'mobilephone' => PhoneHelper::getManzanaPhone($phone),
             ]
         );
 
@@ -904,7 +944,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (ManzanaCardIsNotFound $e) {
             $this->logger->info($e->getMessage());
         } catch (Exception $e) {
-            $this->logger->error(sprintf('Manzana user %s card update error: %s', $client->phone, $e->getMessage()));
+            $this->logger->error(sprintf('Manzana user %s card update error: %s. Error code: %s. Exception class: %s', $client->phone, $e->getMessage(), $e->getCode(), get_class($e)));
         }
     }
 
@@ -1004,5 +1044,31 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     private function sqlHeartBeat()
     {
         BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
+    }
+
+    private function getClientSearchInCache($parameters, $arguments)
+    {
+        $findPhone = null;
+        foreach ($parameters as $itemParameters) {
+            if ($itemParameters['Name'] == 'mobilephone') {
+                $findPhone = $itemParameters['Value'];
+            }
+        }
+        //find in db
+        $checkContactid = null;
+        if ($findPhone) {
+            $checkContactid = ManzanaContactIdTable::query()->setSelect(['ID', 'CONTACT_DATA'])->addFilter('=USER_PHONE', $findPhone)->exec()->fetch();
+        }
+        if ($checkContactid) {
+            $result = unserialize($checkContactid['CONTACT_DATA']);
+        } else {
+            $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
+            ManzanaContactIdTable::add([
+                'USER_PHONE' => $findPhone,
+                'CONTACT_DATA' => serialize($result)
+            ]);
+        }
+
+        return $result;
     }
 }

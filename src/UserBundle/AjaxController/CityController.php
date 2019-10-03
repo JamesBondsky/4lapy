@@ -67,8 +67,13 @@ class CityController extends Controller
             $code = $bitrixLocation->getCode();
             $name = $bitrixLocation->getName();
             $regionName = $bitrixLocation->getRegion();
-            if(empty($code)){
+            if(empty($code) && !isset($dadata['code'])){
                 $dadataNotFound = true;
+            }
+
+            if (isset($dadata['code'])) {
+                $code = $dadata['code'];
+                $name = $dadata['city'];
             }
         } else {
             $code = $request->request->get('code') ?? '';
@@ -77,7 +82,7 @@ class CityController extends Controller
         }
 
         try {
-            if($dadata !== null && $dadataNotFound){
+            if($dadata !== null && $dadataNotFound && !isset($dadata['code'])){
                 throw new CityNotFoundException('населенный пункт не найден');
             }
             $city = $this->userService->setSelectedCity($code, $name, $regionName);

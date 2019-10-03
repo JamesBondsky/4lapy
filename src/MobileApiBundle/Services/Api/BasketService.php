@@ -7,22 +7,28 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use Bitrix\Iblock\ElementTable;
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Db\SqlQueryException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\EntityCollection;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Components\BasketComponent;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\Enum\IblockElementXmlId;
-use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockType;
-use FourPaws\Helpers\BxCollection;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\StampLevel;
@@ -30,6 +36,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Service\StampService;
+use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -90,19 +97,19 @@ class BasketService
     /**
      * @param bool $onlyOrderable флаг запрашивать ли товары доступные для покупки или все товары (в том числе и недоступные для покупки)
      * @return BasketProductCollection
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws LoaderException
+     * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     * @throws BitrixProxyException
      */
     public function getBasketProducts(bool $onlyOrderable = false): BasketProductCollection
     {
@@ -179,7 +186,12 @@ class BasketService
 
         foreach ($basketItems as $basketItem) {
             $offer = OfferQuery::getById($basketItem->getProductId());
-            if ($this->isSubProduct($basketItem) && !in_array($offer->getXmlId(), [AppBasketService::GIFT_DOBROLAP_XML_ID, AppBasketService::GIFT_DOBROLAP_XML_ID_ALT])) {
+
+            if (!$offer) {
+                continue;
+            }
+
+            if ($this->isSubProduct($basketItem) && !in_array($offer->getXmlId(), [AppBasketService::GIFT_DOBROLAP_XML_ID, AppBasketService::GIFT_DOBROLAP_XML_ID_ALT], true)) {
                 continue;
             }
 
@@ -192,9 +204,13 @@ class BasketService
                     $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
                 }
 
+                if ($useStamps) {
+                    $canUseStamps = true;
+                }
+
                 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
                     $maxStampsLevelValue = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
-                    $canUseStamps = (bool)$maxStampsLevelValue;
+                    $canUseStamps = ((bool)$maxStampsLevelValue || $canUseStamps);
 
                     if ($useStamps) {
                         if ($usedStamps = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'])['stampsUsed']) {
@@ -213,6 +229,11 @@ class BasketService
 
             $product = $this->getBasketProduct($basketItem->getId(), $offer, $basketItem->getQuantity(), $useStamps, $canUseStamps, $canUseStampsAmount);
             $shortProduct = $product->getShortProduct();
+
+            if (!$shortProduct) {
+                continue;
+            }
+
             $shortProduct->setPickupOnly(
                 $this->isPickupOnly($basketItem, $delivery, $offer)
             );
@@ -246,6 +267,19 @@ class BasketService
                     }
                 }
 
+                /** @var StampLevel $stampLevelObj */
+                foreach ($stampLevels as $stampLevelKey => $stampLevelObj) {
+                    $oldShortProduct = $product->getShortProduct();
+                    if ($oldShortProduct) {
+                        $oldPrice = $oldShortProduct->getPrice()->getActual();
+                        if ($stampLevelObj->getDiscountType() === $this->stampService::DISCOUNT_TYPE_PERCENTAGE) {
+                            $stampLevels[$stampLevelKey]->setPrice($oldPrice * (1 - $stampLevelObj->getDiscountValue() / 100));
+                        } elseif ($stampLevelObj->getDiscountType() === $this->stampService::DISCOUNT_TYPE_VALUE) {
+                            $stampLevels[$stampLevelKey]->setPrice($oldPrice - $stampLevelObj->getDiscountValue());
+                        }
+                    }
+                }
+                //FIXME можно убрать лишние параметры из $stampLevels (discountValue и discountType)
                 $shortProduct->setStampLevels($stampLevels); //TODO get stampLevels from Manzana. If Manzana doesn't answer then set no levels
             }
 
@@ -276,7 +310,7 @@ class BasketService
         $pricesWithQuantityAll = [];
         foreach ($products as $product) {
             /** @var Product $product */
-            if ($isGift = $product->getShortProduct()->getGiftDiscountId() > 0) {
+            if ($isGift = ($product->getShortProduct()->getGiftDiscountId() > 0)) {
                 continue;
             }
             /** @var BasketItem $basketItem */
@@ -322,11 +356,11 @@ class BasketService
      * @param bool|null $canUseStamps
      * @param int|null $canUseStampsAmount
      * @return Product
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ApplicationCreateException
      */
     public function getBasketProduct(int $basketItemId, Offer $offer, int $quantity, ?bool $useStamps = false, ?bool $canUseStamps = false, ?int $canUseStampsAmount = 0)
     {
@@ -348,14 +382,17 @@ class BasketService
      * @param CalculationResultInterface $delivery
      * @param Offer $offer
      * @return bool
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
      */
     protected function isPickupOnly(BasketItem $basketItem, CalculationResultInterface $delivery, Offer $offer)
     {
         try {
             if (!$basketItem->isDelay()) {
-                if ($basketItem->getPrice() && (
+                if (
+                    ($basketItem->getPrice() > 0 || $basketItem->getBasePrice() > 0)
+                    &&
+                    (
                         (null === $delivery) ||
                         !(clone $delivery)->setStockResult(
                             $this->deliveryService->getStockResultForOffer(

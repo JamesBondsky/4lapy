@@ -77,7 +77,7 @@ use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 	<div class="gray_ribbon">
 		<div class="gray_block_head">
 			<h2 class="b-title b-title--viewed">Есть из чего выбрать!<br>
-			 Более 20 000 товаров на сайте</h2>
+			 Более 25 000 товаров на сайте</h2>
 			<hr class="green_line">
 			<p>
 				 Экономьте ваше время и выбирайте товары онлайн. Делайте покупки<br>
@@ -109,7 +109,7 @@ use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 				</div>
 				<div class="delivery_item">
  <img src="/include/static/images/order03.png" alt="">
-					<h3>В пункте самвывоза</h3>
+					<h3>В пункте самовывоза</h3>
 					<p>
 						 Выберете наиболее удобный пункт самовывоза из более чем 1000 пунктов выдачи&nbsp;по всей России
 					</p>

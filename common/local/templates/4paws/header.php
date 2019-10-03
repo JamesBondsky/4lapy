@@ -42,7 +42,7 @@ if(KioskService::isKioskMode()) {
 
 ?>
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" <?= (CSite::InDir('/fashion/')) ? 'style="scroll-behavior: smooth;"' : '' ?>>
 <head>
     <? /** onesignal.com manifest.json, must appear before any other link <link rel="manifest" ...> */?>
     <? if ($USER->IsAdmin()) { /** [todo] remove after production tests */?>
@@ -81,7 +81,7 @@ if(KioskService::isKioskMode()) {
     <?php
     $asset = Asset::getInstance();
     $asset->addCss($markup->getCssFile());
-    $asset->addJs('//api-maps.yandex.ru/2.1/?apikey=ad666cd3-80be-4111-af2d-209dddf2c55e&lang=ru_RU&load=package.full');
+    $asset->addJs('//api-maps.yandex.ru/2.1/?apikey=8bb38591-0ddc-44f1-a86c-7e5d50e8cac3&lang=ru_RU&load=package.full');
     //$asset->addJs('/api-maps.yandex.ru.js');
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
 
@@ -122,7 +122,7 @@ if(KioskService::isKioskMode()) {
         if(!KioskService::isKioskMode()
             && !$template->isBasket()
             && !$template->isOrderPage()) {
-            require_once __DIR__ . '/blocks/header/promo_top_dobrolap.php';
+            $APPLICATION->IncludeComponent('articul:header.promo.banner', '');
         }
     ?>
     <?php

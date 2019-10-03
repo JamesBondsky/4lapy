@@ -112,12 +112,16 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
 
         $configuration = $this->translator->translate($this->translator->getProfileData($id));
 
+        $feedUid = uniqid('yaf', false);
+
+        $this->log()->info('Starting generating Yandex feed (uid: ' . $feedUid . ', id: ' . $id . ', step: ' . $step . ', stockID: ' . $stockID . ')');
+
         try {
             if (!empty($stockID)) {
                 $configuration->setExportFile('/bitrix/catalog_export/yandex_export_feed_' . $stockID . '.xml');
             }
             if ($this->feedService->process($configuration, $step, $stockID)) {
-                $this->log()->info('Step cleared');
+                $this->log()->info('Yandex feed - Step finished (uid: ' . $feedUid . ', id: ' . $id . ', step: ' . $step . ', stockID: ' . $stockID . ')');
 
                 return FeedFactory::EXIT_CODE_CONTINUE;
             }
@@ -130,7 +134,7 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
             );
         }
 
-        $this->log()->info('Feed was create');
+        $this->log()->info('Yandex feed (uid: ' . $feedUid . ', id: ' . $id . ', step: ' . $step . ', stockID: ' . $stockID . ') has been created');
 
         return FeedFactory::EXIT_CODE_END;
     }

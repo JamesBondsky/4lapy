@@ -877,7 +877,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                 );
             }
 
-            if($deliveryService->isPickup($calculationResult)){
+            if($deliveryService->isPickup($calculationResult) && ($calculationResult->getDeliveryCode() !== DeliveryService::DPD_PICKUP_CODE)){
                 try {
                     $store = $storeService->getStoreByXmlId($subscribe->getDeliveryPlace());
                 } catch (\Exception $e) {
@@ -1932,12 +1932,10 @@ class OrderSubscribeService implements LoggerAwareInterface
                     throw new OrderSubscribeException(sprintf('Failed to create order subscribe: %s', print_r($result->getErrorMessages(), true)));
                 }
 
-                $items = $this->basketService->getBasket()->getOrderableItems();
-                /** @var BasketItem $basketItem */
-                foreach ($items as $basketItem) {
+                foreach ($this->basketService->getItemsForSubscribe() as $offerId => $quantity) {
                     $subscribeItem = (new OrderSubscribeItem())
-                        ->setOfferId($basketItem->getProductId())
-                        ->setQuantity($basketItem->getQuantity());
+                        ->setOfferId($offerId)
+                        ->setQuantity($quantity);
 
                     if (!$this->addSubscribeItem($subscribe, $subscribeItem)) {
                         throw new OrderSubscribeException(sprintf('Failed to create order subscribe item: %s', print_r($data, true)));
