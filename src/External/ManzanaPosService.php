@@ -376,7 +376,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     protected function buildResponseFromRawBalanceResponse($rawResult): BalanceResponse
     {
-        $rawResult = $rawResult->ProcessRequestInfoResult->Responses->BalanceResponse;
+        $rawResult = $rawResult['ProcessRequestInfoResult']['Responses']['BalanceResponse'];
 
         $rawResult = \json_decode(\json_encode($rawResult), true);
 
@@ -478,7 +478,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             try {
                 $resultRaw = $this->newExec(self::METHOD_EXECUTE, $this->buildParametersFromBalanceRequest($balanceRequest));
 
-                $result = $this->buildResponseFromRawResponse($resultRaw);
+                $result = $this->buildResponseFromRawBalanceResponse($resultRaw);
 //                $result = $this->buildResponseFromRawBalanceResponse(
 //                    $this->client->call(
 //                        self::METHOD_EXECUTE,

@@ -185,7 +185,7 @@ class BonusService
             $contact = null;
         }
 
-        if ($contact instanceof Client && $contact->isLoyaltyProgramContact()) {
+//        if ($contact instanceof Client && $contact->isLoyaltyProgramContact()) {
             /** @var CardByContractCards $card */
             $cardBonus = new CardBonus();
             $cardBonus->setEmpty(true);
@@ -264,7 +264,7 @@ class BonusService
                 ;
                 App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
             }
-        }
+//        }
         return $bonus;
     }
 
