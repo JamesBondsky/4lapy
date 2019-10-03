@@ -1634,8 +1634,15 @@ class OrderSubscribeService implements LoggerAwareInterface
                         $data['copyResult']->getErrors()
                     );
                 } else if(!$this->orderSubscribeSingleRepository->findBySubscribe($orderSubscribe->getId())->isEmpty()) {
+                    /** @var OrderSubscribeSingle $subscribeSingle */
                     $subscribeSingle = $this->orderSubscribeSingleRepository->findBySubscribe($orderSubscribe->getId())->first();
-                    $this->updateBySingleSubscribe($subscribeSingle);
+
+                    // восстановим оригинальную подписку
+                    if($this->updateBySingleSubscribe($subscribeSingle)){
+                        $this->orderSubscribeSingleRepository->delete($subscribeSingle->getId());
+                    } else {
+                        $this->log()->error(sprintf('Не удалось восстановить оригинальную подписку id = %s', $orderSubscribe->getId()));
+                    }
                 }
             } catch (\Throwable $exception) {
                 $result->addError(
@@ -2208,7 +2215,7 @@ class OrderSubscribeService implements LoggerAwareInterface
         $items = $orderSubscribe->getItems();
         /** @var OrderSubscribeItem $item */
         foreach ($items as $item){
-            $arOrderSubscribeItems[$item->getId()] = $item->getQuantity();
+            $arOrderSubscribeItems[$item->getOfferId()] = $item->getQuantity();
         }
 
         $singleSubscribe = (new OrderSubscribeSingle())
@@ -2233,6 +2240,7 @@ class OrderSubscribeService implements LoggerAwareInterface
      */
     public function updateBySingleSubscribe(OrderSubscribeSingle $singleSubscribe)
     {
+        /** @var OrderSubscribe $orderSubscribe */
         $orderSubscribe = $this->arrayTransformer->fromArray($singleSubscribe->getSubscribe(), OrderSubscribe::class);
         $orderSubscribeItems = unserialize($singleSubscribe->getItems());
 
@@ -2250,6 +2258,9 @@ class OrderSubscribeService implements LoggerAwareInterface
 
             $this->addSubscribeItem($orderSubscribe, $subscribeItem);
         }
+
+        $orderSubscribe->countNextDate()
+            ->countDateCheck();
 
         $result = $this->update($orderSubscribe);
         return $result->isSuccess();

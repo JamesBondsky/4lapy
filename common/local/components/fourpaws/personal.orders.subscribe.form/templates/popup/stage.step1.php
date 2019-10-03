@@ -89,7 +89,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                    data-radio="1">
             <label class="b-radio__label b-radio__label--tablet-big"
                    for="changeNextDelivery-1">
-                <span class="b-radio__text-label">Редактировать только следующую заказ по подписке</span>
+                <span class="b-radio__text-label">Редактировать только следующий заказ по подписке</span>
             </label>
         </div>
     </div>

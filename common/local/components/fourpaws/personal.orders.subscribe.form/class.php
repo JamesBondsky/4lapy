@@ -624,7 +624,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
                 $deliveryDate = new DateTime($this->arResult['FIELD_VALUES']['deliveryDate']);
                 $orderSubscribe->setNextDate($deliveryDate)
-                    ->setCheckDays(new \DateTime($deliveryDate->toString()));
+                    ->setCheckDays(new \DateTime($deliveryDate->toString()))
+                    ->countDateCheck();
 
                 $frequency = $this->arResult['FIELD_VALUES']['subscribeFrequency'];
                 $orderSubscribe->setFrequency($frequency);
