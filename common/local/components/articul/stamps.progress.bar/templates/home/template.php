@@ -19,7 +19,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
-$marksDeclension = new Declension('марку', 'марки', 'марок');
+$marksDeclension = new Declension('марка', 'марки', 'марок');
 ?>
 
 <section class="section-marks-comfortable-living">
