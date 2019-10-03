@@ -109,6 +109,8 @@ class BasketService implements LoggerAwareInterface
     public const GIFT_DOBROLAP_XML_ID_ALT = '3006616';
     private $dobrolapMagnets;
 
+    public const GIFT_NOVEMBER_NEWSPAPER_XML_ID = '3006893';
+
     /**
      * BasketService constructor.
      *

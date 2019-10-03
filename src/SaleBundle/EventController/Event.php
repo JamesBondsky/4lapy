@@ -4,6 +4,7 @@ namespace FourPaws\SaleBundle\EventController;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -18,6 +19,7 @@ use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\Order;
@@ -152,6 +154,12 @@ class Event extends BaseServiceHandler
             self::class,
             'addMarksToOrderBasket'
         ], $module);*/
+
+        /** Добавление газеты октябрь (3006893) в заказ */
+        static::initHandler('OnSaleOrderBeforeSaved', [
+            self::class,
+            'addOctoberNewspaper'
+        ], $module);
 
         /** генерация номера заказа */
         static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [
@@ -434,6 +442,84 @@ class Event extends BaseServiceHandler
         }
 
         return $result;
+    }
+
+    /**
+     * @param BitrixEvent $event
+     *
+     * @return EventResult
+     */
+    public static function addOctoberNewspaper(BitrixEvent $event): EventResult
+    {
+        if (self::$isEventsDisable) {
+            return new EventResult(EventResult::SUCCESS);
+        }
+
+        try {
+            if (false) // check date
+            {
+                return new EventResult(EventResult::SUCCESS);
+            }
+
+            /** @var Order $order */
+            $order = $event->getParameter('ENTITY');
+
+            /** подсчитываем марки только при создании нового заказе */
+            if (!$order->isNew()) {
+                return new EventResult(EventResult::SUCCESS);
+            }
+
+            if ($order instanceof Order) {
+                /** @var BasketService $basketService */
+                $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+
+                /** @var Basket $basket */
+                $basket = $order->getBasket();
+
+                $items = $basket->getOrderableItems();
+                if ($items->isEmpty())
+                {
+                    return new EventResult(EventResult::ERROR);
+                }
+
+                /** @var BasketItem $item */
+                foreach ($items as $itemIndex => $item)
+                {
+                    if ($item->getProductId() === BasketService::GIFT_NOVEMBER_NEWSPAPER_XML_ID)
+                    {
+                        $basketService->deleteOfferFromBasket($item->getId());
+                    }
+                }
+
+                $basket->save();
+
+                $offer = ElementTable::getList([
+                    'select' => ['ID', 'XML_ID'],
+                    'filter' => ['XML_ID' => BasketService::GIFT_NOVEMBER_NEWSPAPER_XML_ID],
+                    'limit' => 1,
+                ])->fetch();
+
+                if (!$offer || empty($offer) || !$offer['ID']) {
+                    return new EventResult(EventResult::ERROR);
+                }
+
+                $basketItem = $basketService->addOfferToBasket($offer['ID'], 1, [], true, $basket);
+
+                if ($basketItem instanceof BasketItem) {
+                    $order->setFieldNoDemand(
+                        'PRICE',
+                        $order->getBasket()->getOrderableItems()->getPrice() + $order->getDeliveryPrice()
+                    );
+
+                    return new EventResult(EventResult::SUCCESS);
+                }
+            }
+        } catch (\Exception $e) {
+            $logger = LoggerFactory::create('october newspaper');
+            $logger->critical('failed to add october newspaper for order: ' . $e->getMessage());
+        }
+
+        return new EventResult(EventResult::ERROR);
     }
 
     /**
