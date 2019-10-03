@@ -1542,6 +1542,16 @@ class OrderCopy
         // адрес доставки
         if($deliveryService->isDelivery($delivery)){
             $address = $locationService->splitAddress($subscribe->getDeliveryPlace());
+
+            if (($subscribe->getLocationId()) && ($address->getLocation() !== $subscribe->getLocationId())) {
+                $propValues = [
+                    'COM_WAY' => OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS,
+                    'CITY_CODE' => $subscribe->getLocationId(),
+                ];
+                $orderService->setOrderPropertiesByCode($order, $propValues);
+
+                $address = $orderService->compileOrderAddress($this->getOldOrder());
+            }
         } else {
             /** @var PickupResultInterface $delivery */
             $shop = $delivery->getSelectedShop();
@@ -1561,14 +1571,6 @@ class OrderCopy
             }
         }
         $orderService->setOrderAddress($order, $address);
-
-        if (($subscribe->getLocationId()) && ($address->getLocation() !== $subscribe->getLocationId())) {
-            $propValues = [
-                'COM_WAY' => OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS,
-                'CITY_CODE' => $subscribe->getLocationId(),
-            ];
-            $orderService->setOrderPropertiesByCode($order, $propValues);
-        }
 
         // параметры доставки
         /** @var PropertyValue $propertyValue */
