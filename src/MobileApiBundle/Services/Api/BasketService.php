@@ -204,9 +204,13 @@ class BasketService
                     $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
                 }
 
+                if ($useStamps) {
+                    $canUseStamps = true;
+                }
+
                 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
                     $maxStampsLevelValue = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
-                    $canUseStamps = (bool)$maxStampsLevelValue;
+                    $canUseStamps = ((bool)$maxStampsLevelValue || $canUseStamps);
 
                     if ($useStamps) {
                         if ($usedStamps = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'])['stampsUsed']) {
