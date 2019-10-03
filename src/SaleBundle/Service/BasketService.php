@@ -318,6 +318,7 @@ class BasketService implements LoggerAwareInterface
             throw new InvalidArgumentException('Wrong $basketId');
         }
 
+        /** @var BasketItem $basketItem */
         $basketItem = $this->getBasket()->getItemById($basketId);
         if (null === $basketItem) {
             throw new NotFoundException('BasketItem');
@@ -346,9 +347,15 @@ class BasketService implements LoggerAwareInterface
             }
         }
 
+        $hasUseStamps = false;
+        if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
+            $hasUseStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
+        }
+
         $this->setBasketItemPropertyValue($basketItem, 'USE_STAMPS', (string)$useStamps);
 
-        if ($useStamps) {
+
+        if ($useStamps && !$hasUseStamps) {
             $maxStampsLevelProp = $this->getBasketItemPropertyValue($basketItem, 'MAX_STAMPS_LEVEL');
             if ($maxStampsLevelProp) {
                 $maxStampsLevelPropValue = unserialize($maxStampsLevelProp);
@@ -365,7 +372,7 @@ class BasketService implements LoggerAwareInterface
                     $this->setBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL', serialize($usedStampsInfo));
                 }
             }
-        } else {
+        } else if (!$useStamps && $hasUseStamps) {
             $this->setBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL', (string)false);
         }
 
