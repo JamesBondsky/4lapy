@@ -7,6 +7,7 @@ use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Result;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\Export\ExcelExport;
 use Psr\Log\LoggerAwareTrait;
 
 /**
@@ -92,43 +93,30 @@ class CDobrolapFormComponent extends \CBitrixComponent
             throw new \Exception("Нет подходящих заявок");
         }
 
-        $phpExcel = new PHPExcel();
-        $phpExcel->setActiveSheetIndex(0);
-        $page = $phpExcel->getActiveSheet();
+        $excelExport = new ExcelExport('Dobrolap');
 
-        $page->setCellValue('A1', "Номер чека")
-            ->setCellValue('B1', "ФИО")
-            ->setCellValue('C1', "Телефон")
-            ->setCellValue('D1', "Email")
-            ->setCellValue('E1', "Дата оформления")
-            ->setCellValue('F1', "Тип")
-        ;
+        $headers = [
+            "Номер чека",
+            "ФИО",
+            "Телефон",
+            "Email",
+            "Дата оформления",
+            "Тип"
+        ];
 
-        $i = 2;
-        foreach($this->fans as $fan){
-            $page->setCellValue('A'.$i, strtolower($fan['PROPERTIES']['CHECK_NUMBER']['VALUE']))
-                ->setCellValue('B'.$i, implode(' ',array_filter([$fan['USER']['LAST_NAME'], $fan['USER']['NAME'], $fan['USER']['SECOND_NAME']])))
-                ->setCellValue('C'.$i, $fan['USER']['PERSONAL_PHONE'])
-                ->setCellValue('D'.$i, $fan['USER']['EMAIL'])
-                ->setCellValue('E'.$i, $fan['DATE_CREATE'])
-                ->setCellValue('F'.$i, $this->getEnumTypeValue($fan['PROPERTIES']['CHECK_NUMBER']['VALUE']))
-            ;
-            $i++;
+        $rows = [];
+        foreach($this->fans as $i => $fan){
+            $rows[$i] = [
+                strtolower($fan['PROPERTIES']['CHECK_NUMBER']['VALUE']),
+                implode(' ',array_filter([$fan['USER']['LAST_NAME'], $fan['USER']['NAME'], $fan['USER']['SECOND_NAME']])),
+                $fan['USER']['PERSONAL_PHONE'],
+                $fan['USER']['EMAIL'],
+                $fan['DATE_CREATE'],
+                $this->getEnumTypeValue($fan['PROPERTIES']['CHECK_NUMBER']['VALUE'])
+            ];
         }
 
-        foreach(range('A','F') as $columnID) {
-            $phpExcel->getActiveSheet()->getColumnDimension($columnID)
-                ->setAutoSize(true);
-        }
-
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition:attachment;filename="Dobrolap_' .date('Y_m_d'). '.xls"');
-
-        $objWriter = PHPExcel_IOFactory::createWriter($phpExcel, 'Excel2007');
-        $objWriter->save('php://output');
-
-        exit();
+        $excelExport->generateExcel($headers, $rows);
     }
 
     /**
