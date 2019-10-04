@@ -451,13 +451,10 @@ class Event extends BaseServiceHandler
      */
     public static function addOctoberNewspaper(BitrixEvent $event): EventResult
     {
-        if (self::$isEventsDisable) {
-            return new EventResult(EventResult::SUCCESS);
-        }
-
         try {
-            if (false) // check date
-            {
+            $curDate = new \DateTime();
+
+            if (!(((int)$curDate->format('Y') === 2019) && ((int)$curDate->format('m') === 10) && ((int)$curDate->format('d') < 28))) {
                 return new EventResult(EventResult::SUCCESS);
             }
 
