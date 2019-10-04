@@ -461,8 +461,22 @@ class Event extends BaseServiceHandler
                 return new EventResult(EventResult::SUCCESS);
             }
 
+            /** @var BasketService $basketService */
+            $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+            /** @var OrderService $orderService */
+            $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+
             /** @var Order $order */
             $order = $event->getParameter('ENTITY');
+
+            if ($orderService->isSubscribe($order)) {
+                $propCopyOrderId = $orderService->getOrderPropertyByCode($order, 'COPY_ORDER_ID');
+                $isFirsSubscribeOrder = ($propCopyOrderId) ? !\boolval($propCopyOrderId->getValue()) : true;
+
+                if (!$isFirsSubscribeOrder) {
+                    return new EventResult(EventResult::SUCCESS);
+                }
+            }
 
             /** подсчитываем марки только при создании нового заказе */
             if (!$order->isNew()) {
@@ -470,8 +484,17 @@ class Event extends BaseServiceHandler
             }
 
             if ($order instanceof Order) {
-                /** @var BasketService $basketService */
-                $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+                $offer = ElementTable::getList([
+                    'select' => ['ID', 'XML_ID'],
+                    'filter' => ['XML_ID' => BasketService::GIFT_NOVEMBER_NEWSPAPER_XML_ID],
+                    'limit' => 1,
+                ])->fetch();
+
+                if (!$offer || empty($offer) || !$offer['ID']) {
+                    return new EventResult(EventResult::ERROR);
+                }
+
+                $offerId = $offer['ID'];
 
                 /** @var Basket $basket */
                 $basket = $order->getBasket();
@@ -485,7 +508,7 @@ class Event extends BaseServiceHandler
                 /** @var BasketItem $item */
                 foreach ($items as $itemIndex => $item)
                 {
-                    if ($item->getProductId() === BasketService::GIFT_NOVEMBER_NEWSPAPER_XML_ID)
+                    if ($item->getProductId() === $offerId)
                     {
                         $basketService->deleteOfferFromBasket($item->getId());
                     }
@@ -493,17 +516,7 @@ class Event extends BaseServiceHandler
 
                 $basket->save();
 
-                $offer = ElementTable::getList([
-                    'select' => ['ID', 'XML_ID'],
-                    'filter' => ['XML_ID' => BasketService::GIFT_NOVEMBER_NEWSPAPER_XML_ID],
-                    'limit' => 1,
-                ])->fetch();
-
-                if (!$offer || empty($offer) || !$offer['ID']) {
-                    return new EventResult(EventResult::ERROR);
-                }
-
-                $basketItem = $basketService->addOfferToBasket($offer['ID'], 1, [], true, $basket);
+                $basketItem = $basketService->addOfferToBasket($offerId, 1, [], true, $basket);
 
                 if ($basketItem instanceof BasketItem) {
                     $order->setFieldNoDemand(
