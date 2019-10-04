@@ -124,6 +124,12 @@ class Banner extends IblockElement
     protected $PROPERTY_SECTION;
 
     /**
+     * @var string
+     * @Type("string")
+     */
+    protected $PROPERTY_TYPE = '';
+
+    /**
      * @return string
      */
     public function getLink() {
@@ -152,4 +158,11 @@ class Banner extends IblockElement
         return $this->PREVIEW_PICTURE;
     }
 
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return$this->PROPERTY_TYPE;
+    }
 }
