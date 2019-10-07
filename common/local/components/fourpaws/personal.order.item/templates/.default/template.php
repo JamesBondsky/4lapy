@@ -310,23 +310,22 @@ if ($orderSubscribe) {
                         'id' => $order->getId()
                     ]); ?>
 
-                    <a class="b-link b-link--repeat-order b-link__button b-link__button-first" href="<?= $uri->getUri() ?>"
+                    <a class="b-link b-link__button b-link__button-first" href="<?= $uri->getUri() ?>"
                        title="Повторить заказ">
-                        <span class="b-link__text b-link__text--repeat-order">Повторить заказ</span>
+                        <span class="b-link__text">Повторить заказ</span>
                     </a>
                     <?php $isFirstButton = false; ?>
                 <?php } ?>
                 <?php if ($arResult['CAN_CANCEL']) { ?>
-                    <a class="b-link b-link--cancel-order b-link__button <?= ($isFirstButton) ? 'b-link__button-first' : '' ?>" href="<?= $uri->getUri() ?>"
-                       title="Отменить заказ">
-                        <span class="b-link__text b-link__text--cancel-order">Отменить заказ</span>
-                    </a>
+                    <div class="b-link b-link__button js-cancel-order-popup <?= ($isFirstButton) ? 'b-link__button-first' : '' ?>" data-order-id="<?= $order->getId() ?>">
+                        <span class="b-link__text js-link-text">Отменить заказ</span>
+                    </div>
                     <?php $isFirstButton = false; ?>
                 <?php } ?>
                 <?php if ($arResult['CAN_EXTEND']) { ?>
-                    <a class="b-link b-link--extend-order b-link__button <?= ($isFirstButton) ? 'b-link__button-first' : '' ?>" href="<?= $uri->getUri() ?>"
+                    <a class="b-link b-link__button <?= ($isFirstButton) ? 'b-link__button-first' : '' ?>" href="<?= $uri->getUri() ?>"
                        title="Продлить срок хранения">
-                        <span class="b-link__text b-link__text--extend-order">Продлить срок хранения</span>
+                        <span class="b-link__text">Продлить срок хранения</span>
                     </a>
                 <?php } ?>
             </div>

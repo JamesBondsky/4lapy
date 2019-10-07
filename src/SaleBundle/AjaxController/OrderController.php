@@ -793,7 +793,7 @@ class OrderController extends Controller implements LoggerAwareInterface
     }
 
     /**
-     * @Route("/cancel/", methods={"GET"})
+     * @Route("/cancel/", methods={"POST"})
      *
      * @param Request $request
      *
@@ -802,13 +802,14 @@ class OrderController extends Controller implements LoggerAwareInterface
      */
     public function orderCancelAction(Request $request): JsonResponse
     {
-        $data = json_decode($request->get('data'), true, 512, JSON_THROW_ON_ERROR);
-        $orderId = intval($data['order_id']);
+        $orderId = intval($request->request->get('orderId'));
 
         try {
             $cancelResult = $this->orderService->cancelOrder($orderId);
-        } catch (OrderCancelException $e) {
+        } catch (OrderCancelException | \FourPaws\SaleBundle\Exception\NotFoundException  $e) {
             return JsonErrorResponse::createWithData('', ['errors' => [$e->getMessage()]]);
+        } catch (\Exception $e) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка']]);
         }
 
         if (!$cancelResult) {

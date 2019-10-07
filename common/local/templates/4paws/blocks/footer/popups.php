@@ -95,6 +95,10 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 
     // собираем данные с ЛК с кучей и кучей условий, поэтому выносим отдельно..
     include __DIR__ . '/collect_data_popup.php';
+
+    if ($template->isOrderHistoryPage()) {
+        include __DIR__ . '/cancel-order.php';
+    }
     ?>
 
     <div class="b-popup-preloader b-popup-preloader--fixed js-popup-preloader">
