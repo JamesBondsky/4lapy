@@ -850,14 +850,29 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 
         /** @var \GuzzleHttp\Client $guzzleClient */
         $guzzleClient = App::getInstance()->getContainer()->get('manzana.guzzle');
-        $resultBody = $guzzleClient->post('http://nginx/update', [
-            'headers' => [
-                'Host' => '4lapymanzana.local.articul.ru',
-            ],
-            'form_params' => [
-                'data' => $this->serializer->serialize($contact, 'json')
-            ],
-        ]);
+
+        $serviceUrl = getenv('MANZANA_SERVICE_URL');
+        $serviceHeaderHost = getenv('MANZANA_SERVICE_HEADER_HOST');
+
+        $options = [
+            'data' => $this->serializer->serialize($contact, 'json'),
+        ];
+
+        if ($serviceHeaderHost) {
+            $options['headers']['Host'] = $serviceHeaderHost;
+        }
+
+        $resultBody = $guzzleClient->post($serviceUrl . '/update', $options);
+
+
+//        $resultBody = $guzzleClient->post('http://nginx/update', [
+//            'headers' => [
+//                'Host' => '4lapymanzana.local.articul.ru',
+//            ],
+//            'form_params' => [
+//                'data' => $this->serializer->serialize($contact, 'json')
+//            ],
+//        ]);
 
 //        /** @noinspection MissingService */
 //        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_update_producer');
@@ -1085,15 +1100,21 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         [$class, $method] = explode('::', $method);
         /** @var \GuzzleHttp\Client $guzzleClient */
         $guzzleClient = App::getInstance()->getContainer()->get('manzana.guzzle');
-        $resultBody = $guzzleClient->post('http://nginx', [
-            'headers' => [
-                'Host' => '4lapymanzana.local.articul.ru',
-            ],
+        $serviceUrl = getenv('MANZANA_SERVICE_URL');
+        $serviceHeaderHost = getenv('MANZANA_SERVICE_HEADER_HOST');
+
+        $options = [
             'form_params' => [
                 'method' => $method,
                 'body' => $body
             ],
-        ]);
+        ];
+
+        if ($serviceHeaderHost) {
+            $options['headers']['Host'] = $serviceHeaderHost;
+        }
+
+        $resultBody = $guzzleClient->post($serviceUrl, $options);
 
         try {
             $result = (string)$resultBody->getBody();
