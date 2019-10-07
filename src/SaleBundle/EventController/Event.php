@@ -488,7 +488,7 @@ class Event extends BaseServiceHandler
                 ])->fetch();
 
                 if (!$offer || empty($offer) || !$offer['ID']) {
-                    return new EventResult(EventResult::ERROR);
+                    return new EventResult(EventResult::SUCCESS);
                 }
 
                 $offerId = $offer['ID'];
