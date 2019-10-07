@@ -74,6 +74,7 @@ use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Exception\OrderCancelException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
@@ -88,6 +89,7 @@ use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundException as UserNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAvatarAuthorizationInterface;
@@ -97,6 +99,8 @@ use Psr\Log\LoggerAwareInterface;
 use FourPaws\External\Dostavista\Model\Order as DostavistaOrder;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\External\Dostavista\Model;
+use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
+use FourPaws\SapBundle\Service\Orders\OrderService as SapOrderService;
 
 /**
  * Class OrderService
@@ -201,6 +205,11 @@ class OrderService implements LoggerAwareInterface
     protected $manzanaService;
 
     /**
+     * @var SapOrderService $sapOrderService
+     */
+    protected $sapOrderService;
+
+    /**
      * @var CouponStorageInterface
      */
     protected $couponStorage;
@@ -214,22 +223,23 @@ class OrderService implements LoggerAwareInterface
     /**
      * OrderService constructor.
      *
-     * @param AddressService                    $addressService
-     * @param BasketService                     $basketService
-     * @param PaymentService                    $paymentService
-     * @param CurrentUserProviderInterface      $currentUserProvider
-     * @param UserSearchInterface               $userProvider
-     * @param DeliveryService                   $deliveryService
-     * @param LocationService                   $locationService
-     * @param StoreService                      $storeService
-     * @param OrderStorageService               $orderStorageService
-     * @param OrderSubscribeService             $orderSubscribeService
-     * @param OrderSplitService                 $orderSplitService
-     * @param UserAvatarAuthorizationInterface  $userAvatarAuthorization
+     * @param AddressService $addressService
+     * @param BasketService $basketService
+     * @param PaymentService $paymentService
+     * @param CurrentUserProviderInterface $currentUserProvider
+     * @param UserSearchInterface $userProvider
+     * @param DeliveryService $deliveryService
+     * @param LocationService $locationService
+     * @param StoreService $storeService
+     * @param OrderStorageService $orderStorageService
+     * @param OrderSubscribeService $orderSubscribeService
+     * @param OrderSplitService $orderSplitService
+     * @param UserAvatarAuthorizationInterface $userAvatarAuthorization
      * @param UserRegistrationProviderInterface $userRegistrationProvider
-     * @param ManzanaPosService                 $manzanaPosService
-     * @param ManzanaService                    $manzanaService
-     * @param CouponStorageInterface            $couponStorage
+     * @param ManzanaPosService $manzanaPosService
+     * @param ManzanaService $manzanaService
+     * @param CouponStorageInterface $couponStorage
+     * @param SapOrderService $sapOrderService
      */
     public function __construct(
         AddressService $addressService,
@@ -247,7 +257,8 @@ class OrderService implements LoggerAwareInterface
         UserRegistrationProviderInterface $userRegistrationProvider,
         ManzanaPosService $manzanaPosService,
         ManzanaService $manzanaService,
-        CouponStorageInterface $couponStorage
+        CouponStorageInterface $couponStorage,
+        SapOrderService $sapOrderService
     ) {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
@@ -265,7 +276,7 @@ class OrderService implements LoggerAwareInterface
         $this->manzanaPosService = $manzanaPosService;
         $this->manzanaService = $manzanaService;
         $this->couponStorage = $couponStorage;
-
+        $this->sapOrderService = $sapOrderService;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -2408,5 +2419,93 @@ class OrderService implements LoggerAwareInterface
         }
 
         return $scheduleResultOptimal;
+    }
+
+    /**
+     * @param $orderId
+     * @return mixed
+     * @throws OrderCancelException
+     */
+    public function cancelOrder($orderId): bool
+    {
+        // ищем заказ
+        try {
+            $order = $this->getOrderById($orderId);
+        } catch (\Exception $e) {
+            throw new NotFoundException('Заказ не найден');
+        }
+
+        // валидация пользователя
+        $userId = $order->getField('USER_ID');
+
+        if (!$userId) {
+            throw new OrderCancelException('Вы не можете отменить этот заказ');
+        }
+
+        try {
+            if ((int)$userId !== $this->userProvider->getCurrentUserId()) {
+                throw new OrderCancelException('Вы не можете отменить этот заказ');
+            }
+        } catch (NotAuthorizedException $e) {
+            throw new OrderCancelException('Вы не можете отменить этот заказ');
+        }
+
+        // валидация статуса
+        $statusId = $order->getField('STATUS_ID');
+
+        if (!$statusId || in_array($statusId, PersonalOrderService::STATUS_FINAL, true) || (in_array($statusId, PersonalOrderService::STATUS_CANCEL, true))) {
+            return false;
+        }
+
+        $sendEmail = false;
+        if (($statusId === OrderStatus::STATUS_IN_PROGRESS) || ($statusId === OrderStatus::STATUS_DELIVERING)) {
+            $sendEmail = true;
+        }
+
+        // формируем новый статус в зависимости от службы доставки
+        $deliveryId = $order->getField('DELIVERY_ID');
+
+        if (!$deliveryId) {
+            throw new OrderCancelException('Не найдена служба доставки для заказа');
+        }
+
+        try {
+            $delivery = $this->deliveryService->getDeliveryById($deliveryId);
+            if ($this->deliveryService->isDeliveryCode($delivery['CODE'])) {
+                $newStatus = OrderStatus::STATUS_CANCEL_COURIER;
+            } else if ($this->deliveryService->isPickupCode($delivery['CODE'])) {
+                $newStatus = OrderStatus::STATUS_CANCEL_PICKUP;
+            } else {
+                throw new OrderCancelException('Не найдена служба доставки для заказа');
+            }
+        } catch (\Exception $e) {
+            throw new OrderCancelException('Не найдена служба доставки для заказа');
+        }
+
+        // отменяем заказ
+        $cancelResult = (new \CSaleOrder)->cancelOrder($orderId, BaseEntity::BITRIX_TRUE, '');
+
+        if ($cancelResult) {
+            try {
+                $order->setField('STATUS_ID', $newStatus);
+                $saveResult = $order->save();
+            } catch (\Exception $e) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+
+        if (!$saveResult->isSuccess()) {
+            return false;
+        }
+
+        $this->sapOrderService->sendOrderStatus($order);
+
+        if ($sendEmail) {
+            \CEvent::Send('ADMIN_EMAIL_AFTER_ORDER_CANCEL', ['ru'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER')]);
+        }
+
+        return true;
     }
 }
