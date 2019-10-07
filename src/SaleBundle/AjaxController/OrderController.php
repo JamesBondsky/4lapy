@@ -7,7 +7,6 @@
 namespace FourPaws\SaleBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -20,10 +19,10 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\MainTemplate;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
@@ -37,6 +36,7 @@ use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
+use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -48,17 +48,21 @@ use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\ShopInfoService;
+use FourPaws\SapBundle\Consumer\OrderOutConsumer;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\ShopInfoService as StoreShopInfoService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
-use Protobuf\Exception;
+use FourPaws\UserBundle\Service\UserSearchInterface;
 use Psr\Log\LoggerAwareInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\ConstraintViolation;
 use FourPaws\App\Application as App;
+use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 
 /**
  * Class BasketController
@@ -115,17 +119,30 @@ class OrderController extends Controller implements LoggerAwareInterface
     private $recaptcha;
 
     /**
+     * @var UserSearchInterface
+     */
+    private $userService;
+
+
+    /**
+     * @var OrderOutConsumer
+     */
+    private $orderOutConsumer;
+
+    /**
      * OrderController constructor.
      *
-     * @param OrderService               $orderService
-     * @param DeliveryService            $deliveryService
-     * @param OrderStorageService        $orderStorageService
-     * @param OrderSubscribeService      $orderSubscribeService
+     * @param OrderService $orderService
+     * @param DeliveryService $deliveryService
+     * @param OrderStorageService $orderStorageService
+     * @param OrderSubscribeService $orderSubscribeService
      * @param UserAuthorizationInterface $userAuthProvider
-     * @param ShopInfoService            $shopInfoService
-     * @param StoreShopInfoService       $storeShopInfoService
-     * @param LocationService            $locationService
-     * @param ReCaptchaService           $recaptcha
+     * @param ShopInfoService $shopInfoService
+     * @param StoreShopInfoService $storeShopInfoService
+     * @param LocationService $locationService
+     * @param ReCaptchaService $recaptcha
+     * @param CurrentUserProviderInterface $userService
+     * @param OrderOutConsumer $orderOutConsumer
      */
     public function __construct(
         OrderService $orderService,
@@ -136,7 +153,9 @@ class OrderController extends Controller implements LoggerAwareInterface
         ShopInfoService $shopInfoService,
         StoreShopInfoService $storeShopInfoService,
         LocationService $locationService,
-        ReCaptchaService $recaptcha
+        ReCaptchaService $recaptcha,
+        CurrentUserProviderInterface $userService,
+        OrderOutConsumer $orderOutConsumer
     )
     {
         $this->orderService = $orderService;
@@ -148,6 +167,8 @@ class OrderController extends Controller implements LoggerAwareInterface
         $this->storeShopInfoService = $storeShopInfoService;
         $this->locationService = $locationService;
         $this->recaptcha = $recaptcha;
+        $this->userService = $userService;
+        $this->orderOutConsumer = $orderOutConsumer;
     }
 
     /**
@@ -792,5 +813,108 @@ class OrderController extends Controller implements LoggerAwareInterface
                 'delivery_dates'     => $deliveryDates
             ]
         );
+    }
+
+    /**
+     * @Route("/cancel/", methods={"GET"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     */
+    public function orderCancelAction(Request $request): JsonResponse
+    {
+//        $data = json_decode($request->get('data'), true, 512, JSON_THROW_ON_ERROR);
+//        $orderId = $data['order_id'];
+        $orderId = 2161720;
+        $errors = false;
+
+        // ищем заказ
+        try {
+            $order = $this->orderService->getOrderById($orderId);
+        } catch (\Exception $e) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['Заказ не найден']]);
+        }
+
+        // валидация пользователя
+        $userId = $order->getField('USER_ID');
+
+        if ($userId) {
+            try {
+                if ((int)$userId !== $this->userService->getCurrentUserId()) {
+                    $errors = true;
+                }
+            } catch (NotAuthorizedException $e) {
+                $errors = true;
+            }
+        } else {
+            $errors = true;
+        }
+
+        if ($errors) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['Вы не можете отменить этот заказ']]);
+        }
+
+        // валидация статуса
+        $statusId = $order->getField('STATUS_ID');
+
+        if ($statusId) {
+            if (in_array($statusId, PersonalOrderService::STATUS_FINAL, true) || (in_array($statusId, PersonalOrderService::STATUS_CANCEL, true))) {
+                $errors = true;
+            }
+        } else {
+            $errors = true;
+        }
+
+        if ($errors) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['Заказ не может быть отменен']]);
+        }
+
+        // формируем новый статус в зависимости от службы доставки
+        $deliveryId = $order->getField('DELIVERY_ID');
+
+        if ($deliveryId) {
+            try {
+                $delivery = $this->deliveryService->getDeliveryById($deliveryId);
+                if ($this->deliveryService->isDeliveryCode($delivery['CODE'])) {
+                    $newStatus = OrderStatus::STATUS_CANCEL_COURIER;
+                } else if ($this->deliveryService->isPickupCode($delivery['CODE'])) {
+                    $newStatus = OrderStatus::STATUS_CANCEL_PICKUP;
+                } else {
+                    $errors = true;
+                }
+            } catch (\Exception $e) {
+                $errors = true;
+            }
+        } else {
+            $errors = true;
+        }
+
+        if ($errors) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['Не найдена служба доставки для заказа']]);
+        }
+
+        // отменяем заказ
+        $cancelResult = (new \CSaleOrder)->cancelOrder($orderId, BaseEntity::BITRIX_TRUE, '');
+
+        if ($cancelResult) {
+            try {
+                $order->setField('STATUS_ID', $newStatus);
+                $saveResult = $order->save();
+            } catch (\Exception $e) {
+                $errors = true;
+            }
+        } else {
+            $errors = true;
+        }
+
+        if ($errors || !$saveResult->isSuccess()) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка']]);
+        }
+
+        $this->orderOutConsumer->consume($order);
+
+        return JsonSuccessResponse::createWithData('Заказ успешно отменен', []);
     }
 }
