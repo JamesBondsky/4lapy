@@ -475,7 +475,7 @@ class Event extends BaseServiceHandler
                 }
             }
 
-            /** подсчитываем марки только при создании нового заказе */
+            /** добавляем подарок только для нового заказа */
             if (!$order->isNew()) {
                 return new EventResult(EventResult::SUCCESS);
             }
