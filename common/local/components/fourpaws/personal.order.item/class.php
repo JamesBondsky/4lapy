@@ -15,6 +15,7 @@ use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
+use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\StoreBundle\Service\StoreService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -99,8 +100,11 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
             } catch (\Exception $e) {
                 $this->setError(sprintf("Произошла ошибка: %s", $e->getMessage()));
             }
-
         }
+
+        $statusId = $this->arResult['ORDER']->getStatusId();
+        $this->arResult['CAN_CANCEL'] = ($statusId && !in_array($statusId, PersonalOrderService::STATUS_FINAL, true) && !(in_array($statusId, PersonalOrderService::STATUS_CANCEL, true)));
+        $this->arResult['CAN_EXTEND'] = true;
     }
 
     /**
