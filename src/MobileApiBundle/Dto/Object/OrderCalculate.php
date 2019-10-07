@@ -52,6 +52,22 @@ class OrderCalculate
      * @var string
      */
     protected $promoCodeResult = '';
+    
+    /**
+     * Описание промокода
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("promocode_description")
+     * @var string
+     */
+    protected $promoCodeDescription = '';
+    
+    /**
+     * Еасть ли активные купоны
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("has_coupons")
+     * @var string
+     */
+    protected $hasCoupons = false;
 
     /**
      * Можно ли связаться с клиентом по телефону
@@ -155,7 +171,47 @@ class OrderCalculate
         $this->promoCodeResult = $promoCodeResult;
         return $this;
     }
-
+    
+    /**
+     * @return string
+     */
+    public function getPromoCodeDescription(): string
+    {
+        return $this->promoCodeDescription;
+    }
+    
+    
+    /**
+     * @param string $promoCodeDescription
+     *
+     * @return OrderCalculate
+     */
+    public function setPromoCodeDescription(string $promoCodeDescription): OrderCalculate
+    {
+        $this->promoCodeDesc = $promoCodeDescription;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getHasCoupons(): bool
+    {
+        return $this->hasCoupons;
+    }
+    
+    
+    /**
+     * @param string $promoCodeDescription
+     *
+     * @return OrderCalculate
+     */
+    public function setHasCoupons(bool $hasCoupons): OrderCalculate
+    {
+        $this->hasCoupons = $hasCoupons;
+        return $this;
+    }
+    
     /**
      * @param bool $isPhoneCallAvailable
      * @return OrderCalculate

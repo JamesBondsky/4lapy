@@ -10,12 +10,9 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Iblock\ElementTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use FOS\RestBundle\Controller\Annotations as Rest;
-use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\App\Application;
-use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
-use FourPaws\Helpers\DateHelper;
 use FourPaws\KkmBundle\Service\KkmService;
 use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
@@ -34,10 +31,8 @@ use FourPaws\MobileApiBundle\Dto\Request\UserCartRequest;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Services\Api\CityService;
 use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
-use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService;
 use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService as ApiUserDeliveryAddressService;
 use FourPaws\MobileApiBundle\Traits\MobileApiLoggerAwareTrait;
-use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\SaleBundle\Dto\OrderSplit\Basket\BasketSplitItem;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\SaleBundle\Discount\Manzana;
@@ -47,7 +42,7 @@ use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Service\StoreService as AppStoreService;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\UserBundle\Enum\UserLocationEnum;
-use Symfony\Component\HttpFoundation\Request;
+use FourPaws\PersonalBundle\Service\PersonalOffersService;
 
 /**
  * Class BasketController
@@ -56,33 +51,33 @@ use Symfony\Component\HttpFoundation\Request;
 class BasketController extends BaseController
 {
     use MobileApiLoggerAwareTrait;
-
-    /** @var AppBasketService*/
+    
+    /** @var AppBasketService */
     private $appBasketService;
-
-    /** @var ApiBasketService*/
+    
+    /** @var ApiBasketService */
     private $apiBasketService;
-
+    
     /**@var Manzana */
     private $manzana;
-
+    
     /** @var ApiOrderService */
     private $apiOrderService;
-
+    
     /** @var AppStoreService */
     private $appStoreService;
-
+    
     /** @var AppDeliveryService */
     private $appDeliveryService;
-
+    
     /** @var OrderStorageService */
     private $orderStorageService;
-
+    
     /**
      * @var ApiUserDeliveryAddressService
      */
     private $apiUserDeliveryAddressService;
-
+    
     public function __construct(
         Manzana $manzana,
         AppBasketService $appBasketService,
@@ -92,20 +87,19 @@ class BasketController extends BaseController
         AppDeliveryService $appDeliveryService,
         OrderStorageService $orderStorageService,
         ApiUserDeliveryAddressService $apiUserDeliveryAddressService
-    )
-    {
-        $this->manzana = $manzana;
-        $this->appBasketService = $appBasketService;
-        $this->apiBasketService = $apiBasketService;
-        $this->apiOrderService = $apiOrderService;
-        $this->appStoreService = $appStoreService;
-        $this->appDeliveryService = $appDeliveryService;
-        $this->orderStorageService = $orderStorageService;
+    ) {
+        $this->manzana                       = $manzana;
+        $this->appBasketService              = $appBasketService;
+        $this->apiBasketService              = $apiBasketService;
+        $this->apiOrderService               = $apiOrderService;
+        $this->appStoreService               = $appStoreService;
+        $this->appDeliveryService            = $appDeliveryService;
+        $this->orderStorageService           = $orderStorageService;
         $this->apiUserDeliveryAddressService = $apiUserDeliveryAddressService;
-
+        
         $this->setLogger(LoggerFactory::create('BasketController', 'mobileApi'));
     }
-
+    
     /**
      * @Rest\Get("/user_cart/")
      * @Rest\View(serializerGroups={"Default", "basket"})
@@ -116,32 +110,51 @@ class BasketController extends BaseController
      */
     public function getUserCartAction(UserCartRequest $userCartRequest)
     {
-        $storage = $this->orderStorageService->getStorage();
+        $storage   = $this->orderStorageService->getStorage();
         $promoCode = $userCartRequest->getPromoCode() ?: $storage->getPromoCode();
+        
         if ($promoCode) {
             try {
                 /** @see \FourPaws\SaleBundle\AjaxController\BasketController::applyPromoCodeAction */
                 $this->manzana->setPromocode($promoCode);
                 $this->manzana->calculate();
-
+                
                 $storage->setPromoCode($promoCode);
                 $this->orderStorageService->updateStorage($storage);
             } catch (ManzanaPromocodeUnavailableException $e) {
                 $promoCode = '';
             }
         }
-
+        
         $basketProducts = $this->apiBasketService->getBasketProducts(false);
         $orderParameter = $this->apiOrderService->getOrderParameter($basketProducts);
         $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts);
-        if ($promoCode) {
-            $orderCalculate->setPromoCodeResult($promoCode);
+        
+        $personalOffers = Application::getInstance()->getContainer()->get(PersonalOffersService::class);
+        $coupons        = $personalOffers->getActiveUserCoupons($storage->getUserId())['coupons'];
+        
+        if ($coupons) {
+            $orderCalculate->setHasCoupons(true);
         }
+        
+        if ($promoCode && $coupons) {
+            $orderCalculate->setPromoCodeResult($promoCode);
+            
+            foreach ($coupons as $coupon) {
+                if ($promoCode == $coupon['UF_PROMO_CODE']) {
+                    $promoCodeDescrition = $coupon['custom_title'];
+                }
+            }
+            
+            
+            $orderCalculate->setPromoCodeDescription($promoCodeDescrition);
+        }
+        
         return (new UserCartResponse())
             ->setCartCalc($orderCalculate)
             ->setCartParam($orderParameter);
     }
-
+    
     /**
      * Добавление товаров в корзину (принимает массив id товаров и количество каждого товара)
      * @Rest\Post(path="/user_cart/")
@@ -157,13 +170,13 @@ class BasketController extends BaseController
             if ($productQuantity->getDiscountId()) {
                 // gift
                 $gifts[] = [
-                    'offerId' =>  $productQuantity->getProductId(),
+                    'offerId'  => $productQuantity->getProductId(),
                     'actionId' => $productQuantity->getDiscountId(),
-                    'count' => $productQuantity->getQuantity(),
+                    'count'    => $productQuantity->getQuantity(),
                 ];
             } else {
                 $productXmlId = ElementTable::getByPrimary($productQuantity->getProductId(), ['select' => ['XML_ID']])->fetch()['XML_ID'];
-
+                
                 if (!$this->appBasketService->isGiftProductByXmlId($productXmlId, true)) {
                     // regular product
                     $this->appBasketService->addOfferToBasket(
@@ -183,7 +196,7 @@ class BasketController extends BaseController
         }
         return $this->getUserCartAction(new UserCartRequest());
     }
-
+    
     /**
      * обновление количества товаров в корзине, 0 - удаление (принимает id товара из корзины (basketItemId) и количество)
      * @Rest\Put(path="/user_cart/")
@@ -192,7 +205,8 @@ class BasketController extends BaseController
      * @return UserCartResponse
      * @throws \Exception
      */
-    public function putUserCartAction(PutUserCartRequest $putUserCartRequest) //TODO при указании флага useStamps передать это в Manzana и в зависимости от ответа изменить ответ в запросе (и снять флаг USE_STAMPS у товара в корзине, если манзана ответила, что обмен применить нельзя)
+    public function putUserCartAction(PutUserCartRequest $putUserCartRequest
+    ) //TODO при указании флага useStamps передать это в Manzana и в зависимости от ответа изменить ответ в запросе (и снять флаг USE_STAMPS у товара в корзине, если манзана ответила, что обмен применить нельзя)
     {
         foreach ($putUserCartRequest->getGoods() as $productQuantity) {
             $quantity = $productQuantity->getQuantity();
@@ -202,14 +216,13 @@ class BasketController extends BaseController
                 } else {
                     $this->appBasketService->deleteOfferFromBasket($productQuantity->getProductId());
                 }
-            }
-            catch (\FourPaws\SaleBundle\Exception\NotFoundException $e) {
+            } catch (\FourPaws\SaleBundle\Exception\NotFoundException $e) {
                 throw new RuntimeException('Товар не найден');
             }
         }
         return $this->getUserCartAction(new UserCartRequest());
     }
-
+    
     /**
      * @Rest\Get(path="/user_cart_delivery/")
      * @Rest\View()
@@ -222,7 +235,7 @@ class BasketController extends BaseController
             $this->apiOrderService->getDeliveryDetails()
         );
     }
-
+    
     /**
      * Метод рассчитывает корзину.
      * @Rest\Post(path="/user_cart_calc/")
@@ -239,35 +252,34 @@ class BasketController extends BaseController
         } else {
             $basketProducts = $this->apiBasketService->getBasketProducts(true);
         }
-
+        
         // Если выбрано "Товары из наличия"
         if ($userCartCalcRequest->onlyAvailableGoods) {
-            $basketProducts = $this->apiOrderService->filterPartialBasketItems($basketProducts);
+            $basketProducts    = $this->apiOrderService->filterPartialBasketItems($basketProducts);
             $orderSplitService = Application::getInstance()
                 ->getContainer()
                 ->get(OrderSplitService::class);
-
+            
             $items = new ArrayCollection();
             /** @var Product $basketProduct */
             foreach ($basketProducts as $basketProduct) {
                 if ($shortProduct = $basketProduct->getShortProduct()) {
-
-                    $price = $shortProduct->getPrice()->getActual();
-                    $oldPrice = $shortProduct->getPrice()->getOld();
-                    $oldPrice = $oldPrice ?: $price;
+                    
+                    $price     = $shortProduct->getPrice()->getActual();
+                    $oldPrice  = $shortProduct->getPrice()->getOld();
+                    $oldPrice  = $oldPrice ?: $price;
                     $splitItem = (new BasketSplitItem())
                         ->setProductId($shortProduct->getId())
                         ->setAmount($basketProduct->getQuantity())
                         ->setPrice($price)
-                        ->setBasePrice($oldPrice)
-                    ;
+                        ->setBasePrice($oldPrice);
                     $items->add($splitItem);
                 }
             }
-
+            
             $this->manzana->calculate(null, $orderSplitService->generateBasket($items));
         }
-
+        
         if ($promoCode = $this->orderStorageService->getStorage()->getPromoCode()) {
             try {
                 /** @see \FourPaws\SaleBundle\AjaxController\BasketController::applyPromoCodeAction */
@@ -277,11 +289,11 @@ class BasketController extends BaseController
                 // do nothing
             }
         }
-
+        
         $bonusSubtractAmount = $userCartCalcRequest->getBonusSubtractAmount();
-
+        
         [$courierDelivery, $pickupDelivery, $dostavistaDelivery] = $this->apiOrderService->getDeliveryVariants();
-
+        
         $orderCalculate = $this->apiOrderService->getOrderCalculate(
             $basketProducts,
             $userCartCalcRequest->getDeliveryType() === 'courier',
@@ -293,7 +305,7 @@ class BasketController extends BaseController
         return (new UserCartCalcResponse())
             ->setCartCalc($orderCalculate);
     }
-
+    
     /**
      * Оформление корзины / оформить заказ
      * @Rest\Post(path="/user_cart_order/")
@@ -309,7 +321,7 @@ class BasketController extends BaseController
         return (new UserCartOrderResponse())
             ->setCartOrder($cartOrder);
     }
-
+    
     /**
      * @Rest\Post(path="/delivery_dostavista/")
      * @Rest\View()
@@ -319,66 +331,66 @@ class BasketController extends BaseController
      */
     public function getDostavistaAction(DostavistaRequest $dostavistaRequest)
     {
-        $city = $dostavistaRequest->getCity();
-        $street = $dostavistaRequest->getStreet();
-        $house = $dostavistaRequest->getHouse();
-        $building = $dostavistaRequest->getBuilding();
+        $city      = $dostavistaRequest->getCity();
+        $street    = $dostavistaRequest->getStreet();
+        $house     = $dostavistaRequest->getHouse();
+        $building  = $dostavistaRequest->getBuilding();
         $addressId = $dostavistaRequest->getAddressId();
-
+        
         $queryAddress = null;
-
+        
         $results = [
-            'dostavista' => new DeliveryVariant()
+            'dostavista' => new DeliveryVariant(),
         ];
-
+        
         $container = Application::getInstance()->getContainer();
         /** @var KkmService $kkmService */
         $kkmService = $container->get('kkm.service');
-
+        
         $cityService = $container->get(CityService::class);
-
+        
         if ($addressId) {
             $user = $this->getUser();
-
+            
             if ($user) {
                 /** @var DeliveryAddress $listDelivery */
                 $listDelivery = $this->apiUserDeliveryAddressService->getList($user->getId(), $city, $addressId)->first();
-
+                
                 if ($listDelivery) {
                     $cityInfo = $listDelivery->getCity();
-                    $street = $listDelivery->getStreetName();
-                    $house = $listDelivery->getHouse();
+                    $street   = $listDelivery->getStreetName();
+                    $house    = $listDelivery->getHouse();
                 }
             }
         }
-
+        
         if (!$queryAddress) {
             if (!$addressId) {
                 $cityInfo = $cityService->getCityByCode($city);
             }
-
+            
             $queryAddress = implode(', ', array_filter([$cityInfo ? $cityInfo->getTitle() : '', $street, $house, $building], function ($item) {
                 if (!empty($item)) {
                     return $item;
                 }
             }));
         }
-
+        
         $_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE] = $city;
-
+        
         $address = $kkmService->geocode($queryAddress);
-
+        
         $pos = explode(' ', $address['address']['pos']);
-
+        
         $isMKAD = $this->apiOrderService->isMKAD($pos[1], $pos[0]);
-
+        
         if (!$isMKAD) {
             return new Response($results);
         }
-
-
+        
+        
         $deliveryPrice = 0;
-        $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
+        $deliveries    = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
         foreach ($deliveries as $calculationResult) {
             if (DeliveryService::INNER_DELIVERY_CODE == $calculationResult->getDeliveryCode()) {
                 if ($this->appDeliveryService->isDelivery($calculationResult)) {
@@ -386,13 +398,13 @@ class BasketController extends BaseController
                 }
             }
         }
-
+        
         [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery] = $this->apiOrderService->getDeliveryVariants();
-
+        
         $dostavistaDelivery->setCourierPrice($deliveryPrice);
-
+        
         $results['dostavista'] = $dostavistaDelivery;
-
+        
         return new Response($results);
     }
 }
