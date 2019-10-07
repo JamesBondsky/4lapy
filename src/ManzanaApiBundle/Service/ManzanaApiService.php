@@ -13,6 +13,8 @@ use FourPaws\ManzanaApiBundle\Dto\Response\CouponsResponse;
 use FourPaws\ManzanaApiBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\AlreadyExistsException;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException as PersonalBundleInvalidArgumentException;
+use FourPaws\PersonalBundle\Exception\OfferNotFoundException;
+use FourPaws\PersonalBundle\Repository\PersonalOfferRepository;
 use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use FourPaws\UserBundle\Service\UserService;
@@ -51,6 +53,14 @@ class ManzanaApiService
         ]
     ];
 
+    /** @var PersonalOfferRepository  */
+    private $personalOfferRepository;
+
+    public function __construct(PersonalOfferRepository $personalOfferRepository)
+    {
+        $this->personalOfferRepository = $personalOfferRepository;
+    }
+
     /**
      * @param CouponIssue[] $couponIssues
      * @return CouponsResponse
@@ -66,22 +76,27 @@ class ManzanaApiService
         $result = [];
         foreach ($couponIssues as $issue) {
             try {
-                $personalOffersService->addPersonalOffer($issue->getRuleCode(), $issue->getDescription());
+                $ruleCode = $issue->getRuleCode();
 
-                $result[] = (new Message())
-                    ->setMessageId($issue->getMessageId())
-                    ->setMessageStatus('ok')
-                ;
-            } catch (AlreadyExistsException $e) {
-                $message = $e->getMessage();
-                if ($e->getCode() === 1) {
-                    $message = 'Выпуск купонов уже создан ранее';
+                if (!trim($ruleCode)) {
+                    $result[] = (new Message())
+                        ->setMessageId($issue->getMessageId())
+                        ->setMessageStatus('error')
+                        ->setMessageText('Пустой ruleCode')
+                    ;
+                } else {
+                    try {
+                        $id = $this->personalOfferRepository->getId(['=NAME' => $ruleCode]);
+                        $this->personalOfferRepository->update($id, $issue->getDescription());
+                    } catch (OfferNotFoundException $e) {
+                        $this->personalOfferRepository->add($ruleCode, $issue->getDescription());
+                    }
+
+                    $result[] = (new Message())
+                        ->setMessageId($issue->getMessageId())
+                        ->setMessageStatus('ok')
+                    ;
                 }
-                $result[] = (new Message())
-                    ->setMessageId($issue->getMessageId())
-                    ->setMessageStatus('error')
-                    ->setMessageText($message)
-                ;
             } catch (Throwable $e) {
                 $result[] = (new Message())
                     ->setMessageId($issue->getMessageId())

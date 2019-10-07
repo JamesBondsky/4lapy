@@ -47,6 +47,8 @@ class ManzanaController extends Controller
     }
 
     /**
+     * Создает или обновляет выпуск купонов по его ruleCode (коду-названию)
+     *
      * @Route("coupons_issue/", methods={"POST"})
      *
      * @param Request $request

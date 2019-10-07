@@ -51,6 +51,7 @@ use Symfony\Component\Routing\RouteCollection;
 /**
  * Class PersonalOffersService
  *
+ * @todo Отрефакторить класс (вынести CRUD купонов в отдельный Repository)
  * @package FourPaws\PersonalBundle\Service
  */
 class PersonalOffersService
@@ -1468,49 +1469,6 @@ class PersonalOffersService
         }
 
         return $offer;
-    }
-
-    /**
-     * Добавляет персональное предложение в инфоблок
-     *
-     * @param string $name
-     * @param string|null $description
-     * @throws BaseException
-     * @throws InvalidArgumentException
-     * @throws SystemException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\LoaderException
-     */
-    public function addPersonalOffer(string $name, ?string $description = ''): void
-    {
-        if (!Loader::includeModule('iblock')) {
-            throw new SystemException('Module iblock is not installed');
-        }
-        if (!$name) {
-            throw new InvalidArgumentException(InvalidArgumentException::ERRORS[3], 3);
-        }
-
-        $iblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS);
-
-        $isOfferExists = (bool)CIBlockElement::GetList([], [
-            '=IBLOCK_ID' => $iblockId,
-            '=NAME' => $name,
-        ], []);
-        if ($isOfferExists) {
-            throw new AlreadyExistsException(AlreadyExistsException::ERRORS[1], 1);
-        }
-
-        $el = new CIBlockElement;
-        $fields = [
-            'IBLOCK_SECTION_ID' => false,
-            'IBLOCK_ID'         => $iblockId,
-            'NAME'              => $name,
-            'ACTIVE'            => 'Y',
-            'PREVIEW_TEXT'      => $description,
-        ];
-        if (!$elementId = $el->Add($fields)) {
-            throw new BaseException($el->LAST_ERROR);
-        }
     }
 
     /**
