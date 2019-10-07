@@ -12,6 +12,7 @@ use FourPaws\ManzanaApiBundle\Dto\Object\Message;
 use FourPaws\ManzanaApiBundle\Dto\Response\CouponsResponse;
 use FourPaws\ManzanaApiBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\AlreadyExistsException;
+use FourPaws\PersonalBundle\Exception\CouponNotFoundException;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException as PersonalBundleInvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\OfferNotFoundException;
 use FourPaws\PersonalBundle\Repository\PersonalOfferRepository;
@@ -251,6 +252,12 @@ class ManzanaApiService
                     } else {
                         throw new PersonalBundleInvalidArgumentException($e->getMessage(), $e->getCode());
                     }
+                } catch (CouponNotFoundException $e) {
+                    $result[] = (new Message())
+                        ->setMessageId($coupon->getMessageId())
+                        ->setMessageStatus('error')
+                        ->setMessageText($e->getMessage())
+                    ;
                 }
             } catch (Throwable $e) {
                 $result[] = (new Message())

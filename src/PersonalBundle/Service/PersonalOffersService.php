@@ -18,6 +18,7 @@ use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Import\Model\ImportOffer;
 use FourPaws\PersonalBundle\Exception\AlreadyExistsException;
 use FourPaws\PersonalBundle\Exception\BaseException;
+use FourPaws\PersonalBundle\Exception\CouponNotFoundException;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\Serializer;
@@ -661,6 +662,7 @@ class PersonalOffersService
      * @throws SystemException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws CouponNotFoundException
      */
     public function setUsedStatusByManzanaId(string $manzanaId): void
     {
@@ -680,6 +682,8 @@ class PersonalOffersService
         if ($promoCodeUserLinkId > 0)
         {
             $this->setUsedStatus($promoCodeUserLinkId);
+        } else {
+            throw new CouponNotFoundException('Купон не найден');
         }
     }
 
