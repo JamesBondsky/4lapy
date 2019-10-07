@@ -78,7 +78,7 @@ class ManzanaController extends Controller
     }
 
     /**
-     * @Route("coupons/add/", methods={"POST"})
+     * @Route("coupons/", methods={"POST"})
      *
      * @param Request $request
      *
