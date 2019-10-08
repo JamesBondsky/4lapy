@@ -44,6 +44,7 @@ class OrderSubscribeController extends Controller
                     'INCLUDE_TEMPLATE' => 'N',
                     'ORDER_ID' => $request->get('orderId'),
                     'SUBSCRIBE_ID' => $request->get('subscribeId'),
+                    'IS_SINGLE_SUBSCRIBE' => $request->get('changeNextDelivery')
                 ],
                 null,
                 [

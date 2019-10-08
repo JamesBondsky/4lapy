@@ -118,11 +118,11 @@ class OrderSubscribeSingle extends BaseEntity
     }
 
     /**
-     * @return string
+     * @return array
      */
-    public function getItems(): string
+    public function getItems(): array
     {
-        return $this->items;
+        return \unserialize($this->items);
     }
 
     /**

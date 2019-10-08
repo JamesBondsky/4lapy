@@ -48,4 +48,7 @@ if($orderSubscribe && $orderSubscribe->getId() > 0){
         </li>
     </ul>
 </div>
-<?php include 'delivery_frequency.php' ?>
+<?php
+if(!$arResult['IS_SINGLE_SUBSCRIBE'])
+    include 'delivery_frequency.php';
+?>

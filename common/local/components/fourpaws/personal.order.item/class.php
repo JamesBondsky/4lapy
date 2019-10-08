@@ -4,6 +4,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Internals\BasketTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Templates\MediaEnum;
@@ -15,6 +16,7 @@ use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
+use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\StoreBundle\Service\StoreService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -38,6 +40,11 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
      * @var OrderSubscribeService $orderSubscribeService
      */
     private $orderSubscribeService;
+
+    /**
+     * @var OrderSubscribeHistoryService $orderSubscribeHistoryService
+     */
+    private $orderSubscribeHistoryService;
 
 
     /**
@@ -119,6 +126,19 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
         return $this->orderSubscribeService;
     }
 
+    /**
+     * @return OrderSubscribeHistoryService
+     */
+    public function getOrderSubscribeHistoryService(): OrderSubscribeHistoryService
+    {
+        if (!$this->orderSubscribeHistoryService) {
+            $appCont = Application::getInstance()->getContainer();
+            $this->orderSubscribeHistoryService = $appCont->get('order_subscribe_history.service');
+        }
+
+        return $this->orderSubscribeHistoryService;
+    }
+
     protected function getResultCachePath()
     {
         /** @var Order $personalOrder */
@@ -143,7 +163,22 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
     {
         $items = [];
         $orderSubscribe = $this->arParams['ORDER_SUBSCRIBE'];
-        $orderSubscribeItems = $this->getOrderSubscribeService()->getItemsBySubscribeId($orderSubscribe->getId());
+        $lastOrderId = $this->getOrderSubscribeHistoryService()->getLastOrderId($orderSubscribe);
+        if($lastOrderId){
+            $dbres = BasketTable::getList([
+               'select' => ['ID', 'PRODUCT_ID', 'QUANTITY'],
+               'filter' => ['ORDER_ID' => $lastOrderId],
+            ]);
+
+            $orderSubscribeItems = new ArrayCollection();
+            while($item = $dbres->fetch()){
+                $orderSubscribeItems[] = (new OrderSubscribeItem())
+                    ->setOfferId($item['PRODUCT_ID'])
+                    ->setQuantity($item['QUANTITY']);
+            }
+        } else {
+            $orderSubscribeItems = $this->getOrderSubscribeService()->getItemsBySubscribeId($orderSubscribe->getId());
+        }
 
         if($orderSubscribeItems->isEmpty()){
             throw new Exception('Не найдены товары в подписке');

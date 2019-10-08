@@ -26,6 +26,7 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Result;
 use Bitrix\Main\Security\SecurityException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserFieldTable;
 use Bitrix\Sale\Basket;
@@ -811,6 +812,14 @@ class OrderSubscribeService implements LoggerAwareInterface
     }
 
     /**
+     * @return OrderSubscribeSingleRepository
+     */
+    public function getOrderSubscribeSingleRepository(): OrderSubscribeSingleRepository
+    {
+        return $this->orderSubscribeSingleRepository;
+    }
+
+    /**
      * @param $periodValue
      * @param string $periodType
      * @return int
@@ -1025,64 +1034,23 @@ class OrderSubscribeService implements LoggerAwareInterface
                 throw new OrderSubscribeException('Не найдено ни одного товара в подписке');
             }
 
-            $basket = Basket::create(self::SITE_ID);
             $items = [];
-            /** @var OrderSubscribeItem $item */
-            foreach($subscribeItems as $item){
-                $items[$item->getOfferId()] = [
-                    'OFFER_ID' => $item->getOfferId(),
-                    'QUANTITY' => $item->getQuantity(),
-                    'SUBSCRIBE_ITEM_ID' => $item->getId()
+            /** @var OrderSubscribeItem $subscribeItem */
+            foreach ($subscribeItems as $subscribeItem){
+                $items[] = [
+                    'productId' => $subscribeItem->getOfferId(),
+                    'quantity' => $subscribeItem->getQuantity(),
                 ];
             }
 
-            $offers = (new OfferQuery())
-                ->withFilter(["ID" => array_column($items, 'OFFER_ID')])
-                ->exec();
-
-            /** @var Offer $offer */
-            foreach($offers as $offer){
-                if($offer->getSubscribePrice() > 0){
-                    $items[$offer->getId()]['PRICE'] = $offer->getSubscribePrice();
-                    $items[$offer->getId()]['BASE_PRICE'] = $offer->getPrice();
-                    $items[$offer->getId()]['NAME'] = $offer->getName();
-                    $items[$offer->getId()]['WEIGHT'] = $offer->getCatalogProduct()->getWeight();
-                    $items[$offer->getId()]['DETAIL_PAGE_URL'] = $offer->getDetailPageUrl();
-                    $items[$offer->getId()]['PRODUCT_XML_ID'] = $offer->getXmlId();
-                } else {
-                    $this->deleteSubscribeItem($items[$offer->getId()]['SUBSCRIBE_ITEM_ID']);
-                }
-            }
-
-            foreach($items as $item){
-                $basketItem = BasketItem::create($basket, 'catalog', $item['OFFER_ID']);
-                $basketItem->setFields([
-                    'PRODUCT_ID'             => $item['OFFER_ID'],
-                    'PRICE'                  => $item['PRICE'],
-                    'BASE_PRICE'             => $item['BASE_PRICE'],
-                    'CUSTOM_PRICE'           => BitrixUtils::BX_BOOL_TRUE,
-                    'QUANTITY'               => $item['QUANTITY'],
-                    'CURRENCY'               => CurrencyManager::getBaseCurrency(),
-                    'NAME'                   => $item['NAME'],
-                    'WEIGHT'                 => $item['WEIGHT'],
-                    'DETAIL_PAGE_URL'        => $item['DETAIL_PAGE_URL'],
-                    'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
-                    'CATALOG_XML_ID'         => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
-                    'PRODUCT_XML_ID'         => $item['PRODUCT_XML_ID'],
-                    'CAN_BUY'                => "Y",
-                ]);
-
-                /** @noinspection PhpInternalEntityUsedInspection */
-                $basket->addItem($basketItem);
-            }
-
-            //$basket->save();
-
+            $basket = $this->basketService->createBasketFromItems($items);
             return $basket;
         } catch(\Exception $e) {
             throw new OrderSubscribeException($e->getMessage(), $e->getCode());
         }
     }
+
+
 
     public function getPaymentCodes()
     {
@@ -2242,7 +2210,7 @@ class OrderSubscribeService implements LoggerAwareInterface
     {
         /** @var OrderSubscribe $orderSubscribe */
         $orderSubscribe = $this->arrayTransformer->fromArray($singleSubscribe->getSubscribe(), OrderSubscribe::class);
-        $orderSubscribeItems = unserialize($singleSubscribe->getItems());
+        $orderSubscribeItems = $singleSubscribe->getItems();
 
         if(!$this->getById($orderSubscribe->getId())) {
             throw new \Exception(sprintf("Подписка на доставку ID=%s не найдена", $orderSubscribe->getId()));
@@ -2264,6 +2232,20 @@ class OrderSubscribeService implements LoggerAwareInterface
 
         $result = $this->update($orderSubscribe);
         return $result->isSuccess();
+    }
+
+
+    /**
+     * @param $orderSubscribeId
+     * @return OrderSubscribeSingle|false
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getSingleSubscribe($orderSubscribeId)
+    {
+        $orderSubscribeSingle = $this->orderSubscribeSingleRepository->findBySubscribe($orderSubscribeId)->first();
+        return $orderSubscribeSingle;
     }
 
 }
