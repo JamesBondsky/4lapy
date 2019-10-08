@@ -4,9 +4,11 @@ namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
@@ -14,7 +16,6 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketPropertyItem;
@@ -42,8 +43,6 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
-use FourPaws\DeliveryBundle\Exception\RuntimeException;
-use FourPaws\DeliveryBundle\Service\DeliveryScheduleResultService;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\DostavistaService;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
@@ -63,9 +62,7 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\LocationService;
-use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\AddressService;
-use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -78,8 +75,6 @@ use FourPaws\SaleBundle\Exception\OrderCancelException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
-use FourPaws\SaleBundle\Repository\OrderStatusRepository;
-use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
@@ -2425,6 +2420,7 @@ class OrderService implements LoggerAwareInterface
      * @param $orderId
      * @return mixed
      * @throws OrderCancelException
+     * @throws SqlQueryException
      */
     public function cancelOrder($orderId): bool
     {
@@ -2482,25 +2478,34 @@ class OrderService implements LoggerAwareInterface
             throw new OrderCancelException('Не найдена служба доставки для заказа');
         }
 
-        // отменяем заказ
-        $cancelResult = (new \CSaleOrder)->cancelOrder($orderId, BaseEntity::BITRIX_TRUE, '');
+        $connection = BitrixApplication::getConnection();
 
-        if ($cancelResult) {
-            try {
+        $connection->startTransaction();
+
+        try {
+
+            // отменяем заказ
+            $cancelResult = (new \CSaleOrder)->cancelOrder($orderId, BaseEntity::BITRIX_TRUE, '');
+
+            if ($cancelResult) {
                 $order->setField('STATUS_ID', $newStatus);
                 $saveResult = $order->save();
-            } catch (\Exception $e) {
+            } else {
+                $connection->rollbackTransaction();
                 return false;
             }
-        } else {
+
+            if (!$saveResult->isSuccess()) {
+                $connection->rollbackTransaction();
+                return false;
+            }
+
+            $this->sapOrderService->sendOrderStatus($order);
+            $connection->commitTransaction();
+        } catch (\Exception $e) {
+            $connection->rollbackTransaction();
             return false;
         }
-
-        if (!$saveResult->isSuccess()) {
-            return false;
-        }
-
-        $this->sapOrderService->sendOrderStatus($order);
 
         if ($sendEmail) {
             \CEvent::Send('ADMIN_EMAIL_AFTER_ORDER_CANCEL', ['ru'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER')]);
