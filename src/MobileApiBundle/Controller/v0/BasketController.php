@@ -456,7 +456,10 @@ class BasketController extends BaseController
                 $orderStorageService->updateStorage($storage);
                 break;
         }
-
-        return $this->getUserCouponsAction();
+    
+        $couponService = Application::getInstance()->getContainer()->get('coupon.service');
+        $result        = $couponService->getUserCouponsAction();
+    
+        return (new UserCouponsResponse())->setUserCoupons($result);
     }
 }
