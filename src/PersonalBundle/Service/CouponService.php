@@ -256,9 +256,8 @@ class CouponService implements LoggerAwareInterface
         foreach ($coupons as $coupon) {
             $promoCodes[] = $coupon['UF_PROMO_CODE'];
         }
-    
-        $couponService = App::getInstance()->getContainer()->get('coupon.service');
-        $promoCodesActionType = $couponService->checkCouponsApplicability($promoCodes);
+        
+        $promoCodesActionType = $this->checkCouponsApplicability($promoCodes);
     
         foreach ($coupons as $key => $coupon) {
             if (array_key_exists($coupon['UF_PROMO_CODE'], $promoCodesActionType)) {
