@@ -194,29 +194,35 @@ class HlBlockOrderSubscribeUpgrade20190905173304 extends \Adv\Bitrixtools\Migrat
         );
 
         $values = [
-            [
+            'n7' => [
                 'XML_ID' => 'WEEK_7',
                 'VALUE' => 'Раз в семь недель',
+                'SORT' => 700
             ],
-            [
+            'n8' => [
                 'XML_ID' => 'WEEK_8',
                 'VALUE' => 'Раз в восемь недель',
+                'SORT' => 800
             ],
-            [
+            'n9' => [
                 'XML_ID' => 'WEEK_9',
                 'VALUE' => 'Раз в девять недель',
+                'SORT' => 900
             ],
-            [
+            'n10' => [
                 'XML_ID' => 'WEEK_10',
                 'VALUE' => 'Раз в десять недель',
+                'SORT' => 1000
             ],
-            [
+            'n11' => [
                 'XML_ID' => 'WEEK_11',
                 'VALUE' => 'Раз в одиннадцать недель',
+                'SORT' => 1100
             ],
-            [
+            'n12' => [
                 'XML_ID' => 'WEEK_12',
                 'VALUE' => 'Раз в двенадцать недель',
+                'SORT' => 1200
             ],
         ];
 
