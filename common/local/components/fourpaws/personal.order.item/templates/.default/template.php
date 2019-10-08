@@ -330,11 +330,16 @@ if ($orderSubscribe) {
                     </div>
                     <?php $isFirstButton = false; ?>
                 <?php } ?>
-                <?php if ($arResult['CAN_EXTEND']) { ?>
-                    <a class="b-link b-link__button <?= ($isFirstButton) ? 'b-link__button-first' : '' ?>" href="<?= $uri->getUri() ?>"
-                       title="Продлить срок хранения">
-                        <span class="b-link__text">Продлить срок хранения</span>
-                    </a>
+                <?php if (!$arResult['FINISHED'] && ($arResult['CAN_EXTEND'] || $arResult['EXTENDED'])) { ?>
+                    <div class="b-link b-link__button <?= ($arResult['CAN_EXTEND']) ? 'js-extend-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?>" data-order-id="<?= $order->getId() ?>">
+                        <span class="b-link__text js-link-text">
+                            <?php if ($arResult['CAN_EXTEND']) { ?>
+                                Продлить срок хранения
+                            <?php } else if ($arResult['EXTENDED']) { ?>
+                                Срок хранения продлен
+                            <?php } ?>
+                        </span>
+                    </div>
                 <?php } ?>
             </div>
         </div>

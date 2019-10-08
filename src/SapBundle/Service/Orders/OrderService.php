@@ -1427,18 +1427,18 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param Order $order
+     * @param string $status
      */
-    public function sendOrderStatus($order)
+    public function sendOrderStatus($order, $status)
     {
         $container = Application::getInstance()->getContainer();
         $this->setOutPath($container->getParameter('sap.directory.out'));
         $this->setOutPrefix('ORDER_STATUS_');
 
         $orderDto = new OrderStatusDtoOut();
-        $sapStatus = 'V'; // todo получать из сервиса
         $orderDto
             ->setId($order->getField('ACCOUNT_NUMBER'))
-            ->setStatus($sapStatus)
+            ->setStatus($status)
             ->setDeliveryType($this->getDeliveryTypeCode($order));
 
         $xml = $this->serializer->serialize($orderDto, 'xml');

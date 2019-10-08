@@ -73,8 +73,10 @@ use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCancelException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Exception\OrderExtendException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
+use FourPaws\SapBundle\Service\Orders\StatusService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
@@ -2466,10 +2468,10 @@ class OrderService implements LoggerAwareInterface
         }
 
         try {
-            $delivery = $this->deliveryService->getDeliveryById($deliveryId);
-            if ($this->deliveryService->isDeliveryCode($delivery['CODE'])) {
+            $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
+            if ($this->deliveryService->isDeliveryCode($deliveryCode)) {
                 $newStatus = OrderStatus::STATUS_CANCEL_COURIER;
-            } else if ($this->deliveryService->isPickupCode($delivery['CODE'])) {
+            } else if ($this->deliveryService->isPickupCode($deliveryCode)) {
                 $newStatus = OrderStatus::STATUS_CANCEL_PICKUP;
             } else {
                 throw new OrderCancelException('Не найдена служба доставки для заказа');
@@ -2499,7 +2501,8 @@ class OrderService implements LoggerAwareInterface
                 return false;
             }
 
-            $this->sapOrderService->sendOrderStatus($order);
+            $sapStatus = StatusService::STATUS_CANCELED;
+            $this->sapOrderService->sendOrderStatus($order, $sapStatus);
             $connection->commitTransaction();
         } catch (\Exception $e) {
             $connection->rollbackTransaction();
@@ -2508,6 +2511,87 @@ class OrderService implements LoggerAwareInterface
 
         if ($sendEmail) {
             \CEvent::Send('ADMIN_EMAIL_AFTER_ORDER_CANCEL', ['ru'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER')]);
+        }
+
+        return true;
+    }
+
+    /**
+     * Продление заказа
+     *
+     * @param $orderId
+     * @return mixed
+     * @throws OrderExtendException
+     * @throws SqlQueryException
+     */
+    public function extendOrder($orderId): bool
+    {
+        // ищем заказ
+        try {
+            $order = $this->getOrderById($orderId);
+        } catch (\Exception $e) {
+            throw new NotFoundException('Заказ не найден');
+        }
+
+        // валидация пользователя
+        $userId = $order->getField('USER_ID');
+
+        if (!$userId) {
+            throw new OrderExtendException('Вы не можете продлить срок хранения для этого заказа');
+        }
+
+        try {
+            if ((int)$userId !== $this->userProvider->getCurrentUserId()) {
+                throw new OrderExtendException('Вы не можете продлить срок хранения для этого заказа');
+            }
+        } catch (NotAuthorizedException $e) {
+            throw new OrderExtendException('Вы не можете продлить срок хранения для этого заказа');
+        }
+
+        // валидация статуса
+        $statusId = $order->getField('STATUS_ID');
+
+        if (!$statusId || in_array($statusId, PersonalOrderService::STATUS_FINAL, true) || (in_array($statusId, PersonalOrderService::STATUS_CANCEL, true))) {
+            return false;
+        }
+
+        // формируем новый статус в зависимости от службы доставки
+        $deliveryId = $order->getField('DELIVERY_ID');
+
+        if (!$deliveryId) {
+            throw new OrderExtendException('Не найдена служба доставки для заказа');
+        }
+
+        try {
+            $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
+            if ($this->deliveryService->isPickupCode($deliveryCode)) {
+                $newStatus = OrderStatus::STATUS_PICKUP_EXTEND;
+            } else {
+                return false;
+            }
+        } catch (\Exception $e) {
+            throw new OrderExtendException('Не найдена служба доставки для заказа');
+        }
+
+        $connection = BitrixApplication::getConnection();
+
+        $connection->startTransaction();
+
+        try {
+            $order->setField('STATUS_ID', $newStatus);
+            $saveResult = $order->save();
+
+            if (!$saveResult->isSuccess()) {
+                $connection->rollbackTransaction();
+                return false;
+            }
+
+            $sapStatus = StatusService::STATUS_PICKUP_EXTEND;
+            $this->sapOrderService->sendOrderStatus($order, $sapStatus);
+            $connection->commitTransaction();
+        } catch (\Exception $e) {
+            $connection->rollbackTransaction();
+            return false;
         }
 
         return true;

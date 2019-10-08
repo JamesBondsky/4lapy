@@ -98,6 +98,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 
     if ($template->isOrderHistoryPage()) {
         include __DIR__ . '/cancel-order.php';
+        include __DIR__ . '/extend-order.php';
     }
     ?>
 

@@ -30,6 +30,16 @@ $(document).ready(function () {
             },
             complete: function () {
                 $('body').trigger('stop-preloader');
+
+                $('.js-cancel-order-popup').click(function () {
+                    alertPopup(orderCancelPopup);
+                    cancelOrderItem = $(this);
+                });
+
+                $('.js-extend-order-popup').click(function () {
+                    alertPopup(orderExtendPopup);
+                    extendOrderItem = $(this);
+                });
             },
             error: function () {
                 $('body').trigger('stop-preloader');
@@ -66,18 +76,24 @@ $(document).ready(function () {
     //     })
     // });
 
-    // отмена заказа
     var orderCancelPopup = $('.js-popup-section[data-popup="cancel-order"]');
-    var orderItem = undefined;
+    var orderExtendPopup = $('.js-popup-section[data-popup="extend-order"]');
+    var cancelOrderItem = undefined;
+    var extendOrderItem = undefined;
 
     $('.js-cancel-order-popup').click(function () {
-        alertPopup();
-        orderItem = $(this);
+        alertPopup(orderCancelPopup);
+        cancelOrderItem = $(this);
+    });
+
+    $('.js-extend-order-popup').click(function () {
+        alertPopup(orderExtendPopup);
+        extendOrderItem = $(this);
     });
 
     $('.js-cancel-order').click(function () {
         var data = {
-            'orderId': orderItem.attr('data-order-id'),
+            'orderId': cancelOrderItem.attr('data-order-id'),
         };
 
         $.ajax({
@@ -96,9 +112,9 @@ $(document).ready(function () {
                 if (json.success) {
                     msg = json.message;
 
-                    orderItem.find('.js-link-text').text('Отменен');
+                    cancelOrderItem.find('.js-link-text').text('Отменен');
 
-                    orderItem.unbind();
+                    cancelOrderItem.unbind();
                 } else {
                     msg = data.errors[0];
                 }
@@ -117,11 +133,53 @@ $(document).ready(function () {
         });
     });
 
-    function alertPopup() {
+    $('.js-extend-order').click(function () {
+        var data = {
+            'orderId': extendOrderItem.attr('data-order-id'),
+        };
+
+        $.ajax({
+            url: '/ajax/sale/order/extend/',
+            data: data,
+            type: 'post',
+            dataType: 'json',
+            success: function (json) {
+                data = json.data;
+
+                orderExtendPopup.find('.js-info').css('display', 'none')
+                orderExtendPopup.find('.js-result').css('display', 'flex')
+
+                var msg = '';
+
+                if (json.success) {
+                    msg = json.message;
+
+                    extendOrderItem.find('.js-link-text').text('Срок хранения продлен');
+
+                    extendOrderItem.unbind();
+                } else {
+                    msg = data.errors[0];
+                }
+
+                orderExtendPopup.find('.js-result').find('.js-result-text').text(msg);
+
+                $('.b-preloader').removeClass('active');
+
+                setTimeout(function () {
+                    $('.js-popup-section.opened').find('.js-close-popup').trigger('click');
+                }, 2000);
+            },
+            beforeSend: function () {
+                $('.b-preloader').addClass('active');
+            }
+        });
+    });
+
+    function alertPopup(popup) {
         $('.js-popup-wrapper').addClass('active');
-        orderCancelPopup.find('.js-info').css('display', 'flex')
-        orderCancelPopup.find('.js-result').css('display', 'none')
-        orderCancelPopup.find('.js-result').find('.js-result-text').empty()
-        orderCancelPopup.addClass('opened').show();
-    };
+        popup.find('.js-info').css('display', 'flex')
+        popup.find('.js-result').css('display', 'none')
+        popup.find('.js-result').find('.js-result-text').empty()
+        popup.addClass('opened').show();
+    }
 });

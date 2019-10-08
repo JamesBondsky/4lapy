@@ -66,4 +66,9 @@ class OrderStatus
      * В пути
      */
     public const STATUS_IN_PROGRESS = 'D';
+
+    /**
+     * Продление хранения
+     */
+    public const STATUS_PICKUP_EXTEND = 'X';
 }

@@ -39,6 +39,7 @@ use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\OrderCancelException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Exception\OrderExtendException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
@@ -817,5 +818,32 @@ class OrderController extends Controller implements LoggerAwareInterface
         }
 
         return JsonSuccessResponse::createWithData('Заказ успешно отменен', []);
+    }
+
+    /**
+     * @Route("/extend/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     */
+    public function orderExtendAction(Request $request): JsonResponse
+    {
+        $orderId = intval($request->request->get('orderId'));
+
+        try {
+            $extendResult = $this->orderService->extendOrder($orderId);
+        } catch (OrderExtendException | \FourPaws\SaleBundle\Exception\NotFoundException  $e) {
+            return JsonErrorResponse::createWithData('', ['errors' => [$e->getMessage()]]);
+        } catch (\Exception $e) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['При продлении срока хранения произошла ошибка']]);
+        }
+
+        if (!$extendResult) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['При продлении срока хранения произошла ошибка']]);
+        }
+
+        return JsonSuccessResponse::createWithData('Срок хранения заказа успешно продлен', []);
     }
 }
