@@ -65,7 +65,7 @@ class OrderCalculate
      * Еасть ли активные купоны
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("has_coupons")
-     * @var string
+     * @var bool
      */
     protected $hasCoupons = false;
 
@@ -193,7 +193,7 @@ class OrderCalculate
     }
     
     /**
-     * @return string
+     * @return bool
      */
     public function getHasCoupons(): bool
     {
@@ -202,7 +202,7 @@ class OrderCalculate
     
     
     /**
-     * @param string $promoCodeDescription
+     * @param bool $hasCoupons
      *
      * @return OrderCalculate
      */
