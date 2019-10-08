@@ -7,8 +7,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
         name="<?= $selectorName ?>" data-subscribe="1">
     <option value="" disabled="disabled" <?=(!$selectedFirstDate) ? 'selected="selected"' : '' ?>>выберите</option>
     <? /** @var CalculationResultInterface $nextDelivery */
-    foreach ($nextDeliveries as $i => $nextDelivery) {
-        if($arResult['MIN_DELIVERY_DATE'] && $nextDelivery->getDeliveryDate() < $arResult['MIN_DELIVERY_DATE']) continue; ?>
+    foreach ($nextDeliveries as $i => $nextDelivery) { ?>
         <option value="<?= $nextDelivery->getDeliveryDate()->format('d.m.Y') ?>"
                 data-date-option="<?= FormatDate('l, Y-m-d', $nextDelivery->getDeliveryDate()->getTimestamp()) ?>"
                 <?=($selectedFirstDate && $selectedFirstDate->format('d.m.Y') == $nextDelivery->getDeliveryDate()->format('d.m.Y')) ? 'selected="selected"' : '' ?>>

@@ -34,6 +34,7 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeSingle;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeSingleRepository;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
@@ -728,6 +729,15 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                             if ($updateResult->isSuccess()) {
                                 $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
 
+                                /** @var OrderSubscribeSingle $singleSubscribeInactive */
+                                $singleSubscribeInactive = $this->orderSubscribeSingleRepository->findBy(['UF_SUBSCRIBE_ID' => $orderSubscribe->getId(), 'UF_ACTIVE' => 0])->first();
+                                if($singleSubscribeInactive){
+                                    $singleSubscribeInactive->setActive(true);
+                                    $this->orderSubscribeSingleRepository->setEntity($singleSubscribeInactive)->update();
+                                } else {
+                                    $this->setExecError('subscribeAction', 'Не удалось активировать единичную доставку', 'subscriptionSingleUpdate');
+                                }
+
                                 // при успешном обновлении нам нужно удалить ранее созданные, но не доставленные заказы по подписке
                                 if (count($orderIdsForDelete) > 0) {
                                     foreach ($orderIdsForDelete as $orderIdForDelete) {
@@ -753,6 +763,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                         }
                     }
                 } else {
+                    // не используется
                     $orderSubscribe->setActive(true);
                     $this->arResult['SUBSCRIBE_ACTION']['TYPE'] = 'CREATE';
                     $addResult = $orderSubscribeService->add($orderSubscribe);
@@ -787,7 +798,9 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                                 ->setItems(serialize($subscribeItems))
                                 ->setDateCreate(new DateTime());
 
-                            if(!$orderSubscribeService->getOrderSubscribeSingleRepository()->setEntity($orderSubscribeSingle)->update()){
+                            if($orderSubscribeService->getOrderSubscribeSingleRepository()->setEntity($orderSubscribeSingle)->update()){
+                                $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
+                            } else {
                                 $this->setExecError('subscribeAction', sprintf("Не удалось обновить оригинальную подписку %s", $orderSubscribeSingle->getId()), 'subscriptionSingleEdit');
                             }
                         } else {
@@ -1162,7 +1175,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 $this->arResult['DADATA_CONSTRAINTS'] = $this->getLocationService()->getDadataJsonFromLocationArray($selectedCity);
                 $this->arResult['METRO'] = $this->getStoreService()->getMetroInfo();
                 $this->arResult['IS_SINGLE_SUBSCRIBE'] = $isSingleSubscribe;
-                $this->arResult['MIN_DELIVERY_DATE'] = new \DateTime($this->getOrderSubscribeHistoryService()->getNearestDelivery($orderSubscribe));
+                // $this->arResult['MIN_DELIVERY_DATE'] = new \DateTime($this->getOrderSubscribeHistoryService()->getNearestDelivery($orderSubscribe));
             } catch (\Exception $e) {
                 $result->addError(new Error(
                     sprintf("Не удалось активировать 2 шаг: %s", $e->getMessage())

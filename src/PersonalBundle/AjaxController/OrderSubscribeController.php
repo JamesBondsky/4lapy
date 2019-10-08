@@ -104,6 +104,7 @@ class OrderSubscribeController extends Controller
                 }
             }
         } catch (\Exception $exception) {
+            $error = $exception->getMessage();
             // При исключениях выводим общее уведомление об ошибке
         }
 
@@ -112,7 +113,7 @@ class OrderSubscribeController extends Controller
                 'Неизвестная ошибка. Пожалуйста, обратитесь к администратору сайта',
                 [
                     'errors' => [
-                        'systemError' => 'Неизвестная ошибка. Пожалуйста, обратитесь к администратору сайта'
+                        'systemError' => $error
                     ]
                 ]
             );

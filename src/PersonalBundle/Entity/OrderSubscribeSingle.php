@@ -82,6 +82,15 @@ class OrderSubscribeSingle extends BaseEntity
     protected $dateCreate;
 
     /**
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("UF_ACTIVE")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $active = false;
+
+    /**
      * @return int
      */
     public function getSubscribeId(): int
@@ -159,5 +168,23 @@ class OrderSubscribeSingle extends BaseEntity
     public function getSubscribe(): array
     {
         return \unserialize($this->getData());
+    }
+
+    /**
+     * @param bool $active
+     * @return OrderSubscribeSingle
+     */
+    public function setActive(bool $active): OrderSubscribeSingle
+    {
+        $this->active = $active;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isActive(): bool
+    {
+        return $this->active;
     }
 }

@@ -2171,7 +2171,7 @@ class OrderSubscribeService implements LoggerAwareInterface
      */
     public function createSingleSubscribe(OrderSubscribe $orderSubscribe)
     {
-        $singleSubscribeCollection = $this->orderSubscribeSingleRepository->findBySubscribe($orderSubscribe->getId());
+        $singleSubscribeCollection = $this->orderSubscribeSingleRepository->findBySubscribe($orderSubscribe->getId(), false);
         if(!$singleSubscribeCollection->isEmpty()){
             $singleSubscribe = $singleSubscribeCollection->first();
             $this->orderSubscribeSingleRepository->delete($singleSubscribe->getId());

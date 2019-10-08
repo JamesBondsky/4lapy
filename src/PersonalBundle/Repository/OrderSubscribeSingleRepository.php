@@ -49,11 +49,19 @@ class OrderSubscribeSingleRepository extends BaseHlRepository
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    public function findBySubscribe($subscribeId): ArrayCollection
+    public function findBySubscribe($subscribeId, bool $onlyActive = true): ArrayCollection
     {
+        $filter = [
+            'UF_SUBSCRIBE_ID' => $subscribeId,
+        ];
+
+        if($onlyActive){
+            $filter['UF_ACTIVE'] = 1;
+        }
+
         return $this->findBy(
             [
-                'filter' => ['UF_SUBSCRIBE_ID' => $subscribeId],
+                'filter' => $filter
             ]
         );
     }
