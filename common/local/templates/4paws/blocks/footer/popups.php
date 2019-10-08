@@ -97,8 +97,8 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     include __DIR__ . '/collect_data_popup.php';
 
     if ($template->isOrderHistoryPage()) {
-        include __DIR__ . '/cancel-order.php';
-        include __DIR__ . '/extend-order.php';
+        include __DIR__ . '/cancel_order_popup.php';
+        include __DIR__ . '/extend_order_popup.php';
     }
     ?>
 
