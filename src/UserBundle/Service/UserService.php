@@ -832,7 +832,7 @@ class UserService implements
 
             return false;
         }
-        if (!$contact) {
+        if (is_bool($contact) || is_null($contact)) {
             try {
                 $contact = $manzanaService->getContactByUser($user);
             } catch (ApplicationCreateException $e) {
@@ -903,11 +903,10 @@ class UserService implements
     }
 
     /**
-     * возвращаю объект контакта - оптимизация запросов к ML
      * @param User $user
-     * @return bool
+     * @return bool|Client
      */
-    public function refreshUserCard(User $user): bool
+    public function refreshUserCard(User $user)
     {
         if (!$user->hasPhone()) {
             return false;
@@ -961,7 +960,7 @@ class UserService implements
             $this->log()
                 ->info('обновление карты stop');
 
-            return true;
+            return $contact;
         } catch (ManzanaCardIsNotFound $e) {
             $this->log()
                  ->info('активных карт не найдено', $e->getTrace());
