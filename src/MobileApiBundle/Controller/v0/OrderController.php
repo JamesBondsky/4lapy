@@ -137,17 +137,17 @@ class OrderController extends BaseController
         }
 
         if ($error) {
-            $response->setData([]);
+            $response->setData(['success' => false]);
             $response->addError(new Error(0, $error));
         } else {
-            $response->setData(['message' => 'Заказ успешно отменен']);
+            $response->setData(['success' => true]);
         }
 
         return $response;
     }
 
     /**
-     * @Rest\Patch(path="/order_cancel/")
+     * @Rest\Patch(path="/order_extend/")
      * @Rest\View()
      *
      * @param Request $request
@@ -174,10 +174,10 @@ class OrderController extends BaseController
         }
 
         if ($error) {
-            $response->setData([]);
+            $response->setData(['success' => false]);
             $response->addError(new Error(0, $error));
         } else {
-            $response->setData(['message' => 'Срок хранения заказа успешно продлен']);
+            $response->setData(['success' => true]);
         }
 
         return $response;
