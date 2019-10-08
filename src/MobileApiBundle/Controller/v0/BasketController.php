@@ -422,7 +422,7 @@ class BasketController extends BaseController
      */
     public function getUserCouponsAction()
     {
-        $couponService = new CouponService();
+        $couponService = Application::getInstance()->getContainer()->get('coupon.service');
         $result        = $couponService->getUserCouponsAction();
         
         return (new UserCouponsResponse())->setUserCoupons($result);

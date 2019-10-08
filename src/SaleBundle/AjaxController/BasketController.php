@@ -446,7 +446,7 @@ class BasketController extends Controller implements LoggerAwareInterface
     {
         $promoCodes = $request->get('promoCodes');
 
-        $couponService = new CouponService;
+        $couponService = App::getInstance()->getContainer()->get('coupon.service');
         $result = $couponService->checkCouponsApplicability($promoCodes);
 
         return JsonSuccessResponse::createWithData('', ['availablecoupons' => $result]);
