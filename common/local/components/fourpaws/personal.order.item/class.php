@@ -105,7 +105,20 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
 
         $statusId = $personalOrder->getStatusId();
 
-        $this->arResult['CAN_CANCEL'] = ($statusId && !in_array($statusId, PersonalOrderService::STATUS_FINAL, true) && !(in_array($statusId, PersonalOrderService::STATUS_CANCEL, true)));
+        $this->arResult['CAN_CANCEL'] = false;
+        $this->arResult['FINISHED'] = false;
+        $this->arResult['CANCELED'] = false;
+
+        if ($statusId) {
+            if (in_array($statusId, PersonalOrderService::STATUS_FINAL, true)) {
+                $this->arResult['FINISHED'] = true;
+            } else if (in_array($statusId, PersonalOrderService::STATUS_CANCEL, true)) {
+                $this->arResult['CANCELED'] = true;
+            } else {
+                $this->arResult['CAN_CANCEL'] = true;
+            }
+        }
+
         $this->arResult['CAN_EXTEND'] = true;
     }
 

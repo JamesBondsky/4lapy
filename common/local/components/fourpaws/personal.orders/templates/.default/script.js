@@ -65,4 +65,63 @@ $(document).ready(function () {
     //         }
     //     })
     // });
+
+    // отмена заказа
+    var orderCancelPopup = $('.js-popup-section[data-popup="cancel-order"]');
+    var orderItem = undefined;
+
+    $('.js-cancel-order-popup').click(function () {
+        alertPopup();
+        orderItem = $(this);
+    });
+
+    $('.js-cancel-order').click(function () {
+        var data = {
+            'orderId': orderItem.attr('data-order-id'),
+        };
+
+        $.ajax({
+            url: '/ajax/sale/order/cancel/',
+            data: data,
+            type: 'post',
+            dataType: 'json',
+            success: function (json) {
+                data = json.data;
+
+                orderCancelPopup.find('.js-info').css('display', 'none')
+                orderCancelPopup.find('.js-result').css('display', 'flex')
+
+                var msg = '';
+
+                if (json.success) {
+                    msg = json.message;
+
+                    orderItem.find('.js-link-text').text('Отменен');
+
+                    orderItem.unbind();
+                } else {
+                    msg = data.errors[0];
+                }
+
+                orderCancelPopup.find('.js-result').find('.js-result-text').text(msg);
+
+                $('.b-preloader').removeClass('active');
+
+                setTimeout(function () {
+                    $('.js-popup-section.opened').find('.js-close-popup').trigger('click');
+                }, 2000);
+            },
+            beforeSend: function () {
+                $('.b-preloader').addClass('active');
+            }
+        });
+    });
+
+    function alertPopup() {
+        $('.js-popup-wrapper').addClass('active');
+        orderCancelPopup.find('.js-info').css('display', 'flex')
+        orderCancelPopup.find('.js-result').css('display', 'none')
+        orderCancelPopup.find('.js-result').find('.js-result-text').empty()
+        orderCancelPopup.addClass('opened').show();
+    };
 });

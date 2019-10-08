@@ -2483,7 +2483,6 @@ class OrderService implements LoggerAwareInterface
         $connection->startTransaction();
 
         try {
-
             // отменяем заказ
             $cancelResult = (new \CSaleOrder)->cancelOrder($orderId, BaseEntity::BITRIX_TRUE, '');
 
