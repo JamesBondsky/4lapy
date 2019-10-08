@@ -415,6 +415,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         if (!$this->orderStorageService->validateDeliveryDate($storage)) {
+            $this->logger->error(sprintf('failed to validate DeliveryDate: %s', $storage->getDeliveryDate()), [
+                'user' => $storage->getId(),
+                'street' => $storage->getStreet(),
+                'house' => $storage->getHouse(),
+            ]);
             $storage = $this->orderStorageService->clearDeliveryDate($storage);
             $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
 
