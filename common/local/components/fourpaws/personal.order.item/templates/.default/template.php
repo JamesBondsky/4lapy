@@ -12,6 +12,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 
@@ -138,14 +139,14 @@ if ($orderSubscribe) {
                     </a>
                     <?php
 
-                    $countItems = 0;
-                    /** @var OrderItem $orderItem */
-                    foreach ($order->getItems() as $orderItem) {
-                        if ($orderItem->getParentItem()) {
-                            continue;
-                        }
-                        $countItems++;
+                $countItems = 0;
+                /** @var OrderItem $orderItem */
+                foreach ($order->getItems() as $orderItem) {
+                    if ($orderItem->getParentItem() || ($orderItem->getArticle() === BasketService::GIFT_NOVEMBER_NEWSPAPER_XML_ID)) {
+                        continue;
                     }
+                    $countItems++;
+                }
 
                     if ($countItems > 0) { ?>
                         <div class="b-accordion-order-item__info-order"><?= $countItems ?> <?= WordHelper::declension($countItems,
@@ -347,12 +348,12 @@ if ($orderSubscribe) {
             <ul class="b-list-order">
                 <?php /** @var OrderItem $item */
                 foreach ($order->getItems() as $item) {
-                    if ($item->getParentItem()) {
+                    if ($item->getParentItem() || ($item->getArticle() === BasketService::GIFT_NOVEMBER_NEWSPAPER_XML_ID)) {
                         continue;
                     }
                     if (!$order->getManzanaId() && $item->hasDetailPageUrl() && !$item->isGift()) { ?>
                         <a href="<?= $item->getDetailPageUrl() ?>">
-                    <?php } ?>r
+                    <?php } ?>
                     <li class="b-list-order__item">
                         <div class="b-list-order__image-wrapper">
                             <?php if ($item->getImagePath()) { ?>

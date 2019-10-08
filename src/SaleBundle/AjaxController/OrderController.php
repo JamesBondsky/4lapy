@@ -534,6 +534,9 @@ class OrderController extends Controller implements LoggerAwareInterface
          */
         if ($storage->getMoscowDistrictCode() != '') {
             $this->orderStorageService->updateStorageMoscowZone($storage, OrderStorageEnum::NOVALIDATE_STEP);
+
+            // необходимо обновить службы доставки, чтобы применилась зона
+            $this->orderStorageService->getDeliveries($storage, true);
         }
 
 

@@ -641,13 +641,17 @@ class OrderService implements LoggerAwareInterface
                     'SHIPMENT_PLACE_CODE' => $nearShop->getXmlId(),
                 ]
             );
-        } elseif (!($selectedDelivery->getStockResult()->getDelayed()->isEmpty() &&
+        } elseif (
+            !($selectedDelivery->getStockResult()->getDelayed()->isEmpty()
+                &&
                 (
-                    ($this->deliveryService->isInnerDelivery($selectedDelivery) && $selectedDelivery->getSelectedStore()->isShop()) ||
-                    $this->deliveryService->isInnerPickup($selectedDelivery)
-                )) ||
-            mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                    ($this->deliveryService->isInnerDelivery($selectedDelivery) && $selectedDelivery->getSelectedStore()->isShop())
+                    || $this->deliveryService->isInnerPickup($selectedDelivery)
+                )
+            )
+            ||  mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
         ) {
+
             /**
              * Месье Костелье для районов Москвы (установка SHIPMENT_PLACE_CODE если есть базовый магазин для зоны)
              */
@@ -659,11 +663,13 @@ class OrderService implements LoggerAwareInterface
             foreach ($order->getBasket() as $itemKey => $item) {
                 $offer = OfferQuery::getById($item->getProductId());
                 $selectedShop = $selectedDelivery->getSelectedStore();
+
                 if ($selectedShop instanceof Store) {
                     $shipmentPlaceCode = $selectedShop->getXmlId();
                 } else {
                     $shipmentPlaceCode = self::STORE;
                 }
+
                 /** @var DeliveryScheduleResult $deliveryResult */
                 if ($shipmentResults &&
                     ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
@@ -674,6 +680,7 @@ class OrderService implements LoggerAwareInterface
                         $shipmentDays[$shipmentPlaceCode] = $days;
                     }
                 }
+
                 $arShipmentPlaceCode[$itemKey] = $shipmentPlaceCode;
                 if ($offer->isAvailable() && $offer->isByRequest()) {
                     $isSetParam[] = $item->getProductId();
@@ -687,8 +694,8 @@ class OrderService implements LoggerAwareInterface
                         $shipmentPlaceCodeDefault = $shipmentPlaceCode;
                     }
                 }
-
             }
+
             foreach ($order->getBasket() as $itemKey => $item) {
                 if (!in_array($item->getProductId(), $isSetParam)) {
                     $this->basketService->setBasketItemPropertyValue(
@@ -698,6 +705,7 @@ class OrderService implements LoggerAwareInterface
                     );
                 }
             }
+
             $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', $shipmentPlaceCodeDefault);
             if (!empty($shipmentDays)) {
                 arsort($shipmentDays);
