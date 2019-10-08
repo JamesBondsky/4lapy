@@ -668,7 +668,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         try {
             $result = $this->newExec(__METHOD__, func_get_args());
 //            $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
-            $card = $this->serializer->deserialize(json_encode(['Cards' => $result]), Cards::class, 'xml')->cards[0];
+            $card = $this->serializer->deserialize(json_encode(['Cards' => $result]), Cards::class, 'json')->cards[0];
         } catch (Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
