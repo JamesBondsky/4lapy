@@ -2518,7 +2518,7 @@ class OrderService implements LoggerAwareInterface
         }
 
         if ($sendEmail) {
-            \CEvent::Send('ADMIN_EMAIL_AFTER_ORDER_CANCEL', ['ru'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER')]);
+            \CEvent::Send('ADMIN_EMAIL_AFTER_ORDER_CANCEL', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER')]);
         }
 
         return true;
