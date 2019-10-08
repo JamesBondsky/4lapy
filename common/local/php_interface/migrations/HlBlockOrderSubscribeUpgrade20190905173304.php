@@ -193,6 +193,43 @@ class HlBlockOrderSubscribeUpgrade20190905173304 extends \Adv\Bitrixtools\Migrat
             $field
         );
 
+        $values = [
+            [
+                'XML_ID' => 'WEEK_7',
+                'VALUE' => 'Раз в семь недель',
+            ],
+            [
+                'XML_ID' => 'WEEK_8',
+                'VALUE' => 'Раз в восемь недель',
+            ],
+            [
+                'XML_ID' => 'WEEK_9',
+                'VALUE' => 'Раз в девять недель',
+            ],
+            [
+                'XML_ID' => 'WEEK_10',
+                'VALUE' => 'Раз в десять недель',
+            ],
+            [
+                'XML_ID' => 'WEEK_11',
+                'VALUE' => 'Раз в одиннадцать недель',
+            ],
+            [
+                'XML_ID' => 'WEEK_12',
+                'VALUE' => 'Раз в двенадцать недель',
+            ],
+        ];
+
+        $fieldId = \CUserTypeEntity::GetList([], ['FIELD_NAME' => 'UF_FREQUENCY', 'ENTITY_ID' => 'HLBLOCK_43'])->Fetch()['ID'];
+
+        $enum = new \CUserFieldEnum();
+        if ($enum->SetEnumValues($fieldId, $values)) {
+            $this->log()->info(sprintf('Добавлены значения для поля %s', $field['FIELD_NAME']));
+        } else {
+            $this->log()->error(sprintf('Не удалось добавить значения для поля %s', $field['FIELD_NAME']));
+        }
+
+
         return true;
     }
 
