@@ -188,7 +188,7 @@ class OrderCalculate
      */
     public function setPromoCodeDescription(string $promoCodeDescription): OrderCalculate
     {
-        $this->promoCodeDesc = $promoCodeDescription;
+        $this->promoCodeDescription = $promoCodeDescription;
         return $this;
     }
     

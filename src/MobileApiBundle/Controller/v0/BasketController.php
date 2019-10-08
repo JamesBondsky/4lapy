@@ -27,13 +27,16 @@ use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartCalcResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartOrderResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartResponse;
+use FourPaws\MobileApiBundle\Dto\Response\UserCouponsResponse;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartRequest;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Services\Api\CityService;
 use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
 use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService as ApiUserDeliveryAddressService;
 use FourPaws\MobileApiBundle\Traits\MobileApiLoggerAwareTrait;
+use FourPaws\PersonalBundle\Service\CouponService;
 use FourPaws\SaleBundle\Dto\OrderSplit\Basket\BasketSplitItem;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
@@ -43,6 +46,7 @@ use FourPaws\StoreBundle\Service\StoreService as AppStoreService;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\UserBundle\Enum\UserLocationEnum;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class BasketController
@@ -110,9 +114,11 @@ class BasketController extends BaseController
      */
     public function getUserCartAction(UserCartRequest $userCartRequest)
     {
-        $storage   = $this->orderStorageService->getStorage();
-        $promoCode = $userCartRequest->getPromoCode() ?: $storage->getPromoCode();
+        $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
         
+        $storage   = $this->orderStorageService->getStorage();
+        $promoCode = $couponStorage->getApplicableCoupon() ?: $storage->getPromoCode();
+
         if ($promoCode) {
             try {
                 /** @see \FourPaws\SaleBundle\AjaxController\BasketController::applyPromoCodeAction */
@@ -145,7 +151,6 @@ class BasketController extends BaseController
                     $promoCodeDescrition = $coupon['custom_title'];
                 }
             }
-            
             
             $orderCalculate->setPromoCodeDescription($promoCodeDescrition);
         }
@@ -406,5 +411,52 @@ class BasketController extends BaseController
         $results['dostavista'] = $dostavistaDelivery;
         
         return new Response($results);
+    }
+    
+    /**
+     * @Rest\Get("/user_coupons/")
+     * @Rest\View(serializerGroups={"Default", "basket"})
+     *
+     * @return UserCouponsResponse
+     * @throws \Exception
+     */
+    public function getUserCouponsAction()
+    {
+        $couponService = new CouponService();
+        $result        = $couponService->getUserCouponsAction();
+        
+        return (new UserCouponsResponse())->setUserCoupons($result);
+    }
+    
+    /**
+     * @Rest\Put("/user_cart_coupon/")
+     * @Rest\View(serializerGroups={"Default", "basket"})
+     *
+     * @param Request $request
+     * @return UserCouponsResponse
+     * @throws \Exception
+     */
+    public function putUserCartCouponAction(Request $request)
+    {
+        $promoCode = $request->get('promoCode');
+        $use       = $request->get('use');
+        
+        $storage = $this->orderStorageService->getStorage();
+        
+        $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
+        $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
+        
+        switch ($use) {
+            case true:
+                $couponStorage->save($promoCode);
+                break;
+            case false:
+                $couponStorage->delete($promoCode);
+                $storage->setPromoCode('');
+                $orderStorageService->updateStorage($storage);
+                break;
+        }
+
+        return $this->getUserCouponsAction();
     }
 }
