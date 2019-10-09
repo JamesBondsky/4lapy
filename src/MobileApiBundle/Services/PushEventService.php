@@ -432,7 +432,7 @@ class PushEventService
             $phone = $this->normalizePhoneNumber($row);
             $phones[$phone] = $phone;
         }
-        $phones = $this->limitToAllowedPhoneNumbersAmount(array_values($phones));
+//        $phones = $this->limitToAllowedPhoneNumbersAmount(array_values($phones));
         $userIds = $this->getUserIdsByPhoneNumbers($phones, $pushMessage->getTypeEntity()->getXmlId());
 
         $pushMessage->setUserIds($userIds);

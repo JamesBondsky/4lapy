@@ -518,4 +518,9 @@ class MainTemplate extends TemplateAbstract
     {
         return $this->isPartitionPage('/dobrolap/');
     }
+
+    public function isStampsPage() :bool
+    {
+        return $this->isDir('/personal/marki') || $this->isDir('/home');
+    }
 }

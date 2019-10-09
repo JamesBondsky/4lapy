@@ -106,7 +106,15 @@ class User
      * @Serializer\SerializedName("stamps_offer_active")
      * @var bool
      */
-    protected $stampsOfferActive = StampService::IS_STAMPS_OFFER_ACTIVE;
+//    protected $stampsOfferActive = StampService::IS_STAMPS_OFFER_ACTIVE;
+    protected $stampsOfferActive = false;
+
+    /**
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("stamps_october_active")
+     * @var bool
+     */
+    protected $octoberStampsOfferActive = true;
 
 
     /**
