@@ -509,7 +509,15 @@ class PushEventService
         return array_values($userIds);
     }
 
-    public function canSendPushMessage(User $user, $typeCode, $log = false) : bool
+    /**
+     * Проверяет возможность отправки пуша
+     *
+     * @param User $user
+     * @param string $typeCode
+     * @param bool $log
+     * @return bool
+     */
+    public function canSendPushMessage(User $user, $typeCode = "", $log = false) : bool
     {
         $result = true;
 
@@ -528,7 +536,7 @@ class PushEventService
             if($log){
                 $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone не установлено мобильное приложение");
             }
-        } else {
+        } else if(!empty($typeCode)) {
             if (!$this->shouldSendPushMessage($user, $typeCode)) {
                 $result = false;
                 if($log){

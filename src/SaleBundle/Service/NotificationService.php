@@ -31,6 +31,7 @@ use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\Notification\UnknownMessageTypeException;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializationContext;
@@ -93,6 +94,11 @@ class NotificationService implements LoggerAwareInterface
      * @var CurrentUserProviderInterface
      */
     private $userService;
+
+    /**
+     * @var User
+     */
+    private $user;
 
     /**
      * NotificationService constructor.
@@ -279,18 +285,7 @@ class NotificationService implements LoggerAwareInterface
         }
 
         if ($smsTemplate) {
-            $user = null;
-            try {
-                $user = $this->userService->getCurrentUser();
-            } catch (\Exception $e) {
-                // не надо нам здесь падать, если юзер не авторизован
-            }
-
-            if($user && $this->pushEventService->canSendPushMessage($user, 'status')){
-                $this->addPushMessage($smsTemplate, $parameters);
-            } else {
-                $this->sendSms($smsTemplate, $parameters, true);
-            }
+            $this->sendPushOrSms($smsTemplate, $parameters, 'status', true);
         }
 
         $this->sendNewUserSms($parameters);
@@ -801,5 +796,41 @@ class NotificationService implements LoggerAwareInterface
         );
 
         return (int)$result > 0;
+    }
+
+    /**
+     * Отправляет пуш-уведомление, если это невозможно то смс
+     *
+     * @param string $template   - шаблон
+     * @param array  $parameters - параметры
+     * @param string $typeCode   - тип пуша
+     * @param bool   $immediate  - мгновенная отправка смс
+     * @throws ApplicationCreateException
+     */
+    public function sendPushOrSms(string $template, array $parameters, string $typeCode = "", bool $immediate = false): void
+    {
+        $user = $this->getUser();
+
+        if($user && $this->pushEventService->canSendPushMessage($user, $typeCode)){
+            $this->addPushMessage($template, $parameters);
+        } else {
+            $this->sendSms($template, $parameters, $immediate);
+        }
+    }
+
+    /**
+     * @return User
+     */
+    public function getUser(): User
+    {
+        if($this->user === null){
+            try {
+                $this->user = $this->userService->getCurrentUser();
+            } catch (\Exception $e) {
+                $this->user = false;
+            }
+        }
+
+        return $this->user;
     }
 }
