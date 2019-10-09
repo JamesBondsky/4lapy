@@ -10,7 +10,7 @@ class UserCouponsResponse
      * Содержит активные купоны пользователя
      *
      * @Serializer\Type("array")
-     * @Serializer\SerializedName("coupons")
+     * @Serializer\SerializedName("personal_offers")
      * @var array
      */
     protected $coupons = [];

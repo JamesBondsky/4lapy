@@ -16,6 +16,7 @@ use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\KkmBundle\Service\KkmService;
 use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
+use FourPaws\MobileApiBundle\Dto\Object\Coupon;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryVariant;
 use FourPaws\MobileApiBundle\Dto\Request\DostavistaRequest;
@@ -118,7 +119,7 @@ class BasketController extends BaseController
         
         $storage   = $this->orderStorageService->getStorage();
         $promoCode = $couponStorage->getApplicableCoupon() ?: $storage->getPromoCode();
-
+        
         if ($promoCode) {
             try {
                 /** @see \FourPaws\SaleBundle\AjaxController\BasketController::applyPromoCodeAction */
@@ -144,15 +145,18 @@ class BasketController extends BaseController
         }
         
         if ($promoCode && $coupons) {
-            $orderCalculate->setPromoCodeResult($promoCode);
-            
             foreach ($coupons as $coupon) {
                 if ($promoCode == $coupon['UF_PROMO_CODE']) {
-                    $promoCodeDescrition = $coupon['custom_title'];
+                    $orderCalculate->setCoupon(
+                        (new Coupon())->setId($coupon['ID'])
+                            ->setPromocode($promoCode)
+                            ->setText($coupon['custom_title'])
+                            ->setDiscount($coupon['discount_value'])
+                            ->setDateActive($coupon['PERSONAL_COUPON_USER_COUPONS_UF_DATE_ACTIVE_TO']->toString())
+                            ->setActionType(2)
+                    );
                 }
             }
-            
-            $orderCalculate->setPromoCodeDescription($promoCodeDescrition);
         }
         
         return (new UserCartResponse())
@@ -424,7 +428,7 @@ class BasketController extends BaseController
     {
         $couponService = Application::getInstance()->getContainer()->get('coupon.service');
         $result        = $couponService->getUserCouponsAction();
-        
+
         return (new UserCouponsResponse())->setUserCoupons($result);
     }
     
@@ -443,7 +447,7 @@ class BasketController extends BaseController
         
         $storage = $this->orderStorageService->getStorage();
         
-        $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
+        $couponStorage       = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
         $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
         
         switch ($use) {
@@ -456,10 +460,10 @@ class BasketController extends BaseController
                 $orderStorageService->updateStorage($storage);
                 break;
         }
-    
+        
         $couponService = Application::getInstance()->getContainer()->get('coupon.service');
         $result        = $couponService->getUserCouponsAction();
-    
+        
         return (new UserCouponsResponse())->setUserCoupons($result);
     }
 }

@@ -19,7 +19,16 @@ class OrderCalculate
      * @var Price
      */
     protected $totalPrice;
-
+    
+    /**
+     * Купон
+     * @Serializer\SerializedName("personal_offer")
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Coupon")
+     * @Serializer\SkipWhenEmpty()
+     * @var Coupon
+     */
+    protected $coupon;
+    
     /**
      * Расшифровка финальной стоимости, список ОбъектДетализации[]
      * @Serializer\SerializedName("price_details")
@@ -27,7 +36,7 @@ class OrderCalculate
      * @var Detailing[]
      */
     protected $priceDetails = [];
-
+    
     /**
      * Расшифровка движений по карте клиента на текущий заказ, список ОбъектДетализации[]
      * @Serializer\SerializedName("card_details")
@@ -35,7 +44,7 @@ class OrderCalculate
      * @var Detailing[]
      */
     protected $cardDetails = [];
-
+    
     /**
      * Расшифровка движений марок клиентов на текущий заказ, список ОбъектДетализацииМарок[]
      * @Serializer\SerializedName("stamps_details")
@@ -44,22 +53,6 @@ class OrderCalculate
      * @var StampsDetailing[]
      */
     protected $stampsDetails = [];
-
-    /**
-     * Используемый промокод
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("promocode_result")
-     * @var string
-     */
-    protected $promoCodeResult = '';
-    
-    /**
-     * Описание промокода
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("promocode_description")
-     * @var string
-     */
-    protected $promoCodeDescription = '';
     
     /**
      * Еасть ли активные купоны
@@ -68,7 +61,7 @@ class OrderCalculate
      * @var bool
      */
     protected $hasCoupons = false;
-
+    
     /**
      * Можно ли связаться с клиентом по телефону
      * @Serializer\Type("bool")
@@ -76,7 +69,7 @@ class OrderCalculate
      * @var bool
      */
     protected $isPhoneCallAvailable = true;
-
+    
     /**
      * @return Price
      */
@@ -84,7 +77,7 @@ class OrderCalculate
     {
         return $this->totalPrice;
     }
-
+    
     /**
      * @param Price $totalPrice
      *
@@ -95,7 +88,7 @@ class OrderCalculate
         $this->totalPrice = $totalPrice;
         return $this;
     }
-
+    
     /**
      * @return Detailing[]
      */
@@ -103,7 +96,7 @@ class OrderCalculate
     {
         return $this->priceDetails;
     }
-
+    
     /**
      * @param Detailing[] $priceDetails
      *
@@ -114,7 +107,7 @@ class OrderCalculate
         $this->priceDetails = $priceDetails;
         return $this;
     }
-
+    
     /**
      * @return Detailing[]
      */
@@ -122,7 +115,7 @@ class OrderCalculate
     {
         return $this->cardDetails;
     }
-
+    
     /**
      * @param Detailing[] $cardDetails
      *
@@ -133,7 +126,7 @@ class OrderCalculate
         $this->cardDetails = $cardDetails;
         return $this;
     }
-
+    
     /**
      * @return StampsDetailing[]
      */
@@ -141,7 +134,7 @@ class OrderCalculate
     {
         return $this->stampsDetails;
     }
-
+    
     /**
      * @param StampsDetailing[] $stampsDetails
      *
@@ -152,7 +145,7 @@ class OrderCalculate
         $this->stampsDetails = $stampsDetails;
         return $this;
     }
-
+    
     /**
      * @return string
      */
@@ -160,7 +153,7 @@ class OrderCalculate
     {
         return $this->promoCodeResult;
     }
-
+    
     /**
      * @param string $promoCodeResult
      *
@@ -221,12 +214,31 @@ class OrderCalculate
         $this->isPhoneCallAvailable = $isPhoneCallAvailable;
         return $this;
     }
-
+    
     /**
      * @return bool
      */
     public function isPhoneCallAvailable(): bool
     {
         return $this->isPhoneCallAvailable;
+    }
+    
+    /**
+     * @return Coupon
+     */
+    public function getCoupon(): Coupon
+    {
+        return $this->coupon;
+    }
+    
+    /**
+     * @param Coupon $coupon
+     *
+     * @return OrderCalculate
+     */
+    public function setCoupon(Coupon $coupon): OrderCalculate
+    {
+        $this->coupon = $coupon;
+        return $this;
     }
 }

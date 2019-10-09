@@ -252,7 +252,7 @@ class CouponService implements LoggerAwareInterface
         $personalOffers = App::getInstance()->getContainer()->get(PersonalOffersService::class);
         
         $coupons        = $personalOffers->getActiveUserCoupons($storage->getUserId())['coupons']->getValues();
-    
+        
         foreach ($coupons as $coupon) {
             $promoCodes[] = $coupon['UF_PROMO_CODE'];
         }
@@ -261,7 +261,11 @@ class CouponService implements LoggerAwareInterface
     
         foreach ($coupons as $key => $coupon) {
             if (array_key_exists($coupon['UF_PROMO_CODE'], $promoCodesActionType)) {
+                $result[$key]['id'] = $coupon['ID'];
                 $result[$key]['promoCode'] = $coupon['UF_PROMO_CODE'];
+                $result[$key]['discount'] = $coupon['discount_value'];
+                $result[$key]['text'] = $coupon['custom_title'];
+                $result[$key]['date_active'] = $coupon['PERSONAL_COUPON_USER_COUPONS_UF_DATE_ACTIVE_TO']->toString();
             
                 $actionTypeText = array_keys($promoCodesActionType[$coupon['UF_PROMO_CODE']])[0];
             
