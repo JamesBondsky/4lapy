@@ -342,7 +342,11 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     protected function buildResponseFromRawResponse($rawResult): SoftChequeResponse
     {
-        $rawResult = $rawResult['ProcessRequestInfoResult']['Responses']['ChequeResponse'];
+        if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
+            $rawResult = $rawResult['ProcessRequestInfoResult']['Responses']['ChequeResponse'];
+        } else {
+            $rawResult = $rawResult->ProcessRequestInfoResult->Responses->ChequeResponse;
+        }
 
         $rawResult = \json_decode(\json_encode($rawResult), true);
 
@@ -376,7 +380,11 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     protected function buildResponseFromRawBalanceResponse($rawResult): BalanceResponse
     {
-        $rawResult = $rawResult['ProcessRequestInfoResult']['Responses']['BalanceResponse'];
+        if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
+            $rawResult = $rawResult['ProcessRequestInfoResult']['Responses']['BalanceResponse'];
+        } else {
+            $rawResult = $rawResult->ProcessRequestInfoResult->Responses->BalanceResponse;
+        }
 
         $rawResult = \json_decode(\json_encode($rawResult), true);
 
@@ -420,16 +428,18 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                     'arguments' => $arguments,
                 ]);
 
-                $resultRaw = $this->newExec(self::METHOD_EXECUTE, $arguments);
+                if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
+                    $resultRaw = $this->newExec(self::METHOD_EXECUTE, $arguments);
 
-                $result = $this->buildResponseFromRawResponse($resultRaw);
-
-//                $result = $this->buildResponseFromRawResponse(
-//                    $this->client->call(
-//                        self::METHOD_EXECUTE,
-//                        $arguments
-//                    )
-//                );
+                    $result = $this->buildResponseFromRawResponse($resultRaw);
+                } else {
+                    $result = $this->buildResponseFromRawResponse(
+                        $this->client->call(
+                            self::METHOD_EXECUTE,
+                            $arguments
+                        )
+                    );
+                }
             } catch (Exception $e) {
                 try {
                     /** @noinspection PhpUndefinedFieldInspection */
@@ -476,15 +486,18 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         $cacheKey = \json_encode(['cardNumber' => $card->getNumber()]);
         if ($noCache || !$this->results[$cacheKey]) {
             try {
-                $resultRaw = $this->newExec(self::METHOD_EXECUTE, $this->buildParametersFromBalanceRequest($balanceRequest));
+                if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
+                    $resultRaw = $this->newExec(self::METHOD_EXECUTE, $this->buildParametersFromBalanceRequest($balanceRequest));
 
-                $result = $this->buildResponseFromRawBalanceResponse($resultRaw);
-//                $result = $this->buildResponseFromRawBalanceResponse(
-//                    $this->client->call(
-//                        self::METHOD_EXECUTE,
-//                        $this->buildParametersFromBalanceRequest($balanceRequest)
-//                    )
-//                );
+                    $result = $this->buildResponseFromRawBalanceResponse($resultRaw);
+                } else {
+                    $result = $this->buildResponseFromRawBalanceResponse(
+                        $this->client->call(
+                            self::METHOD_EXECUTE,
+                            $this->buildParametersFromBalanceRequest($balanceRequest)
+                        )
+                    );
+                }
             } catch (Exception $e) {
                 try {
                     /** @noinspection PhpUndefinedFieldInspection */
