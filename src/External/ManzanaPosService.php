@@ -527,7 +527,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         /** @var \GuzzleHttp\Client $guzzleClient */
         $guzzleClient = App::getInstance()->getContainer()->get('manzana.guzzle');
 
-        $serviceUrl = getenv('MANZANA_SERVICE_URL');
+        $serviceUrl = getenv('MANZANA_POS_SERVICE_URL');
         $serviceHeaderHost = getenv('MANZANA_SERVICE_HEADER_HOST');
 
         $options = [
@@ -541,7 +541,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             $options['headers']['Host'] = $serviceHeaderHost;
         }
 
-        $resultBody = $guzzleClient->post($serviceUrl . '/pos', $options);
+        $resultBody = $guzzleClient->post($serviceUrl, $options);
 
         try {
             $result = (string)$resultBody->getBody();
