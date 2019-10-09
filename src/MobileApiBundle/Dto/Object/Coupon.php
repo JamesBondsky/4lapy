@@ -12,6 +12,27 @@ use JMS\Serializer\Annotation as Serializer;
 class Coupon
 {
     /**
+     * Не доступен
+     *
+     * @var int
+     */
+    const NOT_AVAILABLE   = 0;
+    
+    /**
+     * Применить
+     *
+     * @var int
+     */
+    const ENABLE   = 1;
+    
+    /**
+     * Отменить
+     *
+     * @var int
+     */
+    const DISABLE   = 2;
+    
+    /**
      * @Serializer\SerializedName("id")
      * @Serializer\Type("string")
      * @var string

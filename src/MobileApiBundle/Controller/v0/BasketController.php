@@ -153,7 +153,7 @@ class BasketController extends BaseController
                             ->setText($coupon['custom_title'])
                             ->setDiscount($coupon['discount_value'])
                             ->setDateActive($coupon['PERSONAL_COUPON_USER_COUPONS_UF_DATE_ACTIVE_TO']->toString())
-                            ->setActionType(2)
+                            ->setActionType(Coupon::DISABLE)
                     );
                 }
             }
