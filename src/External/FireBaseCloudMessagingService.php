@@ -16,12 +16,12 @@ use paragraph1\phpFCM\Notification;
 class FireBaseCloudMessagingService
 {
     const API_KEY = 'AAAAxDpl7KU:APA91bF5dwjOWylTSf7v5CzXcWUkVdZIYHyoj78W1uhfo5TOXXuNrJDCMC7loFO2xnAiw1sFz0khQaZuNgLuLr2La9cGjkA88YpM0zB2QDmavShPJ-sFbZd2jmMrLp1Ki9fJS8T6_WWE';
-
+    
     /**
      * @var HttpClient
      */
     protected $transport;
-
+    
     /**
      * FireBaseCloudMessagingService constructor.
      */
@@ -29,7 +29,7 @@ class FireBaseCloudMessagingService
     {
         $this->transport = new HttpClient();
     }
-
+    
     /**
      * @param $token
      * @param $messageText
@@ -38,30 +38,37 @@ class FireBaseCloudMessagingService
      * @return \Psr\Http\Message\ResponseInterface
      * @throws FireBaseCloudMessagingException
      */
-    public function sendNotification($token, $messageText, $messageId, $messageType)
+    public function sendNotification($token, $messageText, $messageId, $messageType, $messageUrl = '')
     {
         $client = new Client();
         $client->setApiKey(static::API_KEY);
         $client->injectHttpClient(new HttpClient());
-
+        
         $message = new Message();
         $message->addRecipient(new Device($token));
+        echo '<pre>';
+        print_r($messageText);
+        echo '</pre>';
+        die;
         $message->setData([
             'body' => [
                 // Обязательная часть (названия полей в данном случае важно) :
-                'aps' => [
+                'aps'     => [
+                    
                     'badge' => 1, // красный кружок на иконке приложения с количеством оповещений
+                    'title' => 'Информация', //@todo заголовок
                     'alert' => $messageText, // текст, который будет показан пользователю в push- сообщении
                     'sound' => 'default', // можно указать звук при получении пуша
                 ],
                 // Опции
                 'options' => [
-                    'id' => $messageId, // Идентификатор события
-                    'type'=> $messageType // Тип события
-                ]
-            ]
+                    'id'   => $messageId, // Идентификатор события
+                    'url'  => $messageUrl, //@todo путь к картинке
+                    'type' => $messageType // Тип события
+                ],
+            ],
         ]);
-
+        
         $response = $client->send($message);
         if ($response->getStatusCode() !== 200) {
             throw new FireBaseCloudMessagingException($response->getReasonPhrase(), $response->getStatusCode());

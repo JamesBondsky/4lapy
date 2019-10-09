@@ -249,10 +249,22 @@ class PushEventService
 
         if (count($pushEvents) > 0) {
             foreach ($pushEvents as $pushEvent) {
+                echo '<pre>';
+                print_r($pushEvent->getMessageText());
+                echo '</pre>';
+                die;
                 try {
                     $message = new Message($pushEvent->getMessageText());
 
-                    $message->setOption('badge', 1);
+                    $message->setOption('category', 1);
+                    $message->setOption('mutable-content', 1);
+                    $message->setOption('alert', [
+                        'title' => 'Начисление баллов',
+                        'body' => 'Вам начислены баллы'
+                    ]);
+                    $message->setOption('sound', 'default');
+                    $message->setOption('badge', 2);
+    
                     $message->setOption('sound', '');
                     $message->setOption('custom', [
                         'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
@@ -279,6 +291,7 @@ class PushEventService
                     $deviceArr = new DeviceCollection([
                         $device
                     ]);
+
                     $push = new Push($adapter, $deviceArr, $message);
 
                     $pushManager->add($push);
@@ -305,7 +318,7 @@ class PushEventService
             }
 
             $haveThrow = false;
-
+ 
             foreach ($response as $responseItem) {
                 if ($responseItem['token'] != 0) {
                     $haveThrow = true;
