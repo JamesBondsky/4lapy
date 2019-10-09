@@ -3,6 +3,7 @@
 namespace FourPaws\ManzanaApiBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
 use FourPaws\Helpers\PhoneHelper;
@@ -217,6 +218,52 @@ class ManzanaApiService
         }
 
         return (new CouponsResponse())->setMessages($result);
+    }
+
+    /**
+     * @param array $couponsIds
+     * @throws PersonalBundleInvalidArgumentException
+     */
+    public function deleteCoupons(array $couponsIds): void
+    {
+        $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
+
+        foreach ($couponsIds as $couponId) {
+            if ($couponId > 0) {
+                $personalOffersService->deleteCouponUserLink($couponId);
+            }
+        }
+    }
+
+    /**
+     * Для "обновления" купона удаляет старый и добавляет новый (так значительно надежнее, чем делать логику изменения всей цепочки данных)
+     *
+     * @param array $coupons
+     * @return CouponsResponse
+     * @throws PersonalBundleInvalidArgumentException
+     * @throws \Bitrix\Main\Db\SqlQueryException
+     */
+    public function updateCoupons(array $coupons): CouponsResponse
+    {
+        if (!$coupons) {
+            throw new InvalidArgumentException(InvalidArgumentException::ERRORS[1], 1);
+        }
+
+        $conn = Application::getConnection();
+        $conn->startTransaction();
+
+        try {
+            $this->deleteCoupons(array_keys($coupons));
+
+            $addedCoupons = $this->addCoupons($coupons);
+
+            $conn->commitTransaction();
+        } catch (\Exception $e) {
+            $conn->rollbackTransaction();
+            throw $e;
+        }
+
+        return $addedCoupons;
     }
 
     /**

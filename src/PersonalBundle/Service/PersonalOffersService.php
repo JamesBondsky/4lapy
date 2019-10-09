@@ -613,6 +613,19 @@ class PersonalOffersService
     }
 
     /**
+     * @param int $linkId
+     * @throws InvalidArgumentException
+     */
+    public function deleteCouponUserLink(int $linkId): void
+    {
+        if ($linkId <= 0) {
+            throw new InvalidArgumentException(__METHOD__ . '. Не удалось удалить привязку купона к пользователю. $linkId: ' . $linkId);
+        }
+
+        $this->personalCouponUsersManager::delete($linkId);
+    }
+
+    /**
      * @param string $promoCode
      *
      * @throws InvalidArgumentException
