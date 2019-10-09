@@ -744,6 +744,12 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function getCardsByContactId($contactId): array
     {
         $result = $this->newExec(__METHOD__, func_get_args());
+        //FIXME
+        if (count($result['Card']) > 20) {
+            $result = [$result['Card']];
+        } else {
+            $result = $result['Card'];
+        }
         $cards = $this->serializer->deserialize(json_encode(['Cards' => $result]), CardsByContractCards::class, 'json');
         $cardsArray = $cards->cards->toArray();
 
