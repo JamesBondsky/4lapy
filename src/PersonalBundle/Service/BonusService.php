@@ -210,6 +210,9 @@ class BonusService
             if ($isActiveCardGettingNeeded) {
                 /** @var ArrayCollection $cards */
                 $cards = $contact->cards;
+                if (!$cards) {
+                    $cards = new ArrayCollection();
+                }
                 if (!$cards->isEmpty()) {
                     foreach ($cards as $userCard) {
                         $card = $manzanaService->getCardInfo($userCard->cardNumber, $contact->contactId);
