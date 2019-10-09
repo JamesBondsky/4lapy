@@ -147,45 +147,6 @@ class OrderCalculate
     }
     
     /**
-     * @return string
-     */
-    public function getPromoCodeResult(): string
-    {
-        return $this->promoCodeResult;
-    }
-    
-    /**
-     * @param string $promoCodeResult
-     *
-     * @return OrderCalculate
-     */
-    public function setPromoCodeResult(string $promoCodeResult): OrderCalculate
-    {
-        $this->promoCodeResult = $promoCodeResult;
-        return $this;
-    }
-    
-    /**
-     * @return string
-     */
-    public function getPromoCodeDescription(): string
-    {
-        return $this->promoCodeDescription;
-    }
-    
-    
-    /**
-     * @param string $promoCodeDescription
-     *
-     * @return OrderCalculate
-     */
-    public function setPromoCodeDescription(string $promoCodeDescription): OrderCalculate
-    {
-        $this->promoCodeDescription = $promoCodeDescription;
-        return $this;
-    }
-    
-    /**
      * @return bool
      */
     public function getHasCoupons(): bool
