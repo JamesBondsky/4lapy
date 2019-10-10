@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\ManzanaApiBundle\Dto\Object\Coupon;
 use FourPaws\ManzanaApiBundle\Dto\Object\CouponIssue;
@@ -114,9 +115,12 @@ class ManzanaApiService
 
     /**
      * @param Coupon[] $coupons
+     * @param bool|null $isSendNotifications
      * @return CouponsResponse
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\LoaderException
      */
-    public function addCoupons(array $coupons): CouponsResponse
+    public function addCoupons(array $coupons, ?bool $isSendNotifications = false): CouponsResponse
     {
         if (!$coupons) {
             throw new InvalidArgumentException(InvalidArgumentException::ERRORS[1], 1);
@@ -201,7 +205,38 @@ class ManzanaApiService
                         ],
                     ],
                 ];
-                $personalOffersService->importOffers($offerId, $couponsArray, false);
+                $newCouponsInfo = $personalOffersService->importOffers($offerId, $couponsArray, false);
+
+                /** @var UserService $userService */
+                $userService = App::getInstance()->getContainer()->get(UserSearchInterface::class);
+
+                // На первый взгляд, эти два вызова метода можно объединить, но разработчик метода сказал,
+                // что там есть какие-то нюансы, поэтому лучше использовать два отдельных вызова
+                if ($isSendNotifications) {
+                    // Добавление в очередь пушей о начале и окончании действия купона
+                    $userService->sendNotifications(
+                        [$userId],
+                        $offerId,
+                        null,
+                        $coupon->getPromoCode(),
+                        $coupon->getStartDate(),
+                        $coupon->getEndDate(),
+                        false,
+                        'ID'
+                    );
+                    // Отправка email о новом купоне
+                    $userService->sendNotifications(
+                        [$userId],
+                        $offerId,
+                        ExpertsenderService::PERSONAL_OFFER_COUPON_START_SEND_EMAIL,
+                        $coupon->getPromoCode(),
+                        $coupon->getStartDate(),
+                        $coupon->getEndDate(),
+                        true,
+                        'ID',
+                        $newCouponsInfo[$coupon->getPromoCode()]['couponId']
+                    );
+                }
 
                 $result[] = (new Message())
                     ->setMessageId($coupon->getMessageId())

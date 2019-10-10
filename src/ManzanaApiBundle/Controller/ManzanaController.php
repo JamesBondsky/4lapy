@@ -164,7 +164,7 @@ class ManzanaController extends Controller
             if ($couponsWithManzanaIds) {
                 $result->setMessages(array_merge(
                     $result->getMessages(),
-                    $this->manzanaApiService->addCoupons($couponsWithManzanaIds)->getMessages()
+                    $this->manzanaApiService->addCoupons($couponsWithManzanaIds, true)->getMessages()
                 ));
             }
 

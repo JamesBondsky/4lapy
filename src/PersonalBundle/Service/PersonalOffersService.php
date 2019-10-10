@@ -290,10 +290,11 @@ class PersonalOffersService
      * @param int $offerId
      * @param array $coupons
      * @param bool $useOldLinkingMethod В новом методе связывания используются два ключа - users для массива пользователей, к которым привязать промокод, и coupon для расширенной информации о купоне. В старом способе связывания возможно указывать только пользователей
+     * @return array
      * @throws InvalidArgumentException
      * @throws \Bitrix\Main\ObjectException
      */
-    public function importOffers(int $offerId, array $coupons, bool $useOldLinkingMethod = false): void
+    public function importOffers(int $offerId, array $coupons, bool $useOldLinkingMethod = false): array
     {
         if ($offerId <= 0)
         {
@@ -302,6 +303,7 @@ class PersonalOffersService
 
         $promoCodes = array_keys($coupons);
         $promoCodes = array_filter(array_map('trim', $promoCodes));
+        $result = [];
         foreach ($promoCodes as $promoCode)
         {
             $couponId = $this->personalCouponManager::add([
@@ -318,12 +320,21 @@ class PersonalOffersService
             } else {
                 $userIds = $couponData['users'];
             }
+            $usersCouponsIds = [];
             foreach ($userIds as $userId)
             {
-                $this->linkCouponToUser($couponId, $userId, $couponData['coupon'] ?? []);
+                $couponLinkId = $this->linkCouponToUser($couponId, $userId, $couponData['coupon'] ?? []);
+                $usersCouponsIds[$userId] = $couponLinkId;
             }
+
+            $result[$promoCode] = [
+                'couponId' => $couponId,
+                'users' => $usersCouponsIds
+            ];
             unset($couponId);
         }
+
+        return $result;
     }
 
     /**
@@ -591,16 +602,17 @@ class PersonalOffersService
      * @param int $couponId
      * @param int $userId
      * @param array $coupon
+     * @return int
      * @throws \Bitrix\Main\ObjectException
      * @throws InvalidArgumentException
      */
-    public function linkCouponToUser(int $couponId, int $userId, array $coupon = []): void
+    public function linkCouponToUser(int $couponId, int $userId, array $coupon = []): int
     {
         if ($couponId <= 0 || $userId <= 0) {
             throw new InvalidArgumentException(__FUNCTION__ . '. Не удалось привязать купон к пользователю. $couponId: ' . $couponId . '. $userId: ' . $userId);
         }
 
-        $this->personalCouponUsersManager::add([
+        $addResult = $this->personalCouponUsersManager::add([
             'UF_USER_ID' => $userId,
             'UF_COUPON' => $couponId,
             'UF_DATE_CREATED' => new DateTime(),
@@ -610,6 +622,8 @@ class PersonalOffersService
             'UF_DATE_ACTIVE_TO' => $coupon['dateTimeActiveTo'],
             'UF_MANZANA_ID' => $coupon['manzanaId'],
         ]);
+
+        return $addResult->getId();
     }
 
     /**
@@ -1499,9 +1513,10 @@ class PersonalOffersService
      *
      * @param array $coupon
      * @param array $offer
+     * @param bool|null $useMinusSign
      * @return string
      */
-    public function getCouponTitle(array $coupon, array $offer): string
+    public function getCouponTitle(array $coupon, array $offer, ?bool $useMinusSign = true): string
     {
         $couponTitle = '';
         $discount = '';
@@ -1517,7 +1532,7 @@ class PersonalOffersService
             $couponTitle = 'Купон';
         }
         if ($discount) {
-            $couponTitle = '-' . $discount;
+            $couponTitle = ($useMinusSign ? '-' : '') . $discount;
         }
 
         return $couponTitle;

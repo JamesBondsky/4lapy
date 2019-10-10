@@ -1268,14 +1268,19 @@ class UserService implements
     }
 
     /**
-     * @param array $userIds
+     * Рассылка пользователям уведомлений о персональных предложениях через push либо email
+     * @todo рефакторинг (много неочевидной логики замешано в один метод, куча аргументов (тоже с неочевидной логикой))
+     * @todo рефакторинг (этот метод по какой-то причине используется отдельно для пушей и отдельно для email, хотя и то, и то реализовано рядом.
+     *  Если использовать раздельно (в принципе, это правильно), то надо разделить методы и не делать повторных запросов к базе (сейчас одни и те же запросы по два раза летят для каждого юзера)
+     * @todo рефакторинг (смотри fixme/todo в теле метода)
+     * @param array $userIds Название вводит в заблуждение, в этом поле можно указывать значения и из других полей (см. $field)
      * @param int $idEvents
      * @param int|null $emailId
      * @param string $promocode
      * @param \DateTime $startDate
      * @param \DateTime|null $lastDate
      * @param bool|null $isOnlyEmail
-     * @param string|null $field
+     * @param string|null $field Поле, по значениям которого искать пользователя
      * @param int|null $promocodeId
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -1285,24 +1290,38 @@ class UserService implements
      * @throws \Bitrix\Main\LoaderException
      * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
      */
-    public function sendNotifications(array $userIds, int $idEvents, ?int $emailId, string $promocode, \DateTime $startDate, ?\DateTime $lastDate, ?bool $isOnlyEmail = false, ?string $field = 'LOGIN', ?int $promocodeId = null)
+    public function sendNotifications(
+        array $userIds,
+        int $idEvents,
+        ?int $emailId,
+        string $promocode,
+        \DateTime $startDate,
+        ?\DateTime $lastDate,
+        ?bool $isOnlyEmail = false,
+        ?string $field = 'LOGIN',
+        ?int $promocodeId = null
+    )
     {
         $container = App::getInstance()->getContainer();
         $renderer = $container->get('templating');
         $this->personalOffersService = $container->get('personal_offers.service');
 
+        //FIXME всё, что связано с userIds и field в этом методе, сделано очень запутанно. Реализация чрезмерно усложнена на ровном месте. Надо рефакторить
         if ($isOnlyEmail) {
             $field = 'ID';
         }
 
-        $users = $this->userRepository->findBy([$field => $userIds]);
-
         $userIdsOrig = $userIds;
+        if ($field !== 'ID') {
+            if ($userIds) {
+                $users = $this->userRepository->findBy(['=' . $field => $userIds]);
 
-        $userIds = [];
+                $userIds = [];
 
-        foreach ($users as $user) {
-            $userIds[] = $user->getId();
+                foreach ($users as $user) {
+                    $userIds[] = $user->getId();
+                }
+            }
         }
 
         $userIdsOrig = array_filter($userIdsOrig, function ($item) {
@@ -1310,7 +1329,7 @@ class UserService implements
         });
 
         if (count($userIdsOrig) > 0 and $field == 'LOGIN') {
-            $users = $this->userRepository->findBy(['PERSONAL_PHONE' => $userIdsOrig]);
+            $users = $this->userRepository->findBy(['=PERSONAL_PHONE' => $userIdsOrig]);
             foreach ($users as $user) {
                 $userIds[] = $user->getId();
             }
@@ -1320,6 +1339,8 @@ class UserService implements
             return;
         }
 
+        //FIXME отрефакторить. Здесь по ID пользователей находятся все записи в таблице и затем из них снова формируется такой же массив id пользователей в $userIdByPush.
+        // Если цель - проверить наличие сессий в таблице, то достаточно найти первую запись с таким ID. Зачем перебирать всю таблицу?
         $filter = ['=USER_ID' => $userIds];
         $query = ApiUserSessionTable::query()->addSelect('USER_ID')->setFilter($filter);
 
@@ -1345,6 +1366,7 @@ class UserService implements
         $textStart = $renderer->render('FourPawsSaleBundle:Push:coupon.new.start.html.php');
         $textLast = $renderer->render('FourPawsSaleBundle:Push:coupon.last.start.html.php');
 
+        // Отправка пушей
         if (!$isOnlyEmail && count($userIdByPush) > 0) {
             $hlblock = \Bitrix\HighloadBlock\HighloadBlockTable::getList([
                 'filter' => [
@@ -1375,7 +1397,7 @@ class UserService implements
             $pushMessageLast = clone $pushMessage;
 
             if ($lastDate instanceof \DateTime) {
-                $pushMessageLast->setStartSend($lastDate->modify('-4 day'));
+                $pushMessageLast->setStartSend((clone $lastDate)->modify('-4 day'));
             }
             $pushMessageLast->setMessage($textLast);
 
@@ -1398,6 +1420,7 @@ class UserService implements
             }
         }
 
+        // Отправка почтовых уведомлений
         if ($emailId) {
             $userIdByEmail = $userIds;
             $users = $this->userRepository->findBy(['ID' => $userIdByEmail]);
@@ -1419,13 +1442,17 @@ class UserService implements
             $expertSender = $container->get('expertsender.service');
 
             $couponDescription = $offerFields->get('PREVIEW_TEXT');
-            $couponDateActiveTo = $offerFields->get('PROPERTY_ACTIVE_TO_VALUE');
+            if ($lastDate && DateTime::createFromPhp($lastDate) < new DateTime('01.01.3000')) { // Дата, с которой Manzana устанавливает дату окончания действия бесконечных купонов)
+                $couponDateActiveTo = $lastDate->format('d.m.Y');
+            } elseif (!$lastDate) {
+                $couponDateActiveTo = $offerFields->get('PROPERTY_ACTIVE_TO_VALUE');
+            }
             $discountValue = $offerFields->get('PROPERTY_DISCOUNT_VALUE');
 
             if ($discountValue) {
                 $discountValue .= '%';
-            } else {
-                $discountValue = $offerFields->get('PROPERTY_DISCOUNT_CURRENCY_VALUE') . ' руб';
+            } elseif ($discountCurrencyValue = $offerFields->get('PROPERTY_DISCOUNT_CURRENCY_VALUE')) {
+                $discountValue = $discountCurrencyValue . ' руб';
             }
 
             foreach ($users as $user) {
