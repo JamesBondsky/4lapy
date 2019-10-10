@@ -119,11 +119,11 @@ class ApiPushEvent
     
     /**
      * @var string
-     * @Serializer\SerializedName("MESSAGE_URL")
+     * @Serializer\SerializedName("PHOTO_URL")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"read"})
      */
-    protected $messageUrl;
+    protected $photoUrl;
     
     /**
      * @var int
@@ -279,9 +279,9 @@ class ApiPushEvent
     /**
      * @return string
      */
-    public function getMessageUrl(): string
+    public function getPhotoUrl(): string
     {
-        return $this->messageUrl;
+        return $this->photoUrl;
     }
     
     /**

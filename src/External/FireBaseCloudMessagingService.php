@@ -46,23 +46,20 @@ class FireBaseCloudMessagingService
         
         $message = new Message();
         $message->addRecipient(new Device($token));
-        echo '<pre>';
-        print_r($messageTitle);
-        echo '</pre>';
-        die;
+
         $message->setData([
             'body' => [
                 // Обязательная часть (названия полей в данном случае важно) :
                 'aps'     => [
                     'badge' => 1, // красный кружок на иконке приложения с количеством оповещений
-                    'title' => $messageTitle, //@todo заголовок
+                    'title' => $messageTitle,
                     'alert' => $messageText, // текст, который будет показан пользователю в push- сообщении
                     'sound' => 'default', // можно указать звук при получении пуша
                 ],
                 // Опции
                 'options' => [
                     'id'   => $messageId, // Идентификатор события
-                    'url'  => $messageUrl, //@todo путь к картинке
+                    'url'  => $messageUrl,
                     'type' => $messageType // Тип события
                 ],
             ],
