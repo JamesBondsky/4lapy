@@ -10,11 +10,11 @@ use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketPropertyItem;
@@ -42,8 +42,6 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
-use FourPaws\DeliveryBundle\Exception\RuntimeException;
-use FourPaws\DeliveryBundle\Service\DeliveryScheduleResultService;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\DostavistaService;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
@@ -63,9 +61,7 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\LocationService;
-use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\AddressService;
-use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -77,8 +73,6 @@ use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
-use FourPaws\SaleBundle\Repository\OrderStatusRepository;
-use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
@@ -321,10 +315,8 @@ class OrderService implements LoggerAwareInterface
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
-     * @throws BitrixProxyException
      * @throws DeliveryNotAvailableException
      * @throws DeliveryNotFoundException
-     * @throws LoaderException
      * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
@@ -332,7 +324,7 @@ class OrderService implements LoggerAwareInterface
      * @throws OrderCreateException
      * @throws StoreNotFoundException
      * @throws UserMessageException
-     * @throws \Bitrix\Main\ObjectException
+     * @throws ObjectException
      */
     public function initOrder(
         OrderStorage $storage,
@@ -717,6 +709,8 @@ class OrderService implements LoggerAwareInterface
                 $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
             }
         }
+
+        $this->basketService->setDC01AmountProperty($basket);
 
         /**
          * Задание способов оплаты
