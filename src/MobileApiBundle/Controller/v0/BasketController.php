@@ -116,23 +116,23 @@ class BasketController extends BaseController
     public function getUserCartAction(UserCartRequest $userCartRequest)
     {
         $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
-        
+
         $storage   = $this->orderStorageService->getStorage();
         $promoCode = $couponStorage->getApplicableCoupon() ?: $storage->getPromoCode();
-        
+
         if ($promoCode) {
             try {
                 /** @see \FourPaws\SaleBundle\AjaxController\BasketController::applyPromoCodeAction */
                 $this->manzana->setPromocode($promoCode);
                 $this->manzana->calculate();
-                
+        
                 $storage->setPromoCode($promoCode);
                 $this->orderStorageService->updateStorage($storage);
             } catch (ManzanaPromocodeUnavailableException $e) {
                 $promoCode = '';
             }
         }
-        
+
         $basketProducts = $this->apiBasketService->getBasketProducts(false);
         $orderParameter = $this->apiOrderService->getOrderParameter($basketProducts);
         $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts);
@@ -143,22 +143,17 @@ class BasketController extends BaseController
         if ($coupons) {
             $orderCalculate->setHasCoupons(true);
         }
-        
+
         if ($promoCode && $coupons) {
             foreach ($coupons as $coupon) {
+
                 if ($promoCode == $coupon['UF_PROMO_CODE']) {
-                    $date = $coupon['PERSONAL_COUPON_USER_COUPONS_UF_DATE_ACTIVE_TO'];
-                    
-                    if ($date) {
-                        $date = $date->toString();
-                    }
-                    
                     $orderCalculate->setCoupon(
                         (new Coupon())->setId($coupon['ID'])
                             ->setPromocode($promoCode)
                             ->setText($coupon['custom_title'])
                             ->setDiscount($coupon['discount_value'])
-                            ->setDateActive($date)
+                            ->setDateActive($coupon['custom_date_to'])
                             ->setActionType(Coupon::DISABLE)
                     );
                 }
@@ -469,7 +464,7 @@ class BasketController extends BaseController
         
         $couponService = Application::getInstance()->getContainer()->get('coupon.service');
         $result        = $couponService->getUserCouponsAction();
-        
+
         return (new UserCouponsResponse())->setUserCoupons($result);
     }
 }

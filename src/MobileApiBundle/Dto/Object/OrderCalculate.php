@@ -63,14 +63,6 @@ class OrderCalculate
     protected $stampsDetails = [];
 
     /**
-     * Используемый промокод
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("promocode_result")
-     * @var string
-     */
-    protected $promoCodeResult = '';
-
-    /**
      * Можно ли связаться с клиентом по телефону
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("isPhoneCallAvailable")
@@ -172,25 +164,6 @@ class OrderCalculate
     public function setHasCoupons(bool $hasCoupons): OrderCalculate
     {
         $this->hasCoupons = $hasCoupons;
-        return $this;
-    }
-    
-    /**
-     * @return string
-     */
-    public function getPromoCodeResult(): string
-    {
-        return $this->promoCodeResult;
-    }
-
-    /**
-     * @param string $promoCodeResult
-     *
-     * @return OrderCalculate
-     */
-    public function setPromoCodeResult(string $promoCodeResult): OrderCalculate
-    {
-        $this->promoCodeResult = $promoCodeResult;
         return $this;
     }
 
