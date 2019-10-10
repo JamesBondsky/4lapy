@@ -79,7 +79,6 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
 
         $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'A';
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 3600;
-        $params['CACHE_TIME'] = 0;
 
         // подстраховка для идентификатора кеша
         $params['ORDER_ID'] = $params['ORDER']->getId();
@@ -239,7 +238,7 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
             $this->arResult['FINISHED'] = true;
         } else if (in_array($statusId, PersonalOrderService::STATUS_CANCEL, true)) {
             $this->arResult['CANCELED'] = true;
-        } else {
+        } else if ((new DateTime())->getTimestamp() - $personalOrder->getDateInsert()->getTimestamp() < 2592000) { // заказ автоматически отменияется в SAP через 30 дней
             $this->arResult['CAN_CANCEL'] = true;
         }
     }

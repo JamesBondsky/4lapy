@@ -12,7 +12,7 @@ use Bitrix\Sale\StatusLangTable;
 class AddPickupExtendOrderStatus20191008125808 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
 {
 
-    protected $description = 'Добавляет статут заказа "продление хранения"';
+    protected $description = 'Добавляет статут заказа "Срок хранения продлен"';
 
     protected const STATUS_ID = 'X';
 
@@ -27,8 +27,8 @@ class AddPickupExtendOrderStatus20191008125808 extends \Adv\Bitrixtools\Migratio
     protected const STATUS_LANG_DATA = [
         'STATUS_ID' => self::STATUS_ID,
         'LID' => 'ru',
-        'NAME' => 'Продлить хранение',
-        'DESCRIPTION' => 'Продлить хранение',
+        'NAME' => 'Срок хранения продлен',
+        'DESCRIPTION' => 'Срок хранения продлен',
     ];
 
     public function up(): bool

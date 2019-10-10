@@ -317,15 +317,13 @@ if ($orderSubscribe) {
                     </a>
                     <?php $isFirstButton = false; ?>
                 <?php } ?>
-                <?php if ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) { ?>
+                <?php if ($arResult['CAN_CANCEL'] || $arResult['CANCELED']) { ?>
                     <div class="b-link b-link__button <?= ($arResult['CAN_CANCEL']) ? 'js-cancel-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?>" data-order-id="<?= $order->getId() ?>">
                         <span class="b-link__text js-link-text">
                             <?php if ($arResult['CAN_CANCEL']) { ?>
                                 Отменить заказ
                             <?php } else if ($arResult['CANCELED']) { ?>
                                 Отменен
-                            <?php } else if ($arResult['FINISHED']) { ?>
-                                Выполнен
                             <?php } ?>
                         </span>
                     </div>
