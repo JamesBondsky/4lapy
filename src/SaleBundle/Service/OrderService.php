@@ -415,17 +415,30 @@ class OrderService implements LoggerAwareInterface
                 } elseif ($diff > 0) {
                     $toUpdate['QUANTITY'] = $resultByOffer->getAmount();
 
-                    $this->basketService->addOfferToBasket(
-                        $basketItem->getProductId(),
-                        $diff,
-                        [
-                            'CUSTOM_PRICE' => 'Y',
-                            'DELAY' => BitrixUtils::BX_BOOL_TRUE,
-                            'PROPS' => $basketItem->getPropertyCollection()->getPropertyValues(),
-                        ],
-                        false,
-                        $basket
-                    );
+                    /*
+                     * $this->basketService->addOfferToBasket нельзя использовать, так как он обновит QUANTITY
+                     * у элемента корзины, а нам нужно создать новый basketItem с DELAY => 'Y'
+                     */
+
+                    $delayBasketItem = $basket->createItem('catalog', $basketItem->getProductId());
+
+                    $delayBasketItem->setFields([
+                        'CUSTOM_PRICE' => BitrixUtils::BX_BOOL_TRUE,
+                        'DELAY' => BitrixUtils::BX_BOOL_TRUE,
+                    ]);
+
+                    $delayItemPropertyCollection = $delayBasketItem->getPropertyCollection();
+
+                    foreach ($basketItem->getPropertyCollection()->getPropertyValues() as $property) {
+                        if (in_array($property['CODE'], ['CATALOG.XML_ID', 'PRODUCT.XML_ID'])) {
+                            $delayItemProperty = $delayItemPropertyCollection->createItem();
+                            $delayItemProperty->setFields([
+                                'NAME' => $property['NAME'],
+                                'CODE' => $property['CODE'],
+                                'VALUE' => $property['VALUE'],
+                            ]);
+                        }
+                    }
                 }
 
                 if (!empty($toUpdate)) {
