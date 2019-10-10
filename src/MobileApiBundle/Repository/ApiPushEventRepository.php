@@ -85,7 +85,7 @@ class ApiPushEventRepository implements ApiPushEventRepositoryInterface
             ->addSelect('MESSAGE.UF_TYPE', 'MESSAGE_TYPE')
             ->addSelect('MESSAGE.UF_EVENT_ID', 'EVENT_ID')
             ->addSelect('MESSAGE.UF_TITLE', 'MESSAGE_TITLE')
-            ->addSelect('MESSAGE.UF_PHOTO', 'PHOTO_URL');
+            ->addSelect('URL', 'PHOTO_URL');
         if ($criteria) {
             $query->setFilter($criteria);
         }
@@ -104,6 +104,7 @@ class ApiPushEventRepository implements ApiPushEventRepositoryInterface
         if ($dbResult->getSelectedRowsCount() === 0) {
             return [];
         }
+
         return $this->transformer->fromArray(
             $dbResult->fetchAll(),
             'array<' . ApiPushEvent::class . '>',

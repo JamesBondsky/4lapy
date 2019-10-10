@@ -191,16 +191,18 @@ class PushEventService
                     $pushEvent->getPushToken(),
                     $pushEvent->getMessageText(),
                     $pushEvent->getEventId(),
+                    $pushEvent->getMessageTypeEntity()->getXmlId(),
                     $pushEvent->getMessageTitle(),
-                    $pushEvent->getPhotoUrl(),
-                    $pushEvent->getMessageTypeEntity()->getXmlId()
+                    $pushEvent->getPhotoUrl()
                 );
+
                 $execCode = $response->getStatusCode() === 200 ? ApiPushEvent::EXEC_SUCCESS_CODE : ApiPushEvent::EXEC_FAIL_CODE;
                 $pushEvent->setSuccessExec($execCode);
                 $pushEvent->setServiceResponseStatus($response->getStatusCode());
             } catch (\Exception $e) {
                 $pushEvent->setServiceResponseError($e->getMessage());
             }
+
             $this->apiPushEventRepository->update($pushEvent);
         }
     }
@@ -254,8 +256,8 @@ class PushEventService
                         'aps'      => [
                             'mutable-content' => 1,
                             'alert'           => [
-                                'title' => $pushEvent->getMessageTitle(),
-                                'body'  => $pushEvent->getMessageText(),
+                               'title' => $pushEvent->getMessageTitle(),
+                               'body'  => $pushEvent->getMessageText(),
                             ],
                             'sound'           => 'default',
                             'badge'           => 2,
@@ -270,7 +272,7 @@ class PushEventService
                     }
                     
                     $message = new Message('', $data);
-                   
+
                     try {
                         $device = new Device($pushEvent->getPushToken());
                     } catch (AdapterException $adapterException) {

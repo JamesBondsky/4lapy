@@ -122,6 +122,7 @@ class ApiPushEvent
      * @Serializer\SerializedName("PHOTO_URL")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $photoUrl;
     
@@ -271,15 +272,15 @@ class ApiPushEvent
     /**
      * @return string
      */
-    public function getMessageTitle(): string
+    public function getMessageTitle()
     {
         return $this->messageTitle;
     }
     
     /**
-     * @return string
+     * @return int
      */
-    public function getPhotoUrl(): string
+    public function getPhotoUrl()
     {
         return $this->photoUrl;
     }
