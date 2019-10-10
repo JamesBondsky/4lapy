@@ -24,7 +24,7 @@ class HlBlockPushMessagesAdd20191009121450 extends \Adv\Bitrixtools\Migration\Sp
                 ],
         ]);
         $entityId  = 'HLBLOCK_' . $hlblockId;
-    
+        
         $helper->UserTypeEntity()->addUserTypeEntityIfNotExists($entityId, 'UF_TITLE', [
             'FIELD_NAME'        => 'UF_TITLE',
             'USER_TYPE_ID'      => 'string',
@@ -71,61 +71,36 @@ class HlBlockPushMessagesAdd20191009121450 extends \Adv\Bitrixtools\Migration\Sp
                     'ru' => null,
                 ],
         ]);
-    
+        
         $helper->UserTypeEntity()->addUserTypeEntityIfNotExists($entityId, 'UF_PHOTO', [
             'FIELD_NAME'        => 'UF_PHOTO',
-            'USER_TYPE_ID'      => 'string',
+            'USER_TYPE_ID'      => 'file',
             'XML_ID'            => 'UF_PHOTO',
-            'SORT'              => '50',
+            'SORT'              => 90,
             'MULTIPLE'          => 'N',
             'MANDATORY'         => 'N',
             'SHOW_FILTER'       => 'N',
             'SHOW_IN_LIST'      => 'Y',
             'EDIT_IN_LIST'      => 'Y',
             'IS_SEARCHABLE'     => 'N',
-            'SETTINGS'          =>
-                [
-                    'SIZE'          => 20,
-                    'ROWS'          => 1,
-                    'REGEXP'        => null,
-                    'MIN_LENGTH'    => 0,
-                    'MAX_LENGTH'    => 0,
-                    'DEFAULT_VALUE' => null,
-                ],
-            'EDIT_FORM_LABEL'   =>
-                [
-                    'en' => '',
-                    'ru' => 'Ссылка на фото',
-                ],
-            'LIST_COLUMN_LABEL' =>
-                [
-                    'en' => '',
-                    'ru' => 'Ссылка на фото',
-                ],
-            'LIST_FILTER_LABEL' =>
-                [
-                    'en' => '',
-                    'ru' => 'Ссылка на фото',
-                ],
-            'ERROR_MESSAGE'     =>
-                [
-                    'en' => null,
-                    'ru' => null,
-                ],
-            'HELP_MESSAGE'      =>
-                [
-                    'en' => null,
-                    'ru' => null,
-                ],
+            'EDIT_FORM_LABEL'   => [
+                'ru' => 'Картинка',
+            ],
+            'LIST_COLUMN_LABEL' => [
+                'ru' => 'Картинка',
+            ],
+            'LIST_FILTER_LABEL' => [
+                'ru' => 'Картинка',
+            ],
         ]);
     }
     
     public function down()
     {
         $helper = new HelperManager();
-    
+        
         $hlblockId = $helper->Hlblock()->getHlblockId('PushMessages');
-        $entityId = 'HLBLOCK_' . $hlblockId;
+        $entityId  = 'HLBLOCK_' . $hlblockId;
         if ($entityId) {
             $helper->UserTypeEntity()->deleteUserTypeEntityIfExists($entityId, 'UF_TITLE');
             $helper->UserTypeEntity()->deleteUserTypeEntityIfExists($entityId, 'UF_PHOTO');

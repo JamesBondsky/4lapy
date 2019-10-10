@@ -38,7 +38,7 @@ class FireBaseCloudMessagingService
      * @return \Psr\Http\Message\ResponseInterface
      * @throws FireBaseCloudMessagingException
      */
-    public function sendNotification($token, $messageText, $messageId, $messageType, $messageTitle = '', $messageUrl = '')
+    public function sendNotification($token, $messageText, $messageId, $messageType, $messageTitle = '', $photoUrl = '')
     {
         $client = new Client();
         $client->setApiKey(static::API_KEY);
@@ -59,7 +59,7 @@ class FireBaseCloudMessagingService
                 // Опции
                 'options' => [
                     'id'   => $messageId, // Идентификатор события
-                    'url'  => $messageUrl,
+                    'url'  => $photoUrl,
                     'type' => $messageType // Тип события
                 ],
             ],
