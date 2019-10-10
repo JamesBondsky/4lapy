@@ -3,7 +3,7 @@
 namespace Sprint\Migration;
 
 
-class Version20191009121450 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
+class HlBlockPushMessagesAdd20191009121450 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
 {
     
     protected $description = "";
@@ -31,7 +31,7 @@ class Version20191009121450 extends \Adv\Bitrixtools\Migration\SprintMigrationBa
             'XML_ID'            => 'UF_TITLE',
             'SORT'              => '15',
             'MULTIPLE'          => 'N',
-            'MANDATORY'         => 'Y',
+            'MANDATORY'         => 'N',
             'SHOW_FILTER'       => 'N',
             'SHOW_IN_LIST'      => 'Y',
             'EDIT_IN_LIST'      => 'Y',
@@ -78,7 +78,7 @@ class Version20191009121450 extends \Adv\Bitrixtools\Migration\SprintMigrationBa
             'XML_ID'            => 'UF_PHOTO',
             'SORT'              => '50',
             'MULTIPLE'          => 'N',
-            'MANDATORY'         => 'Y',
+            'MANDATORY'         => 'N',
             'SHOW_FILTER'       => 'N',
             'SHOW_IN_LIST'      => 'Y',
             'EDIT_IN_LIST'      => 'Y',

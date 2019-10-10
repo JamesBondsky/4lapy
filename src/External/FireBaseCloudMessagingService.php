@@ -38,7 +38,7 @@ class FireBaseCloudMessagingService
      * @return \Psr\Http\Message\ResponseInterface
      * @throws FireBaseCloudMessagingException
      */
-    public function sendNotification($token, $messageText, $messageId, $messageType, $messageUrl = '')
+    public function sendNotification($token, $messageText, $messageId, $messageType, $messageTitle = '', $messageUrl = '')
     {
         $client = new Client();
         $client->setApiKey(static::API_KEY);
@@ -47,16 +47,15 @@ class FireBaseCloudMessagingService
         $message = new Message();
         $message->addRecipient(new Device($token));
         echo '<pre>';
-        print_r($messageText);
+        print_r($messageTitle);
         echo '</pre>';
         die;
         $message->setData([
             'body' => [
                 // Обязательная часть (названия полей в данном случае важно) :
                 'aps'     => [
-                    
                     'badge' => 1, // красный кружок на иконке приложения с количеством оповещений
-                    'title' => 'Информация', //@todo заголовок
+                    'title' => $messageTitle, //@todo заголовок
                     'alert' => $messageText, // текст, который будет показан пользователю в push- сообщении
                     'sound' => 'default', // можно указать звук при получении пуша
                 ],
