@@ -147,12 +147,18 @@ class BasketController extends BaseController
         if ($promoCode && $coupons) {
             foreach ($coupons as $coupon) {
                 if ($promoCode == $coupon['UF_PROMO_CODE']) {
+                    $date = $coupon['PERSONAL_COUPON_USER_COUPONS_UF_DATE_ACTIVE_TO'];
+                    
+                    if ($date) {
+                        $date = $date->toString();
+                    }
+                    
                     $orderCalculate->setCoupon(
                         (new Coupon())->setId($coupon['ID'])
                             ->setPromocode($promoCode)
                             ->setText($coupon['custom_title'])
                             ->setDiscount($coupon['discount_value'])
-                            ->setDateActive($coupon['PERSONAL_COUPON_USER_COUPONS_UF_DATE_ACTIVE_TO']->toString())
+                            ->setDateActive($date)
                             ->setActionType(Coupon::DISABLE)
                     );
                 }
