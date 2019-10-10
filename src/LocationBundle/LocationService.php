@@ -469,7 +469,7 @@ class LocationService
             if (!($queryParams instanceof Query)) {
                 /** сразу в селект не добалять позиции с join - получать их позже - для скорости
                  * поиск по коду и только по названию без родителя будет быстрее */
-                $query = LocationTable::query()->setFilter($queryParams)->setSelect([
+                $query = LocationTable::query()->setOrder(['SORT' => 'asc'])->setFilter($queryParams)->setSelect([
                     'ID',
                     'CODE',
                     'DEPTH_LEVEL',

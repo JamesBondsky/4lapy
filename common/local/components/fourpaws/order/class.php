@@ -408,6 +408,20 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['URL'][$key] = $route->getPath();
         }
 
+        if (!$this->orderStorageService->validateDeliveryDate($storage)) {
+            $this->logger->error(sprintf('failed to validate DeliveryDate: %s', $storage->getDeliveryDate()), [
+                'user' => $storage->getId(),
+                'street' => $storage->getStreet(),
+                'house' => $storage->getHouse(),
+            ]);
+            $storage = $this->orderStorageService->clearDeliveryDate($storage);
+            $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+
+            if ($this->currentStep != OrderStorageEnum::AUTH_STEP) {
+                LocalRedirect($this->arResult['URL']['AUTH']);
+            }
+        }
+
         $realStep = $this->orderStorageService->validateStorage($storage, $this->currentStep);
         if ($realStep !== $this->currentStep) {
             if ($this->currentStep === OrderStorageEnum::PAYMENT_STEP && $_SESSION['ORDER_PAYMENT_URL']) {
