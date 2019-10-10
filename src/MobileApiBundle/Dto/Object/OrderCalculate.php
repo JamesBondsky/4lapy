@@ -19,7 +19,16 @@ class OrderCalculate
      * @var Price
      */
     protected $totalPrice;
-
+    
+    /**
+     * Купон
+     * @Serializer\SerializedName("personal_offer")
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Coupon")
+     * @Serializer\SkipWhenEmpty()
+     * @var Coupon
+     */
+    protected $coupon;
+    
     /**
      * Расшифровка финальной стоимости, список ОбъектДетализации[]
      * @Serializer\SerializedName("price_details")
@@ -35,6 +44,14 @@ class OrderCalculate
      * @var Detailing[]
      */
     protected $cardDetails = [];
+    
+    /**
+     * Еасть ли активные купоны
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("has_coupons")
+     * @var bool
+     */
+    protected $hasCoupons = false;
 
     /**
      * Расшифровка движений марок клиентов на текущий заказ, список ОбъектДетализацииМарок[]
@@ -137,7 +154,27 @@ class OrderCalculate
         $this->stampsDetails = $stampsDetails;
         return $this;
     }
-
+    
+    /**
+     * @return bool
+     */
+    public function getHasCoupons(): bool
+    {
+        return $this->hasCoupons;
+    }
+    
+    
+    /**
+     * @param bool $hasCoupons
+     *
+     * @return OrderCalculate
+     */
+    public function setHasCoupons(bool $hasCoupons): OrderCalculate
+    {
+        $this->hasCoupons = $hasCoupons;
+        return $this;
+    }
+    
     /**
      * @return string
      */
