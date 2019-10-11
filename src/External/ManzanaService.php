@@ -1165,7 +1165,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             $result = '';
         }
 
-        if ($result['success']) {
+        if ($result['success'] && !empty($result['response'])) {
             $result = $result['response'];
         } else {
             throw new Exception('Ошибка получения данных');
