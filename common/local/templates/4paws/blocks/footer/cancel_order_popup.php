@@ -6,7 +6,7 @@
     <div class="b-popup-action-order b-popup-action-order--popup" data-popup="cancel-order">
         <div class="b-popup-change-viewport__close js-close-popup"></div>
         <div class="b-popup-action-order b-popup-action-order-container js-info" style="display: flex;">
-            <h3 class="b-popup-action-order b-popup-action-order__title">Вы хотите отменть заказ?</h3>
+            <h3 class="b-popup-action-order b-popup-action-order__title">Вы хотите отменить заказ?</h3>
             <div class="b-popup-action-order b-popup-action-order-buttons">
                 <div class="b-popup-action-order b-popup-action-order__button b-popup-action-order__button-yes js-cancel-order">Да</div>
                 <div class="b-popup-action-order b-popup-action-order__button b-popup-action-order__button-no js-close-popup">Нет</div>

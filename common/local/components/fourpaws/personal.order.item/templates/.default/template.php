@@ -337,7 +337,7 @@ if ($orderSubscribe) {
                             <?php if ($arResult['CAN_EXTEND']) { ?>
                                 Продлить срок хранения
                             <?php } else if ($arResult['EXTENDED']) { ?>
-                                Срок хранения продлен
+                                Срок хранения продлен до 5-ти дней
                             <?php } ?>
                         </span>
                     </div>
