@@ -463,9 +463,11 @@ class LocationService
     public function findLocationNew(
         $queryParams,
         int $limit = 0,
-        bool $needPath = true
-    ): array {
-        $cacheFinder = function () use ($queryParams, $limit, $needPath) {
+        bool $needPath = true,
+        bool $sortByType = false
+    ): array
+    {
+        $cacheFinder = function () use ($queryParams, $limit, $needPath, $sortByType) {
             if (!($queryParams instanceof Query)) {
                 /** сразу в селект не добалять позиции с join - получать их позже - для скорости
                  * поиск по коду и только по названию без родителя будет быстрее */
@@ -485,9 +487,13 @@ class LocationService
             if ($limit > 0) {
                 $query->setLimit($limit);
             }
-            $res = $query->exec();
+
             $locations = [];
+            $locationsSortedByType = [];
             $typeList = [];
+
+            $res = $query->exec();
+
             while ($item = $res->fetch()) {
                 $typeList[$item['TYPE_ID']][] = $item['ID'];
                 /** для получения родетелей от запроса в цикле не уйти -
@@ -505,8 +511,8 @@ class LocationService
                         ->setSelect([
                             'ID',
                             'CODE',
-                            'DISPLAY'    => 'NAME.NAME',
-                            '_TYPE_ID'   => 'TYPE.ID',
+                            'DISPLAY' => 'NAME.NAME',
+                            '_TYPE_ID' => 'TYPE.ID',
                             '_TYPE_CODE' => 'TYPE.CODE',
                             '_TYPE_NAME' => 'TYPE.NAME.NAME',
                         ])
@@ -522,35 +528,51 @@ class LocationService
                 }
                 $locations[$item['ID']] = $item;
             }
+
             if (!empty($locations)) {
                 $locationIds = array_keys($locations);
-                $res = NameLocationTable::query()->setSelect([
-                    'NAME',
-                    'LOCATION_ID',
-                ])->setFilter(['=LOCATION_ID' => $locationIds])->exec();
+                $res = NameLocationTable::query()
+                    ->setSelect([
+                        'NAME',
+                        'LOCATION_ID',
+                    ])
+                    ->setFilter(['=LOCATION_ID' => $locationIds])
+                    ->exec();
+
                 while ($item = $res->fetch()) {
                     $locations[$item['LOCATION_ID']]['NAME'] = $item['NAME'];
                 }
-                $res = TypeTable::query()->setSelect([
-                    'ID',
-                    'CODE',
-                    'DISPLAY' => 'NAME.NAME',
-                ])->setFilter(['=ID' => array_keys($typeList)])->exec();
+
+                $res = TypeTable::query()
+                    ->setOrder(['DISPLAY_SORT' => 'asc'])
+                    ->setSelect([
+                        'ID',
+                        'CODE',
+                        'DISPLAY' => 'NAME.NAME',
+                    ])
+                    ->setFilter(['=ID' => array_keys($typeList)])
+                    ->exec();
+
                 while ($item = $res->fetch()) {
                     if (\is_array($typeList[$item['ID']])) {
                         foreach ($typeList[$item['ID']] as $itemId) {
                             $locations[$itemId]['TYPE'] = [
-                                'ID'   => $item['ID'],
+                                'ID' => $item['ID'],
                                 'CODE' => $item['CODE'],
                                 'NAME' => $item['DISPLAY'],
                             ];
+
+                            if ($sortByType) {
+                                $locationsSortedByType[$locations[$itemId]['ID']] = $locations[$itemId];
+                            }
                         }
                     }
                 }
             } else {
                 return [];
             }
-            return $locations;
+
+            return ($sortByType) ? $locationsSortedByType : $locations;
         };
         try {
             return (new BitrixCache())
