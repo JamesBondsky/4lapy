@@ -847,6 +847,6 @@ class OrderController extends Controller implements LoggerAwareInterface
             return JsonErrorResponse::createWithData('', ['errors' => ['При продлении срока хранения произошла ошибка']]);
         }
 
-        return JsonSuccessResponse::createWithData('Срок хранения заказа успешно продлен', []);
+        return JsonSuccessResponse::createWithData('Срок хранения заказа успешно продлен до 5-ти дней', []);
     }
 }

@@ -154,7 +154,7 @@ $(document).ready(function () {
                 if (json.success) {
                     msg = json.message;
 
-                    extendOrderItem.find('.js-link-text').text('Срок хранения продлен');
+                    extendOrderItem.find('.js-link-text').text('Срок хранения продлен до 5-ти дней');
 
                     extendOrderItem.unbind();
                 } else {
