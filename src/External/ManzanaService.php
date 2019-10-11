@@ -454,11 +454,11 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         try {
             if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
                 $result = $this->newExec(__METHOD__, func_get_args());
+                $clients = $this->serializer->deserialize(json_encode(['Clients' => $result]), Clients::class, 'json');
             } else {
                 $result = $this->execute(self::CONTRACT_CLIENT_SEARCH, $bag->getParameters());
+                $clients = $this->serializer->deserialize($result, Clients::class, 'xml');
             }
-
-            $clients = $this->serializer->deserialize(json_encode(['Clients' => $result]), Clients::class, 'json');
         } catch (Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
@@ -653,7 +653,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             } else {
                 $result = $this->execute(self::CONTRACT_CARD_VALIDATE, $bag->getParameters());
                 /** @var CardValidateResult $cardValidateResult */
-                $clients = $this->serializer->deserialize($result, Clients::class, 'xml');
+                $cardValidateResult = $this->serializer->deserialize($result, Clients::class, 'xml');
             }
         } catch (\Throwable $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
@@ -779,7 +779,11 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             $result = $this->execute(self::CONTRACT_CARDS, $bag->getParameters());
             $cards = $this->serializer->deserialize($result, CardsByContractCards::class, 'xml')->cards->toArray();
         }
-        $cardsArray = $cards->cards->toArray();
+        if (isset($cards->cards)) {
+            $cardsArray = $cards->cards->toArray();
+        } else {
+            $cardsArray = [];
+        }
 
         return $cardsArray;
     }
@@ -1165,7 +1169,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             $result = '';
         }
 
-        if ($result['success'] && !empty($result['response'])) {
+        if ($result['success']) {
             $result = $result['response'];
         } else {
             throw new Exception('Ошибка получения данных');
