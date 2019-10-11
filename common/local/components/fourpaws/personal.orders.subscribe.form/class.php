@@ -732,7 +732,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                                 /** @var OrderSubscribeSingle $singleSubscribeInactive */
                                 $singleSubscribeInactive = $this->orderSubscribeSingleRepository->findBy(['UF_SUBSCRIBE_ID' => $orderSubscribe->getId(), 'UF_ACTIVE' => 0])->first();
                                 if($singleSubscribeInactive){
-                                    $singleSubscribeInactive->setActive(true);
+                                    $singleSubscribeInactive->setActive(1);
                                     $this->orderSubscribeSingleRepository->setEntity($singleSubscribeInactive)->update();
                                 } else {
                                     $this->setExecError('subscribeAction', 'Не удалось активировать единичную доставку', 'subscriptionSingleUpdate');
