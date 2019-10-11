@@ -2524,7 +2524,9 @@ class OrderService implements LoggerAwareInterface
             }
 
             $sapStatus = StatusService::STATUS_CANCELED;
-            $this->sapOrderService->sendOrderStatus($order, $sapStatus);
+            /** @var SapOrderService $sapOrderService */
+            $sapOrderService = Application::getInstance()->getContainer()->get(SapOrderService::class);
+            $sapOrderService->sendOrderStatus($order, $sapStatus);
             $connection->commitTransaction();
         } catch (\Exception $e) {
             $connection->rollbackTransaction();
@@ -2609,7 +2611,9 @@ class OrderService implements LoggerAwareInterface
             }
 
             $sapStatus = StatusService::STATUS_PICKUP_EXTEND;
-            $this->sapOrderService->sendOrderStatus($order, $sapStatus);
+            /** @var SapOrderService $sapOrderService */
+            $sapOrderService = Application::getInstance()->getContainer()->get(SapOrderService::class);
+            $sapOrderService->sendOrderStatus($order, $sapStatus);
             $connection->commitTransaction();
         } catch (\Exception $e) {
             $connection->rollbackTransaction();

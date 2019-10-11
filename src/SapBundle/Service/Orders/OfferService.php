@@ -38,7 +38,7 @@ class OfferService implements LoggerAwareInterface
      */
     protected $stampService;
     /**
-     * @var OrderService
+     * @var SaleOrderService
      */
     protected $orderService;
     /**
