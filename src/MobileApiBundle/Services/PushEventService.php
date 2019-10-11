@@ -266,9 +266,10 @@ class PushEventService
                         'type'     => $pushEvent->getMessageTypeEntity()->getXmlId(),
                         'id'       => $pushEvent->getEventId(),
                     ];
-                    
+
                     if ($data['photourl']) {
                         $data['aps']['category'] = 'PHOTO';
+                        $data['photourl'] = getenv('SITE_URL') . $data['photourl'];
                     }
                     
                     $message = new Message('', $data);

@@ -12,6 +12,7 @@ use paragraph1\phpFCM\Client;
 use paragraph1\phpFCM\Message;
 use paragraph1\phpFCM\Recipient\Device;
 use paragraph1\phpFCM\Notification;
+use FourPaws\App\Application;
 
 class FireBaseCloudMessagingService
 {
@@ -59,7 +60,7 @@ class FireBaseCloudMessagingService
                 // Опции
                 'options' => [
                     'id'   => $messageId, // Идентификатор события
-                    'url'  => $photoUrl,
+                    'url'  => getenv('SITE_URL') . $photoUrl,
                     'type' => $messageType // Тип события
                 ],
             ],
