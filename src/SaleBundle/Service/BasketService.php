@@ -372,6 +372,7 @@ class BasketService implements LoggerAwareInterface
                     $parsedStampsLevelKey = $this->stampService->parseLevelKey($maxStampsLevelKey);
                     $stampsUsed = $parsedStampsLevelKey['discountStamps'] * $maxStampsLevelPropValue['value'];
                     $usedStampsInfo = [
+                        'exchangeName' => $maxStampsLevelKey,
                         'stampsUsed' => $stampsUsed,
                         'discountValue' => $parsedStampsLevelKey['discountValue'],
                         'discountType' => $parsedStampsLevelKey['discountType'],
@@ -1770,7 +1771,7 @@ class BasketService implements LoggerAwareInterface
      * @throws ArgumentException
      * @throws NotImplementedException
      */
-    private function getBasketPropertyValueByCode(BasketItem $item, string $code): string
+    public function getBasketPropertyValueByCode(BasketItem $item, string $code): string
     {
         return $item->getPropertyCollection()->getPropertyValues()[$code]['VALUE'] ?? '';
     }
