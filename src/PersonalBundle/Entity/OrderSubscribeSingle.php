@@ -83,7 +83,7 @@ class OrderSubscribeSingle extends BaseEntity
 
     /**
      * @var bool
-     * @Serializer\Type("bool")
+     * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_ACTIVE")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
