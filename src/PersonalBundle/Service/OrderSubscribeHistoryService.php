@@ -382,7 +382,7 @@ class OrderSubscribeHistoryService
                 'filter' => [
                     '=ORDER.CANCELED' => 'N',
                     '=UF_ORIGIN_ORDER_ID' => (int)$orderSubscribe->getOrderId(),
-                    // '>=UF_DELIVERY_DATE' => new Date(),
+                    '>=UF_DELIVERY_DATE' => new Date(),
                 ],
                 'runtime' => [
                     new ReferenceField(

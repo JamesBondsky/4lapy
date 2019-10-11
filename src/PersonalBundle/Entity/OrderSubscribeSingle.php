@@ -129,7 +129,7 @@ class OrderSubscribeSingle extends BaseEntity
     /**
      * @return array
      */
-    public function getItems(): array
+    public function getItems()
     {
         return \unserialize($this->items);
     }
@@ -165,7 +165,7 @@ class OrderSubscribeSingle extends BaseEntity
     /**
      * @return mixed
      */
-    public function getSubscribe(): array
+    public function getSubscribe()
     {
         return \unserialize($this->getData());
     }
