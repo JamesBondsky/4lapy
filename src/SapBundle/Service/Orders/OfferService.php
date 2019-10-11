@@ -12,7 +12,7 @@ use Bitrix\Sale\Order;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Service\BasketService;
-use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
 use FourPaws\SapBundle\Dto\Out\Orders\OrderOffer;
 use FourPaws\SapBundle\Enum\SapOrder;
 use Psr\Log\LoggerAwareInterface;
@@ -51,12 +51,12 @@ class OfferService implements LoggerAwareInterface
      *
      * @param BasketService $basketService
      * @param StampService $stampService
-     * @param OrderService $orderService
+     * @param SaleOrderService $orderService
      */
     public function __construct(
         BasketService $basketService,
         StampService $stampService,
-        OrderService $orderService
+        SaleOrderService $orderService
     )
     {
         $this->basketService = $basketService;
