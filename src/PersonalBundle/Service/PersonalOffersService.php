@@ -64,6 +64,8 @@ class PersonalOffersService
 
     public const DISCOUNT_PREFIX = 'personal_offer';
 
+    public const INFINITE_COUPON_DATE_FORMATTED = '01.01.3000'; // Дата, с которой Manzana устанавливает дату окончания действия бесконечных купонов
+
     /** @var DataManager */
     protected $personalCouponManager;
     /** @var DataManager */
@@ -865,7 +867,7 @@ class PersonalOffersService
             }
 
             if ($offerActiveTo) {
-                if ($offerActiveTo < new DateTime('01.01.3000')) { // Дата, с которой Manzana устанавливает дату окончания действия бесконечных купонов
+                if ($offerActiveTo < new DateTime($this::INFINITE_COUPON_DATE_FORMATTED)) { // Дата, с которой Manzana устанавливает дату окончания действия бесконечных купонов
                     $offer['custom_date_active_to'] =  $offerActiveTo->format('d.m.Y');
                 } else {
                     $offer['custom_date_active_to'] = '';
@@ -1550,7 +1552,7 @@ class PersonalOffersService
     {
         /** @var DateTime $couponDateTo */
         if ($couponDateTo = $coupon['PERSONAL_COUPON_USER_COUPONS_UF_DATE_ACTIVE_TO']) {
-            if ($couponDateTo < new DateTime('01.01.3000')) { // Дата, с которой Manzana устанавливает дату окончания действия бесконечных купонов
+            if ($couponDateTo < new DateTime($this::INFINITE_COUPON_DATE_FORMATTED)) { // Дата, с которой Manzana устанавливает дату окончания действия бесконечных купонов
                 $text =  $couponDateTo->format('d.m.Y');
             } else {
                 $text = '';

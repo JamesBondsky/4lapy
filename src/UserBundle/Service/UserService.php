@@ -1396,28 +1396,35 @@ class UserService implements
 
             $pushMessageLast = clone $pushMessage;
 
-            if ($lastDate instanceof \DateTime) {
+            $isInfiniteCoupon = $lastDate instanceof \DateTime && DateTime::createFromPhp($lastDate) >= new DateTime($this->personalOffersService::INFINITE_COUPON_DATE_FORMATTED); // Дата, с которой Manzana устанавливает дату окончания действия бесконечных купонов)
+            if ($lastDate instanceof \DateTime && !$isInfiniteCoupon) {
                 $pushMessageLast->setStartSend((clone $lastDate)->modify('-4 day'));
             }
-            $pushMessageLast->setMessage($textLast);
+            if (!$isInfiniteCoupon) {
+                $pushMessageLast->setMessage($textLast);
+            }
 
             $data = $this->transformer->toArray(
                 $pushMessage,
                 SerializationContext::create()->setGroups([CrudGroups::CREATE])
             );
 
-            $dataLast = $this->transformer->toArray(
-                $pushMessageLast,
-                SerializationContext::create()->setGroups([CrudGroups::CREATE])
-            );
+            if (!$isInfiniteCoupon) {
+                $dataLast = $this->transformer->toArray(
+                    $pushMessageLast,
+                    SerializationContext::create()->setGroups([CrudGroups::CREATE])
+                );
+            }
 
             if (count($userIdByPush) > 0) {
                 $hlBlockPushMessages = \FourPaws\App\Application::getHlBlockDataManager('bx.hlblock.pushmessages');
                 $hlBlockPushMessages->add($data);
-                if ($lastDate instanceof \DateTime) {
+                if ($lastDate instanceof \DateTime && !$isInfiniteCoupon) {
                     $hlBlockPushMessages->add($dataLast);
                 }
             }
+
+            unset($isInfiniteCoupon);
         }
 
         // Отправка почтовых уведомлений
@@ -1442,7 +1449,7 @@ class UserService implements
             $expertSender = $container->get('expertsender.service');
 
             $couponDescription = $offerFields->get('PREVIEW_TEXT');
-            if ($lastDate && DateTime::createFromPhp($lastDate) < new DateTime('01.01.3000')) { // Дата, с которой Manzana устанавливает дату окончания действия бесконечных купонов)
+            if ($lastDate instanceof \DateTime && DateTime::createFromPhp($lastDate) < new DateTime($this->personalOffersService::INFINITE_COUPON_DATE_FORMATTED)) { // Дата, с которой Manzana устанавливает дату окончания действия бесконечных купонов)
                 $couponDateActiveTo = $lastDate->format('d.m.Y');
             } elseif (!$lastDate) {
                 $couponDateActiveTo = $offerFields->get('PROPERTY_ACTIVE_TO_VALUE');
