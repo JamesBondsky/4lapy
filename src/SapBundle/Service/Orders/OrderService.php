@@ -54,6 +54,7 @@ use FourPaws\SapBundle\Dto\In\Orders\OrderOffer as OrderOfferIn;
 use FourPaws\SapBundle\Dto\Out\Orders\DeliveryAddress as OutDeliveryAddress;
 use FourPaws\SapBundle\Dto\Out\Orders\Order as OrderDtoOut;
 use FourPaws\SapBundle\Dto\Out\Orders\OrderOffer;
+use FourPaws\SapBundle\Dto\Out\Orders\OrderStatus as OrderStatusDtoOut;
 use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\SapBundle\Exception\CantCreateBasketItem;
 use FourPaws\SapBundle\Exception\NotFoundOrderDeliveryException;
@@ -1363,5 +1364,27 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         /** @var UserFieldEnumValue $regularityFastDeliv */
         $regularityFastDeliv = $scheduleResultService->getRegularityEnumByXmlId(ScheduleResultService::FAST_DELIV);
         return $regularityName == $regularityFastDeliv->getValue();
+    }
+
+    /**
+     * @param Order $order
+     * @param string $status
+     */
+    public function sendOrderStatus($order, $status)
+    {
+        $container = Application::getInstance()->getContainer();
+        $this->setOutPath($container->getParameter('sap.directory.out'));
+        $this->setOutPrefix('ORDER_STATUS_');
+
+        $orderDto = new OrderStatusDtoOut();
+        $orderDto
+            ->setId($order->getField('ACCOUNT_NUMBER'))
+            ->setStatus($status)
+            ->setDeliveryType($this->getDeliveryTypeCode($order));
+
+        $xml = $this->serializer->serialize($orderDto, 'xml');
+        $message = new SourceMessage($this->getMessageId($order), OrderStatusDtoOut::class, $xml);
+
+        $this->filesystem->dumpFile($this->getFileName($order), $message->getData());
     }
 }
