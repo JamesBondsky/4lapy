@@ -909,7 +909,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         }
 
         if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
-            $resultBody = $guzzleClient->post($serviceUrl . '/update', $options);
+            $resultBody = $guzzleClient->post($serviceUrl . 'update', $options);
         } else {
             /** @noinspection MissingService */
             $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_update_producer');
