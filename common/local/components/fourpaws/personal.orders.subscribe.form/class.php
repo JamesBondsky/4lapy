@@ -730,10 +730,12 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                                 $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
 
                                 /** @var OrderSubscribeSingle $singleSubscribeInactive */
-                                $singleSubscribeInactive = $this->orderSubscribeSingleRepository->findBy(['UF_SUBSCRIBE_ID' => $orderSubscribe->getId(), 'UF_ACTIVE' => 0])->first();
+                                $singleSubscribeInactive = $this->orderSubscribeSingleRepository->findBy(['=UF_SUBSCRIBE_ID' => $orderSubscribe->getId(), '=UF_ACTIVE' => 0])->first();
+                                $this->log()->error(print_r($singleSubscribeInactive, true));
                                 if($singleSubscribeInactive){
                                     $singleSubscribeInactive->setActive(1);
-                                    $this->orderSubscribeSingleRepository->setEntity($singleSubscribeInactive)->update();
+                                    $result = $this->orderSubscribeSingleRepository->setEntity($singleSubscribeInactive)->update();
+                                    $this->log()->error(print_r($result, true));
                                 } else {
                                     $this->setExecError('subscribeAction', 'Не удалось активировать единичную доставку', 'subscriptionSingleUpdate');
                                 }
