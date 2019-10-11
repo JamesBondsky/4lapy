@@ -41,6 +41,10 @@ class OfferService implements LoggerAwareInterface
      * @var OrderService
      */
     protected $orderService;
+    /**
+     * @var bool
+     */
+    protected $isPseudoAction = false;
 
     /**
      * OrderService constructor.
@@ -76,11 +80,7 @@ class OfferService implements LoggerAwareInterface
             return;
         }
 
-        $quantity = (int)$basketItem->getQuantity();
-        $dc01Amount = (int)$this->basketService->getBasketPropertyValueByCode($basketItem, 'DC01_AMOUNT'); // количество товара на DC01, если заказ берется у поставщика
-        $hasBonus = (int)$this->basketService->getBasketPropertyValueByCode($basketItem, 'HAS_BONUS');
-
-        [$stampsProductAmount, $stampsLevelInfo] = $this->getStampsInfo($basketItem);
+        $this->setPseudoAction($basketItem);
 
         /* эти параметры будут одинаковые у всех элементов после разделения */
         $offer = (new OrderOffer())
@@ -89,56 +89,50 @@ class OfferService implements LoggerAwareInterface
             ->setUnitOfMeasureCode(SapOrder::UNIT_PTC_CODE)
             ->setDeliveryFromPoint($this->orderService->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
 
+        /* Может измениться внутри разделения по местоположению, выставляем здесь, чтобы можно было запустить разделение в цикле */
+        $offer->setDeliveryShipmentPoint($this->getShipmentPlaceCode($basketItem, $order));
+
+        /* Переменные, от значения которых зависит разделение товара */
+        $quantity = (int)$basketItem->getQuantity();
+        $dc01Amount = (int)$this->basketService->getBasketPropertyValueByCode($basketItem, 'DC01_AMOUNT'); // количество товара на DC01, если заказ берется у поставщика
+        $hasBonus = (int)$this->basketService->getBasketPropertyValueByCode($basketItem, 'HAS_BONUS');
+
+        [$stampsProductAmount, $stampsLevelInfo] = $this->getStampsInfo($basketItem);
+
         /*
          * Три уровня разделения
          * 1-ое разделение может быть из-за того, что часть товара берется с DC01, а другая часть заказывается у постовщика
          * 2-ое может быть из-за того, что за часть товара начисляются бонусы, а за другую часть - нет (может быть внутри первого)
          * 3-е разделение происходит из-за того, что за за часть товара списны марки, а за другую часть - нет (может быть внутри двух предыдущих)
          */
-        if ($this->detachOfferByLevel(self::LEVEL_SHIPMENT, $dc01Amount, $collection, $offer, $position, $quantity, $hasBonus, $stampsProductAmount, $stampsLevelInfo)) {
-            $quantity -= $dc01Amount;
-        }
+        $detachLevels = [
+            self::LEVEL_SHIPMENT => 'dc01Amount',
+            self::LEVEL_BONUS => 'hasBonus',
+            self::LEVEL_STAMPS => 'stampsProductAmount',
+        ];
 
-        if ($quantity <= 0) {
-            return;
-        }
+        /* Непосредственно разделение товара */
+        foreach ($detachLevels as $detachLevel => $detachAmount) {
+            if ($this->detachOfferByLevel($detachLevel, $$detachAmount, $collection, $offer, $position, $quantity, $hasBonus, $stampsProductAmount, $stampsLevelInfo)) {
+                $quantity -= $dc01Amount;
 
-        $offer->setDeliveryShipmentPoint($this->basketService->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE'));
-
-        if ($this->detachOfferByLevel(self::LEVEL_BONUS, $hasBonus, $collection, $offer, $position, $quantity, $hasBonus, $stampsProductAmount, $stampsLevelInfo)) {
-            $quantity -= $hasBonus;
-        }
-
-        if ($quantity <= 0) {
-            return;
-        }
-
-        if ($this->detachOfferByLevel(self::LEVEL_STAMPS, $stampsProductAmount, $collection, $offer, $position, $quantity, $hasBonus, $stampsProductAmount, $stampsLevelInfo)) {
-            $quantity -= $stampsProductAmount;
-        }
-
-        if ($quantity <= 0) {
-            return;
+                if ($quantity <= 0) {
+                    return;
+                }
+            }
         }
 
         $offer
             ->setPosition($position)
-            ->setQuantity($quantity);
-
-        $isPseudoActionPropValue = $this->basketService->getBasketPropertyValueByCode($basketItem, 'IS_PSEUDO_ACTION');
-        $isPseudoAction = BitrixUtils::BX_BOOL_TRUE === $isPseudoActionPropValue;
-        if ($isPseudoAction) {
-            $offer->setChargeBonus(true);
-        } else {
-            $offer->setChargeBonus((bool)$hasBonus);
-        }
+            ->setQuantity($quantity)
+            ->setChargeBonus($this->getChargeBonusValue($hasBonus));
 
         $collection->add($offer);
         $position++;
     }
 
     /**
-     * Разделение товара по месту откуда будет забран заказ
+     * Разделение товара
      *
      * @param int $level
      * @param int $detachAmount
@@ -174,7 +168,7 @@ class OfferService implements LoggerAwareInterface
             $detachedOffer
                 ->setPosition($position)
                 ->setQuantity($detachAmount)
-                ->setChargeBonus((bool)$hasBonus);
+                ->setChargeBonus($this->getChargeBonusValue($hasBonus));
 
             if ($stampsProductAmount > 0) {
                 $detachedOffer
@@ -182,16 +176,8 @@ class OfferService implements LoggerAwareInterface
                     ->setStampsQuantity($detachAmount * $stampsLevelInfo['discountStamps']);
             }
 
-            $hasBonus -= $detachAmount;
-            $stampsProductAmount -= $detachAmount;
-
-            if ($hasBonus < 0) {
-                $hasBonus = 0;
-            }
-
-            if ($stampsProductAmount < 0) {
-                $stampsProductAmount = 0;
-            }
+            $hasBonus = ($hasBonus > $detachAmount) ? ($hasBonus - $detachAmount) : 0;
+            $stampsProductAmount = ($stampsProductAmount > $detachAmount) ? ($stampsProductAmount - $detachAmount) : 0;
 
             $collection->add($detachedOffer);
             $position++;
@@ -235,5 +221,43 @@ class OfferService implements LoggerAwareInterface
                 'discountStamps' => $discountStamps,
             ],
         ];
+    }
+
+    /**
+     * @param $hasBonus
+     *
+     * @return bool
+     */
+    protected function getChargeBonusValue($hasBonus): bool
+    {
+        return ($this->isPseudoAction) ? true : (bool)$hasBonus;
+    }
+
+    /**
+     * @param BasketItem $basketItem
+     * @param Order $order
+     * @return string
+     * @throws ArgumentException
+     * @throws NotImplementedException
+     */
+    protected function getShipmentPlaceCode(BasketItem $basketItem, Order $order): string
+    {
+        $shipmentPlaceCode = $this->basketService->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE');
+        if (!$shipmentPlaceCode || empty($shipmentPlaceCode)) {
+            $shipmentPlaceCode = $this->orderService->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE');
+        }
+
+        return $shipmentPlaceCode;
+    }
+
+    /**
+     * @param BasketItem $basketItem
+     * @throws ArgumentException
+     * @throws NotImplementedException
+     */
+    protected function setPseudoAction(BasketItem $basketItem): void
+    {
+        $isPseudoActionPropValue = $this->basketService->getBasketPropertyValueByCode($basketItem, 'IS_PSEUDO_ACTION');
+        $this->isPseudoAction = BitrixUtils::BX_BOOL_TRUE === $isPseudoActionPropValue;
     }
 }
