@@ -95,13 +95,10 @@ class CityController extends Controller
      */
     public function getAddress(Request $request): JsonResponse
     {
-//        $content = json_decode($request->getContent());
-//
-//        $query = $content->query;
-//        $limit = intval($content->count);
+        $content = json_decode($request->getContent());
 
-        $limit = 20;
-        $query = 'Влади';
+        $query = $content->query;
+        $limit = intval($content->count);
 
         /**
          * Баг, когда местоположения имеют одинаковые названия
