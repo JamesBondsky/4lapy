@@ -16,7 +16,7 @@ class UserCartRequest implements SimpleUnserializeRequest, GetRequest
 {
     /**
      * Промокод
-     * @Serializer\SerializedName("promocode")
+     * @Serializer\SerializedName("promoCode")
      * @Serializer\Type("string")
      * @var string
      */
