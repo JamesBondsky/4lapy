@@ -103,7 +103,7 @@ class PushEventService
             ->setFilter([
                 'UF_ACTIVE'       => true,
                 '!UF_FILE'        => false,
-                '>=UF_START_SEND' => (new \Bitrix\Main\Type\DateTime())->add('-10 minutes')->format('d.m.Y H:i:00'),
+                // '>=UF_START_SEND' => (new \Bitrix\Main\Type\DateTime())->add('-10 minutes')->format('d.m.Y H:i:00'),
                 '<=UF_START_SEND' => (new \Bitrix\Main\Type\DateTime())->add('-10 minutes')->format('d.m.Y H:i:59'),
             ])
             ->setSelect([
@@ -111,7 +111,7 @@ class PushEventService
             ])
             ->setLimit(500)
             ->exec();
-        
+
         $pushMessages = $this->transformer->fromArray(
             $res->fetchAll(),
             'array<' . ApiPushMessage::class . '>'
