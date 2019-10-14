@@ -72,6 +72,49 @@ class HlBlockOrderSubscribeUpgrade20190905173304 extends \Adv\Bitrixtools\Migrat
 
         // ---
         $field = [
+            "FIELD_NAME" => "UF_DATA",
+            "USER_TYPE_ID" => "string",
+            "XML_ID" => "",
+            "SORT" => "100",
+            "MULTIPLE" => "N",
+            "MANDATORY" => "Y",
+            "SHOW_FILTER" => "N",
+            "SHOW_IN_LIST" => "Y",
+            "EDIT_IN_LIST" => "Y",
+            "IS_SEARCHABLE" => "N",
+            "SETTINGS" => [
+                "SIZE" => "20",
+                "ROWS" => "5",
+                "REGEXP" => "",
+                "MIN_LENGTH" => "0",
+                "MAX_LENGTH" => "0",
+                "DEFAULT_VALUE" => "",
+            ],
+            "EDIT_FORM_LABEL" => [
+                "ru" => "Данные о подписке",
+            ],
+            "LIST_COLUMN_LABEL" => [
+                "ru" => "Данные о подписке",
+            ],
+            "LIST_FILTER_LABEL" => [
+                "ru" => "Данные о подписке",
+            ],
+            "ERROR_MESSAGE" => [
+                "ru" => "",
+            ],
+            "HELP_MESSAGE" => [
+                "ru" => "",
+            ],
+        ];
+
+        $userTypeEntityHelper->addUserTypeEntityIfNotExists(
+            $entityId,
+            $field['FIELD_NAME'],
+            $field
+        );
+
+        // ---
+        $field = [
             "FIELD_NAME" => "UF_ITEMS",
             "USER_TYPE_ID" => "string",
             "XML_ID" => "",
