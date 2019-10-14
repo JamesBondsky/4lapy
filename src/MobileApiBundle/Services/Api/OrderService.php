@@ -859,6 +859,7 @@ class OrderService
     {
         /** @var DeliveryVariant $courierDelivery */
         /** @var DeliveryVariant $pickupDelivery */
+        $basketProducts = $this->apiBasketService->getBasketProducts(true);
         [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery] = $this->getDeliveryVariants();
         $result = [
             'pickup' => $pickupDelivery,
@@ -873,7 +874,6 @@ class OrderService
         }
 
         if ($courierDelivery->getAvailable()) {
-            $basketProducts = $this->apiBasketService->getBasketProducts(true);
             $orderStorage = $this->orderStorageService->getStorage();
             $deliveries = $this->orderStorageService->getDeliveries($orderStorage);
             $delivery = null;
