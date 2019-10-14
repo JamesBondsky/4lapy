@@ -713,14 +713,20 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                                 $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
 
                                 /** @var OrderSubscribeSingle $singleSubscribeInactive */
-                                $singleSubscribeInactive = $this->orderSubscribeSingleRepository->findBy(['=UF_SUBSCRIBE_ID' => $orderSubscribe->getId(), '=UF_ACTIVE' => 0])->first();
-                                $this->log()->error(print_r($singleSubscribeInactive, true));
+                                $singleSubscribeInactive = $this->orderSubscribeSingleRepository->findBy([
+                                        '=UF_SUBSCRIBE_ID' => $orderSubscribe->getId(),
+                                        '=UF_ACTIVE' => 0
+                                    ])->first();
                                 if($singleSubscribeInactive){
                                     $singleSubscribeInactive->setActive(1);
                                     $result = $this->orderSubscribeSingleRepository->setEntity($singleSubscribeInactive)->update();
-                                    $this->log()->error(print_r($result, true));
-                                } else {
-                                    $this->setExecError('subscribeAction', 'Не удалось активировать единичную доставку', 'subscriptionSingleUpdate');
+                                    if(!$result){
+                                        $this->setExecError(
+                                            'subscribeAction',
+                                            'Не удалось активировать единичную доставку',
+                                            'subscriptionSingleUpdate'
+                                        );
+                                    }
                                 }
 
                                 // при успешном обновлении нам нужно удалить ранее созданные,
@@ -825,6 +831,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     BitrixApplication::getConnection()->commitTransaction();
                 } else{
                     BitrixApplication::getConnection()->rollbackTransaction();
+                    $this->log()->error(__METHOD__.' ошибка выполнения: '.$this->getExecErrors());
                 }
             } else {
                 $this->log()->error(__METHOD__.' ошибка выполнения: '.$this->getExecErrors());
