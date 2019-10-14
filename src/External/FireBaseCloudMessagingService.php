@@ -60,12 +60,12 @@ class FireBaseCloudMessagingService
                 // Опции
                 'options' => [
                     'id'   => $messageId, // Идентификатор события
-                    'url'  => getenv('SITE_URL') . $photoUrl,
+                    'url'  => $photoUrl ? getenv('SITE_URL') . $photoUrl : '',
                     'type' => $messageType // Тип события
                 ],
             ],
         ]);
-        
+
         $response = $client->send($message);
         if ($response->getStatusCode() !== 200) {
             throw new FireBaseCloudMessagingException($response->getReasonPhrase(), $response->getStatusCode());
