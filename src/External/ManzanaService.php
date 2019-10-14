@@ -782,7 +782,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if (isset($cards->cards)) {
             $cardsArray = $cards->cards->toArray();
         } else {
-            if ($cards) {
+            if (count($cards) > 0) {
                 $cardsArray = $cards;
             } else {
                 $cardsArray = [];
