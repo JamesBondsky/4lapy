@@ -1964,6 +1964,7 @@ class OrderSubscribeService implements LoggerAwareInterface
             NotificationService::class
         );
         $notificationService->sendAutoUnsubscribeOrderMessage($orderSubscribe);
+        $notificationService->sendOrderSubscribeCancelMessage($orderSubscribe);
     }
 
     /**
