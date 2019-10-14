@@ -773,6 +773,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             } else {
                 $result = $result['Card'];
             }
+            $this->logger->info('$result new exec', [
+                'result' => $result
+            ]);
             $cards = $this->serializer->deserialize(json_encode(['Cards' => $result]), CardsByContractCards::class, 'json');
         } else {
             $bag = new ParameterBag(['contact_id' => $contactId]);
