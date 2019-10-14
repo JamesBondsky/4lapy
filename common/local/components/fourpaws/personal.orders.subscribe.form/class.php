@@ -826,9 +826,11 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 } else{
                     BitrixApplication::getConnection()->rollbackTransaction();
                 }
+            } else {
+                $this->log()->error(__METHOD__.' ошибка выполнения: '.$this->getExecErrors());
             }
         } else {
-            $this->log()->error(__METHOD__.' ошибка валидации');
+            $this->log()->error(__METHOD__.' ошибка валидации: '.$this->getFieldErrors());
         }
 
         $this->loadData();
@@ -1491,6 +1493,34 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $errorMsg = $this->prepareErrorMsg($errorMsg);
         $this->arResult['ERROR']['EXEC'][$errName] = new Error($errorMsg, $errCode);
         //$this->log()->debug(sprintf('$fieldName: %s; $errorMsg: %s; $errCode: %s', $fieldName, $errorMsg, $errCode));
+    }
+
+    /**
+     * @return string
+     */
+    protected function getExecErrors()
+    {
+        $result = '';
+
+        /** @var Error $error */
+        foreach ($this->arResult['ERROR']['EXEC'] as $errName => $error){
+            $result .= sprintf("\r\n %s: %s", $errName, $error->getMessage());
+        }
+        return $result;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getFieldErrors()
+    {
+        $result = '';
+
+        /** @var Error $error */
+        foreach ($this->arResult['ERROR']['FIELD'] as $errName => $error){
+            $result .= sprintf("\r\n %s: %s", $errName, $error->getMessage());
+        }
+        return $result;
     }
 
     /**
