@@ -133,7 +133,7 @@ class BasketController extends BaseController
             }
         }
 
-        $basketProducts = $this->apiBasketService->getBasketProducts(false);
+        $basketProducts = $this->apiBasketService->getBasketProducts(false, $promoCode);
         $orderParameter = $this->apiOrderService->getOrderParameter($basketProducts);
         $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts);
         
