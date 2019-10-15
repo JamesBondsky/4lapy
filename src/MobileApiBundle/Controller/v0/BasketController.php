@@ -115,10 +115,18 @@ class BasketController extends BaseController
      */
     public function getUserCartAction(UserCartRequest $userCartRequest)
     {
+        $promocodeForOldSupport = '';
+        
         $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
 
         $storage   = $this->orderStorageService->getStorage();
-        $promoCode = $couponStorage->getApplicableCoupon() ?: $storage->getPromoCode();
+    
+        $promoCode = $userCartRequest->getPromoCode();
+        
+        if (!$promoCode) {
+            $promoCode = $couponStorage->getApplicableCoupon() ?: $storage->getPromoCode();
+            $promocodeForOldSupport = $promoCode;
+        }
 
         if ($promoCode) {
             try {
@@ -133,18 +141,18 @@ class BasketController extends BaseController
             }
         }
 
-        $basketProducts = $this->apiBasketService->getBasketProducts(false, $promoCode);
+        $basketProducts = $this->apiBasketService->getBasketProducts(false, $promocodeForOldSupport);
         $orderParameter = $this->apiOrderService->getOrderParameter($basketProducts);
         $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts);
         
         $personalOffers = Application::getInstance()->getContainer()->get(PersonalOffersService::class);
         $coupons        = $personalOffers->getActiveUserCoupons($storage->getUserId())['coupons'];
         
-        if ($coupons) {
+        if ($coupons && $promocodeForOldSupport) {
             $orderCalculate->setHasCoupons(true);
         }
 
-        if ($promoCode && $coupons) {
+        if ($promoCode && $coupons && $promocodeForOldSupport) {
             foreach ($coupons as $coupon) {
 
                 if ($promoCode == $coupon['UF_PROMO_CODE']) {
