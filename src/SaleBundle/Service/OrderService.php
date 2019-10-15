@@ -202,6 +202,11 @@ class OrderService implements LoggerAwareInterface
     protected $manzanaService;
 
     /**
+     * @var SapOrderService $sapOrderService
+     */
+    protected $sapOrderService;
+
+    /**
      * @var CouponStorageInterface
      */
     protected $couponStorage;
@@ -231,6 +236,7 @@ class OrderService implements LoggerAwareInterface
      * @param ManzanaPosService $manzanaPosService
      * @param ManzanaService $manzanaService
      * @param CouponStorageInterface $couponStorage
+     * @param SapOrderService $sapOrderService
      */
     public function __construct(
         AddressService $addressService,
@@ -248,7 +254,8 @@ class OrderService implements LoggerAwareInterface
         UserRegistrationProviderInterface $userRegistrationProvider,
         ManzanaPosService $manzanaPosService,
         ManzanaService $manzanaService,
-        CouponStorageInterface $couponStorage
+        CouponStorageInterface $couponStorage,
+        SapOrderService $sapOrderService
     ) {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
@@ -266,6 +273,7 @@ class OrderService implements LoggerAwareInterface
         $this->manzanaPosService = $manzanaPosService;
         $this->manzanaService = $manzanaService;
         $this->couponStorage = $couponStorage;
+        $this->sapOrderService = $sapOrderService;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -2501,11 +2509,8 @@ class OrderService implements LoggerAwareInterface
                 return false;
             }
 
-            /** @var SapOrderService $sapOrderService */
-            $sapOrderService = Application::getInstance()->getContainer()->get(SapOrderService::class);
-
             $sapStatus = StatusService::STATUS_CANCELED;
-            $sapOrderService->sendOrderStatus($order, $sapStatus);
+            $this->sapOrderService->sendOrderStatus($order, $sapStatus);
 
             $connection->commitTransaction();
         } catch (\Exception $e) {
@@ -2590,11 +2595,8 @@ class OrderService implements LoggerAwareInterface
                 return false;
             }
 
-            /** @var SapOrderService $sapOrderService */
-            $sapOrderService = Application::getInstance()->getContainer()->get(SapOrderService::class);
-
             $sapStatus = StatusService::STATUS_PICKUP_EXTEND;
-            $sapOrderService->sendOrderStatus($order, $sapStatus);
+            $this->sapOrderService->sendOrderStatus($order, $sapStatus);
 
             $connection->commitTransaction();
         } catch (\Exception $e) {
