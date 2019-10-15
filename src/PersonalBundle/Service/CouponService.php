@@ -227,7 +227,7 @@ class CouponService implements LoggerAwareInterface
         
         if ($promoCodes) {
             $applicableCoupons = $manzana->getAllowPromocodes($promoCodes);
-
+            
             foreach ($promoCodes as $promoCode) {
                 $result[$promoCode] = in_array($promoCode, $applicableCoupons, true)
                     ? ['applicable' => 1]
@@ -243,32 +243,35 @@ class CouponService implements LoggerAwareInterface
      */
     public function getUserCouponsAction(): array
     {
-        $result = [];
+        $result     = [];
         $promoCodes = [];
-    
+        $coupons = [];
+        
         $orderStorageService = App::getInstance()->getContainer()->get(OrderStorageService::class);
-        $storage   = $orderStorageService->getStorage();
-    
+        $storage             = $orderStorageService->getStorage();
+        
         $personalOffers = App::getInstance()->getContainer()->get(PersonalOffersService::class);
         
-        $coupons        = $personalOffers->getActiveUserCoupons($storage->getUserId())['coupons']->getValues();
+        if ($storage->getUserId()) {
+            $coupons = $personalOffers->getActiveUserCoupons($storage->getUserId())['coupons']->getValues();
+        }
         
         foreach ($coupons as $coupon) {
             $promoCodes[] = $coupon['UF_PROMO_CODE'];
         }
         
         $promoCodesActionType = $this->checkCouponsApplicability($promoCodes);
-    
+        
         foreach ($coupons as $key => $coupon) {
             if (array_key_exists($coupon['UF_PROMO_CODE'], $promoCodesActionType)) {
-                $result[$key]['id'] = $coupon['ID'];
-                $result[$key]['promocode'] = $coupon['UF_PROMO_CODE'];
-                $result[$key]['discount'] = $coupon['discount_value'];
-                $result[$key]['text'] = $coupon['custom_title'];
+                $result[$key]['id']          = $coupon['ID'];
+                $result[$key]['promocode']   = $coupon['UF_PROMO_CODE'];
+                $result[$key]['discount']    = $coupon['discount_value'];
+                $result[$key]['text']        = $coupon['custom_title'];
                 $result[$key]['date_active'] = $coupon['custom_date_to'];
-            
+                
                 $actionTypeText = array_keys($promoCodesActionType[$coupon['UF_PROMO_CODE']])[0];
-            
+                
                 switch ($actionTypeText) {
                     case 'active':
                         $result[$key]['actionType'] = 2;
