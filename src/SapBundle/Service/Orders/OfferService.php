@@ -10,9 +10,9 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Service\BasketService;
-use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
 use FourPaws\SapBundle\Dto\Out\Orders\OrderOffer;
 use FourPaws\SapBundle\Enum\SapOrder;
 use Psr\Log\LoggerAwareInterface;
@@ -38,30 +38,23 @@ class OfferService implements LoggerAwareInterface
      */
     protected $stampService;
     /**
-     * @var SaleOrderService
-     */
-    protected $orderService;
-    /**
      * @var bool
      */
     protected $isPseudoAction = false;
 
     /**
-     * OrderService constructor.
+     * OfferService constructor.
      *
      * @param BasketService $basketService
      * @param StampService $stampService
-     * @param SaleOrderService $orderService
      */
     public function __construct(
         BasketService $basketService,
-        StampService $stampService,
-        SaleOrderService $orderService
+        StampService $stampService
     )
     {
         $this->basketService = $basketService;
         $this->stampService = $stampService;
-        $this->orderService = $orderService;
     }
 
     /**
@@ -87,7 +80,7 @@ class OfferService implements LoggerAwareInterface
             ->setOfferXmlId($this->basketService->getBasketItemXmlId($basketItem))
             ->setUnitPrice($basketItem->getPrice())
             ->setUnitOfMeasureCode(SapOrder::UNIT_PTC_CODE)
-            ->setDeliveryFromPoint($this->orderService->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
+            ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
 
         /* Может измениться внутри разделения по местоположению, выставляем здесь, чтобы можно было запустить разделение в цикле */
         $offer->setDeliveryShipmentPoint($this->getShipmentPlaceCode($basketItem, $order));
@@ -244,7 +237,7 @@ class OfferService implements LoggerAwareInterface
     {
         $shipmentPlaceCode = $this->basketService->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE');
         if (!$shipmentPlaceCode || empty($shipmentPlaceCode)) {
-            $shipmentPlaceCode = $this->orderService->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE');
+            $shipmentPlaceCode = $this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE');
         }
 
         return $shipmentPlaceCode;
@@ -259,5 +252,21 @@ class OfferService implements LoggerAwareInterface
     {
         $isPseudoActionPropValue = $this->basketService->getBasketPropertyValueByCode($basketItem, 'IS_PSEUDO_ACTION');
         $this->isPseudoAction = BitrixUtils::BX_BOOL_TRUE === $isPseudoActionPropValue;
+    }
+
+
+    /**
+     * @param Order $order
+     * @param string $code
+     *
+     * @return string
+     * @throws ArgumentException
+     * @throws NotImplementedException
+     */
+    public function getPropertyValueByCode(Order $order, string $code): string
+    {
+        $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
+
+        return $propertyValue ? ($propertyValue->getValue() ?? '') : '';
     }
 }
