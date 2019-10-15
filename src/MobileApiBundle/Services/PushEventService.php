@@ -21,6 +21,7 @@ use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
 use FourPaws\UserBundle\Repository\UserRepository;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializationContext;
+use JMS\Serializer\SerializerInterface;
 use Sly\NotificationPusher\Adapter\Apns;
 use Sly\NotificationPusher\Collection\DeviceCollection;
 use Sly\NotificationPusher\Exception\AdapterException;
@@ -39,7 +40,7 @@ class PushEventService
     /**
      * @var ArrayTransformerInterface
      */
-    private $transformer;
+    public $transformer;
 
     /**
      * @var ApiUserSessionRepository
@@ -49,7 +50,7 @@ class PushEventService
     /**
      * @var ApiPushEventRepository
      */
-    private $apiPushEventRepository;
+    public $apiPushEventRepository;
 
     /**
      * @var FireBaseCloudMessagingService
@@ -66,6 +67,11 @@ class PushEventService
      */
     private $userRepository;
 
+    /**
+     * @var SerializerInterface $serializer
+     */
+    private $serializer;
+
 
     public function __construct(
         ArrayTransformerInterface $transformer,
@@ -73,7 +79,8 @@ class PushEventService
         ApiPushEventRepository $apiPushEventRepository,
         FireBaseCloudMessagingService $fireBaseCloudMessagingService,
         ApplePushNotificationService $applePushNotificationService,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        SerializerInterface $serializer
     )
     {
         $this->transformer = $transformer;
@@ -82,6 +89,7 @@ class PushEventService
         $this->fireBaseCloudMessagingService = $fireBaseCloudMessagingService;
         $this->applePushNotificationService = $applePushNotificationService;
         $this->userRepository = $userRepository;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -112,23 +120,37 @@ class PushEventService
             ->setLimit(500)
             ->exec();
 
+        $dataFetch = $res->fetchAll();
+
         $pushMessages = $this->transformer->fromArray(
-            $res->fetchAll(),
+            $dataFetch,
             'array<' . ApiPushMessage::class . '>'
         );
 
+        $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
+
         /** @var ApiPushMessage $pushMessage */
         foreach ($pushMessages as $pushMessage) {
-            $this->parseFile($pushMessage);
-            $pushMessage->setFileId(0);
+//            $this->parseFile($pushMessage);
+//            $pushMessage->setFileId(0);
+//
+//            $data = $this->transformer->toArray(
+//                $pushMessage,
+//                SerializationContext::create()->setGroups([CrudGroups::UPDATE])
+//            );
+            // деактивируем push-сообщение
+            $hlBlockPushMessages->update($pushMessage->getId(), [
+                'UF_ACTIVE' => false,
+            ]);
+        }
 
-            $data = $this->transformer->toArray(
-                $pushMessage,
-                SerializationContext::create()->setGroups([CrudGroups::UPDATE])
-            );
+        foreach ($dataFetch as &$pushItem) {
+            $pushItem['UF_START_SEND'] = (string)$pushItem['UF_START_SEND'];
+        }
 
-            $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
-            $hlBlockPushMessages->update($pushMessage->getId(), $data);
+        if (count($dataFetch) > 0) {
+            $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.push_file_processing_producer');
+            $producer->publish(json_encode($dataFetch));
         }
     }
 
@@ -157,20 +179,25 @@ class PushEventService
             ->setLimit(500)
             ->exec();
 
+        $dataFetch = $res->fetchAll();
+
         /** @var ApiPushMessage[] $pushMessages */
         $pushMessages = $this->transformer->fromArray(
-            $res->fetchAll(),
+            $dataFetch,
             'array<' . ApiPushMessage::class . '>'
         );
 
+        foreach ($dataFetch as &$pushItem) {
+            $pushItem['UF_START_SEND'] = (string)$pushItem['UF_START_SEND'];
+        }
+
+        if (count($dataFetch) > 0) {
+            /** @noinspection MissingService */
+            $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.push_processing_producer');
+            $producer->publish(json_encode($dataFetch));
+        }
+
         foreach ($pushMessages as $pushMessage) {
-            $sessions = $this->findUsersSessions($pushMessage);
-            if (!empty($sessions)) {
-                foreach ($sessions as $session) {
-                    $pushEvent = $this->convertToPushEvent($pushMessage, $session);
-                    $this->apiPushEventRepository->create($pushEvent);
-                }
-            }
             // деактивируем push-сообщение
             $hlBlockPushMessages::update($pushMessage->getId(), [
                 'UF_ACTIVE' => false,
@@ -235,9 +262,9 @@ class PushEventService
         }
     }
 
-    public function execPushEventsForIos()
+    public function execPushEventsForIos($pushEvents = null)
     {
-        $pushEvents = $this->apiPushEventRepository->findForIos();
+//        $pushEvents = $this->apiPushEventRepository->findForIos();
 
         $adapter = new \FourPaws\External\ApplePushNotificationAdapter([
             'certificate' => Application::getInstance()->getRootDir() . '/app/config/apple-push-notification-cert-new.pem',
@@ -265,6 +292,9 @@ class PushEventService
                     try {
                         $device = new Device($pushEvent->getPushToken());
                     } catch (AdapterException $adapterException) {
+                        $pushEvent->setSuccessExec(ApiPushEvent::EXEC_FAIL_CODE);
+                        $pushEvent->setServiceResponseStatus(22);
+                        $this->apiPushEventRepository->update($pushEvent);
                         continue;
                     }
                     $device->setParameter('badge', 1);
@@ -279,7 +309,15 @@ class PushEventService
                     $deviceArr = new DeviceCollection([
                         $device
                     ]);
-                    $push = new Push($adapter, $deviceArr, $message);
+                    try {
+                        $push = new Push($adapter, $deviceArr, $message);
+                    } catch (AdapterException $ae) {
+                        //not support token
+                        $pushEvent->setSuccessExec(ApiPushEvent::EXEC_FAIL_CODE);
+                        $pushEvent->setServiceResponseStatus(33);
+                        $this->apiPushEventRepository->update($pushEvent);
+                        continue;
+                    }
 
                     $pushManager->add($push);
 
@@ -298,7 +336,12 @@ class PushEventService
             $response = [];
 
             try {
-                $response = $pushManager->getResponse()->getParsedResponses();
+                $response = $pushManager->getResponse();
+                if ($response) {
+                    $response = $pushManager->getResponse()->getParsedResponses();
+                } else {
+                    $response = [];
+                }
             } catch (\Exception $e) {
                 $adapter->getOpenedClient()->close();
                 $this->log()->error('Ошибка при отправке push ios ' . $e->getMessage());
@@ -337,7 +380,7 @@ class PushEventService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    protected function findUsersSessions(ApiPushMessage $pushMessage)
+    public function findUsersSessions(ApiPushMessage $pushMessage)
     {
         // Выбираем только тех пользователей, у которых заведен push token
         $findBy = [
@@ -399,7 +442,7 @@ class PushEventService
      * @param ApiUserSession $session
      * @return ApiPushEvent
      */
-    protected function convertToPushEvent(ApiPushMessage $pushMessage, ApiUserSession $session)
+    public function convertToPushEvent(ApiPushMessage $pushMessage, ApiUserSession $session)
     {
         return (new ApiPushEvent())
             ->setPlatform($session->getPlatform())
@@ -415,10 +458,8 @@ class PushEventService
      * @return bool
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Exception
      */
-    protected function parseFile($pushMessage)
+    public function parseFile($pushMessage)
     {
         if (!$pushMessage->getFileId()) {
             return false;
@@ -436,12 +477,12 @@ class PushEventService
 
         $pushMessage->setUserIds($userIds);
 
-        $data = $this->transformer->toArray(
-            $pushMessage,
-            SerializationContext::create()->setGroups([CrudGroups::UPDATE])
-        );
-        $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
-        $hlBlockPushMessages->update($pushMessage->getId(), $data);
+//        $data = $this->transformer->toArray(
+//            $pushMessage,
+//            SerializationContext::create()->setGroups([CrudGroups::UPDATE])
+//        );
+//        $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
+//        $hlBlockPushMessages->update($pushMessage->getId(), $data);
         return true;
     }
 

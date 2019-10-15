@@ -65,6 +65,18 @@ old_sound_rabbit_mq:
             connection: default
             exchange_options: {name: 'import_offers', type: direct }
 
+        push_processing:
+            connection: default
+            exchange_options: {name: 'push_processing', type: direct }
+
+        push_file_processing:
+            connection: default
+            exchange_options: {name: 'push_file_processing', type: direct }
+
+        push_send_ios:
+            connection: default
+            exchange_options: {name: 'push_send_ios', type: direct }
+
     consumers:
         callback_set:
             connection:       default
@@ -134,4 +146,25 @@ old_sound_rabbit_mq:
             exchange_options: {name: 'import_offers', type: direct }
             queue_options: {name: 'import_offers'}
             callback: import.import_offers
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
+
+        push_processing:
+            connection: default
+            exchange_options: {name: 'push_processing', type: direct }
+            queue_options: {name: 'push_processing'}
+            callback: push.processing
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
+
+        push_file_processing:
+            connection: default
+            exchange_options: {name: 'push_file_processing', type: direct }
+            queue_options: {name: 'push_file_processing'}
+            callback: push.processing_file
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
+
+        push_send_ios:
+            connection: default
+            exchange_options: {name: 'push_send_ios', type: direct }
+            queue_options: {name: 'push_send_ios'}
+            callback: push.send_iod
             qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}

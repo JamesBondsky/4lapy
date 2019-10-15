@@ -54,6 +54,18 @@ services:
      class: FourPaws\External\Import\Consumer\ImportOffersConsumer
      arguments: ['@jms_serializer', '@import.service']
 
+  push.processing:
+    class: FourPaws\External\Push\Consumer\PushProcessingConsumer
+    arguments: ['@jms_serializer', '@push.service']
+
+  push.processing_file:
+    class: FourPaws\External\Push\Consumer\PushFileProcessingConsumer
+    arguments: ['@jms_serializer', '@push.service']
+
+  push.send_iod:
+    class: FourPaws\External\Push\Consumer\PushSendIosConsumer
+    arguments: ['@jms_serializer', '@push.service']
+
   search.service:
     class: FourPaws\Search\SearchService
     arguments:
@@ -95,6 +107,12 @@ services:
 
   import.service:
     class: FourPaws\External\ImportService
+    arguments: ['@jms_serializer']
+    calls:
+      - [setServiceLogger]
+
+  push.service:
+    class: FourPaws\External\PushService
     arguments: ['@jms_serializer']
     calls:
       - [setServiceLogger]
