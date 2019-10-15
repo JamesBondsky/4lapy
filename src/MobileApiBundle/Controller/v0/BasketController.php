@@ -150,7 +150,7 @@ class BasketController extends BaseController
             $coupons        = $personalOffers->getActiveUserCoupons($storage->getUserId())['coupons'];
         }
         
-        if ($coupons && $promocodeForOldSupport) {
+        if ($coupons) {
             $orderCalculate->setHasCoupons(true);
         }
         
