@@ -2614,19 +2614,4 @@ class OrderService implements LoggerAwareInterface
 
         return true;
     }
-
-    /**
-     * @param Order $order
-     * @param string $code
-     *
-     * @return string
-     * @throws ArgumentException
-     * @throws NotImplementedException
-     */
-    public function getPropertyValueByCode(Order $order, string $code): string
-    {
-        $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
-
-        return $propertyValue ? ($propertyValue->getValue() ?? '') : '';
-    }
 }
