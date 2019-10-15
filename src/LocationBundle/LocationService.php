@@ -1052,7 +1052,7 @@ class LocationService
      * @throws AddressSplitException
      * @return Address
      */
-    public function splitAddress(string $address, string $locationCode = '')
+    public function splitAddress(string $address, string $locationCode = ''): Address
     {
         $splitAddress = function () use ($address, $locationCode) {
             $dadataLocation = $this->daDataService->splitAddress($address);
