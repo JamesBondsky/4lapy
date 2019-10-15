@@ -807,11 +807,8 @@ class NotificationService implements LoggerAwareInterface
             $this->sendSms($template, $parameters, $immediate);
         }
     }
-
-    /**
-     * @return User
-     */
-    public function getUser(): User
+    
+    public function getUser()
     {
         if($this->user === null){
             try {
