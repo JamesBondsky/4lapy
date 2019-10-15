@@ -338,8 +338,7 @@ class NotificationService implements LoggerAwareInterface
         if ($parameters['deliveryCode'] === DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
             $this->sendSms('FourPawsSaleBundle:Sms:order.new.delivery.dostavista.is.paid.html.php', $parameters, true);
         } else {
-            $this->sendSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, true);
-            $this->addPushMessage('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters);
+            $this->sendPushOrSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, 'status', true);
         }
 
         $this->sendNewUserSms($parameters);
@@ -363,12 +362,8 @@ class NotificationService implements LoggerAwareInterface
         static::$isSending = true;
 
         $parameters = $this->getOrderData($order);
-
-        $this->sendSms(
-            'FourPawsSaleBundle:Sms:order.canceled.html.php',
-            $parameters
-        );
-        $this->addPushMessage('FourPawsSaleBundle:Sms:order.canceled.html.php', $parameters);
+        
+        $this->sendPushOrSms('FourPawsSaleBundle:Sms:order.canceled.html.php', $parameters, 'status', true);
         static::$isSending = false;
     }
 
@@ -440,13 +435,9 @@ class NotificationService implements LoggerAwareInterface
         }
 
         if ($smsTemplate) {
-            $this->sendSms(
-                $smsTemplate,
-                $parameters
-            );
-            $this->addPushMessage($smsTemplate, $parameters);
+            $this->sendPushOrSms($smsTemplate, $parameters, 'status', true);
         }
-
+        
         static::$isSending = false;
     }
 
@@ -767,8 +758,7 @@ class NotificationService implements LoggerAwareInterface
                     }
 
                     $smsTemplate = 'FourPawsSaleBundle:Sms:order.subscribe.upcoming.delivery.html.php';
-                    $this->sendSms($smsTemplate, $parameters);
-                    $this->addPushMessage($smsTemplate, $parameters);
+                    $this->sendPushOrSms($smsTemplate, $parameters, 'status', true);
                     $this->smsService->markAlreadySent($smsEventName, $smsEventKey);
                 }
             }
