@@ -26,6 +26,7 @@ use CBitrixLocationSelectorSearchComponent;
 use CIBlockElement;
 use Exception;
 use FourPaws\Adapter\DaDataLocationAdapter;
+use FourPaws\Adapter\Model\Input\DadataLocation;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -1051,7 +1052,7 @@ class LocationService
      * @throws AddressSplitException
      * @return Address
      */
-    public function splitAddress(string $address, string $locationCode = ''): Address
+    public function splitAddress(string $address, string $locationCode = '')
     {
         $splitAddress = function () use ($address, $locationCode) {
             $dadataLocation = $this->daDataService->splitAddress($address);
@@ -1319,5 +1320,21 @@ class LocationService
         }
 
         return $result;
+    }
+
+    /**
+     * @param string $address
+     * @return DadataLocation
+     * @throws DaDataExecuteException
+     */
+    public function getDadataLocationOkato(string $address): string
+    {
+        $dadataLocation = $this->daDataService->splitAddress($address);
+        if (!$dadataLocation->getOkato()) {
+            throw new DaDataExecuteException('dadata location not found');
+        }
+
+        $okato = $dadataLocation->getOkato();
+        return substr($okato, 0, 8);
     }
 }
