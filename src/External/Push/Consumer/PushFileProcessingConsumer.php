@@ -23,6 +23,8 @@ class PushFileProcessingConsumer extends PushBase
 
         /** @var PushEventService $pushEventService */
         $pushEventService = Application::getInstance()->getContainer()->get('FourPaws\MobileApiBundle\Services\PushEventService');
+        /** @noinspection MissingService */
+        $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.push_send_ios_producer');
 
         $pushMessages = $this->decodeMessage($messageText);
 
@@ -36,9 +38,7 @@ class PushFileProcessingConsumer extends PushBase
                     $pushEvent = $pushEventService->convertToPushEvent($pushMessage, $session);
                     $res = $pushEventService->apiPushEventRepository->createEvent($pushEvent);
 
-                    if ($res->isSuccess()) {
-                        /** @noinspection MissingService */
-                        $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.push_send_ios_producer');
+                    if ($res->isSuccess() && $pushEvent->getPlatform() == 'ios') {
                         $data = $res->getData();
                         $data['ID'] = $res->getId();
                         $data['MESSAGE_TEXT'] = $pushMessage->getMessage();
