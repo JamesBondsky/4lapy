@@ -12,6 +12,7 @@ use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -329,10 +330,8 @@ class OrderService implements LoggerAwareInterface
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
-     * @throws BitrixProxyException
      * @throws DeliveryNotAvailableException
      * @throws DeliveryNotFoundException
-     * @throws LoaderException
      * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
@@ -340,7 +339,7 @@ class OrderService implements LoggerAwareInterface
      * @throws OrderCreateException
      * @throws StoreNotFoundException
      * @throws UserMessageException
-     * @throws \Bitrix\Main\ObjectException
+     * @throws ObjectException
      */
     public function initOrder(
         OrderStorage $storage,
@@ -423,17 +422,30 @@ class OrderService implements LoggerAwareInterface
                 } elseif ($diff > 0) {
                     $toUpdate['QUANTITY'] = $resultByOffer->getAmount();
 
-                    $this->basketService->addOfferToBasket(
-                        $basketItem->getProductId(),
-                        $diff,
-                        [
-                            'CUSTOM_PRICE' => 'Y',
-                            'DELAY' => BitrixUtils::BX_BOOL_TRUE,
-                            'PROPS' => $basketItem->getPropertyCollection()->getPropertyValues(),
-                        ],
-                        false,
-                        $basket
-                    );
+                    /*
+                     * $this->basketService->addOfferToBasket нельзя использовать, так как он обновит QUANTITY
+                     * у элемента корзины, а нам нужно создать новый basketItem с DELAY => 'Y'
+                     */
+
+                    $delayBasketItem = $basket->createItem('catalog', $basketItem->getProductId());
+
+                    $delayBasketItem->setFields([
+                        'CUSTOM_PRICE' => BitrixUtils::BX_BOOL_TRUE,
+                        'DELAY' => BitrixUtils::BX_BOOL_TRUE,
+                    ]);
+
+                    $delayItemPropertyCollection = $delayBasketItem->getPropertyCollection();
+
+                    foreach ($basketItem->getPropertyCollection()->getPropertyValues() as $property) {
+                        if (in_array($property['CODE'], ['CATALOG.XML_ID', 'PRODUCT.XML_ID'])) {
+                            $delayItemProperty = $delayItemPropertyCollection->createItem();
+                            $delayItemProperty->setFields([
+                                'NAME' => $property['NAME'],
+                                'CODE' => $property['CODE'],
+                                'VALUE' => $property['VALUE'],
+                            ]);
+                        }
+                    }
                 }
 
                 if (!empty($toUpdate)) {
@@ -712,6 +724,8 @@ class OrderService implements LoggerAwareInterface
                 $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
             }
         }
+
+        $this->basketService->setDC01AmountProperty($basket);
 
         /**
          * Задание способов оплаты
