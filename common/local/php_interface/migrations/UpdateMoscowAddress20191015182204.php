@@ -4,7 +4,6 @@ namespace Sprint\Migration;
 
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
-use Bitrix\Catalog\Product\CatalogProvider;
 use FourPaws\App\Application;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Repository\OldAddressRepository;
