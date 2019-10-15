@@ -6,7 +6,7 @@ namespace Sprint\Migration;
 class HlBlockPushMessagesAdd20191009121450 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
 {
     
-    protected $description = "";
+    protected $description = "Добавляект поля тайтла и картинки к пуш уведомлениям";
     
     public function up()
     {
