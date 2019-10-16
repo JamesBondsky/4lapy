@@ -291,9 +291,9 @@ class PushEventService
                         $message->setOption('category', 'PHOTO');
                     }
 
-                    $this->logger->info('customArr', [
-                        'customArr' => $customArr,
-                    ]);
+//                    $this->logger->info('customArr', [
+//                        'customArr' => $customArr,
+//                    ]);
 
                     $message->setOption('custom', $customArr);
 
