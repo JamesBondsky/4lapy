@@ -89,7 +89,7 @@ class CityController extends Controller
     }
 
     /**
-     * @Route("/suggest/address", methods={"GET"}, name="location.city.suggest.address")
+     * @Route("/suggest/address", methods={"POST"}, name="location.city.suggest.address")
      * @param Request $request
      * @return JsonResponse
      */
