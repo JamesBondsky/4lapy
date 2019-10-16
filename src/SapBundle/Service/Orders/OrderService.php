@@ -715,9 +715,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
         if (
             (
-                in_array($deliveryZone, DeliveryService::getZonesTwo()) ||
-                mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
-                mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                in_array($deliveryZone, DeliveryService::getZonesTwo())
+                || mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false
+                || mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
             )
             && $this->getPropertyValueByCode($order, 'REGION_COURIER_FROM_DC') === 'Y'
         ) {
@@ -728,6 +728,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         if ($isFastOrder) {
             $code = '';
         }
+
+        $shipmentPlaceCode = $this->getPropertyValueByCode($order, 'SHIPMENT_PLACE_CODE');
 
         switch ($code) {
             case DeliveryService::INNER_DELIVERY_CODE:
@@ -753,9 +755,15 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     case DeliveryService::ZONE_IVANOVO_REGION:
                         return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
                     default:
+                        if(
+                            mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false
+                            && $shipmentPlaceCode == \FourPaws\SaleBundle\Service\OrderService::STORE
+                        ) {
+                            return SapOrder::DELIVERY_TYPE_COURIER_RC;
+                        }
                         if (
-                            mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
                             mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                            || mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false
                         ) {
                             return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
                         }
@@ -763,8 +771,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
                 break;
             case DeliveryService::INNER_PICKUP_CODE:
-                $shipmentPlaceCode = $this->getPropertyValueByCode($order, 'SHIPMENT_PLACE_CODE');
-
                 return $shipmentPlaceCode ? SapOrder::DELIVERY_TYPE_PICKUP : SapOrder::DELIVERY_TYPE_PICKUP_POSTPONE;
                 break;
             case DeliveryService::DPD_DELIVERY_CODE:
