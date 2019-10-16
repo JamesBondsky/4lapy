@@ -15,7 +15,7 @@ use Bitrix\Highloadblock as HL;
 use Bitrix\Main\Entity;
 
 
-class AddItemListInEntity20190731175343 extends SprintMigrationBase
+class AddItemListInEntity20191016152400 extends SprintMigrationBase
 {
     protected $description = 'Добавляет новый тип пуша';
     
