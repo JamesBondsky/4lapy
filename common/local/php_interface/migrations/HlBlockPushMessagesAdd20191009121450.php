@@ -94,57 +94,6 @@ class HlBlockPushMessagesAdd20191009121450 extends \Adv\Bitrixtools\Migration\Sp
             ],
         ]);
         
-        $helper->UserTypeEntity()->updateUserTypeEntityIfExists($entityId, 'UF_TYPE', [
-            'FIELD_NAME'        => 'UF_TYPE',
-            'USER_TYPE_ID'      => 'enumeration',
-            'XML_ID'            => 'UF_TYPE',
-            'SORT'              => 40,
-            'MULTIPLE'          => 'N',
-            'MANDATORY'         => 'Y',
-            'SHOW_FILTER'       => 'Y',
-            'SHOW_IN_LIST'      => 'Y',
-            'EDIT_IN_LIST'      => 'Y',
-            'IS_SEARCHABLE'     => 'N',
-            'EDIT_FORM_LABEL'   => [
-                'ru' => 'Тип push',
-            ],
-            'LIST_COLUMN_LABEL' => [
-                'ru' => 'Тип push',
-            ],
-            'LIST_FILTER_LABEL' => [
-                'ru' => 'Тип push',
-            ],
-            'SETTINGS'          => [
-                'DISPLAY' => 'CHECKBOX',
-            ],
-            'ENUMS'             => [
-                'n1' => [
-                    'XML_ID' => 'news',
-                    'VALUE'  => 'Новости',
-                ],
-                'n2' => [
-                    'XML_ID' => 'offers',
-                    'VALUE'  => 'Акции',
-                ],
-                'n3' => [
-                    'XML_ID' => 'change_order_status',
-                    'VALUE'  => 'Изменение статуса заказа',
-                ],
-                'n4' => [
-                    'XML_ID' => 'order_review',
-                    'VALUE'  => 'Возможность оставить отзыв о заказе',
-                ],
-                'n5' => [
-                    'XML_ID' => 'message',
-                    'VALUE'  => 'Сообщение',
-                ],
-                'n6' => [
-                    'XML_ID' => 'category',
-                    'VALUE'  => 'ID раздела каталога',
-                ],
-            ],
-        ]);
-        
         $helper->UserTypeEntity()->updateUserTypeEntityIfExists($entityId, 'UF_EVENT_ID', [
             'FIELD_NAME'        => 'UF_EVENT_ID',
             'USER_TYPE_ID'      => 'integer',
