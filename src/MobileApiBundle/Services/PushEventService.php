@@ -291,12 +291,6 @@ class PushEventService
                         $message->setOption('category', 'PHOTO');
                     }
 
-                    var_dump($pushEvent);
-
-//                    $this->logger->info('customArr', [
-//                        'customArr' => $customArr,
-//                    ]);
-
                     $message->setOption('custom', $customArr);
 
 
