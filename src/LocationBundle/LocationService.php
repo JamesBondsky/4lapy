@@ -458,21 +458,19 @@ class LocationService
      * @param int $limit
      * @param bool $needPath
      *
-     * @param bool $sortByType
      * @return array
      */
     public function findLocationNew(
         $queryParams,
         int $limit = 0,
-        bool $needPath = true,
-        bool $sortByType = false
+        bool $needPath = true
     ): array
     {
-        $cacheFinder = function () use ($queryParams, $limit, $needPath, $sortByType) {
+        $cacheFinder = function () use ($queryParams, $limit, $needPath) {
             if (!($queryParams instanceof Query)) {
                 /** сразу в селект не добалять позиции с join - получать их позже - для скорости
                  * поиск по коду и только по названию без родителя будет быстрее */
-                $query = LocationTable::query()->setOrder(['SORT' => 'asc'])->setFilter($queryParams)->setSelect([
+                $query = LocationTable::query()->setOrder(['TYPE.DISPLAY_SORT' => 'asc', 'SORT' => 'asc'])->setFilter($queryParams)->setSelect([
                     'ID',
                     'CODE',
                     'DEPTH_LEVEL',
@@ -490,7 +488,6 @@ class LocationService
             }
 
             $locations = [];
-            $locationsSortedByType = [];
             $typeList = [];
 
             $res = $query->exec();
@@ -545,7 +542,6 @@ class LocationService
                 }
 
                 $res = TypeTable::query()
-                    ->setOrder(['DISPLAY_SORT' => 'asc'])
                     ->setSelect([
                         'ID',
                         'CODE',
@@ -562,10 +558,6 @@ class LocationService
                                 'CODE' => $item['CODE'],
                                 'NAME' => $item['DISPLAY'],
                             ];
-
-                            if ($sortByType) {
-                                $locationsSortedByType[$locations[$itemId]['ID']] = $locations[$itemId];
-                            }
                         }
                     }
                 }
@@ -573,7 +565,7 @@ class LocationService
                 return [];
             }
 
-            return ($sortByType) ? $locationsSortedByType : $locations;
+            return $locations;
         };
         try {
             return (new BitrixCache())
