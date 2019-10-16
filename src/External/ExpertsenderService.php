@@ -1042,10 +1042,13 @@ class ExpertsenderService implements LoggerAwareInterface
         $frequencyList = $orderSubscribeService->getFrequencies();
         $curFrequency = current(array_filter($frequencyList, function($item) use ($frequency) { return $item['ID'] == $frequency; }));
         $saleBonus = $orderSubscribeService->countBasketPriceDiff($order->getBasket());
+        $deliveryDate = $orderSubscribeHistoryService->getLastOrderDeliveryDate($orderSubscribe);
+        $deliveryDate = $deliveryDate ? $deliveryDate->format('d.m.Y') : '';
 
         $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));
         $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($orderService->getOrderDeliveryAddress($order)));
-        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribeService->getPreviousDate($orderSubscribe)->format('d.m.Y')));
+        // $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribeService->getPreviousDate($orderSubscribe)->format('d.m.Y')));
+        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($deliveryDate));
         $snippets[] = new Snippet('tel_number', PhoneHelper::formatPhone($personalOrder->getPropValue('PHONE')));
         $snippets[] = new Snippet('total_bonuses', (int)$orderService->getOrderBonusSum($order));
         $snippets[] = new Snippet('delivery_cost', (float)$order->getShipmentCollection()->getPriceDelivery());
