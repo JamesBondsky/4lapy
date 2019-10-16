@@ -32,42 +32,42 @@ use tests\units\Sly\NotificationPusher\PushManager;
 
 class PushEventService
 {
-    
+
     use LazyLoggerAwareTrait;
-    
+
     const MAX_PHONES_AMOUNT_PER_REQUEST = 100;
-    
+
     /**
      * @var ArrayTransformerInterface
      */
     private $transformer;
-    
+
     /**
      * @var ApiUserSessionRepository
      */
     private $apiUserSessionRepository;
-    
+
     /**
      * @var ApiPushEventRepository
      */
     private $apiPushEventRepository;
-    
+
     /**
      * @var FireBaseCloudMessagingService
      */
     private $fireBaseCloudMessagingService;
-    
+
     /**
      * @var ApplePushNotificationService
      */
     private $applePushNotificationService;
-    
+
     /**
      * @var UserRepository
      */
     private $userRepository;
-    
-    
+
+
     public function __construct(
         ArrayTransformerInterface $transformer,
         ApiUserSessionRepository $apiUserSessionRepository,
@@ -83,7 +83,7 @@ class PushEventService
         $this->applePushNotificationService  = $applePushNotificationService;
         $this->userRepository                = $userRepository;
     }
-    
+
     /**
      * Обработка записей с привязками файлов
      * Файл с номерами телефонов парсится,
@@ -97,7 +97,7 @@ class PushEventService
     public function handleRowsWithFile()
     {
         // выбираем push с привязанными файлами
-        
+
         $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
         $res                 = $hlBlockPushMessages->query()
             ->setFilter([
@@ -116,22 +116,22 @@ class PushEventService
             $res->fetchAll(),
             'array<' . ApiPushMessage::class . '>'
         );
-        
+
         /** @var ApiPushMessage $pushMessage */
         foreach ($pushMessages as $pushMessage) {
             $this->parseFile($pushMessage);
             $pushMessage->setFileId(0);
-            
+
             $data = $this->transformer->toArray(
                 $pushMessage,
                 SerializationContext::create()->setGroups([CrudGroups::UPDATE])
             );
-            
+
             $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
             $hlBlockPushMessages->update($pushMessage->getId(), $data);
         }
     }
-    
+
     /**
      * Обработка записей без привязки файлов
      * @throws \Bitrix\Main\ArgumentException
@@ -156,13 +156,13 @@ class PushEventService
             ])
             ->setLimit(500)
             ->exec();
-        
+
         /** @var ApiPushMessage[] $pushMessages */
         $pushMessages = $this->transformer->fromArray(
             $res->fetchAll(),
             'array<' . ApiPushMessage::class . '>'
         );
-        
+
         foreach ($pushMessages as $pushMessage) {
             $sessions = $this->findUsersSessions($pushMessage);
             if (!empty($sessions)) {
@@ -177,8 +177,8 @@ class PushEventService
             ]);
         }
     }
-    
-    
+
+
     /**
      * @throws \FourPaws\External\Exception\FireBaseCloudMessagingException
      */
@@ -206,7 +206,7 @@ class PushEventService
             $this->apiPushEventRepository->update($pushEvent);
         }
     }
-    
+
     /**
      * @throws \ApnsPHP_Exception
      * @throws \ApnsPHP_Push_Server_Exception
@@ -223,11 +223,11 @@ class PushEventService
                     $pushEvent->getEventId(),
                     $pushEvent->getMessageTypeEntity()->getXmlId()
                 );
-                
+
                 foreach ($this->applePushNotificationService->getLogMessages() as $logMessage) {
                     $this->log()->info(__METHOD__ . '. PushToken: ' . $pushEvent->getPushToken() . '. LogMessage: ' . $logMessage);
                 }
-                
+
             } catch (\Exception $e) {
                 $this->log()->error(__METHOD__ . '. PushToken: ' . $pushEvent->getPushToken() . '. Exception: ' . $e->getMessage());
                 $pushEvent->setServiceResponseError($e->getMessage());
@@ -236,19 +236,19 @@ class PushEventService
             $this->apiPushEventRepository->update($pushEvent);
         }
     }
-    
+
     public function execPushEventsForIos()
     {
         $pushEvents = $this->apiPushEventRepository->findForIos();
-        
+
         $adapter     = new \FourPaws\External\ApplePushNotificationAdapter([
             'certificate' => Application::getInstance()->getRootDir() . '/app/config/apple-push-notification-cert-new.pem',
             'passPhrase'  => 'lapy',
         ]);
         $pushManager = new \Sly\NotificationPusher\PushManager(\Sly\NotificationPusher\PushManager::ENVIRONMENT_PROD);
-        
+
         $pushId = [];
-        
+
         if (count($pushEvents) > 0) {
             foreach ($pushEvents as $pushEvent) {
                 try {
@@ -271,8 +271,8 @@ class PushEventService
                         $data['aps']['category'] = 'PHOTO';
                         $data['photourl'] = getenv('SITE_URL') . $data['photourl'];
                     }
-                    
-                    $message = new Message('', $data);
+
+                    $message = new Message($pushEvent->getMessageText(), $data);
 
                     try {
                         $device = new Device($pushEvent->getPushToken());
@@ -287,44 +287,44 @@ class PushEventService
                         'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
                         'id'   => $pushEvent->getEventId(),
                     ]);
-                    
+
                     $deviceArr = new DeviceCollection([
                         $device,
                     ]);
-                    
+
                     $push = new Push($adapter, $deviceArr, $message);
-                    
+
                     $pushManager->add($push);
-                    
+
                     $pushId[$pushEvent->getPushToken()] = $pushEvent;
                 } catch (\Exception $e) {
                     $pushEvent->setServiceResponseError($e->getMessage());
                 }
             }
-            
+
             try {
                 $pushManager->push();
             } catch (\Exception $adapterException) {
                 $this->log()->error('Ошибка при отправке push ios ' . $adapterException->getMessage());
             }
-            
+
             $response = [];
-            
+
             try {
                 $response = $pushManager->getResponse()->getParsedResponses();
             } catch (\Exception $e) {
                 $adapter->getOpenedClient()->close();
                 $this->log()->error('Ошибка при отправке push ios ' . $e->getMessage());
             }
-            
+
             $haveThrow = false;
-            
+
             foreach ($response as $responseItem) {
                 if ($responseItem['token'] != 0) {
                     $haveThrow = true;
                 }
             }
-            
+
             foreach ($response as $token => $responseItem) {
                 if ($haveThrow) {
                     if ($responseItem['token'] != 0) {
@@ -340,8 +340,8 @@ class PushEventService
             }
         }
     }
-    
-    
+
+
     /**
      * Ищет сессии пользователей для конкретного push-сообщения
      * @param ApiPushMessage $pushMessage
@@ -356,21 +356,21 @@ class PushEventService
         $findBy = [
             '!PUSH_TOKEN' => false,
         ];
-        
+
         // если в push-сообщении указаны конкретные id пользователей - ищем пользователя по этим id
         $userIds = [];
         foreach ($pushMessage->getUsers() as $user) {
             $userIds[] = $user->getId();
         }
-        
+
         $userFilter = [];
-        
+
         if (!empty($userIds)) {
             $userFilter[] = [
                 '=USER_ID' => $userIds,
             ];
         }
-        
+
         // если в push-сообщении указаны группы - выбираем пользователей по группам (UF_полям)
         if (!empty($pushMessage->getGroupEntity())) {
             $userGroupFilter['LOGIC'] = 'OR';
@@ -381,32 +381,32 @@ class PushEventService
             }
             $userFilter[] = $userGroupFilter;
         }
-        
+
         if (empty($userFilter) && !$pushMessage->getIsSendingToAllUsers()) {
             // если адресаты не указаны - ничего отправлять не нужно
             return [];
         }
-        
+
         $userFilter['LOGIC'] = 'OR';
-        
+
         if ($pushMessage->getIsSendingToAllUsers()) { // если стоит галка "Отправить всем пользователям", то игнорируются указанные группы и отдельные пользователи
             $userFilter = [
                 'LOGIC' => 'OR',
             ];
         }
-        
+
         if ($pushMessage->getPlatformId()) {
             // если указана платформа - фильтруем пользователей еще и по платформе (ios / android)
             $findBy['PLATFORM'] = substr($pushMessage->getPlatformEntity()->getXmlId(), 0);
         }
-        
+
         $findBy[] = $userFilter;
-        
+
         $sessions = $this->apiUserSessionRepository->findBy($findBy);
-        
+
         return $sessions;
     }
-    
+
     /**
      * @param ApiPushMessage $pushMessage
      * @param ApiUserSession $session
@@ -421,7 +421,7 @@ class PushEventService
             ->setMessageId($pushMessage->getId())
             ->setDateTimeExec($pushMessage->getStartSend());
     }
-    
+
     /**
      * обрабатывает файл с номерами телефонов, прикреплённый к записи push сообщения
      * @param ApiPushMessage $pushMessage
@@ -436,9 +436,9 @@ class PushEventService
         if (!$pushMessage->getFileId()) {
             return false;
         }
-        
+
         $rows = file($_SERVER['DOCUMENT_ROOT'] . $pushMessage->getFilePath());
-        
+
         $phones = [];
         foreach ($rows as $row) {
             $phone          = $this->normalizePhoneNumber($row);
@@ -446,9 +446,9 @@ class PushEventService
         }
         //        $phones = $this->limitToAllowedPhoneNumbersAmount(array_values($phones));
         $userIds = $this->getUserIdsByPhoneNumbers($phones, $pushMessage->getTypeEntity()->getXmlId());
-        
+
         $pushMessage->setUserIds($userIds);
-        
+
         $data                = $this->transformer->toArray(
             $pushMessage,
             SerializationContext::create()->setGroups([CrudGroups::UPDATE])
@@ -457,7 +457,7 @@ class PushEventService
         $hlBlockPushMessages->update($pushMessage->getId(), $data);
         return true;
     }
-    
+
     /**
      * @param $phone
      * @return string
@@ -466,7 +466,7 @@ class PushEventService
     {
         return substr(preg_replace('/\D/', '', $phone), -10);
     }
-    
+
     /**
      * @param array $phones
      * @return array
@@ -475,7 +475,7 @@ class PushEventService
     {
         return array_slice($phones, 0, static::MAX_PHONES_AMOUNT_PER_REQUEST);
     }
-    
+
     /**
      * метод проверяет разрешено ли отправлять push'и данного типа на указанные номера телефонов
      *
@@ -491,17 +491,17 @@ class PushEventService
     protected function getUserIdsByPhoneNumbers(array $phoneNumbers, string $typeCode): array
     {
         $userIds = [];
-        
+
         if (!(is_array($phoneNumbers) && !empty($phoneNumbers))) {
             return $userIds;
         }
-        
+
         $users = $this->userRepository
             ->findBy([
                 '=PERSONAL_PHONE' => $phoneNumbers,
                 '!PERSONAL_PHONE' => null,
             ]);
-        
+
         $foundPhoneNumbers = [];
         /** @var User $user */
         foreach ($users as $user) {
@@ -510,17 +510,17 @@ class PushEventService
                 $userIds[]           = $user->getId();
             }
         }
-        
+
         $notFoundPhoneNumbers = array_diff($phoneNumbers, $foundPhoneNumbers);
         if (!empty($notFoundPhoneNumbers)) {
             foreach ($notFoundPhoneNumbers as $phoneNumber) {
                 $this->log()->warning("PushEventService: пользователь с номером телефона $phoneNumber не найден");
             }
         }
-        
+
         return array_values($userIds);
     }
-    
+
     /**
      * Проверяет возможность отправки пуша
      *
@@ -532,12 +532,12 @@ class PushEventService
     public function canSendPushMessage(User $user, $typeCode = "", $log = false): bool
     {
         $result = true;
-        
+
         $personalPhone = $user->getPersonalPhone();
         $userSession   = $this->apiUserSessionRepository->findBy([
             '=USER_ID' => $user->getId(),
         ], ['ID' => 'DESC'], 1)[0];
-        
+
         if (!$userSession) {
             $result = false;
             if ($log) {
@@ -556,10 +556,10 @@ class PushEventService
                 }
             }
         }
-        
+
         return $result;
     }
-    
+
     /**
      * @param \FourPaws\UserBundle\Entity\User $user
      * @param                                  $typeCode
