@@ -48,6 +48,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\UserBundle\Enum\UserLocationEnum;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use Symfony\Component\HttpFoundation\Request;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
 
 /**
@@ -468,13 +469,14 @@ class BasketController extends BaseController
         
         switch ($use) {
             case true:
-                $this->manzana->setPromocode($promoCode);
-                $this->manzana->calculate();
-                
-                $storage->setPromoCode($promoCode);
-                $this->orderStorageService->updateStorage($storage);
+                // $this->manzana->setPromocode($promoCode);
+                // $this->manzana->calculate();
+                //
+                // $storage->setPromoCode($promoCode);
+                // $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
                 $fUserId = $this->appUserService->getCurrentFUserId() ?: 0;
                 $this->appBasketService->getBasket(true, $fUserId);
+                $couponStorage->clear();
                 $couponStorage->save($promoCode);
                 break;
             case false:
