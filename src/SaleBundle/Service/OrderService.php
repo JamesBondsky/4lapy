@@ -10,6 +10,7 @@ use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -321,10 +322,8 @@ class OrderService implements LoggerAwareInterface
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
-     * @throws BitrixProxyException
      * @throws DeliveryNotAvailableException
      * @throws DeliveryNotFoundException
-     * @throws LoaderException
      * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
@@ -332,7 +331,7 @@ class OrderService implements LoggerAwareInterface
      * @throws OrderCreateException
      * @throws StoreNotFoundException
      * @throws UserMessageException
-     * @throws \Bitrix\Main\ObjectException
+     * @throws ObjectException
      */
     public function initOrder(
         OrderStorage $storage,
@@ -717,6 +716,8 @@ class OrderService implements LoggerAwareInterface
                 $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
             }
         }
+
+        $this->basketService->setDC01AmountProperty($basket);
 
         /**
          * Задание способов оплаты

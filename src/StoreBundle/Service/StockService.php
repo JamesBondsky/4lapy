@@ -82,8 +82,9 @@ class StockService implements LoggerAwareInterface
     }
 
     /**
-     * @param Offer $offer
-     *
+     * @param array $offerIds
+     * @param array $storeIds
+     * @param bool $onlyAvailable
      * @return StockCollection
      */
     public function getStocksByOfferIds(array $offerIds, array $storeIds = [], bool $onlyAvailable = true): Collection
@@ -95,7 +96,7 @@ class StockService implements LoggerAwareInterface
                 $filter['>AMOUNT'] = 0;
             }
 
-            if(!empty($stores)){
+            if(!empty($storeIds)){
                 $filter['STORE_ID'] = $storeIds;
             }
 
