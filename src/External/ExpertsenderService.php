@@ -1311,6 +1311,28 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
+     * @param int    $transactionId
+     * @param string $email
+     * @param array  $snippets
+     *
+     * @return ApiResult
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     * @throws ExpertSenderException
+     */
+    protected function sendTransactional(int $transactionId, string $email, array $snippets = []): ApiResult
+    {
+        return $this->sendRequest(
+            'sendTransactional',
+            [
+                $transactionId,
+                new Receiver($email),
+                $snippets
+            ]
+        );
+    }
+
+    /**
      * @param AddUserToList $addUserToList
      *
      * @return ApiResult
@@ -1581,7 +1603,7 @@ class ExpertsenderService implements LoggerAwareInterface
             $snippets[] = new Snippet('user_name', $name);
             //$snippets[] = new Snippet('text', htmlspecialcharsbx());
 
-            $this->sendSystemTransactional($transactionId, $email, $snippets);
+            $this->sendTransactional($transactionId, $email, $snippets);
             return true;
         }
 

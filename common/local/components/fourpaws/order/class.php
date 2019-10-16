@@ -415,6 +415,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         if (!$this->orderStorageService->validateDeliveryDate($storage)) {
+            $this->logger->error(sprintf('failed to validate DeliveryDate: %s', $storage->getDeliveryDate()), [
+                'user' => $storage->getId(),
+                'street' => $storage->getStreet(),
+                'house' => $storage->getHouse(),
+            ]);
             $storage = $this->orderStorageService->clearDeliveryDate($storage);
             $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
 
@@ -456,7 +461,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             foreach ($deliveries as $calculationResult) {
                 if ($this->deliveryService->isPickup($calculationResult)) {
                     $pickup = $calculationResult;
-                } elseif ($this->deliveryService->isDelivery($calculationResult)) {
+                } elseif (!$delivery && $this->deliveryService->isDelivery($calculationResult)) {
                     $delivery = $calculationResult;
                 } elseif($this->deliveryService->isDostavistaDelivery($calculationResult)){
                     $deliveryDostavista = $calculationResult;
