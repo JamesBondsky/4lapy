@@ -113,8 +113,7 @@ class CityController extends Controller
 
         $locations = $this->locationService->findLocationNew(
             array_merge([($exact ? '=' : '?') . 'NAME.NAME_UPPER' => ToUpper($query)], $filter),
-            $limit,
-            true
+            $limit
         );
 
         $result = $this->apiCityService->convertInDadataFormat($locations);
