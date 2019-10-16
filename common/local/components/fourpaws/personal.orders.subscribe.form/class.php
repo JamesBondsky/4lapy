@@ -714,8 +714,10 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
                                 /** @var OrderSubscribeSingle $singleSubscribeInactive */
                                 $singleSubscribeInactive = $this->orderSubscribeSingleRepository->findBy([
-                                        '=UF_SUBSCRIBE_ID' => $orderSubscribe->getId(),
-                                        '=UF_ACTIVE' => 0
+                                        'filter' => [
+                                            '=UF_SUBSCRIBE_ID' => $orderSubscribe->getId(),
+                                            '=UF_ACTIVE' => 0
+                                        ]
                                     ])->first();
                                 if($singleSubscribeInactive){
                                     $singleSubscribeInactive->setActive(1);
