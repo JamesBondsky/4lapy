@@ -161,6 +161,9 @@ services:
     class: FourPaws\KioskBundle\Service\KioskService
     public: true
 
+  manzana_api.service:
+    class: FourPaws\ManzanaApiBundle\Service\ManzanaApiService
+
   mobile_api.logger.service:
     class: FourPaws\MobileApiBundle\Services\LoggerService
     arguments: ['%env(LOG_MOBILE_API)%']

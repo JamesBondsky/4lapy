@@ -105,10 +105,11 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console bitrix:mobileApi:push:queue
 ```
 
-## Рассылка персональных предложений на почту
+## Рассылка персональных предложений на почту (не используется, работает некорректно)
 
 ```
-- ./bin/symfony_console fourpaws:popup:notification
+- ./bin/symfony_console fourpaws:popup:notification                  # рассылает уведомления по персональным предложениям, которые закончатся через 4 дня
+- ./bin/symfony_console fourpaws:popup:notification -t start         # рассылает уведомления по персональным предложениям, которые начинаются в текущий день
 ```
 
 ## Фабрика фидов
