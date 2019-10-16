@@ -272,21 +272,33 @@ class PushEventService
                         $data['photourl'] = getenv('SITE_URL') . $data['photourl'];
                     }
 
-                    $message = new Message($pushEvent->getMessageText(), $data);
+
+                    $message = new Message($pushEvent->getMessageText());
+
+                    $message->setOption('badge', 1);
+                    $message->setOption('sound', 'default');
+                    $message->setOption('mutable-content', 1);
+                    $message->setOption('title', $pushEvent->getMessageTitle());
+
+                    $customArr = [
+                        'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
+                        'id' => $pushEvent->getEventId()
+                    ];
+
+                    if ($data['photourl']) {
+                        $customArr['photourl'] = $data['photourl'];
+
+                        $message->setOption('category', 'PHOTO');
+                    }
+
+                    $message->setOption('custom', $customArr);
+
 
                     try {
                         $device = new Device($pushEvent->getPushToken());
                     } catch (AdapterException $adapterException) {
                         continue;
                     }
-                    $device->setParameter('badge', 2);
-                    $device->setParameter('sound', 'default');
-                    $device->setParameter('type', $pushEvent->getMessageTypeEntity()->getXmlId());
-                    $device->setParameter('id', $pushEvent->getEventId());
-                    $device->setParameter('custom', [
-                        'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
-                        'id'   => $pushEvent->getEventId(),
-                    ]);
 
                     $deviceArr = new DeviceCollection([
                         $device,
