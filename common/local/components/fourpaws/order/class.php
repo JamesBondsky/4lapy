@@ -461,7 +461,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             foreach ($deliveries as $calculationResult) {
                 if ($this->deliveryService->isPickup($calculationResult)) {
                     $pickup = $calculationResult;
-                } elseif ($this->deliveryService->isDelivery($calculationResult)) {
+                } elseif (!$delivery && $this->deliveryService->isDelivery($calculationResult)) {
                     $delivery = $calculationResult;
                 } elseif($this->deliveryService->isDostavistaDelivery($calculationResult)){
                     $deliveryDostavista = $calculationResult;
