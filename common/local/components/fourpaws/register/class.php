@@ -570,7 +570,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 $manzanaService = $container->get('manzana.service');
                 $client = null;
                 try {
-                    $contactId = $manzanaService->getContactIdByUser();
+                    $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($phone));
                     $client = new Client();
                     if (!empty($contactId)) {
                         $client->contactId = $contactId;
