@@ -35,7 +35,7 @@ class PushProcessingConsumer extends PushBase
                     $pushEvent = $pushEventService->convertToPushEvent($pushMessage, $session);
                     $res = $pushEventService->apiPushEventRepository->createEvent($pushEvent);
 
-                    if ($res->isSuccess()) {
+                    if ($res->isSuccess() && $pushEvent->getPlatform() == 'ios') {
                         /** @noinspection MissingService */
                         $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.push_send_ios_producer');
                         $data = $res->getData();
