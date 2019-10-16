@@ -61,14 +61,4 @@ class OrderStatus
      * Перезвонить (приходит из SAP, конда клиент не подошел за три попытки)
      */
     public const STATUS_CALL_BACK = 'B';
-
-    /**
-     * В пути
-     */
-    public const STATUS_IN_PROGRESS = 'D';
-
-    /**
-     * Продление хранения
-     */
-    public const STATUS_PICKUP_EXTEND = 'X';
 }
