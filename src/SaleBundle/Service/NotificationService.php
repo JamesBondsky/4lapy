@@ -799,13 +799,13 @@ class NotificationService implements LoggerAwareInterface
      */
     public function sendPushOrSms(string $template, array $parameters, string $typeCode = "", bool $immediate = false): void
     {
-        $user = $this->getUser();
+        // $user = $this->getUser();
 
-        if($user && $this->pushEventService->canSendPushMessage($user, $typeCode)){
+        // if($user && $this->pushEventService->canSendPushMessage($user, $typeCode)){
             $this->addPushMessage($template, $parameters);
-        } else {
+        // } else {
             $this->sendSms($template, $parameters, $immediate);
-        }
+        // }
     }
     
     public function getUser()
