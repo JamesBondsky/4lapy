@@ -18,6 +18,7 @@ use FourPaws\MobileApiBundle\Entity\ApiPushMessage;
 use FourPaws\MobileApiBundle\Entity\ApiUserSession;
 use FourPaws\MobileApiBundle\Repository\ApiPushEventRepository;
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Repository\UserRepository;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializationContext;
@@ -218,15 +219,18 @@ class PushEventService
                     $pushEvent->getPushToken(),
                     $pushEvent->getMessageText(),
                     $pushEvent->getEventId(),
-                    $pushEvent->getMessageTypeEntity()->getXmlId()
+                    $pushEvent->getMessageTypeEntity()->getXmlId(),
+                    $pushEvent->getMessageTitle(),
+                    $pushEvent->getPhotoUrl()
                 );
+
                 $execCode = $response->getStatusCode() === 200 ? ApiPushEvent::EXEC_SUCCESS_CODE : ApiPushEvent::EXEC_FAIL_CODE;
                 $pushEvent->setSuccessExec($execCode);
                 $pushEvent->setServiceResponseStatus($response->getStatusCode());
-            }
-            catch (\Exception $e) {
+            } catch (\Exception $e) {
                 $pushEvent->setServiceResponseError($e->getMessage());
             }
+
             $this->apiPushEventRepository->update($pushEvent);
         }
     }
@@ -252,8 +256,7 @@ class PushEventService
                     $this->log()->info(__METHOD__ . '. PushToken: ' . $pushEvent->getPushToken() . '. LogMessage: ' . $logMessage);
                 }
 
-            }
-            catch (\Exception $e) {
+            } catch (\Exception $e) {
                 $this->log()->error(__METHOD__ . '. PushToken: ' . $pushEvent->getPushToken() . '. Exception: ' . $e->getMessage());
                 $pushEvent->setServiceResponseError($e->getMessage());
             }
@@ -277,16 +280,46 @@ class PushEventService
         if (count($pushEvents) > 0) {
             foreach ($pushEvents as $pushEvent) {
                 try {
+                    $data = [
+                        'aps'      => [
+                            'mutable-content' => 1,
+                            'alert'           => [
+                               'title' => $pushEvent->getMessageTitle(),
+                               'body'  => $pushEvent->getMessageText(),
+                            ],
+                            'sound'           => 'default',
+                            'badge'           => 2,
+                        ],
+                        'photourl' => $pushEvent->getPhotoUrl(),
+                        'type'     => $pushEvent->getMessageTypeEntity()->getXmlId(),
+                        'id'       => $pushEvent->getEventId(),
+                    ];
+
+                    if ($data['photourl']) {
+                        $data['aps']['category'] = 'PHOTO';
+                        $data['photourl'] = getenv('SITE_URL') . $data['photourl'];
+                    }
+
+
                     $message = new Message($pushEvent->getMessageText());
 
                     $message->setOption('badge', 1);
-                    $message->setOption('sound', '');
-                    $message->setOption('custom', [
+                    $message->setOption('sound', 'default');
+                    $message->setOption('mutable-content', 1);
+                    $message->setOption('title', $pushEvent->getMessageTitle());
+
+                    $customArr = [
                         'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
                         'id' => $pushEvent->getEventId()
-                    ]);
-                    $message->setOption('type', $pushEvent->getMessageTypeEntity()->getXmlId());
-                    $message->setOption('id', $pushEvent->getEventId());
+                    ];
+
+                    if ($data['photourl']) {
+                        $customArr['photourl'] = $data['photourl'];
+
+                        $message->setOption('category', 'PHOTO');
+                    }
+
+                    $message->setOption('custom', $customArr);
 
 
                     try {
@@ -297,18 +330,11 @@ class PushEventService
                         $this->apiPushEventRepository->update($pushEvent);
                         continue;
                     }
-                    $device->setParameter('badge', 1);
-                    $device->setParameter('sound', '');
-                    $device->setParameter('type', $pushEvent->getMessageTypeEntity()->getXmlId());
-                    $device->setParameter('id', $pushEvent->getEventId());
-                    $device->setParameter('custom', [
-                        'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
-                        'id' => $pushEvent->getEventId()
-                    ]);
 
                     $deviceArr = new DeviceCollection([
-                        $device
+                        $device,
                     ]);
+
                     try {
                         $push = new Push($adapter, $deviceArr, $message);
                     } catch (AdapterException $ae) {
@@ -531,25 +557,12 @@ class PushEventService
             ]);
 
         $foundPhoneNumbers = [];
+        /** @var User $user */
         foreach ($users as $user) {
-            $personalPhone = $user->getPersonalPhone();
-            $userSession = $this->apiUserSessionRepository->findBy([
-                '=USER_ID' => $user->getId(),
-            ], ['ID' => 'DESC'], 1)[0];
-
-            if (!$userSession) {
-                $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone нет сессий в мобильном приложении");
-            } else if (!($userSession->getPlatform() && $userSession->getPushToken())) {
-                $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone не установлено мобильное приложение");
-            } else {
-                if ($this->shouldSendPushMessage($user, $typeCode)) {
-                    $userIds[$user->getId()] = $user->getId();
-                } else {
-                    $this->log()->warning("PushEventService: пользователь с номером телефона $personalPhone отключил push уведомления");
-                }
+            if ($this->canSendPushMessage($user, $typeCode, true)) {
+                $foundPhoneNumbers[] = $user->getPersonalPhone();
+                $userIds[]           = $user->getId();
             }
-
-            $foundPhoneNumbers[] = $personalPhone;
         }
 
         $notFoundPhoneNumbers = array_diff($phoneNumbers, $foundPhoneNumbers);
@@ -563,8 +576,47 @@ class PushEventService
     }
 
     /**
+     * Проверяет возможность отправки пуша
+     *
+     * @param User   $user
+     * @param string $typeCode
+     * @param bool   $log
+     * @return bool
+     */
+    public function canSendPushMessage(User $user, $typeCode = "", $log = false): bool
+    {
+        $result = true;
+
+        $personalPhone = $user->getPersonalPhone();
+        $userSession   = $this->apiUserSessionRepository->findBy([
+            '=USER_ID' => $user->getId(),
+        ], ['ID' => 'DESC'], 1)[0];
+
+        if (!$userSession) {
+            $result = false;
+            if ($log) {
+                $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone нет сессий в мобильном приложении");
+            }
+        } elseif (!($userSession->getPlatform() && $userSession->getPushToken())) {
+            $result = false;
+            if ($log) {
+                $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone не установлено мобильное приложение");
+            }
+        } elseif (!empty($typeCode)) {
+            if (!$this->shouldSendPushMessage($user, $typeCode)) {
+                $result = false;
+                if ($log) {
+                    $this->log()->warning("PushEventService: пользователь с номером телефона $personalPhone отключил push уведомления");
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * @param \FourPaws\UserBundle\Entity\User $user
-     * @param $typeCode
+     * @param                                  $typeCode
      * @return bool
      */
     protected function shouldSendPushMessage(\FourPaws\UserBundle\Entity\User $user, string $typeCode): bool

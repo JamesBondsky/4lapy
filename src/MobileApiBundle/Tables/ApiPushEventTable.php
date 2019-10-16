@@ -7,6 +7,7 @@ use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Main\Entity\Event;
 use Bitrix\Main\Entity\EventResult;
+use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\StringField;
@@ -61,6 +62,16 @@ class ApiPushEventTable extends DataManager
                 (Application::getHlBlockDataManager('bx.hlblock.pushmessages'))::getEntity(),
                 ['=ref.ID' => 'this.MESSAGE_ID']
             ),
+            new ReferenceField(
+                'PHOTO_FILE',
+                '\Bitrix\Main\FileTable',
+                ['=ref.ID' => 'this.MESSAGE.UF_PHOTO']
+            ),
+            new ExpressionField(
+                'URL',
+                'CONCAT("/upload/", %s, "/", %s)',
+                ['PHOTO_FILE.SUBDIR', 'PHOTO_FILE.FILE_NAME']
+            )
         ];
     }
 

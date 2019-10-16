@@ -22,6 +22,7 @@ use FourPaws\External\ExpertSender\Dto\ForgotBasket;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
 use FourPaws\MobileApiBundle\Entity\ApiPushMessage;
+use FourPaws\MobileApiBundle\Services\PushEventService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\SaleBundle\Dto\Notification\ForgotBasketNotification;
@@ -30,6 +31,8 @@ use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\Notification\UnknownMessageTypeException;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializationContext;
 use LinguaLeo\ExpertSender\ExpertSenderException;
@@ -83,6 +86,21 @@ class NotificationService implements LoggerAwareInterface
     private $transformer;
 
     /**
+     * @var PushEventService
+     */
+    private $pushEventService;
+
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    private $userService;
+
+    /**
+     * @var User
+     */
+    private $user;
+
+    /**
      * NotificationService constructor.
      * @param OrderService $orderService
      * @param SmsService $smsService
@@ -95,7 +113,9 @@ class NotificationService implements LoggerAwareInterface
         SmsService $smsService,
         StoreService $storeService,
         ExpertsenderService $emailService,
-        ArrayTransformerInterface $transformer
+        ArrayTransformerInterface $transformer,
+        PushEventService $pushEventService,
+        CurrentUserProviderInterface $userService
     )
     {
         $this->orderService = $orderService;
@@ -103,6 +123,8 @@ class NotificationService implements LoggerAwareInterface
         $this->storeService = $storeService;
         $this->emailService = $emailService;
         $this->transformer = $transformer;
+        $this->pushEventService = $pushEventService;
+        $this->userService = $userService;
 
         $container = Application::getInstance()->getContainer();
         /** @noinspection MissingService */
@@ -263,8 +285,7 @@ class NotificationService implements LoggerAwareInterface
         }
 
         if ($smsTemplate) {
-            $this->sendSms($smsTemplate, $parameters, true);
-            $this->addPushMessage($smsTemplate, $parameters);
+            $this->sendPushOrSms($smsTemplate, $parameters, 'status', true);
         }
 
         $this->sendNewUserSms($parameters);
@@ -317,8 +338,7 @@ class NotificationService implements LoggerAwareInterface
         if ($parameters['deliveryCode'] === DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
             $this->sendSms('FourPawsSaleBundle:Sms:order.new.delivery.dostavista.is.paid.html.php', $parameters, true);
         } else {
-            $this->sendSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, true);
-            $this->addPushMessage('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters);
+            $this->sendPushOrSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, 'status', true);
         }
 
         $this->sendNewUserSms($parameters);
@@ -342,12 +362,8 @@ class NotificationService implements LoggerAwareInterface
         static::$isSending = true;
 
         $parameters = $this->getOrderData($order);
-
-        $this->sendSms(
-            'FourPawsSaleBundle:Sms:order.canceled.html.php',
-            $parameters
-        );
-        $this->addPushMessage('FourPawsSaleBundle:Sms:order.canceled.html.php', $parameters);
+        
+        $this->sendPushOrSms('FourPawsSaleBundle:Sms:order.canceled.html.php', $parameters, 'status', true);
         static::$isSending = false;
     }
 
@@ -419,13 +435,9 @@ class NotificationService implements LoggerAwareInterface
         }
 
         if ($smsTemplate) {
-            $this->sendSms(
-                $smsTemplate,
-                $parameters
-            );
-            $this->addPushMessage($smsTemplate, $parameters);
+            $this->sendPushOrSms($smsTemplate, $parameters, 'status', true);
         }
-
+        
         static::$isSending = false;
     }
 
@@ -746,8 +758,7 @@ class NotificationService implements LoggerAwareInterface
                     }
 
                     $smsTemplate = 'FourPawsSaleBundle:Sms:order.subscribe.upcoming.delivery.html.php';
-                    $this->sendSms($smsTemplate, $parameters);
-                    $this->addPushMessage($smsTemplate, $parameters);
+                    $this->sendPushOrSms($smsTemplate, $parameters, 'status', true);
                     $this->smsService->markAlreadySent($smsEventName, $smsEventKey);
                 }
             }
@@ -775,5 +786,38 @@ class NotificationService implements LoggerAwareInterface
         );
 
         return (int)$result > 0;
+    }
+
+    /**
+     * Отправляет пуш-уведомление, если это невозможно то смс
+     *
+     * @param string $template   - шаблон
+     * @param array  $parameters - параметры
+     * @param string $typeCode   - тип пуша
+     * @param bool   $immediate  - мгновенная отправка смс
+     * @throws ApplicationCreateException
+     */
+    public function sendPushOrSms(string $template, array $parameters, string $typeCode = "", bool $immediate = false): void
+    {
+        // $user = $this->getUser();
+
+        // if($user && $this->pushEventService->canSendPushMessage($user, $typeCode)){
+            $this->addPushMessage($template, $parameters);
+        // } else {
+            $this->sendSms($template, $parameters, $immediate);
+        // }
+    }
+    
+    public function getUser()
+    {
+        if($this->user === null){
+            try {
+                $this->user = $this->userService->getCurrentUser();
+            } catch (\Exception $e) {
+                $this->user = false;
+            }
+        }
+
+        return $this->user;
     }
 }
