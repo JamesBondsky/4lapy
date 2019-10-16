@@ -24,6 +24,7 @@ use FourPaws\External\SmsService;
 use FourPaws\MobileApiBundle\Entity\ApiPushMessage;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
+use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\SaleBundle\Dto\Notification\ForgotBasketNotification;
 use FourPaws\SaleBundle\Enum\ForgotBasketEnum;
 use FourPaws\SaleBundle\Enum\OrderPayment;
@@ -348,6 +349,32 @@ class NotificationService implements LoggerAwareInterface
             $parameters
         );
         $this->addPushMessage('FourPawsSaleBundle:Sms:order.canceled.html.php', $parameters);
+        static::$isSending = false;
+    }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     */
+    public function sendOrderSubscribeCancelMessage(OrderSubscribe $orderSubscribe): void
+    {
+        if (static::$isSending) {
+            return;
+        }
+
+        /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
+        $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
+
+        try {
+            $order = $this->orderService->getOrderById($orderSubscribeHistoryService->getLastCreatedOrderId($orderSubscribe));
+        } catch (\Exception $e) {
+            return;
+        }
+
+        static::$isSending = true;
+
+        $parameters = $this->getOrderData($order);
+
+        $this->sendSms('FourPawsSaleBundle:Sms:order.subscribe.canceled.html.php', $parameters);
         static::$isSending = false;
     }
 

@@ -65,6 +65,7 @@ use FourPaws\PersonalBundle\Repository\OrderSubscribeItemRepository;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
+use FourPaws\SaleBundle\EventController\Event;
 use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
@@ -1971,6 +1972,7 @@ class OrderSubscribeService implements LoggerAwareInterface
             NotificationService::class
         );
         $notificationService->sendAutoUnsubscribeOrderMessage($orderSubscribe);
+        $notificationService->sendOrderSubscribeCancelMessage($orderSubscribe);
     }
 
     /**
@@ -2111,6 +2113,8 @@ class OrderSubscribeService implements LoggerAwareInterface
      */
     public function deleteNotDeliveredOrders(OrderSubscribe $orderSubscribe)
     {
+        Event::disableEvents();
+
         $result = new Result();
         try {
             $orderIdsForDelete = $this->getOrderSubscribeHistoryService()->getNotDeliveredOrderIds($orderSubscribe);
