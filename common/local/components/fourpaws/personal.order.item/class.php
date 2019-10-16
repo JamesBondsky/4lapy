@@ -2,6 +2,7 @@
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application as BitrixApplication;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\SystemException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
@@ -10,13 +11,11 @@ use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
-use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
-use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\StoreBundle\Service\StoreService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -40,11 +39,6 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
      */
     private $orderSubscribeService;
 
-    /**
-     * @var DeliveryService $deliveryService
-     */
-    private $deliveryService;
-
 
     /**
      * FourPawsPersonalCabinetOrderItemComponent constructor.
@@ -52,6 +46,7 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
      * @param null|\CBitrixComponent $component
      *
      * @throws LogicException
+     * @throws SystemException
      * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
      */
@@ -61,7 +56,6 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
         // делаем это вручную
         $this->logName = __CLASS__;
         $this->storeService = Application::getInstance()->getContainer()->get('store.service');
-        $this->deliveryService = Application::getInstance()->getContainer()->get(DeliveryService::class);
         parent::__construct($component);
     }
 
@@ -105,12 +99,7 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
             } catch (\Exception $e) {
                 $this->setError(sprintf("Произошла ошибка: %s", $e->getMessage()));
             }
-        }
 
-        $this->setCancelValues($personalOrder);
-
-        if (!$this->arResult['FINISHED'] && !$this->arResult['CANCELED']) {
-            $this->setExtendValues($personalOrder);
         }
     }
 
@@ -217,66 +206,6 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
         }
 
         return $path;
-    }
-
-    /**
-     * @param Order $personalOrder
-     */
-    protected function setCancelValues(Order $personalOrder): void
-    {
-        $this->arResult['CAN_CANCEL'] = false;
-        $this->arResult['FINISHED'] = false;
-        $this->arResult['CANCELED'] = false;
-
-        $statusId = $personalOrder->getStatusId();
-
-        if (!$statusId) {
-            return;
-        }
-
-        if (in_array($statusId, PersonalOrderService::STATUS_FINAL, true)) {
-            $this->arResult['FINISHED'] = true;
-        } else if (in_array($statusId, PersonalOrderService::STATUS_CANCEL, true)) {
-            $this->arResult['CANCELED'] = true;
-        } else if ((new DateTime())->getTimestamp() - $personalOrder->getDateInsert()->getTimestamp() < 2592000) { // заказ автоматически отменияется в SAP через 30 дней
-            $this->arResult['CAN_CANCEL'] = true;
-        }
-    }
-
-    protected function setExtendValues(Order $personalOrder): void
-    {
-        $this->arResult['CAN_EXTEND'] = false;
-        $this->arResult['EXTENDED'] = false;
-
-        $statusId = $personalOrder->getStatusId();
-
-        if (!$statusId) {
-            return;
-        }
-
-        if ($statusId === OrderStatus::STATUS_PICKUP_EXTEND) {
-            $this->arResult['EXTENDED'] = true;
-            return;
-        }
-
-        if ($this->arResult['FINISHED']) {
-            return;
-        }
-
-        $deliveryId = $personalOrder->getDeliveryId();
-
-        if (!$deliveryId) {
-            return;
-        }
-
-        try {
-            $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
-            if ($this->deliveryService->isPickupCode($deliveryCode)) {
-                $this->arResult['CAN_EXTEND'] = true;
-            }
-        } catch (\Exception $e) {
-            return;
-        }
     }
 
     /**

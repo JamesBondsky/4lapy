@@ -100,21 +100,20 @@ if ($orderSubscribe) {
 
 ?>
     <li<?= $attr ?> class="b-accordion-order-item js-permutation-li js-item-content">
-        <div>
-            <div class="b-accordion-order-item__visible js-premutation-accordion-content">
-                <div class="b-accordion-order-item__info">
-                    <a class="b-accordion-order-item__open-accordion js-open-accordion"
-                       href="javascript:void(0);"
-                       title="">
+        <div class="b-accordion-order-item__visible js-premutation-accordion-content">
+            <div class="b-accordion-order-item__info">
+                <a class="b-accordion-order-item__open-accordion js-open-accordion"
+                   href="javascript:void(0);"
+                   title="">
                     <span class="b-accordion-order-item__arrow">
                         <span class="b-icon b-icon--account">
                             <?= new SvgDecorator('icon-arrow-account', 25, 25) ?>
                         </span>
                     </span>
-                        <?php
-                        if ($isOrderSubscribePage) {
-                            ?>
-                            <span class="b-accordion-order-item__number-order">
+                    <?php
+                    if ($isOrderSubscribePage) {
+                        ?>
+                        <span class="b-accordion-order-item__number-order">
                             <?php
                             echo $orderSubscribe->getDeliveryFrequencyEntity()
                                 ->getValue();
@@ -122,22 +121,25 @@ if ($orderSubscribe) {
                             echo $orderSubscribe->getDateStartWeekdayRu();
                             ?>
                         </span>
-                            <?php
-                        } else {
-                            $manzanaId = $order->getManzanaId();
-                            $accountNumber = $order->getAccountNumber();
-                            if ($manzanaId) {
-                                $orderNumber = $manzanaId === $accountNumber . 'NEW' ? $accountNumber : $manzanaId;
-                            } else {
-                                $orderNumber = $accountNumber;
-                            }
-                            ?>
-                            <span class="b-accordion-order-item__number-order">
+                        <?php
+                    } else {
+                        $manzanaId = $order->getManzanaId();
+                        $accountNumber = $order->getAccountNumber();
+                        if ($manzanaId)
+                        {
+                        	$orderNumber = $manzanaId === $accountNumber . 'NEW' ? $accountNumber : $manzanaId;
+                        }
+                        else
+                        {
+                            $orderNumber = $accountNumber;
+                        }
+                        ?>
+                        <span class="b-accordion-order-item__number-order">
                             <?= ('№ ' . $orderNumber . ' от ' . $order->getFormattedDateInsert()) ?>
                         </span>
-                        <?php } ?>
-                    </a>
-                    <?php
+                    <?php } ?>
+                </a>
+                <?php
 
                 $countItems = 0;
                 /** @var OrderItem $orderItem */
@@ -148,158 +150,120 @@ if ($orderSubscribe) {
                     $countItems++;
                 }
 
-                    if ($countItems > 0) { ?>
-                        <div class="b-accordion-order-item__info-order"><?= $countItems ?> <?= WordHelper::declension($countItems,
-                                [
-                                    'товар',
-                                    'товара',
-                                    'товаров',
-                                ]) ?> <?= $order->getAllWeight() > 0 ? '(' . WordHelper::showWeight($order->getAllWeight(),
-                                    true) . ')' : ''; ?>
-                        </div>
-                    <?php } ?>
-                </div>
-                <div class="b-accordion-order-item__adress">
-                    <div class="b-accordion-order-item__date b-accordion-order-item__date--new">
-                        <?php if ($isOrderSubscribePage) {
-                            echo '<span>';
-                            echo 'Следующая доставка ';
-                            echo DateHelper::replaceRuMonth(
-                                $orderSubscribe->getNextDate()
-                                    ->format('d #n# Y'),
-                                DateHelper::GENITIVE,
-                                true
-                            );
-                            echo '</span>';
-                        } else {
-                            echo $order->getStatus();
-                            echo ' ';
-                            echo '<span>';
-                            echo ' ';
-                            /** предлог "с" только для статусов "В пунке выдачи" и "В сборке" */
-                            $checkStatuses = [
-                                OrderStatus::STATUS_IN_ASSEMBLY_1,
-                                OrderStatus::STATUS_IN_ASSEMBLY_2,
-                                OrderStatus::STATUS_ISSUING_POINT,
-                            ];
-                            echo \in_array($order->getStatus(), $checkStatuses, true) ? 'с&nbsp;' : '';
-                            echo $order->getFormattedDateStatus();
-                            echo ' ';
-                            echo '</span>';
-                        } ?>
+                if ($countItems > 0) { ?>
+                    <div class="b-accordion-order-item__info-order"><?= $countItems ?> <?= WordHelper::declension($countItems,
+                            [
+                                'товар',
+                                'товара',
+                                'товаров',
+                            ]) ?> <?= $order->getAllWeight() > 0 ? '(' . WordHelper::showWeight($order->getAllWeight(),
+                                true) . ')' : ''; ?>
                     </div>
-                    <?php if (!$order->isFastOrder()) { ?>
-                        <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
-                            <?= $order->getDelivery()
-                                ->getDeliveryName() ?>
-                            <span><?= $order->getDateDelivery() ?></span>
-                        </div>
-                    <?php }
-                    $store = $order->getStore();
-                    if ($store !== null && $store->isActive()) {
-                        $address = trim($store->getAddress());
-                        if (!empty($address)) { ?>
-                            <div class="b-adress-info b-adress-info--order">
-                                <?php if ($arResult['METRO'] !== null && $store->getMetro() > 0) { ?>
-                                    <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($store->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
-                                    м. <?= $arResult['METRO']->get($store->getMetro())['UF_NAME'] ?>,
-                                <?php }
-                                echo $address;
-                                if (!empty($store->getScheduleString())) { ?>
-                                    <p class="b-adress-info__mode-operation"><?= $store->getScheduleString() ?></p>
-                                <?php } ?>
-                            </div>
-                        <?php }
+                <?php } ?>
+            </div>
+            <div class="b-accordion-order-item__adress">
+                <div class="b-accordion-order-item__date b-accordion-order-item__date--new">
+                    <?php if ($isOrderSubscribePage) {
+                        echo '<span>';
+                        echo 'Следующая доставка ';
+                        echo DateHelper::replaceRuMonth(
+                            $orderSubscribe->getNextDate()
+                                ->format('d #n# Y'),
+                            DateHelper::GENITIVE,
+                            true
+                        );
+                        echo '</span>';
+                    } else {
+                        echo $order->getStatus();
+                        echo ' ';
+                        echo '<span>';
+                        echo ' ';
+                        /** предлог "с" только для статусов "В пунке выдачи" и "В сборке" */
+                        $checkStatuses = [
+                            OrderStatus::STATUS_IN_ASSEMBLY_1,
+                            OrderStatus::STATUS_IN_ASSEMBLY_2,
+                            OrderStatus::STATUS_ISSUING_POINT,
+                        ];
+                        echo \in_array($order->getStatus(), $checkStatuses, true) ? 'с&nbsp;' : '';
+                        echo $order->getFormattedDateStatus();
+                        echo ' ';
+                        echo '</span>';
                     } ?>
                 </div>
-                <div class="b-accordion-order-item__pay">
-                    <div class="b-accordion-order-item__not-pay">
-                        <?php
-                        $paymentName = '';
-                        if ($isOrderSubscribePage) {
-                            $paymentName = 'Оплата наличными или картой при получении';
-                        } else {
-                            $payment = $order->getPayment();
-                            $paymentCode = $payment->getCode();
-                            switch ($paymentCode) {
-                                case OrderPayment::PAYMENT_CASH_OR_CARD:
-                                    $paymentName = 'наличными или картой';
-                                    break;
-                                case OrderPayment::PAYMENT_ONLINE:
-                                    $paymentName = 'онлайн';
-                                    break;
-                                case OrderPayment::PAYMENT_CASH:
-                                    $paymentName = 'наличными';
-                                    break;
-                            }
-                            if ($paymentCode === 'cash' && !$order->getManzanaId() && !$order->isPayed()) {
-                                /** т.к. неоплаченных заказов будет не очень много у пользователя - оставим расчет здесь */
-                                /** @var OrderService $orderService */
-                                $orderService = SymfoniApplication::getInstance()
-                                    ->getContainer()
-                                    ->get(OrderService::class);
-                                $bitrixOrder = BitrixOrder::load($order->getId());
-                                if ($bitrixOrder !== null && $bitrixOrder->getId() > 0) {
-                                    $commWay = $orderService->getOrderPropertyByCode($bitrixOrder, 'COM_WAY');
-                                    if ($commWay->getValue() === OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
-                                        $paymentName = 'Постоплата';
-                                    }
+                <?php if (!$order->isFastOrder()) { ?>
+                    <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
+                        <?= $order->getDelivery()
+                            ->getDeliveryName() ?>
+                        <span><?= $order->getDateDelivery() ?></span>
+                    </div>
+                <?php }
+                $store = $order->getStore();
+                if ($store !== null && $store->isActive()) {
+                    $address = trim($store->getAddress());
+                    if (!empty($address)) { ?>
+                        <div class="b-adress-info b-adress-info--order">
+                            <?php if ($arResult['METRO'] !== null && $store->getMetro() > 0) { ?>
+                                <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($store->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
+                                м. <?= $arResult['METRO']->get($store->getMetro())['UF_NAME'] ?>,
+                            <?php }
+                            echo $address;
+                            if (!empty($store->getScheduleString())) { ?>
+                                <p class="b-adress-info__mode-operation"><?= $store->getScheduleString() ?></p>
+                            <?php } ?>
+                        </div>
+                    <?php }
+                } ?>
+            </div>
+            <div class="b-accordion-order-item__pay">
+                <div class="b-accordion-order-item__not-pay">
+                    <?php
+                    $paymentName = '';
+                    if ($isOrderSubscribePage) {
+                        $paymentName = 'Оплата наличными или картой при получении';
+                    } else {
+                        $payment = $order->getPayment();
+                        $paymentCode = $payment->getCode();
+                        switch ($paymentCode) {
+                            case OrderPayment::PAYMENT_CASH_OR_CARD:
+                                $paymentName = 'наличными или картой';
+                                break;
+                            case OrderPayment::PAYMENT_ONLINE:
+                                $paymentName = 'онлайн';
+                                break;
+                            case OrderPayment::PAYMENT_CASH:
+                                $paymentName = 'наличными';
+                                break;
+                        }
+                        if ($paymentCode === 'cash' && !$order->getManzanaId() && !$order->isPayed()) {
+                            /** т.к. неоплаченных заказов будет не очень много у пользователя - оставим расчет здесь */
+                            /** @var OrderService $orderService */
+                            $orderService = SymfoniApplication::getInstance()
+                                ->getContainer()
+                                ->get(OrderService::class);
+                            $bitrixOrder = BitrixOrder::load($order->getId());
+                            if ($bitrixOrder !== null && $bitrixOrder->getId() > 0) {
+                                $commWay = $orderService->getOrderPropertyByCode($bitrixOrder, 'COM_WAY');
+                                if ($commWay->getValue() === OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
+                                    $paymentName = 'Постоплата';
                                 }
                             }
-                            if ($order->isFastOrder()
-                                && \in_array($order->getStatusId(), [
-                                    'N',
-                                    'Q'
-                                ], true)) {
-                                $paymentName = 'Постоплата';
-                            }
-                            if ($paymentName && $paymentName !== 'Постоплата') {
-                                $paymentName = $order->getPayPrefixText() . ' ' . $paymentName;
-                            }
                         }
-
-                        echo $paymentName; ?>
-                    </div>
-                </div>
-                <div class="b-accordion-order-item__button js-button-default">
-                    <?php
-                    /*
-                    if (!$isOrderSubscribePage && !$order->isClosed() && !$order->isPayed() && !$order->getManzanaId() && $order->getPayment()->getCode() === 'card-online') {
-                        ?>
-                        <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
-                            <a class="b-link b-link--pay-account b-link--pay-account"
-                               href="<?= '/sale/payment/?ORDER_ID='.$order->getId() ?>"
-                               title="Оплатить">
-                                <span class="b-link__text b-link__text--pay-account">Оплатить</span>
-                            </a>
-                        </div>
-                        <?php
+                        if ($order->isFastOrder()
+                            && \in_array($order->getStatusId(), [
+                                'N',
+                                'Q'
+                            ], true)) {
+                            $paymentName = 'Постоплата';
+                        }
+                        if ($paymentName && $paymentName !== 'Постоплата') {
+                            $paymentName = $order->getPayPrefixText() . ' ' . $paymentName;
+                        }
                     }
-                    */
 
-                    // элементы управления подпиской
-                    echo $subscribeOrderEditControls;
-
-                    ?>
-                    <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full">
-                        <?php
-                        /**
-                         * [LP03-908] В подписке на доставку не отображаем бонусы
-                         */
-                        echo $isOrderSubscribePage ? $order->getFormattedPriceReal() : $order->getFormattedPrice();
-                        ?>
-                        <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
-                    </div>
-                    <?php
-
-                    // элементы добавления подписки
-                    echo $subscribeOrderAddControls;
-
-                    ?>
+                    echo $paymentName; ?>
                 </div>
             </div>
-            <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
-                <?php $isFirstButton = true; ?>
+            <div class="b-accordion-order-item__button js-button-default">
                 <?php
                 if (!$isOrderSubscribePage && (!$order->getManzanaId())) {
                     $uri = new Uri(Application::getInstance()
@@ -308,38 +272,48 @@ if ($orderSubscribe) {
                         ->getRequestUri());
                     $uri->addParams([
                         'reply_order' => 'Y',
-                        'id' => $order->getId()
-                    ]); ?>
+                        'id'          => $order->getId()
+                    ]);?>
+                    <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
+                        <a class="b-link b-link--repeat-order b-link--repeat-order" href="<?= $uri->getUri() ?>"
+                           title="Повторить заказ">
+                            <span class="b-link__text b-link__text--repeat-order">Повторить заказ</span>
+                        </a>
+                    </div>
+                <?php }
+                /*
+                if (!$isOrderSubscribePage && !$order->isClosed() && !$order->isPayed() && !$order->getManzanaId() && $order->getPayment()->getCode() === 'card-online') {
+                    ?>
+                    <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
+                        <a class="b-link b-link--pay-account b-link--pay-account"
+                           href="<?= '/sale/payment/?ORDER_ID='.$order->getId() ?>"
+                           title="Оплатить">
+                            <span class="b-link__text b-link__text--pay-account">Оплатить</span>
+                        </a>
+                    </div>
+                    <?php
+                }
+                */
 
-                    <a class="b-link b-link__button b-link__button-first" href="<?= $uri->getUri() ?>"
-                       title="Повторить заказ">
-                        <span class="b-link__text">Повторить заказ</span>
-                    </a>
-                    <?php $isFirstButton = false; ?>
-                <?php } ?>
-                <?php if ($arResult['CAN_CANCEL'] || $arResult['CANCELED']) { ?>
-                    <div class="b-link b-link__button <?= ($arResult['CAN_CANCEL']) ? 'js-cancel-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?>" data-order-id="<?= $order->getId() ?>">
-                        <span class="b-link__text js-link-text">
-                            <?php if ($arResult['CAN_CANCEL']) { ?>
-                                Отменить заказ
-                            <?php } else if ($arResult['CANCELED']) { ?>
-                                Отменен
-                            <?php } ?>
-                        </span>
-                    </div>
-                    <?php $isFirstButton = false; ?>
-                <?php } ?>
-                <?php if (!$arResult['FINISHED'] && ($arResult['CAN_EXTEND'] || $arResult['EXTENDED'])) { ?>
-                    <div class="b-link b-link__button <?= ($arResult['CAN_EXTEND']) ? 'js-extend-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?>" data-order-id="<?= $order->getId() ?>">
-                        <span class="b-link__text js-link-text">
-                            <?php if ($arResult['CAN_EXTEND']) { ?>
-                                Продлить срок хранения
-                            <?php } else if ($arResult['EXTENDED']) { ?>
-                                Срок хранения продлен
-                            <?php } ?>
-                        </span>
-                    </div>
-                <?php } ?>
+                // элементы управления подпиской
+                echo $subscribeOrderEditControls;
+
+                ?>
+                <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full">
+                    <?php
+                    /**
+                     * [LP03-908] В подписке на доставку не отображаем бонусы
+                     */
+                    echo $isOrderSubscribePage ? $order->getFormattedPriceReal() : $order->getFormattedPrice();
+                    ?>
+                    <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
+                </div>
+                <?php
+
+                // элементы добавления подписки
+                echo $subscribeOrderAddControls;
+
+                ?>
             </div>
         </div>
         <div class="b-accordion-order-item__hidden js-hidden-order">
