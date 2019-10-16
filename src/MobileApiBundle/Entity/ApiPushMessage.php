@@ -108,6 +108,14 @@ class ApiPushMessage
      */
     protected $isSendingToAllUsers;
 
+    /**
+     * @var string
+     * @Serializer\SerializedName("PHOTO_URL")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read","update","create"})
+     */
+    protected $photoUrl;
+
     /** @var UserFieldEnumValue $typeEntity */
     private $typeEntity;
 

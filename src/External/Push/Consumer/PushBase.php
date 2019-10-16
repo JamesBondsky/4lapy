@@ -5,6 +5,7 @@ namespace FourPaws\External\Push\Consumer;
 
 
 use FourPaws\App\Application;
+use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\External\PushService;
 use FourPaws\MobileApiBundle\Entity\ApiPushMessage;
 use FourPaws\MobileApiBundle\Services\PushEventService;
@@ -55,6 +56,12 @@ abstract class PushBase implements ConsumerInterface, LoggerAwareInterface
     {
         /** @var PushEventService $pushEventService */
         $pushEventService = Application::getInstance()->getContainer()->get('FourPaws\MobileApiBundle\Services\PushEventService');
+
+        foreach ($messageText as &$messageTextItem) {
+            if ($messageTextItem['UF_PHOTO']) {
+                $messageTextItem['PHOTO_URL'] = \CFile::GetPath($messageTextItem['UF_PHOTO']);
+            }
+        }
 
         /** @var ApiPushMessage[] $pushMessages */
         $pushMessages = $pushEventService->transformer->fromArray(
