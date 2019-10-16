@@ -3,8 +3,10 @@
 namespace FourPaws\ManzanaApiBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\ManzanaApiBundle\Dto\Object\Coupon;
 use FourPaws\ManzanaApiBundle\Dto\Object\CouponIssue;
@@ -12,6 +14,7 @@ use FourPaws\ManzanaApiBundle\Dto\Object\Message;
 use FourPaws\ManzanaApiBundle\Dto\Response\CouponsResponse;
 use FourPaws\ManzanaApiBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\AlreadyExistsException;
+use FourPaws\PersonalBundle\Exception\CouponNotFoundException;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException as PersonalBundleInvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\OfferNotFoundException;
 use FourPaws\PersonalBundle\Repository\PersonalOfferRepository;
@@ -112,9 +115,12 @@ class ManzanaApiService
 
     /**
      * @param Coupon[] $coupons
+     * @param bool|null $isSendNotifications
      * @return CouponsResponse
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\LoaderException
      */
-    public function addCoupons(array $coupons): CouponsResponse
+    public function addCoupons(array $coupons, ?bool $isSendNotifications = false): CouponsResponse
     {
         if (!$coupons) {
             throw new InvalidArgumentException(InvalidArgumentException::ERRORS[1], 1);
@@ -199,7 +205,38 @@ class ManzanaApiService
                         ],
                     ],
                 ];
-                $personalOffersService->importOffers($offerId, $couponsArray, false);
+                $newCouponsInfo = $personalOffersService->importOffers($offerId, $couponsArray, false);
+
+                /** @var UserService $userService */
+                $userService = App::getInstance()->getContainer()->get(UserSearchInterface::class);
+
+                // На первый взгляд, эти два вызова метода можно объединить, но разработчик метода сказал,
+                // что там есть какие-то нюансы, поэтому лучше использовать два отдельных вызова
+                if ($isSendNotifications) {
+                    // Добавление в очередь пушей о начале и окончании действия купона
+                    $userService->sendNotifications(
+                        [$userId],
+                        $offerId,
+                        null,
+                        $coupon->getPromoCode(),
+                        $coupon->getStartDate(),
+                        $coupon->getEndDate(),
+                        false,
+                        'ID'
+                    );
+                    // Отправка email о новом купоне
+                    $userService->sendNotifications(
+                        [$userId],
+                        $offerId,
+                        ExpertsenderService::PERSONAL_OFFER_COUPON_START_SEND_EMAIL,
+                        $coupon->getPromoCode(),
+                        $coupon->getStartDate(),
+                        $coupon->getEndDate(),
+                        true,
+                        'ID',
+                        $newCouponsInfo[$coupon->getPromoCode()]['couponId']
+                    );
+                }
 
                 $result[] = (new Message())
                     ->setMessageId($coupon->getMessageId())
@@ -216,6 +253,52 @@ class ManzanaApiService
         }
 
         return (new CouponsResponse())->setMessages($result);
+    }
+
+    /**
+     * @param array $couponsIds
+     * @throws PersonalBundleInvalidArgumentException
+     */
+    public function deleteCoupons(array $couponsIds): void
+    {
+        $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
+
+        foreach ($couponsIds as $couponId) {
+            if ($couponId > 0) {
+                $personalOffersService->deleteCouponUserLink($couponId);
+            }
+        }
+    }
+
+    /**
+     * Для "обновления" купона удаляет старый и добавляет новый (так значительно надежнее, чем делать логику изменения всей цепочки данных)
+     *
+     * @param array $coupons
+     * @return CouponsResponse
+     * @throws PersonalBundleInvalidArgumentException
+     * @throws \Bitrix\Main\Db\SqlQueryException
+     */
+    public function updateCoupons(array $coupons): CouponsResponse
+    {
+        if (!$coupons) {
+            throw new InvalidArgumentException(InvalidArgumentException::ERRORS[1], 1);
+        }
+
+        $conn = Application::getConnection();
+        $conn->startTransaction();
+
+        try {
+            $this->deleteCoupons(array_keys($coupons));
+
+            $addedCoupons = $this->addCoupons($coupons);
+
+            $conn->commitTransaction();
+        } catch (\Exception $e) {
+            $conn->rollbackTransaction();
+            throw $e;
+        }
+
+        return $addedCoupons;
     }
 
     /**
@@ -251,6 +334,12 @@ class ManzanaApiService
                     } else {
                         throw new PersonalBundleInvalidArgumentException($e->getMessage(), $e->getCode());
                     }
+                } catch (CouponNotFoundException $e) {
+                    $result[] = (new Message())
+                        ->setMessageId($coupon->getMessageId())
+                        ->setMessageStatus('error')
+                        ->setMessageText($e->getMessage())
+                    ;
                 }
             } catch (Throwable $e) {
                 $result[] = (new Message())

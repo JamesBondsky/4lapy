@@ -12,6 +12,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 
@@ -143,7 +144,7 @@ if ($orderSubscribe) {
                 $countItems = 0;
                 /** @var OrderItem $orderItem */
                 foreach ($order->getItems() as $orderItem) {
-                    if ($orderItem->getParentItem()) {
+                    if ($orderItem->getParentItem() || ($orderItem->getArticle() === BasketService::GIFT_NOVEMBER_NEWSPAPER_XML_ID)) {
                         continue;
                     }
                     $countItems++;
@@ -319,7 +320,7 @@ if ($orderSubscribe) {
             <ul class="b-list-order">
                 <?php /** @var OrderItem $item */
                 foreach ($order->getItems() as $item) {
-                    if ($item->getParentItem()) {
+                    if ($item->getParentItem() || ($item->getArticle() === BasketService::GIFT_NOVEMBER_NEWSPAPER_XML_ID)) {
                         continue;
                     }
                     if (!$order->getManzanaId() && $item->hasDetailPageUrl() && !$item->isGift()) { ?>
