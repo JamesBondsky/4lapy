@@ -455,9 +455,10 @@ class LocationService
      * Поиск местоположения по названию
      *
      * @param Query|array $queryParams
-     * @param int         $limit
-     * @param bool        $needPath
+     * @param int $limit
+     * @param bool $needPath
      *
+     * @param bool $sortByType
      * @return array
      */
     public function findLocationNew(
