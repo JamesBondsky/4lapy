@@ -141,7 +141,7 @@ class BasketController extends BaseController
                 $this->manzana->calculate();
                 
                 $storage->setPromoCode($promoCode);
-                $this->orderStorageService->updateStorage($storage);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
             } catch (ManzanaPromocodeUnavailableException $e) {
                 $promoCode = '';
             }
@@ -469,11 +469,11 @@ class BasketController extends BaseController
         
         switch ($use) {
             case true:
-                // $this->manzana->setPromocode($promoCode);
-                // $this->manzana->calculate();
-                //
-                // $storage->setPromoCode($promoCode);
-                // $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+                $this->manzana->setPromocode($promoCode);
+                $this->manzana->calculate();
+                
+                $storage->setPromoCode($promoCode);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
                 $fUserId = $this->appUserService->getCurrentFUserId() ?: 0;
                 $this->appBasketService->getBasket(true, $fUserId);
                 $couponStorage->clear();
