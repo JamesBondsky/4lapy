@@ -482,7 +482,7 @@ class BasketController extends BaseController
             case false:
                 $couponStorage->delete($promoCode);
                 $storage->setPromoCode('');
-                $orderStorageService->updateStorage($storage);
+                $orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
                 break;
         }
         
