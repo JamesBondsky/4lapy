@@ -36,17 +36,27 @@ class FireBaseCloudMessagingService
      * @param $messageText
      * @param $messageId
      * @param $messageType
+     * @param $messageTitle
+     * @param $photoUrl
      * @return \Psr\Http\Message\ResponseInterface
      * @throws FireBaseCloudMessagingException
      */
     public function sendNotification($token, $messageText, $messageId, $messageType, $messageTitle = '', $photoUrl = '')
     {
+        $categoryTitle = '';
         $client = new Client();
         $client->setApiKey(static::API_KEY);
         $client->injectHttpClient(new HttpClient());
         
         $message = new Message();
         $message->addRecipient(new Device($token));
+
+        if ($messageType == 'category') {
+            $categoryTitle = \Bitrix\Iblock\SectionTable::getList([
+                'select' => ['NAME'],
+                'filter' => ['=ID' => $messageId]
+            ])->fetch()['NAME'];
+        }
 
         $message->setData([
             'body' => [
@@ -61,7 +71,8 @@ class FireBaseCloudMessagingService
                 'options' => [
                     'id'   => $messageId, // Идентификатор события
                     'url'  => $photoUrl ? getenv('SITE_URL') . $photoUrl : '',
-                    'type' => $messageType // Тип события
+                    'type' => $messageType, // Тип события
+                    'title' => $categoryTitle // Заголовок категории
                 ],
             ],
         ]);
