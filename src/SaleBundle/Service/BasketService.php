@@ -366,6 +366,7 @@ class BasketService implements LoggerAwareInterface
                     $parsedStampsLevelKey = $this->stampService->parseLevelKey($maxStampsLevelKey);
                     $stampsUsed = $parsedStampsLevelKey['discountStamps'] * $maxStampsLevelPropValue['value'];
                     $usedStampsInfo = [
+                        'exchangeName' => $maxStampsLevelKey,
                         'stampsUsed' => $stampsUsed,
                         'discountValue' => $parsedStampsLevelKey['discountValue'],
                         'discountType' => $parsedStampsLevelKey['discountType'],
@@ -1724,5 +1725,48 @@ class BasketService implements LoggerAwareInterface
         }
 
         return $result;
+    }
+
+    /**
+     * проставляем наличие товара на DC01, если товар берется у поставщика
+     *
+     * @param Basket $basket
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     */
+    public function setDC01AmountProperty(Basket $basket): void
+    {
+        /** @var BasketItem $basketItem */
+        foreach ($basket->getOrderableItems() as $basketItem) {
+            $shipmentPlaceCode = $this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE');
+            if ($shipmentPlaceCode) {
+                try {
+                    $store = $this->storeService->getStoreByXmlId($shipmentPlaceCode);
+                } catch (\FourPaws\StoreBundle\Exception\NotFoundException $e) {
+                    continue;
+                }
+                if ($store->isSupplier() && $rcStock = $this->stockService->getStocksByOfferIds([$basketItem->getProductId()], [1])) {
+                    $this->setBasketItemPropertyValue(
+                        $basketItem,
+                        'DC01_AMOUNT',
+                        (string)$rcStock->getTotalAmount()
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * @param BasketItem $item
+     * @param string $code
+     *
+     * @return string
+     * @throws ArgumentException
+     * @throws NotImplementedException
+     */
+    public function getBasketPropertyValueByCode(BasketItem $item, string $code): string
+    {
+        return $item->getPropertyCollection()->getPropertyValues()[$code]['VALUE'] ?? '';
     }
 }
