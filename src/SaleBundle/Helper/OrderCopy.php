@@ -41,6 +41,7 @@ use FourPaws\SaleBundle\Exception\OrderCopyBasketException;
 use FourPaws\SaleBundle\Exception\OrderCopyShipmentsException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Service\StoreService;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
@@ -1541,6 +1542,16 @@ class OrderCopy
         // адрес доставки
         if($deliveryService->isDelivery($delivery)){
             $address = $locationService->splitAddress($subscribe->getDeliveryPlace());
+
+            if (($subscribe->getLocationId()) && ($address->getLocation() !== $subscribe->getLocationId())) {
+                $propValues = [
+                    'COM_WAY' => OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS,
+                    'CITY_CODE' => $subscribe->getLocationId(),
+                ];
+                $orderService->setOrderPropertiesByCode($order, $propValues);
+
+                $address = $orderService->compileOrderAddress($this->getOldOrder());
+            }
         } else {
             /** @var PickupResultInterface $delivery */
             $shop = $delivery->getSelectedShop();

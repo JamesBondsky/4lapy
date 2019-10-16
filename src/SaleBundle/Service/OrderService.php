@@ -1849,6 +1849,14 @@ class OrderService implements LoggerAwareInterface
         $value = $commWay->getValue();
         $changed = false;
 
+        $propCopyOrderId = $this->getOrderPropertyByCode($order, 'COPY_ORDER_ID');
+        if (($value === OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS) && ($propCopyOrderId) && boolval($propCopyOrderId->getValue())) {
+            /*
+             * при создании заказов по подписке dadata может неправильно определить местоположение и выставляет это поле ранее
+             */
+            return;
+        }
+
         $deliveryFromShop = $this->deliveryService->isInnerDelivery($delivery) && $delivery->getSelectedStore()->isShop();
         $stockResult = $delivery->getStockResult();
         if (!$isFastOrder) {
@@ -1879,7 +1887,7 @@ class OrderService implements LoggerAwareInterface
                     break;
                 case $this->isSubscribe($order):
 
-                    $propCopyOrderId = $this->getOrderPropertyByCode($order, 'COPY_ORDER_ID');
+
                     $isFirsSubscribeOrder = ($propCopyOrderId) ? !\boolval($propCopyOrderId->getValue()) : true;
 
                     switch (true) {

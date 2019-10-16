@@ -1314,10 +1314,17 @@ class OrderSubscribeService implements LoggerAwareInterface
                     'COPY_ORDER_ID',
                     $copyOrderId
                 );
-                $orderCopyHelper->setPropValueByCode(
-                    'COM_WAY',
-                    $comWayValue
-                );
+
+                /*
+                 * Способ коммуникации - "анализ адрес" выставляется ранее и если он выставлен, то не меняем его
+                 */
+                $newOrderComWayProp = $this->getOrderService()->getOrderPropertyByCode($orderCopyHelper->getNewOrder(), 'COM_WAY');
+                if (!(($newOrderComWayProp) && ($newOrderComWayProp->getValue() === OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS))) {
+                    $orderCopyHelper->setPropValueByCode(
+                        'COM_WAY',
+                        $comWayValue
+                    );
+                }
             } catch (\Exception $exception) {
                 $result->addError(
                     new Error(
