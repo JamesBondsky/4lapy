@@ -912,7 +912,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $serviceHeaderHost = getenv('MANZANA_SERVICE_HEADER_HOST');
 
         $options = [
-            'data' => $this->serializer->serialize($contact, 'json'),
+            'form_params' => [
+                'data' => $this->serializer->serialize($contact, 'json'),
+            ]
         ];
 
         if ($serviceHeaderHost) {
