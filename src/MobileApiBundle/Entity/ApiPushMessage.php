@@ -393,4 +393,9 @@ class ApiPushMessage
         $this->isSendingToAllUsers = $isSendingToAllUsers;
         return $this;
     }
+
+    public function getPhotoUrl()
+    {
+        return $this->photoUrl;
+    }
 }

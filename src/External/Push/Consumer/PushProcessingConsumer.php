@@ -43,6 +43,7 @@ class PushProcessingConsumer extends PushBase
                         $data['MESSAGE_TEXT'] = $pushMessage->getMessage();
                         $data['MESSAGE_TYPE'] = $pushMessage->getTypeEntity()->getId();
                         $data['EVENT_ID'] = $pushMessage->getEventId();
+                        $data['PHOTO_URL'] = $pushMessage->getPhotoUrl();
                         $producer->publish(json_encode($data));
                     }
                 }
