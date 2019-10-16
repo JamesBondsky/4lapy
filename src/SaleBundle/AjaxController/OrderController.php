@@ -37,7 +37,9 @@ use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
+use FourPaws\SaleBundle\Exception\OrderCancelException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Exception\OrderExtendException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
@@ -114,15 +116,15 @@ class OrderController extends Controller implements LoggerAwareInterface
     /**
      * OrderController constructor.
      *
-     * @param OrderService               $orderService
-     * @param DeliveryService            $deliveryService
-     * @param OrderStorageService        $orderStorageService
-     * @param OrderSubscribeService      $orderSubscribeService
+     * @param OrderService $orderService
+     * @param DeliveryService $deliveryService
+     * @param OrderStorageService $orderStorageService
+     * @param OrderSubscribeService $orderSubscribeService
      * @param UserAuthorizationInterface $userAuthProvider
-     * @param ShopInfoService            $shopInfoService
-     * @param StoreShopInfoService       $storeShopInfoService
-     * @param LocationService            $locationService
-     * @param ReCaptchaService           $recaptcha
+     * @param ShopInfoService $shopInfoService
+     * @param StoreShopInfoService $storeShopInfoService
+     * @param LocationService $locationService
+     * @param ReCaptchaService $recaptcha
      */
     public function __construct(
         OrderService $orderService,
@@ -790,5 +792,59 @@ class OrderController extends Controller implements LoggerAwareInterface
                 'delivery_dates'     => $deliveryDates
             ]
         );
+    }
+
+    /**
+     * @Route("/cancel/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     */
+    public function orderCancelAction(Request $request): JsonResponse
+    {
+        $orderId = intval($request->request->get('orderId'));
+
+        try {
+            $cancelResult = $this->orderService->cancelOrder($orderId);
+        } catch (OrderCancelException | \FourPaws\SaleBundle\Exception\NotFoundException  $e) {
+            return JsonErrorResponse::createWithData('', ['errors' => [$e->getMessage()]]);
+        } catch (\Exception $e) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка']]);
+        }
+
+        if (!$cancelResult) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка']]);
+        }
+
+        return JsonSuccessResponse::createWithData('Заказ успешно отменен', []);
+    }
+
+    /**
+     * @Route("/extend/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     */
+    public function orderExtendAction(Request $request): JsonResponse
+    {
+        $orderId = intval($request->request->get('orderId'));
+
+        try {
+            $extendResult = $this->orderService->extendOrder($orderId);
+        } catch (OrderExtendException | \FourPaws\SaleBundle\Exception\NotFoundException  $e) {
+            return JsonErrorResponse::createWithData('', ['errors' => [$e->getMessage()]]);
+        } catch (\Exception $e) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['При продлении срока хранения произошла ошибка']]);
+        }
+
+        if (!$extendResult) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['При продлении срока хранения произошла ошибка']]);
+        }
+
+        return JsonSuccessResponse::createWithData('Срок хранения заказа успешно продлен', []);
     }
 }

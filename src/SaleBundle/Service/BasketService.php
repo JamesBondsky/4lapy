@@ -16,8 +16,8 @@ use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
@@ -40,14 +40,11 @@ use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\Catalog\Query\PriceQuery;
 use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Enum\IblockType;
 use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
-use FourPaws\Helpers\IblockHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
@@ -60,6 +57,8 @@ use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SapBundle\Repository\ShareRepository;
+use FourPaws\StoreBundle\Service\StockService;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -70,7 +69,6 @@ use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use WebArch\BitrixCache\BitrixCache;
 
 /** @noinspection EfferentObjectCouplingInspection */
 
@@ -97,6 +95,10 @@ class BasketService implements LoggerAwareInterface
     private $orderService;
     /** @var StampService */
     private $stampService;
+    /** @var StoreService */
+    private $storeService;
+    /** @var StockService */
+    private $stockService;
     /** @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ */
     private $promocodeDiscount = 0.0;
     private $fUserId;
@@ -125,13 +127,17 @@ class BasketService implements LoggerAwareInterface
         ManzanaPosService $manzanaPosService,
         OrderService $orderService,
         ShareRepository $shareRepository,
-        StampService $stampService
+        StampService $stampService,
+        StockService $stockService,
+        StoreService $storeService
     ) {
         $this->currentUserProvider = $currentUserProvider;
         $this->manzanaPosService = $manzanaPosService;
         $this->orderService = $orderService;
         $this->shareRepository = $shareRepository;
         $this->stampService = $stampService;
+        $this->stockService = $stockService;
+        $this->storeService = $storeService;
     }
 
     /**
@@ -366,6 +372,7 @@ class BasketService implements LoggerAwareInterface
                     $parsedStampsLevelKey = $this->stampService->parseLevelKey($maxStampsLevelKey);
                     $stampsUsed = $parsedStampsLevelKey['discountStamps'] * $maxStampsLevelPropValue['value'];
                     $usedStampsInfo = [
+                        'exchangeName' => $maxStampsLevelKey,
                         'stampsUsed' => $stampsUsed,
                         'discountValue' => $parsedStampsLevelKey['discountValue'],
                         'discountType' => $parsedStampsLevelKey['discountType'],
@@ -1606,7 +1613,7 @@ class BasketService implements LoggerAwareInterface
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotImplementedException
+     * @throws NotImplementedException
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectException
      * @throws Exception
@@ -1724,5 +1731,48 @@ class BasketService implements LoggerAwareInterface
         }
 
         return $result;
+    }
+
+    /**
+     * проставляем наличие товара на DC01, если товар берется у поставщика
+     *
+     * @param Basket $basket
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     */
+    public function setDC01AmountProperty(Basket $basket): void
+    {
+        /** @var BasketItem $basketItem */
+        foreach ($basket->getOrderableItems() as $basketItem) {
+            $shipmentPlaceCode = $this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE');
+            if ($shipmentPlaceCode) {
+                try {
+                    $store = $this->storeService->getStoreByXmlId($shipmentPlaceCode);
+                } catch (\FourPaws\StoreBundle\Exception\NotFoundException $e) {
+                    continue;
+                }
+                if ($store->isSupplier() && $rcStock = $this->stockService->getStocksByOfferIds([$basketItem->getProductId()], [1])) {
+                    $this->setBasketItemPropertyValue(
+                        $basketItem,
+                        'DC01_AMOUNT',
+                        (string)$rcStock->getTotalAmount()
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * @param BasketItem $item
+     * @param string $code
+     *
+     * @return string
+     * @throws ArgumentException
+     * @throws NotImplementedException
+     */
+    public function getBasketPropertyValueByCode(BasketItem $item, string $code): string
+    {
+        return $item->getPropertyCollection()->getPropertyValues()[$code]['VALUE'] ?? '';
     }
 }
