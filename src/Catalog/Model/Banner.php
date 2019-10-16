@@ -163,6 +163,6 @@ class Banner extends IblockElement
      */
     public function getType(): string
     {
-        return$this->PROPERTY_TYPE;
+        return $this->PROPERTY_TYPE;
     }
 }
