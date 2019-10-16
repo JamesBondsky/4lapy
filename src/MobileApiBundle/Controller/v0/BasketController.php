@@ -48,6 +48,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\UserBundle\Enum\UserLocationEnum;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use Symfony\Component\HttpFoundation\Request;
+use FourPaws\UserBundle\Service\UserService as AppUserService;
 
 /**
  * Class BasketController
@@ -78,6 +79,9 @@ class BasketController extends BaseController
     /** @var OrderStorageService */
     private $orderStorageService;
     
+    /** @var AppUserService */
+    private $appUserService;
+    
     /**
      * @var ApiUserDeliveryAddressService
      */
@@ -91,7 +95,8 @@ class BasketController extends BaseController
         AppStoreService $appStoreService,
         AppDeliveryService $appDeliveryService,
         OrderStorageService $orderStorageService,
-        ApiUserDeliveryAddressService $apiUserDeliveryAddressService
+        ApiUserDeliveryAddressService $apiUserDeliveryAddressService,
+        AppUserService $appUserService
     ) {
         $this->manzana                       = $manzana;
         $this->appBasketService              = $appBasketService;
@@ -101,7 +106,7 @@ class BasketController extends BaseController
         $this->appDeliveryService            = $appDeliveryService;
         $this->orderStorageService           = $orderStorageService;
         $this->apiUserDeliveryAddressService = $apiUserDeliveryAddressService;
-        
+        $this->appUserService        = $appUserService;
         $this->setLogger(LoggerFactory::create('BasketController', 'mobileApi'));
     }
     
@@ -463,6 +468,13 @@ class BasketController extends BaseController
         
         switch ($use) {
             case true:
+                $this->manzana->setPromocode($promoCode);
+                $this->manzana->calculate();
+                
+                $storage->setPromoCode($promoCode);
+                $this->orderStorageService->updateStorage($storage);
+                $fUserId = $this->appUserService->getCurrentFUserId() ?: 0;
+                $this->appBasketService->getBasket(true, $fUserId);
                 $couponStorage->save($promoCode);
                 break;
             case false:
