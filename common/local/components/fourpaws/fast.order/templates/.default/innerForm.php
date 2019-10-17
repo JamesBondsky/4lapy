@@ -271,7 +271,7 @@ $basketRows = $arResult['BASKET_ROWS'];
         <hr class="b-hr b-hr--one-click3"/>
         <dl class="b-popup-one-click__result">
             <dt class="b-popup-one-click__result-dt">
-                Итого <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'], 0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
+                Итого без учёта стоимости доставки <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'], 0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
                     ['товар', 'товара', 'товаров']) ?> <?php if($arResult['BASKET_WEIGHT'] > 0){ ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)<?php } ?>
             </dt>
             <dd class="b-popup-one-click__result-dd"><?= WordHelper::numberFormat($arResult['TOTAL_PRICE']) ?> ₽</dd>

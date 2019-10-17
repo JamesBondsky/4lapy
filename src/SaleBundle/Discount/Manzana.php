@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Internals\DiscountCouponTable;
 use Bitrix\Sale\Order;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
@@ -139,7 +140,15 @@ class Manzana implements LoggerAwareInterface
         $request = $this->manzanaPosService->buildRequestFromBasket($basket, $card, $this->basketService);
 
         try {
-            if ($this->promocode) {
+            $isBitrixCoupon = false;
+            if ($this->promocode && ($order || isset($user))) {
+                $isBitrixCoupon = (bool)DiscountCouponTable::getCount([
+                    'COUPON' => $this->promocode,
+                    'USER_ID' => isset($order) ? $order->getUserId() : $user->getId(),
+                ]);
+            }
+
+            if ($this->promocode && !$isBitrixCoupon) {
                 /** @var PiggyBankService $piggyBankService */
                 $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
                 $piggyBankService->checkPiggyBankCoupon($this->promocode);
@@ -273,7 +282,23 @@ class Manzana implements LoggerAwareInterface
     public function recalculateBasketFromResponse(Basket $basket, SoftChequeResponse $response): void
     {
         $manzanaItems = $response->getItems();
-        $this->setStampsToBeAdded($response->getChargedStatusBonus());
+
+        $stampsToBeAdd = $response->getChargedStatusBonus();
+
+        // если за заказ будет начислено 0 марок, то возможно пользователь не авторизован
+        if ((int)$stampsToBeAdd === 0) {
+            try {
+                $this->userService->getCurrentUserId();
+            } catch (NotAuthorizedException $e) {
+                // если пользователь не авторизован, то считаем вручную
+                $basketPrice = $response->getSummDiscounted();
+
+                $stampsToBeAdd = floor($basketPrice / StampService::MARK_RATE);
+            }
+        }
+
+        $this->setStampsToBeAdded($stampsToBeAdd);
+
 
         try {
             $activeStampsCount = $this->stampService->getActiveStampsCount();

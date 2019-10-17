@@ -334,6 +334,11 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 $delayedStockResult = $stockResult;
             }
 
+            if (getenv('KKM_USE_INTERVALS') == 'Y') {
+                $stockResultCollection->add($stockResult);
+                $delayedStockResult = null;
+            }
+
             /**
              * Товар в наличии не полностью. Часть будет отложена
              */

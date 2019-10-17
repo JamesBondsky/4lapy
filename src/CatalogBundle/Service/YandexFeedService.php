@@ -811,8 +811,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                         ->setRequiredQuantity($requiredQuantity)
                         ->setFreeQuantity($freeQuantity)
                         ->setProduct($productCollection);
-                    $descr = ($share['PREVIEW_TEXT']) ? $share['PREVIEW_TEXT'] : $share['DETAIL_TEXT'];
-                    $descr = str_replace("\r\n", '', html_entity_decode(\HTMLToTxt($descr)));
+//                    $descr = ($share['PREVIEW_TEXT']) ? $share['PREVIEW_TEXT'] : $share['DETAIL_TEXT'];
+//                    $descr = str_replace("\r\n", '', html_entity_decode(\HTMLToTxt($descr)));
                     $promo = new Promo();
                     $promo
                         ->setId($share['ID'])
@@ -820,7 +820,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                         ->setUrl((new FullHrefDecorator($share['DETAIL_PAGE_URL']))->setHost($host)->__toString())
                         ->setStartDate(\DateTime::createFromFormat('d.m.Y H:i:s', $share['DATE_ACTIVE_FROM'])->format('Y-m-d H:i:s'))
                         ->setEndDate(\DateTime::createFromFormat('d.m.Y H:i:s', $share['DATE_ACTIVE_TO'])->format('Y-m-d H:i:s'))
-                        ->setDescription($descr)
+//                        ->setDescription($descr)
                         ->setPurchase($purchase);
                     $promos->add($promo);
                 }
