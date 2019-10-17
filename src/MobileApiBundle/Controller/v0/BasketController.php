@@ -155,7 +155,7 @@ class BasketController extends BaseController
             $personalOffers = Application::getInstance()->getContainer()->get(PersonalOffersService::class);
             $coupons        = $personalOffers->getActiveUserCoupons($storage->getUserId())['coupons'];
         }
-        
+
         if ($coupons) {
             $orderCalculate->setHasCoupons(true);
         }
@@ -167,8 +167,8 @@ class BasketController extends BaseController
                     $orderCalculate->setCoupon(
                         (new Coupon())->setId($coupon['ID'])
                             ->setPromocode($promoCode)
-                            ->setText($coupon['custom_title'])
-                            ->setDiscount($coupon['discount_value'])
+                            ->setText($coupon['text'])
+                            ->setDiscount($coupon['custom_title'])
                             ->setDateActive($coupon['custom_date_to'])
                             ->setActionType(Coupon::DISABLE)
                     );

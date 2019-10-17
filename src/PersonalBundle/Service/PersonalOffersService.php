@@ -1075,7 +1075,7 @@ class PersonalOffersService
             $offer = $offersCollection->get($coupon['UF_OFFER']);
 
             $coupons[$couponKey]['custom_title']   = $this->getCouponTitle($coupon, $offer);
-            $coupons[$couponKey]['discount_value'] = $this->getDiscountValue($coupon, $offer);
+            $coupons[$couponKey]['text']           = strip_tags(html_entity_decode($offer['PREVIEW_TEXT']));
             $coupons[$couponKey]['custom_date_to'] = $this->getCouponDateToText($coupon, $offer);
         }
 
