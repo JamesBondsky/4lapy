@@ -141,6 +141,8 @@ class KkmService implements LoggerAwareInterface
         $this->deliveryService = $deliveryService;
         $this->basicUser = getenv('BASIC_AUTH_LOGIN');
         $this->basicPassword = getenv('BASIC_AUTH_PASSWORD');
+
+        putenv('KKM_USE_INTERVALS=Y');
     }
 
     /**
