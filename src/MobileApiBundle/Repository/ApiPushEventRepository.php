@@ -145,6 +145,33 @@ class ApiPushEventRepository implements ApiPushEventRepositoryInterface
 
     /**
      * @param ApiPushEvent $pushEvent
+     * @return \Bitrix\Main\Entity\AddResult
+     */
+    public function createEvent(ApiPushEvent $pushEvent)
+    {
+        $validationResult = $this->validator->validate($pushEvent, null, [CrudGroups::CREATE]);
+        if ($validationResult->count() > 0) {
+            throw new ValidationException('Wrong push event passed');
+        }
+        $data = $this
+            ->transformer
+            ->toArray(
+                $pushEvent,
+                SerializationContext::create()->setGroups([CrudGroups::CREATE])
+            );
+        if (!\is_array($data)) {
+            throw new WrongTransformerResultException('Wrong transform result for push event');
+        }
+        try {
+            $result = ApiPushEventTable::add($data);
+        } catch (\Exception $exception) {
+            throw new BitrixException($exception->getMessage(), $exception->getCode(), $exception);
+        }
+        return $result;
+    }
+
+    /**
+     * @param ApiPushEvent $pushEvent
      *
      * @throws ValidationException
      * @throws BitrixException

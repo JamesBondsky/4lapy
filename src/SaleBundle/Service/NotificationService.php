@@ -364,7 +364,7 @@ class NotificationService implements LoggerAwareInterface
         static::$isSending = true;
 
         $parameters = $this->getOrderData($order);
-        
+
         $this->sendPushOrSms('FourPawsSaleBundle:Sms:order.canceled.html.php', $parameters, 'status', true);
         static::$isSending = false;
     }
@@ -465,7 +465,7 @@ class NotificationService implements LoggerAwareInterface
         if ($smsTemplate) {
             $this->sendPushOrSms($smsTemplate, $parameters, 'status', true);
         }
-        
+
         static::$isSending = false;
     }
 
@@ -536,6 +536,8 @@ class NotificationService implements LoggerAwareInterface
             $pushMessage,
             SerializationContext::create()->setGroups([CrudGroups::CREATE])
         );
+
+        unset($data['PHOTO_URL']);
 
         $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
         $hlBlockPushMessages->add($data);
@@ -838,7 +840,7 @@ class NotificationService implements LoggerAwareInterface
             $this->sendSms($template, $parameters, $immediate);
         // }
     }
-    
+
     public function getUser()
     {
         if($this->user === null){
