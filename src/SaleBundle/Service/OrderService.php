@@ -1146,10 +1146,10 @@ class OrderService implements LoggerAwareInterface
             } catch (WrongPhoneNumberException $e) {
             } catch (ManzanaServiceContactSearchNullException $e) {
             } catch (ManzanaServiceException $e) {
+            } catch (Exception $e) {
                 $this->log()->error(sprintf('failed to get discount card number: %s', $e->getMessage()), [
                     'phone' => $storage->getPhone(),
                 ]);
-            } catch (Exception $e) {
             }
         }
 
