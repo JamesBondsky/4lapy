@@ -280,6 +280,8 @@ class PushEventService
         if (count($pushEvents) > 0) {
             foreach ($pushEvents as $pushEvent) {
                 try {
+                    $categoryTitle = '';
+
                     $data = [
                         'aps'      => [
                             'mutable-content' => 1,
@@ -300,6 +302,12 @@ class PushEventService
                         $data['photourl'] = getenv('SITE_URL') . $data['photourl'];
                     }
 
+                    if ($data['type'] == 'category') {
+                        $categoryTitle = \Bitrix\Iblock\SectionTable::getList([
+                            'select' => ['NAME'],
+                            'filter' => ['=ID' => $data['id']]
+                        ])->fetch()['NAME'];
+                    }
 
                     $message = new Message($pushEvent->getMessageText());
 
@@ -310,7 +318,8 @@ class PushEventService
 
                     $customArr = [
                         'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
-                        'id' => $pushEvent->getEventId()
+                        'id' => $pushEvent->getEventId(),
+                        'title' => $categoryTitle
                     ];
 
                     if ($data['photourl']) {
@@ -499,6 +508,10 @@ class PushEventService
             $phones[$phone] = $phone;
         }
 //        $phones = $this->limitToAllowedPhoneNumbersAmount(array_values($phones));
+        $phones = $this->limitToAllowedPhoneNumbersAmount(array_values($phones));
+        if (count($phones) > 0) {
+            $phones = array_values($phones);
+        }
         $userIds = $this->getUserIdsByPhoneNumbers($phones, $pushMessage->getTypeEntity()->getXmlId());
 
         $pushMessage->setUserIds($userIds);

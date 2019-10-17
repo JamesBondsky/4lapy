@@ -97,15 +97,15 @@ $sPopBrandsTitle = \Bitrix\Main\Localization\Loc::getMessage('MENU_BRANDS.POP_BR
                 if (empty($arGroup['ITEMS_ARRAY_KEYS'])) {
                     continue;
                 }
-                ?><li class="b-menu-brands__group">
+                ?><li class="b-menu-brands__group" data-group-menu-brands="true">
                     <span class="b-menu-brands__litter js-brands-filter"><!--noindex--><?=$arGroup['TITLE']?><!--/noindex--></span>
-                    <ul class="b-menu-brands__name-list"><?php
+                    <ul class="b-menu-brands__name-list" data-list-name-menu-brands="true"><?php
                         foreach ($arGroup['ITEMS_ARRAY_KEYS'] as $mKey) {
                             $arItem = isset($arResult['ITEMS'][$mKey]) ? $arResult['ITEMS'][$mKey] : array();
                             if (!$arItem) {
                                 continue;
                             }
-                            ?><li class="b-menu-brands__name">
+                            ?><li class="b-menu-brands__name" data-name-menu-brands="true">
                                 <a class="b-menu-brands__name-link" href="<?=$arItem['DETAIL_PAGE_URL']?>" title="<?=$arItem['NAME']?>"><!--noindex--><?=$arItem['NAME']?><!--/noindex--></a>
                             </li><?php
                         }

@@ -80,7 +80,7 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
                 } catch (\Exception $e) {}
 
                 try {
-                    $manzanaService->updateContact($client);
+                    $manzanaService->updateContactAsync($client);
                 }  catch (ContactUpdateException | WrongContactMessageException $e) {
                     $this->log()->error(sprintf(
                         'Contact update error: %s',

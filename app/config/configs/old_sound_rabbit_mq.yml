@@ -65,6 +65,10 @@ old_sound_rabbit_mq:
             connection: default
             exchange_options: {name: 'import_offers', type: direct }
 
+        expert_sender_send_pets:
+            connection: default
+            exchange_options: {name: 'expert_sender_send_pets', type: direct }
+
         push_processing:
             connection: default
             exchange_options: {name: 'push_processing', type: direct }
@@ -146,6 +150,13 @@ old_sound_rabbit_mq:
             exchange_options: {name: 'import_offers', type: direct }
             queue_options: {name: 'import_offers'}
             callback: import.import_offers
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
+
+        expert_sender_send_pets:
+            connection: default
+            exchange_options: {name: 'expert_sender_send_pets', type: direct }
+            queue_options: {name: 'expert_sender_send_pets'}
+            callback: expert_sender.send_pets
             qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
 
         push_processing:

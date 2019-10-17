@@ -33,6 +33,10 @@ app.order_subscribe:
     resource: "@FourPawsPersonalBundle/Controller/"
     type: annotation
 
+app.manzana_api:
+    resource: "@FourPawsManzanaApiBundle/Controller/"
+    type: annotation
+
 old_items.news:
     path: /actions_and_programs/news/{path}/
     defaults: { _controller: '\FourPaws\AppBundle\Controller\OldPublicationController::oldNewsDetailAction' }
