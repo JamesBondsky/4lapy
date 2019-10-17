@@ -529,7 +529,7 @@ class LocationService
                         $queryParts[$key] = ToUpper($queryPart);
                     }
 
-                    $filter[$filterKeyName] = ToUpper($queryParts[0]);
+                    $filter[$filterKeyName] = $queryParts[0];
                     $query = LocationTable::query()->setOrder($locationQueryOrder)->setFilter($filter)->setSelect($locationQuerySelect);
 
                     unset($queryParts[0]);
