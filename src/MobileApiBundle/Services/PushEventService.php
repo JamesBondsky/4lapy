@@ -306,7 +306,7 @@ class PushEventService
                     $message->setOption('badge', 1);
                     $message->setOption('sound', 'default');
                     $message->setOption('mutable-content', 1);
-                    $message->setOption('title', $pushEvent->getMessageTitle());
+                    $message->setOption('title', $pushEvent->getMessageTitle() ?? '');
 
                     $customArr = [
                         'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
