@@ -88,10 +88,7 @@ class PersonalOffersService
             $result = [
                 'success' => true,
                 'data'    => [
-                    'personal_offers' => array_map(static function($coupon) {
-                        $coupon['discount'] = '-' . $coupon['discount'];
-                        return $coupon;
-                    }, $this->personalOffersService->getActiveUserCouponsEx($userId))
+                    'personal_offers' => $this->personalOffersService->getActiveUserCouponsEx($userId),
                 ]
             ];
         } catch (BarcodeException|IblockNotFoundException|ArgumentException|LoaderException|SystemException|InvalidArgumentException $exception) {
@@ -154,7 +151,7 @@ class PersonalOffersService
             }
 
             $couponDescription = $offerFields->get('PREVIEW_TEXT');
-            $couponDateActiveTo = $offerFields->get('DATE_ACTIVE_TO');
+            $couponDateActiveTo = $offerFields->get('custom_date_active_to');
             $discountValue = $offerFields->get('PROPERTY_DISCOUNT_VALUE');
 
             $this->expertsenderService->sendPersonalOfferCouponEmail(

@@ -148,7 +148,7 @@ class PetService
         )->setOrder(['UF_SORT' => 'asc'])->exec();
 
         if (($petType = $res->Fetch()) && ($petType['UF_EXPERT_SENDER_ID'])) {
-            $this->expertSenderService->sendAfterPetUpdate($this->currentUser->getCurrentUser(), $petType['UF_EXPERT_SENDER_ID']);
+            $this->expertSenderService->sendAfterPetUpdateAsync($this->currentUser, $petType['UF_EXPERT_SENDER_ID']);
         }
 
         $this->petRepository->setEntity($entity);
@@ -365,7 +365,7 @@ class PetService
             $expertSenderPetIds[$petType['ID']] = $petType['UF_EXPERT_SENDER_ID'];
         }
 
-        $this->expertSenderService->sendAfterPetUpdate($this->currentUser->getCurrentUser(), $expertSenderPetIds[$entity->getType()], $expertSenderPetIds[$updateEntity->getType()]);
+        $this->expertSenderService->sendAfterPetUpdateAsync($this->currentUser, $expertSenderPetIds[$entity->getType()], $expertSenderPetIds[$updateEntity->getType()]);
 
         if ($entity->getUserId() === 0) {
             $entity->setUserId($updateEntity->getUserId());
@@ -427,7 +427,7 @@ class PetService
         )->setOrder(['UF_SORT' => 'asc'])->exec();
 
         if (($petType = $res->Fetch()) && ($petType['UF_EXPERT_SENDER_ID'])) {
-            $this->expertSenderService->sendAfterPetUpdate($this->currentUser->getCurrentUser(), null, $petType['UF_EXPERT_SENDER_ID']);
+            $this->expertSenderService->sendAfterPetUpdateAsync($this->currentUser, null, $petType['UF_EXPERT_SENDER_ID']);
         }
 
         return $this->petRepository->delete($id);

@@ -284,7 +284,8 @@ class UserController extends BaseController
 
         if ($this->stampService->getNextDiscount() !== null) {
             $marksDeclension = new Declension('марку', 'марки', 'марок');
-            $textNext = sprintf('До скидки -%s%% осталось %s %s', $this->stampService->getNextDiscount(), $this->stampService->getNextDiscountStampsNeed(), $marksDeclension->get($this->stampService->getNextDiscountStampsNeed()));
+            $nextStampsText = ($this->stampService->getNextDiscountStampsNeed() === 1) ? 'осталась' : 'осталось';
+            $textNext = sprintf('До скидки -%s%% %s %s %s', $this->stampService->getNextDiscount(), $nextStampsText, $this->stampService->getNextDiscountStampsNeed(), $marksDeclension->get($this->stampService->getNextDiscountStampsNeed()));
         } else {
             $textNext = 'Доступна максимальная скидка';
         }

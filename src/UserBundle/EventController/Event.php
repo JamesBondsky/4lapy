@@ -549,9 +549,9 @@ class Event extends BaseServiceHandler
             $userService = $container->get(CurrentUserProviderInterface::class);
 
             /** обновление номера карты на авторизации */
-            $userService->refreshUserCard($userService->getCurrentUser());
-            /** обновление группы оптовиков */
-            $userService->refreshUserOpt($userService->getCurrentUser());
+            $contact = $userService->refreshUserCard($userService->getCurrentUser()); //
+//            /** обновление группы оптовиков */
+            $userService->refreshUserOpt($userService->getCurrentUser(), $contact);
             /** сброс счётка на разлогинивание при сбросе пароля */
             $userService->refreshUserAuthActions($userService->getCurrentUser());
         } catch (NotAuthorizedException $e) {

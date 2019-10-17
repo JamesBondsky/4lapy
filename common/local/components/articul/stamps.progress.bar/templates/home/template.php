@@ -19,7 +19,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
-$marksDeclension = new Declension('марку', 'марки', 'марок');
+$marksDeclension = new Declension('марка', 'марки', 'марок');
 ?>
 
 <section class="section-marks-comfortable-living">
@@ -54,7 +54,7 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
                 <? if ($USER->IsAuthorized()) { ?>
                     <div class="balance-comfortable-living__primary">
                         <? if ($arResult['NEXT_DISCOUNT'] > 0) { ?>
-                            До скидки -<?= $arResult['NEXT_DISCOUNT'] ?>% осталось <?= $arResult['NEXT_DISCOUNT_STAMPS_NEED'] ?> <?= $marksDeclension->get($arResult['NEXT_DISCOUNT_STAMPS_NEED']) ?>
+                            До скидки -<?= $arResult['NEXT_DISCOUNT'] ?>% <?= ($arResult['NEXT_DISCOUNT_STAMPS_NEED'] === 1) ? 'осталась' : 'осталось' ?> <?= $arResult['NEXT_DISCOUNT_STAMPS_NEED'] ?> <?= $marksDeclension->get($arResult['NEXT_DISCOUNT_STAMPS_NEED']) ?>
                         <? } else { ?>
                             Доступна максимальная скидка
                         <? } ?>
