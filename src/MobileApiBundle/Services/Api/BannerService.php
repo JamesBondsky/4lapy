@@ -75,6 +75,10 @@ class BannerService
             ->setHasElementOrSectionLink($hasElementOrSectionLink)
             ->setLink($bannerModel->getLink(), $this->cityId);
 
+        if ($bannerModel->getType()) {
+            $banner->setType($bannerModel->getType());
+        }
+
         if ($elementLink) {
             $banner->setLink($elementLink);
         } elseif ($sectionLink) {

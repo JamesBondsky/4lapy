@@ -88,7 +88,7 @@ class PersonalOffersController extends Controller
                 $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
                 $offerFields = $personalOffersService->getOfferFieldsByPromoCode($coupon);
                 $couponDescription = $offerFields->get('PREVIEW_TEXT');
-                $couponDateActiveTo = $offerFields->get('DATE_ACTIVE_TO');
+                $couponDateActiveTo = $offerFields->get('custom_date_active_to');
                 $discountValue = $offerFields->get('PROPERTY_DISCOUNT_VALUE');
 
                 $sender->sendPersonalOfferCouponEmail(

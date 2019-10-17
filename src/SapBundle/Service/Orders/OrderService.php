@@ -134,6 +134,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @var StampService
      */
     private $stampService;
+    /**
+     * @var OfferService
+     */
+    private $offerService;
 
     /**
      * @var int
@@ -157,6 +161,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @param StatusService $statusService
      * @param BasketService $basketService
      * @param StampService $stampService
+     * @param OfferService $offerService
      */
     public function __construct(
         DeliveryService $deliveryService,
@@ -167,7 +172,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         IntervalService $intervalService,
         StatusService $statusService,
         BasketService $basketService,
-        StampService $stampService
+        StampService $stampService,
+        OfferService $offerService
     )
     {
         $this->serializer = $serializer;
@@ -180,6 +186,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $this->setFilesystem($filesystem);
         $this->basketService = $basketService;
         $this->stampService = $stampService;
+        $this->offerService = $offerService;
     }
 
     /**
@@ -335,6 +342,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     /**
      * @param OrderDtoIn $orderDto
      *
+     * @return Order
      * @throws \Bitrix\Main\NotSupportedException
      * @throws NotFoundOrderDeliveryException
      * @throws NotFoundProductException
@@ -349,9 +357,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @throws NotFoundOrderPaySystemException
      * @throws Exception
      * @throws ObjectNotFoundException
-     * @throws ArgumentOutOfRangeException
+     * @throws ArgumentOutOfRangeException*@throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      *
-     * @return Order
      */
     public function transformDtoToOrder(OrderDtoIn $orderDto): Order
     {
@@ -543,87 +551,20 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param OrderDtoOut $orderDto
-     * @param Order       $order
+     * @param Order $order
      *
-     * @throws \FourPaws\SapBundle\Exception\NotFoundOrderDeliveryException
-     * @throws NotFoundOrderShipmentException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
      */
     private function populateOrderDtoProducts(OrderDtoOut $orderDto, Order $order)
     {
         $position = 1;
         $collection = new ArrayCollection();
 
-        /**
-         * @var BasketItem $basketItem
-         */
-        foreach ($order->getBasket() as $basketItem) {
-            if ($basketItem->isDelay()) {
-                continue;
-            }
-
-            $offer = (new OrderOffer())
-                ->setOfferXmlId($this->basketService->getBasketItemXmlId($basketItem))
-                ->setUnitPrice($basketItem->getPrice())
-                /**
-                 * Только штуки
-                 */
-                ->setUnitOfMeasureCode(SapOrder::UNIT_PTC_CODE)
-                ->setChargeBonus((bool)$this->getBasketPropertyValueByCode($basketItem, 'HAS_BONUS'))
-                ->setDeliveryShipmentPoint($this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE'))
-                ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
-
-            if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
-                $useStamps = $this->getBasketPropertyValueByCode($basketItem, 'USE_STAMPS');
-                $discountStamps = 0;
-                if ($useStamps) {
-                    $maxStampsLevel = $this->getBasketPropertyValueByCode($basketItem, 'MAX_STAMPS_LEVEL');
-                    if ($maxStampsLevelArr = unserialize($maxStampsLevel)) {
-                        $offer->setExchangeName($maxStampsLevelArr['key']);
-                        $discountStamps = $this->stampService->parseLevelKey($maxStampsLevelArr['key'])['discountStamps'];
-                    } else {
-                        $useStamps = false;
-                    }
-                }
-            }
-
-            $hasBonus = $this->getBasketPropertyValueByCode($basketItem, 'HAS_BONUS');
-            $quantity = $basketItem->getQuantity();
-            if ($hasBonus && $hasBonus < $quantity) {
-                $quantity -= $hasBonus;
-                $detachedOffer = clone $offer;
-                $detachedOffer
-                    ->setQuantity($hasBonus)
-                    ->setChargeBonus((bool)$hasBonus)
-                    ->setPosition($position);
-
-                if ($this->stampService::IS_STAMPS_OFFER_ACTIVE && $useStamps) {
-                    $detachedOffer->setStampsQuantity($hasBonus * $discountStamps);
-                }
-
-                $collection->add($detachedOffer);
-                $hasBonus = 0;
-                $position++;
-            }
-
-            if ($this->stampService::IS_STAMPS_OFFER_ACTIVE && $useStamps) {
-                // $offer->setStampsQuantity($maxStampsLevelArr['value']); todo проблематично использовать, так как есть разделение по бонусам
-                $offer->setStampsQuantity($quantity * $discountStamps);
-            }
-
-            $offer->setQuantity($quantity);
-            $isPseudoActionPropValue = $this->getBasketPropertyValueByCode($basketItem, 'IS_PSEUDO_ACTION');
-            $isPseudoAction = BitrixUtils::BX_BOOL_TRUE === $isPseudoActionPropValue;
-            if ($isPseudoAction)
-            {
-                $offer->setChargeBonus(true);
-            }
-            else
-            {
-                $offer->setChargeBonus((bool)$hasBonus);
-            }
-            $offer->setPosition($position);
-            $collection->add($offer);
-            $position++;
+        /** @var BasketItem $basketItem */
+        foreach ($order->getBasket()->getOrderableItems() as $basketItem) {
+            $this->offerService->addOfferToCollection($collection, $position, $order, $basketItem);
         }
 
         $this->addBasketDeliveryItem($order, $collection);
@@ -715,9 +656,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
         if (
             (
-                in_array($deliveryZone, DeliveryService::getZonesTwo()) ||
-                mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
-                mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                in_array($deliveryZone, DeliveryService::getZonesTwo())
+                || mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false
+                || mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
             )
             && $this->getPropertyValueByCode($order, 'REGION_COURIER_FROM_DC') === 'Y'
         ) {
@@ -728,6 +669,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         if ($isFastOrder) {
             $code = '';
         }
+
+        $shipmentPlaceCode = $this->getPropertyValueByCode($order, 'SHIPMENT_PLACE_CODE');
 
         switch ($code) {
             case DeliveryService::INNER_DELIVERY_CODE:
@@ -753,9 +696,15 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     case DeliveryService::ZONE_IVANOVO_REGION:
                         return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
                     default:
+                        if(
+                            mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false
+                            && $shipmentPlaceCode == \FourPaws\SaleBundle\Service\OrderService::STORE
+                        ) {
+                            return SapOrder::DELIVERY_TYPE_COURIER_RC;
+                        }
                         if (
-                            mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
                             mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                            || mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false
                         ) {
                             return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
                         }
@@ -763,8 +712,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
                 break;
             case DeliveryService::INNER_PICKUP_CODE:
-                $shipmentPlaceCode = $this->getPropertyValueByCode($order, 'SHIPMENT_PLACE_CODE');
-
                 return $shipmentPlaceCode ? SapOrder::DELIVERY_TYPE_PICKUP : SapOrder::DELIVERY_TYPE_PICKUP_POSTPONE;
                 break;
             case DeliveryService::DPD_DELIVERY_CODE:
@@ -1301,7 +1248,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @param Order           $order
      * @param ArrayCollection $collection
      *
-     * @throws \FourPaws\SapBundle\Exception\NotFoundOrderDeliveryException
+     * @throws NotFoundOrderDeliveryException
      * @throws NotFoundOrderShipmentException
      */
     private function addBasketDeliveryItem(Order $order, ArrayCollection $collection): void

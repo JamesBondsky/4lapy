@@ -342,7 +342,11 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     protected function buildResponseFromRawResponse($rawResult): SoftChequeResponse
     {
-        $rawResult = $rawResult->ProcessRequestInfoResult->Responses->ChequeResponse;
+        if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
+            $rawResult = $rawResult['ProcessRequestInfoResult']['Responses']['ChequeResponse'];
+        } else {
+            $rawResult = $rawResult->ProcessRequestInfoResult->Responses->ChequeResponse;
+        }
 
         $rawResult = \json_decode(\json_encode($rawResult), true);
 
@@ -376,7 +380,11 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     protected function buildResponseFromRawBalanceResponse($rawResult): BalanceResponse
     {
-        $rawResult = $rawResult->ProcessRequestInfoResult->Responses->BalanceResponse;
+        if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
+            $rawResult = $rawResult['ProcessRequestInfoResult']['Responses']['BalanceResponse'];
+        } else {
+            $rawResult = $rawResult->ProcessRequestInfoResult->Responses->BalanceResponse;
+        }
 
         $rawResult = \json_decode(\json_encode($rawResult), true);
 
@@ -419,12 +427,19 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                     'user_id' => $userId,
                     'arguments' => $arguments,
                 ]);
-                $result = $this->buildResponseFromRawResponse(
-                    $this->client->call(
-                        self::METHOD_EXECUTE,
-                        $arguments
-                    )
-                );
+
+                if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
+                    $resultRaw = $this->newExec(self::METHOD_EXECUTE, $arguments);
+
+                    $result = $this->buildResponseFromRawResponse($resultRaw);
+                } else {
+                    $result = $this->buildResponseFromRawResponse(
+                        $this->client->call(
+                            self::METHOD_EXECUTE,
+                            $arguments
+                        )
+                    );
+                }
             } catch (Exception $e) {
                 try {
                     /** @noinspection PhpUndefinedFieldInspection */
@@ -471,12 +486,18 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         $cacheKey = \json_encode(['cardNumber' => $card->getNumber()]);
         if ($noCache || !$this->results[$cacheKey]) {
             try {
-                $result = $this->buildResponseFromRawBalanceResponse(
-                    $this->client->call(
-                        self::METHOD_EXECUTE,
-                        $this->buildParametersFromBalanceRequest($balanceRequest)
-                    )
-                );
+                if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
+                    $resultRaw = $this->newExec(self::METHOD_EXECUTE, $this->buildParametersFromBalanceRequest($balanceRequest));
+
+                    $result = $this->buildResponseFromRawBalanceResponse($resultRaw);
+                } else {
+                    $result = $this->buildResponseFromRawBalanceResponse(
+                        $this->client->call(
+                            self::METHOD_EXECUTE,
+                            $this->buildParametersFromBalanceRequest($balanceRequest)
+                        )
+                    );
+                }
             } catch (Exception $e) {
                 try {
                     /** @noinspection PhpUndefinedFieldInspection */
@@ -512,5 +533,42 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
     protected function generateRequestId(): int
     {
         return (int)((\microtime(true) * 1000) . random_int(1000, 9999));
+    }
+
+    private function newExec($method, $arguments)
+    {
+        /** @var \GuzzleHttp\Client $guzzleClient */
+        $guzzleClient = App::getInstance()->getContainer()->get('manzana.guzzle');
+
+        $serviceUrl = getenv('MANZANA_POS_SERVICE_URL');
+        $serviceHeaderHost = getenv('MANZANA_SERVICE_HEADER_HOST');
+
+        $options = [
+            'form_params' => [
+                'method' => $method,
+                'body' => $arguments
+            ]
+        ];
+
+        if ($serviceHeaderHost) {
+            $options['headers']['Host'] = $serviceHeaderHost;
+        }
+
+        $resultBody = $guzzleClient->post($serviceUrl, $options);
+
+        try {
+            $result = (string)$resultBody->getBody();
+            $result = json_decode($result, true);
+        } catch (Exception $e) {
+            $result = '';
+        }
+
+        if ($result['success']) {
+            $result = $result['response'];
+        } else {
+            throw new Exception('Ошибка получения данных');
+        }
+
+        return $result;
     }
 }

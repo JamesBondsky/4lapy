@@ -23,7 +23,7 @@ if($USER->IsAuthorized()) {
             /** @var PersonalOffersService $personalOffersService */
             $personalOffersService = $personalOffersService ?? App::getInstance()->getContainer()->get('personal_offers.service');
             $userId = $userId ?? $USER->GetID();
-            $userPersonalOffers = $userPersonalOffers ?? $personalOffersService->getActiveUserCoupons($userId, true);
+            $userPersonalOffers = $userPersonalOffers ?? $personalOffersService->getActiveUserCoupons($userId, true, true);
 
             /** @var ArrayCollection $coupons */
             $coupons = $coupons ?? $userPersonalOffers['coupons'];

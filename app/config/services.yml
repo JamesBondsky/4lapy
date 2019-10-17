@@ -54,6 +54,10 @@ services:
      class: FourPaws\External\Import\Consumer\ImportOffersConsumer
      arguments: ['@jms_serializer', '@import.service']
 
+  expert_sender.send_pets:
+     class: FourPaws\External\ExpertSender\Consumer\ExpertSenderPetConsumer
+     arguments: ['@jms_serializer', '@expertsender.service']
+
   push.processing:
     class: FourPaws\External\Push\Consumer\PushProcessingConsumer
     arguments: ['@jms_serializer', '@push.service']
@@ -101,7 +105,7 @@ services:
 
   manzana.service:
     class: FourPaws\External\ManzanaService
-    arguments: ['@jms_serializer', '@manzana.soap', '%manzana%']
+    arguments: ['@jms_serializer', '@manzana.soap', '%manzana%', '@manzana.guzzle']
     calls:
       - [setServiceLogger]
 
@@ -174,6 +178,9 @@ services:
   kiosk.service:
     class: FourPaws\KioskBundle\Service\KioskService
     public: true
+
+  manzana_api.service:
+    class: FourPaws\ManzanaApiBundle\Service\ManzanaApiService
 
   mobile_api.logger.service:
     class: FourPaws\MobileApiBundle\Services\LoggerService
