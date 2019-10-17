@@ -266,8 +266,8 @@ class CouponService implements LoggerAwareInterface
             if (array_key_exists($coupon['UF_PROMO_CODE'], $promoCodesActionType)) {
                 $result[$key]['id']          = $coupon['ID'];
                 $result[$key]['promocode']   = $coupon['UF_PROMO_CODE'];
-                $result[$key]['discount']    = $coupon['discount_value'];
-                $result[$key]['text']        = $coupon['custom_title'];
+                $result[$key]['discount']    = $coupon['custom_title'];
+                $result[$key]['text']        = $coupon['text'];
                 $result[$key]['date_active'] = $coupon['custom_date_to'];
                 
                 $actionTypeText = array_keys($promoCodesActionType[$coupon['UF_PROMO_CODE']])[0];

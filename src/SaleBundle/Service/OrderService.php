@@ -27,6 +27,7 @@ use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentItem;
 use Bitrix\Sale\UserMessageException;
 use COption;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
@@ -1145,6 +1146,7 @@ class OrderService implements LoggerAwareInterface
             } catch (WrongPhoneNumberException $e) {
             } catch (ManzanaServiceContactSearchNullException $e) {
             } catch (ManzanaServiceException $e) {
+            } catch (Exception $e) {
                 $this->log()->error(sprintf('failed to get discount card number: %s', $e->getMessage()), [
                     'phone' => $storage->getPhone(),
                 ]);
