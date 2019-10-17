@@ -114,7 +114,7 @@ class ApiPushMessage
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"read","update","create"})
      */
-    protected $photoUrl;
+    protected $photoUrl = '';
 
     /**
      * @var string
