@@ -1507,60 +1507,63 @@ class PaymentService implements LoggerAwareInterface
                     }
                 }
 
-                while ($bonusAmount > 0) {
+                $nextStep = false;
+
+                while ($bonusAmount > 0 && !$nextStep) {
+                    $isDebit = false;
                     foreach ($xmlIdsItems as $xmlIdItem) {
                         foreach ($newItemArr[$xmlIdItem] as $productItem) {
                             if ($productItemsPrices[$productItem->getId()] > 1) {
                                 $bonusAmount -= 1;
 
                                 $debitBonus($productItem, 1);
+                                $isDebit = true;
                             }
                         }
                     }
+                    $nextStep = !$isDebit;
                 }
 
+                if ($nextStep) {
+                    foreach ($xmlIdsItems as $xmlIdItem) {
+                        foreach ($newItemArr[$xmlIdItem] as $productItem) {
+                            $sumItem = $productItem->getPrice() * $productItem->getQuantity();
 
+                            if ($sumItem > $bonusAmount) {
+                                $sumItem -= $bonusAmount;
+                                $productItemsPrices[$productItem->getId()] = $sumItem / $productItem->getQuantity();
+                                $bonusAmount = 0;
+                                break;
+                            }
 
-//                foreach ($xmlIdsItems as $xmlIdItem) {
-//                    foreach ($newItemArr[$xmlIdItem] as $productItem) {
-//                        $sumItem = $productItem->getPrice()*$productItem->getQuantity();
-//
-//                        if ($sumItem > $bonusAmount) {
-//                            $sumItem -= $bonusAmount;
-//                            $productItemsPrices[$productItem->getId()] = $sumItem/$productItem->getQuantity();
-//                            $bonusAmount = 0;
-//                            break;
-//                        }
-//
-//                        ++$itemPosition;
-//                    }
-//                }
+                            ++$itemPosition;
+                        }
+                    }
+                }
             }
 
-//            if ($bonusAmount) {
-//                $sumItem = null;
-//
-//                $debitBonus = function ($productItem, $amountBonus) use ($productItemsPrices) {};
-//
-//                foreach ($xmlIdsItems as $xmlIdItem) {
-//                    foreach ($newItemArr[$xmlIdItem] as $productItem) {
-//                        if ($bonusAmount) {
-//                            $sumItem = $productItem->getPrice() * $productItem->getQuantity();
-//
-//                            $discountSum = (round($sumItem) - 1);
-//
-//                            if ($discountSum > $bonusAmount) {
-//                                $discountSum = $bonusAmount;
-//                            }
-//
-//                            $productItemsPrices[$productItem->getId()] = $sumItem - $discountSum;
-//                            $bonusAmount -= $discountSum;
-//                        }
-//
-//                        break;
-//                    }
-//                }
-//            }
+            if ($bonusAmount) {
+                $sumItem = null;
+
+                foreach ($xmlIdsItems as $xmlIdItem) {
+                    foreach ($newItemArr[$xmlIdItem] as $productItem) {
+                        if ($bonusAmount) {
+                            $sumItem = $productItem->getPrice() * $productItem->getQuantity();
+
+                            $discountSum = (round($sumItem) - 1);
+
+                            if ($discountSum > $bonusAmount) {
+                                $discountSum = $bonusAmount;
+                            }
+
+                            $productItemsPrices[$productItem->getId()] = $sumItem - $discountSum;
+                            $bonusAmount -= $discountSum;
+                        }
+
+                        break;
+                    }
+                }
+            }
 
 
             foreach ($xmlIdsItems as $xmlIdItem) {
