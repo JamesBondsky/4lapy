@@ -1518,6 +1518,11 @@ class PaymentService implements LoggerAwareInterface
 
                                 $debitBonus($productItem, 1);
                                 $isDebit = true;
+                            } else if ($productItem->getQuantity()*$productItemsPrices[$productItem->getId()] > 1) {
+                                $bonusAmount -= 1;
+
+                                $debitBonus($productItem, 1);
+                                $isDebit = true;
                             }
                         }
                     }
@@ -1542,28 +1547,28 @@ class PaymentService implements LoggerAwareInterface
                 }
             }
 
-            if ($bonusAmount) {
-                $sumItem = null;
-
-                foreach ($xmlIdsItems as $xmlIdItem) {
-                    foreach ($newItemArr[$xmlIdItem] as $productItem) {
-                        if ($bonusAmount) {
-                            $sumItem = $productItemsPrices[$productItem->getId()] * $productItem->getQuantity();
-
-                            $discountSum = (round($sumItem) - 1);
-
-                            if ($discountSum > $bonusAmount) {
-                                $discountSum = $bonusAmount;
-                            }
-
-                            $productItemsPrices[$productItem->getId()] = $sumItem - $discountSum;
-                            $bonusAmount -= $discountSum;
-                        }
-
-                        break;
-                    }
-                }
-            }
+//            if ($bonusAmount) {
+//                $sumItem = null;
+//
+//                foreach ($xmlIdsItems as $xmlIdItem) {
+//                    foreach ($newItemArr[$xmlIdItem] as $productItem) {
+//                        if ($bonusAmount) {
+//                            $sumItem = $productItemsPrices[$productItem->getId()] * $productItem->getQuantity();
+//
+//                            $discountSum = (round($sumItem) - 1);
+//
+//                            if ($discountSum > $bonusAmount) {
+//                                $discountSum = $bonusAmount;
+//                            }
+//
+//                            $productItemsPrices[$productItem->getId()] = $sumItem - $discountSum;
+//                            $bonusAmount -= $discountSum;
+//                        }
+//
+//                        break;
+//                    }
+//                }
+//            }
 
             if ($bonusAmount && $order->getDeliveryPrice() > $bonusAmount) {
                 $order->setFieldNoDemand('PRICE_DELIVERY', $order->getDeliveryPrice() - $bonusAmount);
