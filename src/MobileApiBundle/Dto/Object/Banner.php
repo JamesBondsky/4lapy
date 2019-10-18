@@ -156,6 +156,15 @@ class Banner
     }
 
     /**
+     * @param string $type
+     * @return Banner
+     */
+    public function setType($type): Banner {
+        $this->type = $type;
+        return $this;
+    }
+
+    /**
      * @param string $link
      * @param string $cityId
      * @return Banner

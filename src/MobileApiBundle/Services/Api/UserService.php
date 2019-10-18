@@ -203,8 +203,9 @@ class UserService
 
             if (!$client->contactId) {
                 try {
-                    $manzanaContact = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($user->getPersonalPhone()));
-                    $client->contactId = $manzanaContact->contactId;
+//                    $manzanaContact = $manzanaService->getContactByPhone($user->getManzanaNormalizePersonalPhone());
+                    $contactId = $manzanaService->getContactByPhone($user->getManzanaNormalizePersonalPhone());
+                    $client->contactId = $contactId;
                 } catch (ManzanaServiceContactSearchNullException $e) {
                     // Значит, новый пользователь
                 } catch (Exception $e) {

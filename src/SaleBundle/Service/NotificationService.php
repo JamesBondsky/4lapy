@@ -14,6 +14,7 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Enum\CrudGroups;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
 use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
 use FourPaws\External\Exception\ExpertsenderServiceBlackListException;
@@ -24,6 +25,7 @@ use FourPaws\External\SmsService;
 use FourPaws\MobileApiBundle\Entity\ApiPushMessage;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
+use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\SaleBundle\Dto\Notification\ForgotBasketNotification;
 use FourPaws\SaleBundle\Enum\ForgotBasketEnum;
 use FourPaws\SaleBundle\Enum\OrderPayment;
@@ -352,6 +354,32 @@ class NotificationService implements LoggerAwareInterface
     }
 
     /**
+     * @param OrderSubscribe $orderSubscribe
+     */
+    public function sendOrderSubscribeCancelMessage(OrderSubscribe $orderSubscribe): void
+    {
+        if (static::$isSending) {
+            return;
+        }
+
+        /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
+        $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
+
+        try {
+            $order = $this->orderService->getOrderById($orderSubscribeHistoryService->getLastCreatedOrderId($orderSubscribe));
+        } catch (\Exception $e) {
+            return;
+        }
+
+        static::$isSending = true;
+
+        $parameters = $this->getOrderData($order);
+
+        $this->sendSms('FourPawsSaleBundle:Sms:order.subscribe.canceled.html.php', $parameters);
+        static::$isSending = false;
+    }
+
+    /**
      * @param Order $order
      * @throws ApplicationCreateException
      */
@@ -518,6 +546,7 @@ class NotificationService implements LoggerAwareInterface
                     'PHONE',
                     'EMAIL',
                     'DELIVERY_DATE',
+                    'DELIVERY_INTERVAL',
                     'DELIVERY_PLACE_CODE',
                     'IS_FAST_ORDER'
                 ]
@@ -539,6 +568,8 @@ class NotificationService implements LoggerAwareInterface
             );
             $result['deliveryCode'] = $this->orderService->getOrderDeliveryCode($order);
             $result['isOneClick'] = $properties['IS_FAST_ORDER'] === 'Y';
+
+            $result['deliveryInterval'] = IntervalService::validateDeliveryInterval($properties['DELIVERY_INTERVAL']);
 
             if (!$result['isOneClick'] &&
                 ($result['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE)

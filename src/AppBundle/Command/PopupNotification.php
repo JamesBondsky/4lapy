@@ -61,6 +61,9 @@ class PopupNotification extends Command
     }
 
     /**
+     * !ATTENTION Метод не используется и некорректно работает
+     * @todo Если потребуется использовать - нужно исправить баги и тщательно протестировать
+     *
      * @inheritdoc
      */
     protected function execute(InputInterface $input, OutputInterface $output)
