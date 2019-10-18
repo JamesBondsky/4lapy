@@ -1419,6 +1419,7 @@ class UserService implements
 
             if (count($userIdByPush) > 0) {
                 $hlBlockPushMessages = \FourPaws\App\Application::getHlBlockDataManager('bx.hlblock.pushmessages');
+                unset($data['PHOTO_URL']);
                 $hlBlockPushMessages->add($data);
                 if ($lastDate instanceof \DateTime && !$isInfiniteCoupon) {
                     $hlBlockPushMessages->add($dataLast);

@@ -27,6 +27,7 @@ use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\DaDataExecuteException;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
@@ -628,6 +629,25 @@ class OrderController extends Controller implements LoggerAwareInterface
                     $errors[] = 'Некорректная дата доставки!';
                 }
             } catch (\Exception $e) {
+            }
+        }
+
+        /*
+         * Если на шаге выбора доставки не выбирали адрес из подсказок, то пробуем определить его тут для проставления района Москвы
+         */
+        if (($step === OrderStorageEnum::DELIVERY_STEP) && ($storage->getCityCode() === DeliveryService::MOSCOW_LOCATION_CODE) && ($storage->getMoscowDistrictCode() === '') && ($storage->getStreet()) && ($storage->getHouse() !== '')) {
+            $strAddress = sprintf('Москва, %s, %s', $storage->getStreet(), $storage->getHouse());
+            try {
+                $okato = $this->locationService->getDadataLocationOkato($strAddress);
+                $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+
+                if (count($locations)) {
+                    $location = current($locations);
+                    $storage->setCity($location['NAME']);
+                    $storage->setCityCode($location['CODE']);
+                    $storage->setMoscowDistrictCode($location['CODE']);
+                }
+            } catch (DaDataExecuteException $e) {
             }
         }
 
