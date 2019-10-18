@@ -617,8 +617,8 @@ class OrderStorageService
             $basket = $this->basketService->getBasket();
             $codes = [];
             if (null === $basket->getOrder()) {
-                // $order = Order::create(SITE_ID, $storage->getUserId() ?: null);
-                // $order->setBasket($basket);
+                $order = Order::create(SITE_ID, $storage->getUserId() ?: null);
+                $order->setBasket($basket);
             }
 
             // для подписки оставляем всё, кроме достависты

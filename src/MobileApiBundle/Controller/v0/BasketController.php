@@ -175,6 +175,10 @@ class BasketController extends BaseController
                 }
             }
         }
+    
+        if ($promoCode) {
+            $orderCalculate->setPromoCodeResult($promoCode);
+        }
         
         return (new UserCartResponse())
             ->setCartCalc($orderCalculate)
