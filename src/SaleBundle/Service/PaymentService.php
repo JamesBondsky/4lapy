@@ -1495,44 +1495,72 @@ class PaymentService implements LoggerAwareInterface
         if (count($newItemArr) > 0) {
             $itemPosition = 0;
             if ($bonusAmount) {
+                $debitBonus = function ($productItem, $amountBonus) use (&$productItemsPrices) {
+                    $sumItem = $productItemsPrices[$productItem->getId()]*$productItem->getQuantity();
+                    $sumItem -= $amountBonus;
+                    $productItemsPrices[$productItem->getId()] = $sumItem/$productItem->getQuantity();
+                };
+
                 foreach ($xmlIdsItems as $xmlIdItem) {
                     foreach ($newItemArr[$xmlIdItem] as $productItem) {
-                        $sumItem = $productItem->getPrice()*$productItem->getQuantity();
-
-                        if ($sumItem > $bonusAmount) {
-                            $sumItem -= $bonusAmount;
-                            $productItemsPrices[$productItem->getId()] = $sumItem/$productItem->getQuantity();
-                            $bonusAmount = 0;
-                            break;
-                        }
-
-                        ++$itemPosition;
+                        $productItemsPrices[$productItem->getId()] = $productItem->getPrice();
                     }
                 }
-            }
 
-            if ($bonusAmount) {
-                $sumItem = null;
+                while ($bonusAmount > 0) {
+                    foreach ($xmlIdsItems as $xmlIdItem) {
+                        foreach ($newItemArr[$xmlIdItem] as $productItem) {
+                            if ($productItemsPrices[$productItem->getId()] > 1) {
+                                $bonusAmount -= 1;
 
-                foreach ($xmlIdsItems as $xmlIdItem) {
-                    foreach ($newItemArr[$xmlIdItem] as $productItem) {
-                        if ($bonusAmount) {
-                            $sumItem = $productItem->getPrice() * $productItem->getQuantity();
-
-                            $discountSum = (round($sumItem) - 1);
-
-                            if ($discountSum > $bonusAmount) {
-                                $discountSum = $bonusAmount;
+                                $debitBonus($productItem, 1);
                             }
-
-                            $productItemsPrices[$productItem->getId()] = $sumItem - $discountSum;
-                            $bonusAmount -= $discountSum;
                         }
-
-                        break;
                     }
                 }
+
+
+
+//                foreach ($xmlIdsItems as $xmlIdItem) {
+//                    foreach ($newItemArr[$xmlIdItem] as $productItem) {
+//                        $sumItem = $productItem->getPrice()*$productItem->getQuantity();
+//
+//                        if ($sumItem > $bonusAmount) {
+//                            $sumItem -= $bonusAmount;
+//                            $productItemsPrices[$productItem->getId()] = $sumItem/$productItem->getQuantity();
+//                            $bonusAmount = 0;
+//                            break;
+//                        }
+//
+//                        ++$itemPosition;
+//                    }
+//                }
             }
+
+//            if ($bonusAmount) {
+//                $sumItem = null;
+//
+//                $debitBonus = function ($productItem, $amountBonus) use ($productItemsPrices) {};
+//
+//                foreach ($xmlIdsItems as $xmlIdItem) {
+//                    foreach ($newItemArr[$xmlIdItem] as $productItem) {
+//                        if ($bonusAmount) {
+//                            $sumItem = $productItem->getPrice() * $productItem->getQuantity();
+//
+//                            $discountSum = (round($sumItem) - 1);
+//
+//                            if ($discountSum > $bonusAmount) {
+//                                $discountSum = $bonusAmount;
+//                            }
+//
+//                            $productItemsPrices[$productItem->getId()] = $sumItem - $discountSum;
+//                            $bonusAmount -= $discountSum;
+//                        }
+//
+//                        break;
+//                    }
+//                }
+//            }
 
 
             foreach ($xmlIdsItems as $xmlIdItem) {
