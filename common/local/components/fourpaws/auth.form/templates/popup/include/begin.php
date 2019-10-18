@@ -68,6 +68,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                            type="text"
                            id="tel-email-authorization"
                            name="login"
+                           value="<?= $arResult['LOGIN'] ?>"
                            data-type="telEmail"/>
                     <div class="b-error"><span class="js-message"></span></div>
                 </div>

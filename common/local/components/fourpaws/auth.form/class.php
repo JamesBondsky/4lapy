@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
+use Bitrix\Main\Context;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -162,7 +163,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->arResult['IS_SHOW_CAPTCHA'] = $this->isShowCapthca();
             $this->setSocial();
 
-            $this->arResult['LIMIT_AUTH_ATTEMPT'] = $this->getLimitAuthAuthorizeAttempts();
+            $this->arResult['LOGIN'] = $this->getRawLogin();
+
+            $this->arResult['LIMIT_AUTH_ATTEMPT'] = $this->getLimitAuthAuthorizeAttempts($this->arResult['LOGIN']);
             $this->includeComponentTemplate();
         } catch (Exception $e) {
             try {
@@ -237,6 +240,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         $newToken['value'] = $newToken['token'];
         unset($newToken['token']);
         $newTokenResponse = ['token' => $newToken];
+
+        $this->arResult['LOGIN'] = $rawLogin;
 
         try {
             $container = App::getInstance()->getContainer();
@@ -1003,6 +1008,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if (!empty($params)) {
             extract($params, EXTR_OVERWRITE);
         }
+
+        $this->arResult['LOGIN'] = $this->getRawLogin();
+
         ob_start();
         if (!empty($title)) {
             ?>
@@ -1092,7 +1100,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @param string $rawLogin
      * @return int
      */
-    public function getLimitAuthAuthorizeAttempts(string $rawLogin = ''): int
+    protected function getLimitAuthAuthorizeAttempts(string $rawLogin = ''): int
     {
         if ($this->limitAuthAuthorizeAttempts === null) {
             if (!$rawLogin || empty($rawLogin)) {
@@ -1107,5 +1115,19 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         return $this->limitAuthAuthorizeAttempts;
+    }
+
+    protected function getRawLogin(): string
+    {
+        if (isset($this->arResult['LOGIN']) && !empty($this->arResult['LOGIN'])) {
+            return $this->arResult['LOGIN'];
+        }
+
+        $rowLogin = Context::getCurrent()->getRequest()->getCookie('LOGIN');
+        if ($rowLogin && !empty($rowLogin)) {
+            return $rowLogin;
+        }
+
+        return '';
     }
 }
