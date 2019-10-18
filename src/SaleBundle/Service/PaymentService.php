@@ -1527,7 +1527,7 @@ class PaymentService implements LoggerAwareInterface
                 if ($nextStep) {
                     foreach ($xmlIdsItems as $xmlIdItem) {
                         foreach ($newItemArr[$xmlIdItem] as $productItem) {
-                            $sumItem = $productItem->getPrice() * $productItem->getQuantity();
+                            $sumItem = $productItemsPrices[$productItem->getId()] * $productItem->getQuantity();
 
                             if ($sumItem > $bonusAmount) {
                                 $sumItem -= $bonusAmount;
@@ -1548,7 +1548,7 @@ class PaymentService implements LoggerAwareInterface
                 foreach ($xmlIdsItems as $xmlIdItem) {
                     foreach ($newItemArr[$xmlIdItem] as $productItem) {
                         if ($bonusAmount) {
-                            $sumItem = $productItem->getPrice() * $productItem->getQuantity();
+                            $sumItem = $productItemsPrices[$productItem->getId()] * $productItem->getQuantity();
 
                             $discountSum = (round($sumItem) - 1);
 
@@ -1563,6 +1563,11 @@ class PaymentService implements LoggerAwareInterface
                         break;
                     }
                 }
+            }
+
+            if ($bonusAmount && $order->getDeliveryPrice() > $bonusAmount) {
+                $order->setFieldNoDemand('PRICE_DELIVERY', $order->getDeliveryPrice() - $bonusAmount);
+                $bonusAmount = 0;
             }
 
 
