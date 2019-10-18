@@ -33,7 +33,7 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\Model\City;
-use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
+use FourPaws\UserBundle\Service\UserService;
 use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
@@ -98,6 +98,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @var KioskService
      */
     private $kioskService;
+    /**
+     * @var int
+     */
+    private $limitAuthAuthorizeAttempts;
 
     /**
      * FourPawsAuthFormComponent constructor.
@@ -158,6 +162,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->arResult['IS_SHOW_CAPTCHA'] = $this->isShowCapthca();
             $this->setSocial();
 
+            $this->arResult['LIMIT_AUTH_ATTEMPT'] = $this->getLimitAuthAuthorizeAttempts();
             $this->includeComponentTemplate();
         } catch (Exception $e) {
             try {
@@ -252,9 +257,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
         $_SESSION['COUNT_AUTH_AUTHORIZE']++;
 
-        if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
+        if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > $this->getLimitAuthAuthorizeAttempts($rawLogin)) {
             try {
-                if ($this->showBitrixCaptcha()) {
+                if ($this->showBitrixCaptcha($rawLogin)) {
                     $recaptchaService = $container->get(ReCaptchaInterface::class);
                     $checkedCaptcha = $recaptchaService->checkCaptcha();
 
@@ -390,7 +395,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
             }
         } catch (UsernameNotFoundException $e) {
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 2) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] >= $token-$this->getLimitAuthAuthorizeAttempts($rawLogin)) {
                 try {
                     $this->setSocial();
                     $html = $this->getHtml(
@@ -414,7 +419,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
             return $this->ajaxMess->getWrongPasswordError($newTokenResponse);
         } catch (InvalidCredentialException $e) {
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 2 && $this->showBitrixCaptcha()) {
+            if (($_SESSION['COUNT_AUTH_AUTHORIZE'] >= $this->getLimitAuthAuthorizeAttempts($rawLogin)) && $this->showBitrixCaptcha($rawLogin)) {
                 try {
                     $this->setSocial();
                     $html = $this->getHtml(
@@ -1071,9 +1076,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         return !KioskService::isKioskMode();
     }
 
-    protected function showBitrixCaptcha()
+    protected function showBitrixCaptcha($rawLogin = '')
     {
-        $this->arResult['IS_SHOW_CAPTCHA'] = $_SESSION['COUNT_AUTH_AUTHORIZE'] > 2;
+        $this->arResult['IS_SHOW_CAPTCHA'] = ($_SESSION['COUNT_AUTH_AUTHORIZE'] >= $this->getLimitAuthAuthorizeAttempts($rawLogin));
 
         return $this->arResult['IS_SHOW_CAPTCHA'];
     }
@@ -1081,5 +1086,26 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     protected function isShowBitrixCaptcha($word, $code)
     {
         return !empty($code) && !empty($word);
+    }
+
+    /**
+     * @param string $rawLogin
+     * @return int
+     */
+    public function getLimitAuthAuthorizeAttempts(string $rawLogin = ''): int
+    {
+        if ($this->limitAuthAuthorizeAttempts === null) {
+            if (!$rawLogin || empty($rawLogin)) {
+                return UserService::DEFAULT_AUTH_ATTEMPTS;
+            }
+
+            try {
+                $this->limitAuthAuthorizeAttempts = $this->userSearchService->getLimitAuthAuthorizeAttemptsByRawLogin($rawLogin);
+            } catch (\Exception $e) {
+                return UserService::DEFAULT_AUTH_ATTEMPTS;
+            }
+        }
+
+        return $this->limitAuthAuthorizeAttempts;
     }
 }

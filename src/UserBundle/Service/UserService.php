@@ -89,6 +89,8 @@ class UserService implements
 {
     use LazyLoggerAwareTrait;
 
+    public const DEFAULT_AUTH_ATTEMPTS = 3;
+
     public const BASE_DISCOUNT = 3;
     /**
      * @var CAllUser|CUser
@@ -1204,6 +1206,23 @@ class UserService implements
         } catch (\Exception $e) {
             return false;
         }
+    }
+
+    /**
+     * @param string $login
+     * @return int
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws WrongPhoneNumberException
+     */
+    public function getLimitAuthAuthorizeAttemptsByRawLogin(string $login): int
+    {
+        $userLogin = $this->userRepository->findLoginByRawLogin($login);
+        $user = CUser::GetByLogin($userLogin)->Fetch();
+
+        $policy = CUser::GetGroupPolicy($user['ID']);
+        return intval($policy['LOGIN_ATTEMPTS']);
     }
 
     /**

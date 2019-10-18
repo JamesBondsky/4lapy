@@ -91,7 +91,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                 </div>
             </div>
             <?php
-            if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] > 2 && $arResult['IS_SHOW_CAPTCHA']) {
+            if ($arResult['IS_SHOW_CAPTCHA'] && ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= $arResult['LIMIT_AUTH_ATTEMPT'])) {
                 try {
                     $recaptchaService = App::getInstance()
                         ->getContainer()
@@ -103,7 +103,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
             } ?>
             <div>
                 <span class="b-registration__auth-error">
-                    <?= (int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 ? 'Неверный логин или пароль' : '' ?>
+                    <?= ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= $arResult['LIMIT_AUTH_ATTEMPT']) ? 'Неверный логин или пароль' : '' ?>
                 </span>
             </div>
             <button class="b-button b-button--social b-button--full-width b-button--popup-authorization">
