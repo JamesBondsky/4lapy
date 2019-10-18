@@ -5,7 +5,6 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\Helpers\ProtectorHelper;
-use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 use FourPaws\Decorators\SvgDecorator;
 
@@ -76,11 +75,11 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
             <div class="b-input-line b-input-line--popup-authorization">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="password-authorization">Пароль</label>
-                    <? if(!$arResult['KIOSK']) { ?>
+                    <?php if(!$arResult['KIOSK']) { ?>
                         <a class="b-link-gray b-link-gray--label"
                            href="/personal/forgot-password/?backurl=<?= $backUrl ?>"
                            title="Забыли пароль?">Забыли пароль?</a>
-                    <? } ?>
+                    <?php } ?>
                 </div>
                 <div class="b-input b-input--registration-form">
                     <input class="b-input__input-field b-input__input-field--registration-form"
@@ -111,7 +110,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                 Войти
             </button>
             <span class="b-registration__else b-registration__else--authorization">или</span>
-            <? if(!$arResult['KIOSK']) { ?>
+            <?php if(!$arResult['KIOSK']) { ?>
                 <?php $APPLICATION->IncludeComponent(
                     'bitrix:socserv.auth.form',
                     'socserv_auth',
@@ -129,7 +128,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                        title="Зарегистрироваться"><span
                                 class="b-link__text b-link__text--authorization">Зарегистрироваться</span></a>
                 </div>
-            <? } else { ?>
+            <?php } else { ?>
                 <div class="b-authorize-by-card">
                     <div class="b-authorize-by-card__text">Поднесите карту к сканеру штрих-кодом</div>
                     <span class="b-icon b-icon--barcode-kiosk">
@@ -139,11 +138,10 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                         <?= new SvgDecorator('icon-arr-barcode', 15, 9) ?>
                     </span>
                 </div>
-            <? } ?>
+            <?php } ?>
 
-            <? $token = $arResult['token'] ?? ProtectorHelper::generateToken(ProtectorHelper::TYPE_AUTH); ?>
-	        <input type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
+            <?php $token = $arResult['token'] ?? $component->getTokenProvider()->getToken(ProtectorHelper::TYPE_AUTH)->getValue() ?>
+            <input type="hidden" name="_csrf" value="<?= $token ?>">
         </form>
     </div>
-    <?php
-} ?>
+<?php } ?>
