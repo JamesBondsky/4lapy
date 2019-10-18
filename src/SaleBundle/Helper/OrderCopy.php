@@ -26,6 +26,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
+use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
@@ -40,6 +41,7 @@ use FourPaws\SaleBundle\Exception\OrderCopyBasketException;
 use FourPaws\SaleBundle\Exception\OrderCopyShipmentsException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Service\StoreService;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
@@ -852,16 +854,25 @@ class OrderCopy
 
     /**
      * Пересчет заказа
+     * $extendedDiscounts - отключает расчёт скидок,
+     *                      но если он отключен, то бонусы (HAS_BONUS) не считаются
      *
      * @throws ArgumentNullException
      * @throws ObjectNotFoundException
      * @throws OrderCreateException
      */
-    public function doFinalAction()
+    public function doFinalAction($extendedDiscounts = true)
     {
-        $this->extendedDiscountsBlockManagerStart();
+        if($extendedDiscounts){
+            $this->extendedDiscountsBlockManagerStart();
+        }
+
         $tmpResult = $this->newOrder->doFinalAction(true);
-        $this->extendedDiscountsBlockManagerEnd();
+
+        if($extendedDiscounts){
+            $this->extendedDiscountsBlockManagerEnd();
+        }
+
         if (!$tmpResult->isSuccess()) {
             throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 800);
         }
@@ -1531,6 +1542,16 @@ class OrderCopy
         // адрес доставки
         if($deliveryService->isDelivery($delivery)){
             $address = $locationService->splitAddress($subscribe->getDeliveryPlace());
+
+            if (($subscribe->getLocationId()) && ($address->getLocation() !== $subscribe->getLocationId())) {
+                $propValues = [
+                    'COM_WAY' => OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS,
+                    'CITY_CODE' => $subscribe->getLocationId(),
+                ];
+                $orderService->setOrderPropertiesByCode($order, $propValues);
+
+                $address = $orderService->compileOrderAddress($this->getOldOrder());
+            }
         } else {
             /** @var PickupResultInterface $delivery */
             $shop = $delivery->getSelectedShop();
@@ -1568,8 +1589,13 @@ class OrderCopy
                     if (!$this->deliveryService->isDpdPickup($delivery)) {
                         continue 2;
                     }
-                    /** @var DpdPickupResult $selectedDelivery */
-                    $value = $delivery->getSelectedShop()->getXmlId();
+                    /** @var DpdPickupResult $delivery */
+                    /** @var Terminal $terminal */
+                    if ($terminal = $delivery->getTerminals()[$subscribe->getDeliveryPlace()]) {
+                        $value = $terminal->getXmlId();
+                    } else {
+                        $value = $delivery->getSelectedShop()->getXmlId();
+                    }
                     break;
                 case 'DELIVERY_DATE':
                     $value = $delivery->getDeliveryDate()->format('d.m.Y');

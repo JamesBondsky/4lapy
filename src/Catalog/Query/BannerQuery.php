@@ -42,6 +42,7 @@ class BannerQuery extends IblockElementQuery
             'BACKGROUND',
             'SECTION',
             'ELEMENT',
+            'TYPE',
         ];
     }
 

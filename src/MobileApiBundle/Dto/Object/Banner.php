@@ -156,6 +156,15 @@ class Banner
     }
 
     /**
+     * @param string $type
+     * @return Banner
+     */
+    public function setType($type): Banner {
+        $this->type = $type;
+        return $this;
+    }
+
+    /**
      * @param string $link
      * @param string $cityId
      * @return Banner
@@ -240,7 +249,12 @@ class Banner
             } else if (strpos($link, '/articles/') !== false) {
                 // ссылка на статью
                 $type = 'articles';
-            } else if (strpos($link, '/shares/') !== false || strpos($link, '/dobrolap/') !== false) { //для добролапа
+            } else if (
+                strpos($link, '/shares/') !== false
+                || strpos($link, '/dobrolap/') !== false
+                || strpos($link, '/fashion/') !== false
+                || strpos($link, '/iqgames/') !== false
+            ) {
                 // ссылка на акцию
                 $type = 'action';
             } else {

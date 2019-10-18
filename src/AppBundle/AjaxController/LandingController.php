@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Type\DateTime;
+use CUser;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -51,6 +52,8 @@ class LandingController extends Controller
     static $royalCaninLanding = 'royal_canin';
     static $festivalLanding = 'festival';
     static $mealfeelLanding = 'mealfeel';
+
+    const MAX_FILE_SIZE = 5000000; // 5 Мб
 
     /** @var AjaxMess */
     private $ajaxMess;
@@ -284,7 +287,7 @@ class LandingController extends Controller
                         $coupons = [
                             $festivalUserId => [$userId]
                         ];
-                        $personalOffersService->importOffers($festivalOfferId, $coupons);
+                        $personalOffersService->importOffers($festivalOfferId, $coupons, true);
                         $festivalPersonalOfferLinked = true;
                     } catch (\Exception $e) {
                         $logger = LoggerFactory::create('Festival');
@@ -355,6 +358,82 @@ class LandingController extends Controller
             unset($token['token']);
 
             return $e->getJsonResponse()->extendData($token);
+        }
+    }
+
+    /**
+     * @param Request $request
+     */
+    public function uploadDrawImageAction(Request $request)
+    {
+        global $USER;
+
+        try {
+
+            if (!$USER->IsAuthorized()) {
+                throw new JsonResponseException($this->ajaxMess->getNotAuthorizedException());
+            }
+
+            // < 5 Мб
+            if ($_FILES['PHOTO']['size'] > self::MAX_FILE_SIZE) {
+                throw new JsonResponseException($this->ajaxMess->getFileSizeError(self::MAX_FILE_SIZE/1000000));
+            }
+
+            $userId = $USER->GetID();
+            $userFields = \CUser::GetByID($USER->GetID())->Fetch();
+
+            $requestIblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::HOME_IMAGES);
+
+            $iblockElement = new \CIBlockElement();
+            $resultAdd = $iblockElement->Add([
+                'IBLOCK_ID' => $requestIblockId,
+                'NAME' => 'Заявка ' . implode(' ', [$USER->GetID(), $userFields['LAST_NAME'], $userFields['FIRST_NAME']]),
+                'IBLOCK_SECTION_ID' => false,
+                'PREVIEW_PICTURE' => $_FILES['PHOTO'],
+                'PROPERTY_VALUES' => [
+                    'USER_ID' => $userId,
+                    'LOGIN' => $userFields['LOGIN'],
+                    'FIO' => implode(' ', array_filter([$userFields['LAST_NAME'], $userFields['NAME'], $userFields['SECOND_NAME']])),
+                    'PHONE' => $userFields['PERSONAL_PHONE'],
+                    'EMAIL' => $userFields['EMAIL']
+                ],
+            ]);
+
+            if (!$resultAdd) {
+                throw new JsonResponseException($this->ajaxMess->getAddError($iblockElement->LAST_ERROR));
+            }
+
+//            try {
+//                $sender = App::getInstance()->getContainer()->get('expertsender.service');
+//                $sender->sendAfterCheckReg([
+//                    'userEmail' => $email,
+//                    'userId' => $userId,
+//                    'landingType' => $landingType
+//                ]);
+//            }
+//            catch (\Exception $exception)
+//            {
+//                $logger = LoggerFactory::create('expertSender');
+//                $logger->error(sprintf(
+//                    'Error while sending mail. %s exception: %s',
+//                    __METHOD__,
+//                    $exception->getMessage()
+//                ));
+//            }
+
+            // $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD);
+            return JsonSuccessResponse::create('Заявка успешно отправлена!');
+
+        } catch (JsonResponseException $e) {
+            $logger = LoggerFactory::create('expertSender');
+            $logger->error(sprintf(
+                'Ошибка добавления заявки LP Уютно жить: %s exception: %s, user_id: %s',
+                __METHOD__,
+                $e->getMessage(),
+                $userFields['ID']
+            ));
+
+            return JsonSuccessResponse::create('Произошла ошибка, пожалуйста, обратитесь к администратору!');
         }
     }
 

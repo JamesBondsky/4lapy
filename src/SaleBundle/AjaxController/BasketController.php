@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace FourPaws\SaleBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -14,6 +15,8 @@ use Bitrix\Main\Grid\Declension;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Sale\Internals\DiscountCouponTable;
 use Exception;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -24,10 +27,13 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Manzana;
@@ -44,6 +50,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
+use FourPaws\PersonalBundle\Service\CouponService;
 
 /**
  * Class BasketController
@@ -81,6 +88,14 @@ class BasketController extends Controller implements LoggerAwareInterface
      * @var SalePreset
      */
     private $salePreset;
+    /**
+     * @var DeliveryService
+     */
+    private $deliveryService;
+    /**
+     * @var LocationService
+     */
+    private $locationService;
 
     /**
      * BasketController constructor.
@@ -91,6 +106,8 @@ class BasketController extends Controller implements LoggerAwareInterface
      * @param CouponStorageInterface $couponStorage
      * @param GoogleEcommerceService $ecommerceService
      * @param SalePreset $salePreset
+     * @param DeliveryService $deliveryService
+     * @param LocationService $locationService
      */
     public function __construct(
         BasketService $basketService,
@@ -98,7 +115,9 @@ class BasketController extends Controller implements LoggerAwareInterface
         Manzana $manzana,
         CouponStorageInterface $couponStorage,
         GoogleEcommerceService $ecommerceService,
-        SalePreset $salePreset
+        SalePreset $salePreset,
+        DeliveryService $deliveryService,
+        LocationService $locationService
     )
     {
         $this->basketService = $basketService;
@@ -107,6 +126,8 @@ class BasketController extends Controller implements LoggerAwareInterface
         $this->couponStorage = $couponStorage;
         $this->ecommerceService = $ecommerceService;
         $this->salePreset = $salePreset;
+        $this->deliveryService = $deliveryService;
+        $this->locationService = $locationService;
     }
 
     /**
@@ -138,7 +159,7 @@ class BasketController extends Controller implements LoggerAwareInterface
             $data = [
                 'remainQuantity' => 10,
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
-                'disableAdd' => false
+                'disableAdd' => false,
             ];
 
             $temporaryItem = clone $basketItem;
@@ -148,8 +169,23 @@ class BasketController extends Controller implements LoggerAwareInterface
                 false
             );
 
+            // проверка на доступность доставки данного товара в текущем регионе
+            $locationCode = $this->locationService->getCurrentLocation();
+
+            $availableDelivery = true;
+            if ($locationCode) {
+                $deliveries = $this->deliveryService->getByProduct($this->basketService->getOfferCollection()->get($offerId), $locationCode);
+                if (empty($deliveries)) {
+                    $availableDelivery = false;
+                }
+            }
+
+            $data['warning'] = !$availableDelivery;
+
+            $message = ($availableDelivery) ? 'Товар добавлен в корзину' : 'Обратите внимание, что доставка в ваш регион не осуществляется.';
+
             $response = JsonSuccessResponse::createWithData(
-                'Товар добавлен в корзину',
+                $message,
                 $data,
                 200,
                 ['reload' => false]
@@ -338,6 +374,26 @@ class BasketController extends Controller implements LoggerAwareInterface
             $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
             $piggyBankService->checkPiggyBankCoupon($promoCode);
 
+            $bitrixCoupon = DiscountCouponTable::query()
+                ->setFilter([
+                    'COUPON' => $promoCode,
+                ])
+                ->setSelect([
+                    'ACTIVE',
+                    'ACTIVE_FROM',
+                    'ACTIVE_TO',
+                ])
+                ->setLimit(1)
+                ->exec()
+                ->fetch();
+            if ($bitrixCoupon && (
+                    $bitrixCoupon['ACTIVE'] === BitrixUtils::BX_BOOL_FALSE
+                    || ($bitrixCoupon['ACTIVE_FROM'] && $bitrixCoupon['ACTIVE_FROM'] > new DateTime())
+                    || ($bitrixCoupon['ACTIVE_TO'] && $bitrixCoupon['ACTIVE_TO'] < new DateTime())
+                )) {
+                throw new CouponIsNotAvailableForUseException(__FUNCTION__ . '. Купон ' . $promoCode . ' неактивен');
+            }
+
             $this->manzana->setPromocode($promoCode);
             $this->couponStorage->clear();
             $this->couponStorage->save($promoCode);
@@ -390,28 +446,8 @@ class BasketController extends Controller implements LoggerAwareInterface
     {
         $promoCodes = $request->get('promoCodes');
 
-        $result = [];
-
-        $appliedCoupon = $this->couponStorage->getApplicableCoupon() ?? '';
-        if ($appliedCoupon) {
-            foreach ($promoCodes as $key => $promoCode) {
-                if ($appliedCoupon === $promoCode) {
-                    $result[$promoCode] = ['active' => 1];
-                    unset($promoCodes[$key]);
-                }
-            }
-            unset($key);
-        }
-
-        if ($promoCodes) {
-            $applicableCoupons = $this->manzana->getAllowPromocodes($promoCodes);
-
-            foreach ($promoCodes as $promoCode) {
-                $result[$promoCode] = in_array($promoCode, $applicableCoupons, true)
-                    ? ['applicable' => 1]
-                    : ['disabled' => 1];
-            }
-        }
+        $couponService = App::getInstance()->getContainer()->get('coupon.service');
+        $result = $couponService->checkCouponsApplicability($promoCodes);
 
         return JsonSuccessResponse::createWithData('', ['availablecoupons' => $result]);
     }

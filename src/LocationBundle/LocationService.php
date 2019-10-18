@@ -26,6 +26,7 @@ use CBitrixLocationSelectorSearchComponent;
 use CIBlockElement;
 use Exception;
 use FourPaws\Adapter\DaDataLocationAdapter;
+use FourPaws\Adapter\Model\Input\DadataLocation;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -455,8 +456,8 @@ class LocationService
      * Поиск местоположения по названию
      *
      * @param Query|array $queryParams
-     * @param int         $limit
-     * @param bool        $needPath
+     * @param int $limit
+     * @param bool $needPath
      *
      * @return array
      */
@@ -464,12 +465,13 @@ class LocationService
         $queryParams,
         int $limit = 0,
         bool $needPath = true
-    ): array {
+    ): array
+    {
         $cacheFinder = function () use ($queryParams, $limit, $needPath) {
             if (!($queryParams instanceof Query)) {
                 /** сразу в селект не добалять позиции с join - получать их позже - для скорости
                  * поиск по коду и только по названию без родителя будет быстрее */
-                $query = LocationTable::query()->setFilter($queryParams)->setSelect([
+                $query = LocationTable::query()->setOrder(['TYPE.DISPLAY_SORT' => 'asc', 'SORT' => 'asc'])->setFilter($queryParams)->setSelect([
                     'ID',
                     'CODE',
                     'DEPTH_LEVEL',
@@ -485,9 +487,12 @@ class LocationService
             if ($limit > 0) {
                 $query->setLimit($limit);
             }
-            $res = $query->exec();
+
             $locations = [];
             $typeList = [];
+
+            $res = $query->exec();
+
             while ($item = $res->fetch()) {
                 $typeList[$item['TYPE_ID']][] = $item['ID'];
                 /** для получения родетелей от запроса в цикле не уйти -
@@ -505,8 +510,8 @@ class LocationService
                         ->setSelect([
                             'ID',
                             'CODE',
-                            'DISPLAY'    => 'NAME.NAME',
-                            '_TYPE_ID'   => 'TYPE.ID',
+                            'DISPLAY' => 'NAME.NAME',
+                            '_TYPE_ID' => 'TYPE.ID',
                             '_TYPE_CODE' => 'TYPE.CODE',
                             '_TYPE_NAME' => 'TYPE.NAME.NAME',
                         ])
@@ -522,25 +527,35 @@ class LocationService
                 }
                 $locations[$item['ID']] = $item;
             }
+
             if (!empty($locations)) {
                 $locationIds = array_keys($locations);
-                $res = NameLocationTable::query()->setSelect([
-                    'NAME',
-                    'LOCATION_ID',
-                ])->setFilter(['=LOCATION_ID' => $locationIds])->exec();
+                $res = NameLocationTable::query()
+                    ->setSelect([
+                        'NAME',
+                        'LOCATION_ID',
+                    ])
+                    ->setFilter(['=LOCATION_ID' => $locationIds])
+                    ->exec();
+
                 while ($item = $res->fetch()) {
                     $locations[$item['LOCATION_ID']]['NAME'] = $item['NAME'];
                 }
-                $res = TypeTable::query()->setSelect([
-                    'ID',
-                    'CODE',
-                    'DISPLAY' => 'NAME.NAME',
-                ])->setFilter(['=ID' => array_keys($typeList)])->exec();
+
+                $res = TypeTable::query()
+                    ->setSelect([
+                        'ID',
+                        'CODE',
+                        'DISPLAY' => 'NAME.NAME',
+                    ])
+                    ->setFilter(['=ID' => array_keys($typeList)])
+                    ->exec();
+
                 while ($item = $res->fetch()) {
                     if (\is_array($typeList[$item['ID']])) {
                         foreach ($typeList[$item['ID']] as $itemId) {
                             $locations[$itemId]['TYPE'] = [
-                                'ID'   => $item['ID'],
+                                'ID' => $item['ID'],
                                 'CODE' => $item['CODE'],
                                 'NAME' => $item['DISPLAY'],
                             ];
@@ -550,13 +565,14 @@ class LocationService
             } else {
                 return [];
             }
+
             return $locations;
         };
         try {
             return (new BitrixCache())
                 ->withTag('location_finder')
                 ->withTime(360000)
-                ->withId(__METHOD__ . serialize($queryParams))
+                ->withId(__METHOD__ . serialize(['queryParams' => $queryParams, 'limit' => $limit]))
                 ->resultOf($cacheFinder);
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get location: %s', $e->getMessage()), [
@@ -757,7 +773,7 @@ class LocationService
             if (!isset($this->locationsByCode[$code])) {
                 $this->locationsByCode[$code] = reset($this->findLocationNew([
                     '=CODE'     => $code,
-                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE, static::TYPE_DISTRICT, static::TYPE_DISTRICT_MOSCOW],
+//                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE, static::TYPE_DISTRICT, static::TYPE_DISTRICT_MOSCOW],
                 ]));
             }
             if (!empty($this->locationsByCode[$code]) && !\is_bool($this->locationsByCode[$code])) {
@@ -1319,5 +1335,21 @@ class LocationService
         }
 
         return $result;
+    }
+
+    /**
+     * @param string $address
+     * @return DadataLocation
+     * @throws DaDataExecuteException
+     */
+    public function getDadataLocationOkato(string $address): string
+    {
+        $dadataLocation = $this->daDataService->splitAddress($address);
+        if (!$dadataLocation->getOkato()) {
+            throw new DaDataExecuteException('dadata location not found');
+        }
+
+        $okato = $dadataLocation->getOkato();
+        return substr($okato, 0, 8);
     }
 }

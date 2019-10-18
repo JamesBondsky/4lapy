@@ -19,7 +19,16 @@ class OrderCalculate
      * @var Price
      */
     protected $totalPrice;
-
+    
+    /**
+     * Купон
+     * @Serializer\SerializedName("personal_offer")
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Coupon")
+     * @Serializer\SkipWhenEmpty()
+     * @var Coupon
+     */
+    protected $coupon;
+    
     /**
      * Расшифровка финальной стоимости, список ОбъектДетализации[]
      * @Serializer\SerializedName("price_details")
@@ -35,6 +44,14 @@ class OrderCalculate
      * @var Detailing[]
      */
     protected $cardDetails = [];
+    
+    /**
+     * Еасть ли активные купоны
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("has_coupons")
+     * @var bool
+     */
+    protected $hasCoupons = false;
 
     /**
      * Расшифровка движений марок клиентов на текущий заказ, список ОбъектДетализацииМарок[]
@@ -46,17 +63,10 @@ class OrderCalculate
     protected $stampsDetails = [];
 
     /**
-     * Используемый промокод
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("promocode_result")
-     * @var string
-     */
-    protected $promoCodeResult = '';
-
-    /**
      * Можно ли связаться с клиентом по телефону
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("isPhoneCallAvailable")
+     * @Serializer\SkipWhenEmpty()
      * @var bool
      */
     protected $isPhoneCallAvailable = true;
@@ -136,23 +146,24 @@ class OrderCalculate
         $this->stampsDetails = $stampsDetails;
         return $this;
     }
-
+    
     /**
-     * @return string
+     * @return bool
      */
-    public function getPromoCodeResult(): string
+    public function getHasCoupons(): bool
     {
-        return $this->promoCodeResult;
+        return $this->hasCoupons;
     }
-
+    
+    
     /**
-     * @param string $promoCodeResult
+     * @param bool $hasCoupons
      *
      * @return OrderCalculate
      */
-    public function setPromoCodeResult(string $promoCodeResult): OrderCalculate
+    public function setHasCoupons(bool $hasCoupons): OrderCalculate
     {
-        $this->promoCodeResult = $promoCodeResult;
+        $this->hasCoupons = $hasCoupons;
         return $this;
     }
 
@@ -172,5 +183,24 @@ class OrderCalculate
     public function isPhoneCallAvailable(): bool
     {
         return $this->isPhoneCallAvailable;
+    }
+    
+    /**
+     * @return Coupon
+     */
+    public function getCoupon(): Coupon
+    {
+        return $this->coupon;
+    }
+    
+    /**
+     * @param Coupon $coupon
+     *
+     * @return OrderCalculate
+     */
+    public function setCoupon(Coupon $coupon): OrderCalculate
+    {
+        $this->coupon = $coupon;
+        return $this;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace FourPaws\PersonalBundle\EventController;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
@@ -9,12 +10,15 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\Exception;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\GroupTable;
 use Bitrix\Main\Mail\Event as EventMail;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserTable;
+use Bitrix\Sale\Internals\DiscountTable;
+use CSaleDiscount;
 use CUser;
 use FourPaws\App\Application;
 use FourPaws\App\Application as App;
@@ -136,6 +140,10 @@ class Event extends BaseServiceHandler
 
         static::initHandler('OnAfterIBlockElementUpdate', [self::class, 'processShareFileProducts'], 'iblock');
         static::initHandler('OnAfterIBlockElementAdd', [self::class, 'processShareFileProducts'], 'iblock');
+
+        /** уникальные акции */
+        static::initHandler('OnAfterIBlockElementAdd', [self::class, 'createDiscountFromPersonalOffer'], 'iblock');
+        static::initHandler('OnAfterIBlockElementUpdate', [self::class, 'createDiscountFromPersonalOffer'], 'iblock');
 
         if(KioskService::isKioskMode()) {
             static::initHandler('OnEpilog', [
@@ -779,6 +787,107 @@ class Event extends BaseServiceHandler
 
                 \CModule::IncludeModule("iblock");
                 \CIBlockElement::SetPropertyValuesEx($arFields['ID'], $arFields['IBLOCK_ID'], [IblockProperty::SHARES_PRODUCT_CODE => $uniqArrProducts]);
+            }
+        }
+    }
+
+    /**
+     * @param $arFields
+     * @throws ArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Adv\Bitrixtools\Exception\IblockPropertyNotFoundException
+     * @throws SystemException
+     */
+    public static function createDiscountFromPersonalOffer($arFields): void
+    {
+        if (!$arFields['RESULT']
+            || !$arFields['IBLOCK_ID'] == IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS)
+        ) {
+            return;
+        }
+
+        $container = Application::getInstance()->getContainer();
+        /** @var PersonalOffersService $personalOffersService */
+        $personalOffersService = $container->get('personal_offers.service');
+
+        if (!in_array($arFields['CODE'], [$personalOffersService::SECOND_ORDER_OFFER_CODE, $personalOffersService::TIME_PASSED_AFTER_LAST_ORDER_OFFER_CODE], true))
+        {
+            return;
+        }
+
+        $discountPropertyId = IblockUtils::getPropertyId($arFields['IBLOCK_ID'], 'DISCOUNT');
+
+        if ($discountPropertyId > 0 && ($discountProperty = $arFields['PROPERTY_VALUES'][$discountPropertyId]) && ($discount = array_values($discountProperty)[0]['VALUE']) && $discount > 0)
+        {
+            $discountId = $personalOffersService->getUniqueOfferDiscountIdByDiscountValue($discount);
+
+            if ($discountId <= 0)
+            {
+                $rsGroups = GroupTable::getList([
+                    'filter' => ['=STRING_ID' => [
+                        UserGroup::BASKET_RULES,
+                        UserGroup::NOT_AUTH_CODE,
+                    ]],
+                    'select' => ['ID'],
+                ]);
+                $result = $rsGroups->fetchAll();
+                $groupsIds = array_column($result, 'ID');
+
+                $discountId = CSaleDiscount::Add([
+                    'XML_ID' => $personalOffersService::DISCOUNT_PREFIX . '_' . $discount,
+                    'LID' => 's1',
+                    'NAME' => 'Персональное предложение ' . $discount . '%',
+                    'ACTIVE' => BitrixUtils::BX_BOOL_TRUE,
+                    'PRIORITY' => 1,
+                    'SORT' => 100,
+                    'LAST_LEVEL_DISCOUNT' => BitrixUtils::BX_BOOL_FALSE,
+                    /*
+                    // если нужно предотвратить выполнение других скидок
+                    'PRIORITY' => 1000,
+                    'SORT' => 1,
+                    'LAST_LEVEL_DISCOUNT' => BitrixUtils::BX_BOOL_TRUE,
+                    */
+                    'LAST_DISCOUNT' => BitrixUtils::BX_BOOL_TRUE,
+                    'USER_GROUPS' => $groupsIds,
+                    'CURRENCY' => 'RUB',
+                    'CONDITIONS' => [
+                        'CLASS_ID' => 'CondGroup',
+                        'DATA' => [
+                            'All' => 'AND',
+                            'True' => 'True',
+                        ],
+                        'CHILDREN' => [],
+                    ],
+                    'ACTIONS' => array(
+                        'CLASS_ID' => 'CondGroup',
+                        'DATA' => array(
+                            'ALL' => 'AND',
+                        ),
+                        'CHILDREN' => array(
+                            array(
+                                'CLASS_ID' => 'ActSaleBsktGrp',
+                                'DATA' => array(
+                                    'Type' => 'Discount',
+                                    'Value' => $discount,
+                                    'Unit' => 'Perc',
+                                    'Max' => 0,
+                                    'All' => 'AND',
+                                    'True' => 'True',
+                                ),
+                                'CHILDREN' => array(),
+                            ),
+                        ),
+                    ),
+                ]);
+
+                if (!$discountId) {
+                    global $APPLICATION;
+                    $logger = LoggerFactory::create('event_createDiscountFromPersonalOffer');
+                    $logger->error('Ошибка создания скидки: ' . $APPLICATION->GetException()->GetString());
+                    return;
+                }
+                DiscountTable::setUseCoupons([$discountId], BitrixUtils::BX_BOOL_TRUE);
+                //DiscountGroupTable::updateByDiscount($discountId, $groupsIds, 'Y', true);
             }
         }
     }

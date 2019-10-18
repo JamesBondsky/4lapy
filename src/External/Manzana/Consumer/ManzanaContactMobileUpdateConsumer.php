@@ -61,7 +61,14 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
             $client->haveMobileApp = true;
             $client->lastDateUseMobileApp = $currentDate->format(\DateTime::ATOM);
 
-            if ($client->phone) {
+            if (strlen($client->firstName) > 50) {
+                $this->log()->error(sprintf(
+                    '%s. Длина firstName больше 50 символов, разрешенных в Manzana. userId: %s. firstName: %s',
+                    __METHOD__,
+                    $userId,
+                    $client->firstName
+                ));
+            } elseif ($client->phone) {
                 $container = App::getInstance()->getContainer();
                 /** @var ManzanaService $manzanaService */
                 $manzanaService = $container->get('manzana.service');
@@ -73,7 +80,7 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
                 } catch (\Exception $e) {}
 
                 try {
-                    $manzanaService->updateContact($client);
+                    $manzanaService->updateContactAsync($client);
                 }  catch (ContactUpdateException | WrongContactMessageException $e) {
                     $this->log()->error(sprintf(
                         'Contact update error: %s',
@@ -87,18 +94,20 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
                     /** не перезапускаем очередь */
                 } catch (ManzanaServiceException $e) {
                     $this->log()->error(sprintf(
-                        'Manzana contact consumer error: %s, message: %s',
+                        'Manzana contact mobile update consumer error: %s, message: %s',
                         $e->getMessage(),
                         $message->getBody()
                     ));
 
                     sleep(5);
 
+                    //FIXME Не очень корректное решение - приводит к зацикливанию выполнения метода в случае перманентных ошибок в данном сообщении
+                    // (текущее сообщение бесконечно помечается как обработанное и заново добавляется в очередь)
                     try {
                         $this->manzanaService->updateContactMobileAsync($userData);
                     } catch (ApplicationCreateException | ServiceNotFoundException | ServiceCircularReferenceException $e) {
                         $this->log()->error(sprintf(
-                            'Manzana contact consumer /service/ error: %s, message: %s',
+                            'Manzana contact mobile update consumer /service/ error: %s, message: %s',
                             $e->getMessage(),
                             $message->getBody()
                         ));

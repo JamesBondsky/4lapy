@@ -13,6 +13,8 @@ use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
+use Bitrix\Sale\Discount;
+use Bitrix\Sale\DiscountCouponsManager;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\PriceMaths;
 use CBitrixComponent;
@@ -184,6 +186,36 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
                 $storage->setSubscribe(false);
                 $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
             }
+
+            // сбрасывает еще подписку у элементов корзины
+            foreach ($basket->getBasketItems() as $basketItem) {
+                $this->basketService->setBasketItemPropertyValue($basketItem, 'SUBSCRIBE_PRICE', '0');
+            }
+
+
+            $coupon = $this->couponsStorage->getApplicableCoupon();
+            /*$isBitrixCoupon = (bool)DiscountCouponTable::getCount([
+                'COUPON' => $coupon,
+                'USER_ID' => $order->getUserId(),
+            ]);*/
+
+            //if ($isBitrixCoupon) {
+                DiscountCouponsManager::get();
+                DiscountCouponsManager::init(DiscountCouponsManager::MODE_CLIENT, array("userId" => $userId));
+                if ($coupon) {
+                    DiscountCouponsManager::add($coupon);
+                } else {
+                    DiscountCouponsManager::clear(true);
+                }
+
+                $discounts = Discount::loadByBasket($basket);
+                $basket->refreshData(array('PRICE', 'COUPONS'));
+                if ($discounts) {
+                    $discounts->calculate();
+                    $discountResult = $discounts->getApplyResult();
+                    $basket->save();
+                }
+            //}
             $order = Order::create(SITE_ID, $userId);
             $order->setBasket($basket);
             // но иногда он так просто не запускается
@@ -210,6 +242,7 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
             $this->ecommerceSalePreset->createEcommerceToCheckoutFromBasket($basket, 1, 'Просмотр корзины'),
             true
         );
+
         $this->arResult['IS_STAMPS_OFFER_ACTIVE'] = false;
         if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
             $this->arResult['IS_STAMPS_OFFER_ACTIVE'] = true;
@@ -223,14 +256,15 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
             $this->arResult['MARKS_TO_BE_ADDED'] = $this->manzana->getStampsToBeAdded();
             $this->arResult['ACTIVE_STAMPS_COUNT'] = $activeStampsCount;
 
+            /** @var BasketItem $basketItem */
             foreach ($this->arResult['BASKET'] as $basketItem) {
-                $offer = $this->getOffer((int)$basketItem->getProductId());
+                if ($offer = $this->getOffer((int)$basketItem->getProductId())) {
+                    if ($this->arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()]) {
+                        continue;
+                    }
 
-                if ($this->arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()]) {
-                    continue;
+                    $this->arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()] = $this->stampService->getBasketItemStampsInfo($basketItem, $offer->getXmlId());
                 }
-
-                $this->arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()] = $this->stampService->getBasketItemStampsInfo($basketItem, $offer->getXmlId(), $activeStampsCount);
             }
         }
 
@@ -399,6 +433,8 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
         $haveOrder = $basket->getOrder() instanceof Order;
         $deliveries = $this->getDeliveryService()->getByLocation();
 
+        $this->arResult['HAS_DELIVERY'] = (empty($deliveries)) ? false : true;
+
         $delivery = null;
         foreach ($deliveries as $calculationResult) {
             if ($this->getDeliveryService()->isDelivery($calculationResult)) {
@@ -431,6 +467,7 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
             } else {
                 if (
                     ($basketItem->getPrice() > 0 || $basketItem->getBasePrice() > 0)
+                    && $this->arResult['HAS_DELIVERY']
                     &&
                     (
                         (null === $delivery) ||

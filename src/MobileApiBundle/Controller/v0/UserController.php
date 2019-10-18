@@ -6,12 +6,18 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Grid\Declension;
 use CEvent;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\External\Manzana\Exception\ExecuteErrorException;
 use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\LoginExistRequest;
@@ -68,7 +74,7 @@ class UserController extends BaseController
      * @param LoginRequest $loginRequest
      * @return ApiResponse
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \Bitrix\Main\Db\SqlQueryException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
@@ -110,7 +116,7 @@ class UserController extends BaseController
      *
      * @return ApiResponse
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
@@ -132,7 +138,7 @@ class UserController extends BaseController
      * @param PostUserInfoRequest $userInfoRequest
      * @return ApiResponse
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
@@ -161,7 +167,7 @@ class UserController extends BaseController
      * @param LoginExistRequest $loginExistRequest
      * @return ApiResponse
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
@@ -180,7 +186,7 @@ class UserController extends BaseController
      * @Rest\View()
      *
      * @return PersonalBonusResponse
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
@@ -244,6 +250,7 @@ class UserController extends BaseController
 
         return (new ApiResponse())->setData([
             'stamps' => [
+                'actionID' => false,
                 'amount' => $stamps,
                 'rate_val' => StampService::MARK_RATE,
                 //IMPORTANT: В description переносы строк должны быть разделены с помощью \n\n
@@ -253,6 +260,54 @@ class UserController extends BaseController
                     . "\n\n3. Выбери игру и добавь в корзину, нажми \"списать марки\";"
                     . "\n\n4. Получи игру со скидкой и развивай питомца!",
                 'goods' => $productsList,
+            ],
+        ]);
+    }
+
+    /**
+     * @Rest\Get("/stamps_october/")
+     * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
+     *
+     * @return ApiResponse
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws IblockNotFoundException
+     */
+    public function getStampsOctoberInfoAction(): ApiResponse
+    {
+        try {
+            $stamps = $this->stampService->getActiveStampsCount();
+        } catch (\Exception $e) {
+            $stamps = 0;
+        }
+
+        if ($this->stampService->getNextDiscount() !== null) {
+            $marksDeclension = new Declension('марку', 'марки', 'марок');
+            $nextStampsText = ($this->stampService->getNextDiscountStampsNeed() === 1) ? 'осталась' : 'осталось';
+            $textNext = sprintf('До скидки -%s%% %s %s %s', $this->stampService->getNextDiscount(), $nextStampsText, $this->stampService->getNextDiscountStampsNeed(), $marksDeclension->get($this->stampService->getNextDiscountStampsNeed()));
+        } else {
+            $textNext = 'Доступна максимальная скидка';
+        }
+
+        $actionCode = 'kopi-marki-pokupay-lezhaki-i-kogtetochki-so-skidkoy-30-';
+        $actionIblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES);
+        $arAction = \CIBlockElement::GetList(false, ['IBLOCK_ID' => $actionIblockId, '=CODE' => $actionCode], false, false, ['ID', 'IBLOCK_ID'])->GetNext();
+
+        return (new ApiResponse())->setData([
+            'stamps' => [
+                'amount' => $stamps,
+                'rate_val' => StampService::MARK_RATE,
+                //IMPORTANT: В description переносы строк должны быть разделены с помощью \n\n
+                'description' => '1. Делай любые покупки, копи марки: 1 марка  = ' . StampService::MARK_RATE . ' руб.;'
+                    . "\n\n2. Отслеживай баланс марок: на чеке, в личном кабинете и в приложении;"
+                    . "\n\n3. Покупай со скидкой до -30%;"
+                    . "\n\n- на сайте и в приложении: добавь товар в корзину, нажми \"списать марки\";"
+                    . "\n\n- в магазине: предъяви буклет или сообщи кассиру номер телефона;",
+                'stampCategories' => $this->apiProductService->getStampsCategories(),
+                'actionID' => ($arAction) ? $arAction['ID'] : 102862,
+                'discount' => sprintf('%s%%', $this->stampService->getCurrentDiscount()),
+                'textNext' => $textNext,
             ],
         ]);
     }

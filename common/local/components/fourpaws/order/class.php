@@ -8,9 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -39,14 +37,10 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
-use FourPaws\Enum\IblockElementXmlId;
-use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockType;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\ManzanaService;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
-use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
@@ -353,7 +347,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         try {
             $order = $this->orderService->initOrder($storage);
-        } catch (OrderCreateException $e) {
+        } catch (OrderCreateException | \FourPaws\SaleBundle\Exception\NotFoundException $e) {
             if ($this->currentStep === OrderStorageEnum::PAYMENT_STEP && $_SESSION['ORDER_PAYMENT_URL']) {
                 $url = $_SESSION['ORDER_PAYMENT_URL'];
                 unset($_SESSION['ORDER_PAYMENT_URL']);
@@ -414,6 +408,20 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['URL'][$key] = $route->getPath();
         }
 
+        if (!$this->orderStorageService->validateDeliveryDate($storage)) {
+            $this->logger->error(sprintf('failed to validate DeliveryDate: %s', $storage->getDeliveryDate()), [
+                'user' => $storage->getId(),
+                'street' => $storage->getStreet(),
+                'house' => $storage->getHouse(),
+            ]);
+            $storage = $this->orderStorageService->clearDeliveryDate($storage);
+            $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+
+            if ($this->currentStep != OrderStorageEnum::AUTH_STEP) {
+                LocalRedirect($this->arResult['URL']['AUTH']);
+            }
+        }
+
         $realStep = $this->orderStorageService->validateStorage($storage, $this->currentStep);
         if ($realStep !== $this->currentStep) {
             if ($this->currentStep === OrderStorageEnum::PAYMENT_STEP && $_SESSION['ORDER_PAYMENT_URL']) {
@@ -447,7 +455,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             foreach ($deliveries as $calculationResult) {
                 if ($this->deliveryService->isPickup($calculationResult)) {
                     $pickup = $calculationResult;
-                } elseif ($this->deliveryService->isDelivery($calculationResult)) {
+                } elseif (!$delivery && $this->deliveryService->isDelivery($calculationResult)) {
                     $delivery = $calculationResult;
                 } elseif($this->deliveryService->isDostavistaDelivery($calculationResult)){
                     $deliveryDostavista = $calculationResult;
@@ -568,6 +576,16 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
 
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
+        }
+
+        // сравнение даты доставки с текущей, после всех остальных расчетов/проверок
+        if (!$this->orderStorageService->validateDeliveryDate($storage)) {
+            $storage = $this->orderStorageService->clearDeliveryDate($storage);
+            $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+
+            if ($this->currentStep === OrderStorageEnum::PAYMENT_STEP) {
+                LocalRedirect($this->arResult['URL']['AUTH']);
+            }
         }
 
         $this->arResult['BASKET']             = $basket;
