@@ -34,6 +34,8 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeSingle;
+use FourPaws\PersonalBundle\Repository\OrderSubscribeSingleRepository;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
@@ -48,6 +50,8 @@ use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use Bitrix\Main\Application as BitrixApplication;
+use JMS\Serializer\ArrayTransformerInterface;
+use JMS\Serializer\SerializerInterface;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -122,6 +126,18 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         'deliveryInterval' => 'Интервал',
     ];
 
+    /** @var bool */
+    private $changeNextDelivery;
+
+    /** @var OrderSubscribeSingleRepository $orderSubscribeSingleRepository */
+    private $orderSubscribeSingleRepository;
+
+    /** @var ArrayTransformerInterface $arrayTransformer */
+    private $arrayTransformer;
+
+    /** @var OrderSubscribeSingle */
+    private $orderSubscribeSingle;
+
 
     /**
      * FourPawsPersonalCabinetOrdersSubscribeFormComponent constructor.
@@ -133,6 +149,9 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         // LazyLoggerAwareTrait не умеет присваивать имя по классам без неймспейса
         // делаем это вручную
         $this->logName = __CLASS__;
+
+        $this->orderSubscribeSingleRepository = Application::getInstance()->getContainer()->get('order_subscribe_single.repository');
+        $this->arrayTransformer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
 
         parent::__construct($component);
     }
@@ -559,6 +578,12 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     }
 
     /**
+     * Метод обновляет подписку на доставку.
+     * Создание подписки на доставку сейчас не используется.
+     * Если юзер выбирает редактировать всю подписку
+     * и у него есть единичная доставка (!$isSingleSubscribe && $orderSubscribeSingle),
+     * то обновляется "слепок" подписки из OrderSubscribeSingleRepository.
+     *
      * @throws ApplicationCreateException
      * @throws Exception
      * @throws \Bitrix\Main\ArgumentException
@@ -573,13 +598,20 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         }
 
         $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'N';
-
         $this->processSubscribeFormFields();
 
         if (empty($this->arResult['ERROR']['FIELD'])) {
             /** @var OrderSubscribeService $orderSubscribeService */
             $orderSubscribeService = $this->getOrderSubscribeService();
-            $orderSubscribe = $this->getOrderSubscribe(true);
+
+            // редактирование всей подписки при наличии единичной доставки
+            if($this->isSingleSubscribeMode()){
+                $arOrderSubscribe = $this->getSingleSubscribe()->getSubscribe();
+                $orderSubscribe = $this->arrayTransformer->fromArray($arOrderSubscribe, OrderSubscribe::class);
+            } else {
+                $orderSubscribe = $this->getOrderSubscribe(true);
+            }
+
             $order = $this->getOrder();
             if(!$order && !$orderSubscribe){
                 $this->setExecError('subscribeAction', "Необходимо наличие заказа или подписки для действия", 'subscriptionUpdate');
@@ -597,10 +629,13 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
                 $deliveryDate = new DateTime($this->arResult['FIELD_VALUES']['deliveryDate']);
                 $orderSubscribe->setNextDate($deliveryDate)
-                    ->setCheckDays(new \DateTime($deliveryDate->toString()));
+                    ->setCheckDays(new \DateTime($deliveryDate->toString()))
+                    ->countDateCheck();
 
                 $frequency = $this->arResult['FIELD_VALUES']['subscribeFrequency'];
-                $orderSubscribe->setFrequency($frequency);
+                if($frequency){
+                    $orderSubscribe->setFrequency($frequency);
+                }
 
                 if(!empty($this->arResult['FIELD_VALUES']['deliveryInterval'])){
                     $orderSubscribe->setDeliveryTime($this->arResult['FIELD_VALUES']['deliveryInterval']);
@@ -655,86 +690,139 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
                 $orderSubscribe->setPayWithbonus($this->arResult['FIELD_VALUES']['subscribeBonus'] ? true : false);
 
-                if($this->getActionReal() == 'renewalSubmit'){
+                if($this->isRenewalAction()){
                     $orderSubscribe->setActive(true);
                     $this->arResult['SUBSCRIBE_ACTION']['RESUMED'] = 'Y';
                 }
 
                 BitrixApplication::getConnection()->startTransaction();
 
-                // создание или обновление подписки
+                // обновление подписки
                 if ($orderSubscribe->getId() > 0) {
                     $this->arResult['SUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $orderSubscribe->getId();
                     $this->arResult['SUBSCRIBE_ACTION']['TYPE'] = 'UPDATE';
-                    try {
-                        $updateResult = $orderSubscribeService->update($orderSubscribe);
-                        if ($updateResult->isSuccess()) {
-                            $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
 
-                            // при успешном обновлении нам нужно удалить ранее созданные, но не доставленные заказы по подписке
-                            if(count($orderIdsForDelete) > 0){
-                                foreach($orderIdsForDelete as $orderIdForDelete){
-                                    $orderService = $this->getOrderService();
-                                    $order = $orderService->getOrderById($orderIdForDelete);
-                                    $order->setField('CANCELED', 'Y');
-                                    $order->save();
+                    if($this->isSingleSubscribeMode()) {
+                        // в данном случае подписка обновляется ниже, вместе с товарами
+                    }
+                    else {
+                        try {
+                            $updateResult = $orderSubscribeService->update($orderSubscribe);
+
+                            if ($updateResult->isSuccess()) {
+                                $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
+
+                                /** @var OrderSubscribeSingle $singleSubscribeInactive */
+                                $singleSubscribeInactive = $this->orderSubscribeSingleRepository->findBy([
+                                        'filter' => [
+                                            '=UF_SUBSCRIBE_ID' => $orderSubscribe->getId(),
+                                            '=UF_ACTIVE' => 0
+                                        ]
+                                    ])->first();
+                                if($singleSubscribeInactive){
+                                    $singleSubscribeInactive->setActive(1);
+                                    $result = $this->orderSubscribeSingleRepository->setEntity($singleSubscribeInactive)->update();
+                                    if(!$result){
+                                        $this->setExecError(
+                                            'subscribeAction',
+                                            'Не удалось активировать единичную доставку',
+                                            'subscriptionSingleUpdate'
+                                        );
+                                    }
                                 }
+
+                                // при успешном обновлении нам нужно удалить ранее созданные,
+                                // но не доставленные заказы по подписке
+                                if (count($orderIdsForDelete) > 0) {
+                                    foreach ($orderIdsForDelete as $orderIdForDelete) {
+                                        $orderService = $this->getOrderService();
+                                        $order = $orderService->getOrderById($orderIdForDelete);
+                                        $order->setField('CANCELED', 'Y');
+                                        $order->save();
+                                    }
+                                }
+
+                                if ($this->getActionReal() != 'renewalSubmit') {
+                                    $orderSubscribeService->deleteAllItems($orderSubscribe->getId());
+                                }
+
+                                $this->flushOrderSubscribe();
+                                $this->clearTaggedCache();
+                            } else {
+                                $this->setExecError('subscribeAction', $updateResult->getErrors(), 'subscriptionUpdate');
                             }
 
-                            if($this->getActionReal() != 'renewalSubmit') {
-                                $orderSubscribeService->deleteAllItems($orderSubscribe->getId());
-                            }
-
-                            $this->flushOrderSubscribe();
-                            $this->clearTaggedCache();
-                        } else {
-                            $this->setExecError('subscribeAction', $updateResult->getErrors(), 'subscriptionUpdate');
+                        } catch (\Exception $exception) {
+                            $this->setExecError('subscribeAction', $exception->getMessage(), 'subscriptionUpdateException');
                         }
-                    } catch (\Exception $exception) {
-                        $this->setExecError('subscribeAction', $exception->getMessage(), 'subscriptionUpdateException');
                     }
                 } else {
-                    $orderSubscribe->setActive(true);
-                    $this->arResult['SUBSCRIBE_ACTION']['TYPE'] = 'CREATE';
-                    $addResult = $orderSubscribeService->add($orderSubscribe);
-                    if ($addResult->isSuccess()) {
-                        $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
-                        $this->arResult['SUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $orderSubscribe->getId();
+                    $this->setExecError('subscribeAction', "Не определена подписка на доставку", 'subscriptionUpdate');
 
-                        $this->flushOrderSubscribe();
-                        $this->clearTaggedCache();
-                    } else {
-                        $this->setExecError('subscribeAction', $addResult->getErrors(), 'subscriptionAdd');
-                    }
+                    // не используется
+//                    $orderSubscribe->setActive(true);
+//                    $this->arResult['SUBSCRIBE_ACTION']['TYPE'] = 'CREATE';
+//                    $addResult = $orderSubscribeService->add($orderSubscribe);
+//                    if ($addResult->isSuccess()) {
+//                        $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
+//                        $this->arResult['SUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $orderSubscribe->getId();
+//
+//                        $this->flushOrderSubscribe();
+//                        $this->clearTaggedCache();
+//                    } else {
+//                        $this->setExecError('subscribeAction', $addResult->getErrors(), 'subscriptionAdd');
+//                    }
                 }
 
                 // привязка товаров
                 if(empty($this->arResult['ERROR'])){
                     $items = $this->request->get('items');
+
                     if(empty($items) && $this->getActionReal() != 'renewalSubmit'){
                         $this->setExecError('subscribeAction', "Не переданы товары для подписки", 'subscriptionAdd');
                     }
-                    if(!empty($items)){
-                        /** @var BasketItem $basketItem */
-                        foreach($items as $item){
-                            $subscribeItem = (new OrderSubscribeItem())
-                                ->setOfferId($item['productId'])
-                                ->setQuantity($item['quantity']);
 
-                            if(!$orderSubscribeService->addSubscribeItem($orderSubscribe, $subscribeItem)){
-                                $this->setExecError('subscribeAction', sprintf("Не удалось добавить товар %s", $subscribeItem->getOfferId()), 'subscriptionAdd');
+                    if(!empty($items)){
+                        if($this->isSingleSubscribeMode()){
+                            $subscribeItems = [];
+                            foreach($items as $item){
+                                $subscribeItems[$item['productId']] = $item['quantity'];
+                            }
+
+                            $arOrderSubscribe = $this->arrayTransformer->toArray($orderSubscribe);
+                            $orderSubscribeSingle = $this->getSingleSubscribe()
+                                ->setData(serialize($arOrderSubscribe))
+                                ->setItems(serialize($subscribeItems))
+                                ->setDateCreate(new DateTime());
+
+                            if($orderSubscribeService->getOrderSubscribeSingleRepository()->setEntity($orderSubscribeSingle)->update()){
+                                $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
+                            } else {
+                                $this->setExecError('subscribeAction', sprintf("Не удалось обновить оригинальную подписку %s", $orderSubscribeSingle->getId()), 'subscriptionSingleEdit');
+                            }
+                        } else {
+                            foreach($items as $item){
+                                $subscribeItem = (new OrderSubscribeItem())
+                                    ->setOfferId($item['productId'])
+                                    ->setQuantity($item['quantity']);
+
+                                if(!$orderSubscribeService->addSubscribeItem($orderSubscribe, $subscribeItem)){
+                                    $this->setExecError('subscribeAction', sprintf("Не удалось добавить товар %s", $subscribeItem->getOfferId()), 'subscriptionAdd');
+                                }
                             }
                         }
                     }
 
                     // создание нового заказа по подписке
                     if($orderSubscribe->isActive()){
-                        if($this->arResult['SUBSCRIBE_ACTION']['TYPE'] == 'UPDATE' && $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] == 'Y'){
-                            $result = $orderSubscribeService->processOrderSubscribe($orderSubscribe);
-                            if(!$result->isSuccess()){
-                                throw new Exception(sprintf('Не удалось создать заказ по новой подписке: %s', implode("; ", $result->getErrorMessages())));
-                            }
-                        }
+
+                        // убрали по требованию заказчика
+                        // if($this->arResult['SUBSCRIBE_ACTION']['TYPE'] == 'UPDATE' && $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] == 'Y'){
+                        //     $result = $orderSubscribeService->processOrderSubscribe($orderSubscribe);
+                        //    if(!$result->isSuccess()){
+                        //         throw new Exception(sprintf('Не удалось создать заказ по новой подписке: %s', implode("; ", $result->getErrorMessages())));
+                        //     }
+                        // }
 
                         // отправка уведомления о возобновленной или отредактированной подписке
                         $this->sendOrderSubscribedNotification($orderSubscribe->getId());
@@ -745,10 +833,13 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     BitrixApplication::getConnection()->commitTransaction();
                 } else{
                     BitrixApplication::getConnection()->rollbackTransaction();
+                    $this->log()->error(__METHOD__.' ошибка выполнения: '.$this->getExecErrors());
                 }
+            } else {
+                $this->log()->error(__METHOD__.' ошибка выполнения: '.$this->getExecErrors());
             }
         } else {
-            $this->log()->error(__METHOD__.' ошибка валидации');
+            $this->log()->error(__METHOD__.' ошибка валидации: '.$this->getFieldErrors());
         }
 
         $this->loadData();
@@ -876,10 +967,24 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $result = new Result();
 
         if($this->arParams['SUBSCRIBE_ID'] > 0){ // редактирование подписки
-            try {
-                $basket = $this->getOrderSubscribeService()->getBasketBySubscribeId($this->arParams['SUBSCRIBE_ID']);
+            try
+            {
+                if($orderSubscribeSingle = $this->getOrderSubscribeService()->getSingleSubscribe($this->arParams['SUBSCRIBE_ID'])) {
+                    $items = [];
+                    foreach ($orderSubscribeSingle->getItems() as $offerId => $quantity){
+                        $items[] = [
+                            'productId' => $offerId,
+                            'quantity' => $quantity,
+                        ];
+                    }
+                    $basket = $this->getBasketService()->createBasketFromItems($items);
+                } else {
+                    $basket = $this->getOrderSubscribeService()->getBasketBySubscribeId($this->arParams['SUBSCRIBE_ID']);
+                }
+
                 $this->arResult['TITLE'] = "Редактирование подписки";
-            } catch (\Exception $e) {
+            }
+            catch (\Exception $e) {
                 $result->addError(new Error(
                     sprintf("Ошибка формирования корзины: %s", $e->getMessage()),
                     'getBasketBySubscribeId',
@@ -965,30 +1070,62 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     private function initStep2(): Result
     {
         $result = new Result();
+        $isSingleSubscribe = false;
 
-        if($this->arParams['SUBSCRIBE_ID'] > 0){
-            $this->arResult['SUBSCRIBE'] = $this->setSubscribe($this->getOrderSubscribeService()->getById($this->arParams['SUBSCRIBE_ID']));
+        if($this->arParams['SUBSCRIBE_ID'] > 0) {
+            $isSingleSubscribe = $this->request->get('changeNextDelivery');
+            $orderSubscribeSingle = $this->getOrderSubscribeService()->getSingleSubscribe($this->arParams['SUBSCRIBE_ID']);
+
+            if(!$isSingleSubscribe && $orderSubscribeSingle){
+                $arOrderSubscribe = $orderSubscribeSingle->getSubscribe();
+                $orderSubscribe = $this->arrayTransformer->fromArray($arOrderSubscribe, OrderSubscribe::class);
+            } else {
+                $orderSubscribe = $this->getOrderSubscribeService()->getById($this->arParams['SUBSCRIBE_ID']);
+            }
+
+            $this->arResult['SUBSCRIBE'] = $this->setSubscribe($orderSubscribe);
+
+            if($isSingleSubscribe && !$orderSubscribeSingle){
+                $isSuccess = $this->getOrderSubscribeService()->createSingleSubscribe($this->getSubscribe());
+                if(!$isSuccess){
+                    $result->addError(new Error(
+                        sprintf("Не удалось создать единичную подписку на доставку: %s", $this->arParams['SUBSCRIBE_ID'])
+                    ));
+                }
+            }
         }
 
         // товары
-        $items = null;
-        if(is_array($this->request->get('items'))){
+        $items = [];
+        if(is_array($this->request->get('items')))
+        {
             $items = $this->request->get('items');
         }
-        else if($this->getOrderSubscribe(true) && $this->getOrderSubscribe()->getId() > 0) {
-            $subscribeItems = $this->getOrderSubscribeService()->getItemsBySubscribeId($this->getOrderSubscribe()->getId());
-            /** @var OrderSubscribeItem $item */
-            foreach($subscribeItems as $item){
-                $items[] = [
-                    'productId' => $item->getOfferId(),
-                    'quantity' => $item->getQuantity(),
-                ];
+        else if($this->getOrderSubscribe(true) && $this->getOrderSubscribe()->getId() > 0)
+        {
+            if(!$isSingleSubscribe && $orderSubscribeSingle){
+                foreach($orderSubscribeSingle->getItems() as $offerId => $quantity){
+                    $items[] = [
+                        'productId' => $offerId,
+                        'quantity' => $quantity,
+                    ];
+                }
+            } else {
+                $subscribeItems = $this->getOrderSubscribeService()->getItemsBySubscribeId($this->getOrderSubscribe()->getId());
+
+                /** @var OrderSubscribeItem $item */
+                foreach($subscribeItems as $item){
+                    $items[] = [
+                        'productId' => $item->getOfferId(),
+                        'quantity' => $item->getQuantity(),
+                    ];
+                }
             }
         }
 
         try {
-            if(!$items){
-                throw new \Bitrix\Main\ArgumentException("Items can't be null");
+            if(empty($items)){
+                throw new \Bitrix\Main\ArgumentException("Items can't be empty");
             }
             $this->setItems($items);
             $basket = $this->createBasketFromItems($this->getItems());
@@ -1037,6 +1174,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 $this->arResult['SELECTED_CITY'] = $selectedCity;
                 $this->arResult['DADATA_CONSTRAINTS'] = $this->getLocationService()->getDadataJsonFromLocationArray($selectedCity);
                 $this->arResult['METRO'] = $this->getStoreService()->getMetroInfo();
+                $this->arResult['IS_SINGLE_SUBSCRIBE'] = $isSingleSubscribe;
+                // $this->arResult['MIN_DELIVERY_DATE'] = new \DateTime($this->getOrderSubscribeHistoryService()->getNearestDelivery($orderSubscribe));
             } catch (\Exception $e) {
                 $result->addError(new Error(
                     sprintf("Не удалось активировать 2 шаг: %s", $e->getMessage())
@@ -1086,23 +1225,25 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             }
         }
 
-        $fieldName = 'subscribeFrequency';
-        $value = $this->arResult['FIELD_VALUES'][$fieldName] ?? '';
-        $value = (int)$value;
-        if ($value == 0) {
-            $this->setFieldError($fieldName, 'Значение не задано', 'empty');
-        } else {
-            $success = false;
-            $deliveryFrequency = $this->getFrequencyVariants();
+        if(!$this->arResult['FIELD_VALUES']['changeNextDelivery']){
+            $fieldName = 'subscribeFrequency';
+            $value = $this->arResult['FIELD_VALUES'][$fieldName] ?? '';
+            $value = (int)$value;
+            if ($value == 0) {
+                $this->setFieldError($fieldName, 'Значение не задано', 'empty');
+            } else {
+                $success = false;
+                $deliveryFrequency = $this->getFrequencyVariants();
 
-            foreach ($deliveryFrequency as $variant) {
-                if ($variant['VALUE'] == $value) {
-                    $success = true;
-                    break;
+                foreach ($deliveryFrequency as $variant) {
+                    if ($variant['VALUE'] == $value) {
+                        $success = true;
+                        break;
+                    }
                 }
-            }
-            if (!$success) {
-                $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
+                if (!$success) {
+                    $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
+                }
             }
         }
 
@@ -1361,6 +1502,34 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $errorMsg = $this->prepareErrorMsg($errorMsg);
         $this->arResult['ERROR']['EXEC'][$errName] = new Error($errorMsg, $errCode);
         //$this->log()->debug(sprintf('$fieldName: %s; $errorMsg: %s; $errCode: %s', $fieldName, $errorMsg, $errCode));
+    }
+
+    /**
+     * @return string
+     */
+    protected function getExecErrors()
+    {
+        $result = '';
+
+        /** @var Error $error */
+        foreach ($this->arResult['ERROR']['EXEC'] as $errName => $error){
+            $result .= sprintf("\r\n %s: %s", $errName, $error->getMessage());
+        }
+        return $result;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getFieldErrors()
+    {
+        $result = '';
+
+        /** @var Error $error */
+        foreach ($this->arResult['ERROR']['FIELD'] as $errName => $error){
+            $result .= sprintf("\r\n %s: %s", $errName, $error->getMessage());
+        }
+        return $result;
     }
 
     /**
@@ -1872,5 +2041,47 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         } else {
             $this->arResult['BY_SUBSCRIBE'] = false;
         }
+    }
+
+    /**
+     * Режим редактирования единичной доставки
+     *
+     * @return bool
+     */
+    public function isRenewalAction()
+    {
+        return $this->getActionReal() == 'renewalSubmit';
+    }
+
+    /**
+     * @return false|OrderSubscribeSingle
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getSingleSubscribe()
+    {
+        if(null === $this->orderSubscribeSingle){
+            $this->orderSubscribeSingle = $this->getOrderSubscribeService()->getSingleSubscribe($this->arParams['SUBSCRIBE_ID']);
+        }
+
+        return $this->orderSubscribeSingle;
+    }
+
+    /**
+     * Режим редактирования всей подписки при наличии единичной
+     *
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function isSingleSubscribeMode()
+    {
+        return !$this->arParams['IS_SINGLE_SUBSCRIBE']
+            && $this->getSingleSubscribe()
+            && !$this->isRenewalAction();
     }
 }
