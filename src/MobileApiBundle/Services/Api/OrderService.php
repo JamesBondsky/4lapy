@@ -1240,6 +1240,7 @@ class OrderService
         }
 
         if (!$this->orderStorageService->validateDeliveryDate($storage)) {
+            // todo вернуть ошибку,
             $storage = $this->orderStorageService->clearDeliveryDate($storage);
         }
 

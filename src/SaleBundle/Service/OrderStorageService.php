@@ -788,7 +788,7 @@ class OrderStorageService
      */
     public function validateDeliveryDate($storage): bool
     {
-        if ($storage->getDeliveryDate() < 1) {
+        if ($storage->getDeliveryInterval() < 1) {
             return true; // значит еще не выбрали
         }
 
