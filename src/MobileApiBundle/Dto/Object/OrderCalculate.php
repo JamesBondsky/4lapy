@@ -97,6 +97,14 @@ class OrderCalculate
     {
         return $this->priceDetails;
     }
+    
+    /**
+     * Используемый промокод
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("promocode_result")
+     * @var string
+     */
+    protected $promoCodeResult = '';
 
     /**
      * @param Detailing[] $priceDetails
@@ -201,6 +209,25 @@ class OrderCalculate
     public function setCoupon(Coupon $coupon): OrderCalculate
     {
         $this->coupon = $coupon;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getPromoCodeResult(): string
+    {
+        return $this->promoCodeResult;
+    }
+    
+    /**
+     * @param string $promoCodeResult
+     *
+     * @return OrderCalculate
+     */
+    public function setPromoCodeResult(string $promoCodeResult): OrderCalculate
+    {
+        $this->promoCodeResult = $promoCodeResult;
         return $this;
     }
 }
