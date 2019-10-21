@@ -19,6 +19,8 @@ class BannerCollection extends IblockElementCollection
                 if (in_array($key, $props)) {
                     if ($arProp['PROPERTY_TYPE'] == 'F' && $arProp['VALUE'] == '') {
                         $val = null;
+                    } else if ($key === 'TYPE') {
+                        $val = $arProp['VALUE_XML_ID'];
                     } else {
                         $val = $arProp['VALUE'];
                     }

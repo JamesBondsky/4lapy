@@ -241,8 +241,9 @@ class CardService
         $newCardId = $newCardValidResult->cardId;
 
         // 3.2 получаем ID новой карты
-        $client = $this->appManzanaService->getContactByUser($user);
-        $card = $this->appManzanaService->getCardInfo($oldCard, $client->contactId);
+//        $client = $this->appManzanaService->getContactByUser($user);
+        $contactId = $this->appManzanaService->getContactIdByPhone($user->getManzanaNormalizePersonalPhone());
+        $card = $this->appManzanaService->getCardInfo($oldCard, $contactId);
         if ($card === null) {
             throw new InvalidCardException();
         }

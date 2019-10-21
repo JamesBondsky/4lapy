@@ -18,9 +18,11 @@ use FourPaws\MobileApiBundle\Entity\ApiPushMessage;
 use FourPaws\MobileApiBundle\Entity\ApiUserSession;
 use FourPaws\MobileApiBundle\Repository\ApiPushEventRepository;
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Repository\UserRepository;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializationContext;
+use JMS\Serializer\SerializerInterface;
 use Sly\NotificationPusher\Adapter\Apns;
 use Sly\NotificationPusher\Collection\DeviceCollection;
 use Sly\NotificationPusher\Exception\AdapterException;
@@ -39,7 +41,7 @@ class PushEventService
     /**
      * @var ArrayTransformerInterface
      */
-    private $transformer;
+    public $transformer;
 
     /**
      * @var ApiUserSessionRepository
@@ -49,7 +51,7 @@ class PushEventService
     /**
      * @var ApiPushEventRepository
      */
-    private $apiPushEventRepository;
+    public $apiPushEventRepository;
 
     /**
      * @var FireBaseCloudMessagingService
@@ -66,6 +68,11 @@ class PushEventService
      */
     private $userRepository;
 
+    /**
+     * @var SerializerInterface $serializer
+     */
+    private $serializer;
+
 
     public function __construct(
         ArrayTransformerInterface $transformer,
@@ -73,7 +80,8 @@ class PushEventService
         ApiPushEventRepository $apiPushEventRepository,
         FireBaseCloudMessagingService $fireBaseCloudMessagingService,
         ApplePushNotificationService $applePushNotificationService,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        SerializerInterface $serializer
     )
     {
         $this->transformer = $transformer;
@@ -82,6 +90,7 @@ class PushEventService
         $this->fireBaseCloudMessagingService = $fireBaseCloudMessagingService;
         $this->applePushNotificationService = $applePushNotificationService;
         $this->userRepository = $userRepository;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -112,23 +121,37 @@ class PushEventService
             ->setLimit(500)
             ->exec();
 
+        $dataFetch = $res->fetchAll();
+
         $pushMessages = $this->transformer->fromArray(
-            $res->fetchAll(),
+            $dataFetch,
             'array<' . ApiPushMessage::class . '>'
         );
 
+        $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
+
         /** @var ApiPushMessage $pushMessage */
         foreach ($pushMessages as $pushMessage) {
-            $this->parseFile($pushMessage);
-            $pushMessage->setFileId(0);
+//            $this->parseFile($pushMessage);
+//            $pushMessage->setFileId(0);
+//
+//            $data = $this->transformer->toArray(
+//                $pushMessage,
+//                SerializationContext::create()->setGroups([CrudGroups::UPDATE])
+//            );
+            // деактивируем push-сообщение
+            $hlBlockPushMessages->update($pushMessage->getId(), [
+                'UF_ACTIVE' => false,
+            ]);
+        }
 
-            $data = $this->transformer->toArray(
-                $pushMessage,
-                SerializationContext::create()->setGroups([CrudGroups::UPDATE])
-            );
+        foreach ($dataFetch as &$pushItem) {
+            $pushItem['UF_START_SEND'] = (string)$pushItem['UF_START_SEND'];
+        }
 
-            $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
-            $hlBlockPushMessages->update($pushMessage->getId(), $data);
+        if (count($dataFetch) > 0) {
+            $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.push_file_processing_producer');
+            $producer->publish(json_encode($dataFetch));
         }
     }
 
@@ -157,20 +180,25 @@ class PushEventService
             ->setLimit(500)
             ->exec();
 
+        $dataFetch = $res->fetchAll();
+
         /** @var ApiPushMessage[] $pushMessages */
         $pushMessages = $this->transformer->fromArray(
-            $res->fetchAll(),
+            $dataFetch,
             'array<' . ApiPushMessage::class . '>'
         );
 
+        foreach ($dataFetch as &$pushItem) {
+            $pushItem['UF_START_SEND'] = (string)$pushItem['UF_START_SEND'];
+        }
+
+        if (count($dataFetch) > 0) {
+            /** @noinspection MissingService */
+            $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.push_processing_producer');
+            $producer->publish(json_encode($dataFetch));
+        }
+
         foreach ($pushMessages as $pushMessage) {
-            $sessions = $this->findUsersSessions($pushMessage);
-            if (!empty($sessions)) {
-                foreach ($sessions as $session) {
-                    $pushEvent = $this->convertToPushEvent($pushMessage, $session);
-                    $this->apiPushEventRepository->create($pushEvent);
-                }
-            }
             // деактивируем push-сообщение
             $hlBlockPushMessages::update($pushMessage->getId(), [
                 'UF_ACTIVE' => false,
@@ -191,15 +219,18 @@ class PushEventService
                     $pushEvent->getPushToken(),
                     $pushEvent->getMessageText(),
                     $pushEvent->getEventId(),
-                    $pushEvent->getMessageTypeEntity()->getXmlId()
+                    $pushEvent->getMessageTypeEntity()->getXmlId(),
+                    $pushEvent->getMessageTitle(),
+                    $pushEvent->getPhotoUrl()
                 );
+
                 $execCode = $response->getStatusCode() === 200 ? ApiPushEvent::EXEC_SUCCESS_CODE : ApiPushEvent::EXEC_FAIL_CODE;
                 $pushEvent->setSuccessExec($execCode);
                 $pushEvent->setServiceResponseStatus($response->getStatusCode());
-            }
-            catch (\Exception $e) {
+            } catch (\Exception $e) {
                 $pushEvent->setServiceResponseError($e->getMessage());
             }
+
             $this->apiPushEventRepository->update($pushEvent);
         }
     }
@@ -225,8 +256,7 @@ class PushEventService
                     $this->log()->info(__METHOD__ . '. PushToken: ' . $pushEvent->getPushToken() . '. LogMessage: ' . $logMessage);
                 }
 
-            }
-            catch (\Exception $e) {
+            } catch (\Exception $e) {
                 $this->log()->error(__METHOD__ . '. PushToken: ' . $pushEvent->getPushToken() . '. Exception: ' . $e->getMessage());
                 $pushEvent->setServiceResponseError($e->getMessage());
             }
@@ -235,9 +265,9 @@ class PushEventService
         }
     }
 
-    public function execPushEventsForIos()
+    public function execPushEventsForIos($pushEvents = null)
     {
-        $pushEvents = $this->apiPushEventRepository->findForIos();
+//        $pushEvents = $this->apiPushEventRepository->findForIos();
 
         $adapter = new \FourPaws\External\ApplePushNotificationAdapter([
             'certificate' => Application::getInstance()->getRootDir() . '/app/config/apple-push-notification-cert-new.pem',
@@ -250,36 +280,79 @@ class PushEventService
         if (count($pushEvents) > 0) {
             foreach ($pushEvents as $pushEvent) {
                 try {
+                    $categoryTitle = '';
+
+                    $data = [
+                        'aps'      => [
+                            'mutable-content' => 1,
+                            'alert'           => [
+                               'title' => $pushEvent->getMessageTitle(),
+                               'body'  => $pushEvent->getMessageText(),
+                            ],
+                            'sound'           => 'default',
+                            'badge'           => 2,
+                        ],
+                        'photourl' => $pushEvent->getPhotoUrl(),
+                        'type'     => $pushEvent->getMessageTypeEntity()->getXmlId(),
+                        'id'       => $pushEvent->getEventId(),
+                    ];
+
+                    if ($data['photourl']) {
+                        $data['aps']['category'] = 'PHOTO';
+                        $data['photourl'] = getenv('SITE_URL') . $data['photourl'];
+                    }
+
+                    if ($data['type'] == 'category') {
+                        $categoryTitle = \Bitrix\Iblock\SectionTable::getList([
+                            'select' => ['NAME'],
+                            'filter' => ['=ID' => $data['id']]
+                        ])->fetch()['NAME'];
+                    }
+
                     $message = new Message($pushEvent->getMessageText());
 
                     $message->setOption('badge', 1);
-                    $message->setOption('sound', '');
-                    $message->setOption('custom', [
+                    $message->setOption('sound', 'default');
+                    $message->setOption('mutable-content', 1);
+                    $message->setOption('title', $pushEvent->getMessageTitle() ?? '');
+
+                    $customArr = [
                         'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
-                        'id' => $pushEvent->getEventId()
-                    ]);
-                    $message->setOption('type', $pushEvent->getMessageTypeEntity()->getXmlId());
-                    $message->setOption('id', $pushEvent->getEventId());
+                        'id' => $pushEvent->getEventId(),
+                        'title' => $categoryTitle
+                    ];
+
+                    if ($data['photourl']) {
+                        $customArr['photourl'] = $data['photourl'];
+
+                        $message->setOption('category', 'PHOTO');
+                    }
+
+                    $message->setOption('custom', $customArr);
 
 
                     try {
                         $device = new Device($pushEvent->getPushToken());
                     } catch (AdapterException $adapterException) {
+                        $pushEvent->setSuccessExec(ApiPushEvent::EXEC_FAIL_CODE);
+                        $pushEvent->setServiceResponseStatus(22);
+                        $this->apiPushEventRepository->update($pushEvent);
                         continue;
                     }
-                    $device->setParameter('badge', 1);
-                    $device->setParameter('sound', '');
-                    $device->setParameter('type', $pushEvent->getMessageTypeEntity()->getXmlId());
-                    $device->setParameter('id', $pushEvent->getEventId());
-                    $device->setParameter('custom', [
-                        'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
-                        'id' => $pushEvent->getEventId()
-                    ]);
 
                     $deviceArr = new DeviceCollection([
-                        $device
+                        $device,
                     ]);
-                    $push = new Push($adapter, $deviceArr, $message);
+
+                    try {
+                        $push = new Push($adapter, $deviceArr, $message);
+                    } catch (AdapterException $ae) {
+                        //not support token
+                        $pushEvent->setSuccessExec(ApiPushEvent::EXEC_FAIL_CODE);
+                        $pushEvent->setServiceResponseStatus(33);
+                        $this->apiPushEventRepository->update($pushEvent);
+                        continue;
+                    }
 
                     $pushManager->add($push);
 
@@ -298,7 +371,12 @@ class PushEventService
             $response = [];
 
             try {
-                $response = $pushManager->getResponse()->getParsedResponses();
+                $response = $pushManager->getResponse();
+                if ($response) {
+                    $response = $pushManager->getResponse()->getParsedResponses();
+                } else {
+                    $response = [];
+                }
             } catch (\Exception $e) {
                 $adapter->getOpenedClient()->close();
                 $this->log()->error('Ошибка при отправке push ios ' . $e->getMessage());
@@ -337,7 +415,7 @@ class PushEventService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    protected function findUsersSessions(ApiPushMessage $pushMessage)
+    public function findUsersSessions(ApiPushMessage $pushMessage)
     {
         // Выбираем только тех пользователей, у которых заведен push token
         $findBy = [
@@ -399,7 +477,7 @@ class PushEventService
      * @param ApiUserSession $session
      * @return ApiPushEvent
      */
-    protected function convertToPushEvent(ApiPushMessage $pushMessage, ApiUserSession $session)
+    public function convertToPushEvent(ApiPushMessage $pushMessage, ApiUserSession $session)
     {
         return (new ApiPushEvent())
             ->setPlatform($session->getPlatform())
@@ -415,10 +493,8 @@ class PushEventService
      * @return bool
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Exception
      */
-    protected function parseFile($pushMessage)
+    public function parseFile($pushMessage)
     {
         if (!$pushMessage->getFileId()) {
             return false;
@@ -432,16 +508,20 @@ class PushEventService
             $phones[$phone] = $phone;
         }
 //        $phones = $this->limitToAllowedPhoneNumbersAmount(array_values($phones));
+        $phones = $this->limitToAllowedPhoneNumbersAmount(array_values($phones));
+        if (count($phones) > 0) {
+            $phones = array_values($phones);
+        }
         $userIds = $this->getUserIdsByPhoneNumbers($phones, $pushMessage->getTypeEntity()->getXmlId());
 
         $pushMessage->setUserIds($userIds);
 
-        $data = $this->transformer->toArray(
-            $pushMessage,
-            SerializationContext::create()->setGroups([CrudGroups::UPDATE])
-        );
-        $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
-        $hlBlockPushMessages->update($pushMessage->getId(), $data);
+//        $data = $this->transformer->toArray(
+//            $pushMessage,
+//            SerializationContext::create()->setGroups([CrudGroups::UPDATE])
+//        );
+//        $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
+//        $hlBlockPushMessages->update($pushMessage->getId(), $data);
         return true;
     }
 
@@ -490,25 +570,12 @@ class PushEventService
             ]);
 
         $foundPhoneNumbers = [];
+        /** @var User $user */
         foreach ($users as $user) {
-            $personalPhone = $user->getPersonalPhone();
-            $userSession = $this->apiUserSessionRepository->findBy([
-                '=USER_ID' => $user->getId(),
-            ], ['ID' => 'DESC'], 1)[0];
-
-            if (!$userSession) {
-                $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone нет сессий в мобильном приложении");
-            } else if (!($userSession->getPlatform() && $userSession->getPushToken())) {
-                $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone не установлено мобильное приложение");
-            } else {
-                if ($this->shouldSendPushMessage($user, $typeCode)) {
-                    $userIds[$user->getId()] = $user->getId();
-                } else {
-                    $this->log()->warning("PushEventService: пользователь с номером телефона $personalPhone отключил push уведомления");
-                }
+            if ($this->canSendPushMessage($user, $typeCode, true)) {
+                $foundPhoneNumbers[] = $user->getPersonalPhone();
+                $userIds[]           = $user->getId();
             }
-
-            $foundPhoneNumbers[] = $personalPhone;
         }
 
         $notFoundPhoneNumbers = array_diff($phoneNumbers, $foundPhoneNumbers);
@@ -522,8 +589,47 @@ class PushEventService
     }
 
     /**
+     * Проверяет возможность отправки пуша
+     *
+     * @param User   $user
+     * @param string $typeCode
+     * @param bool   $log
+     * @return bool
+     */
+    public function canSendPushMessage(User $user, $typeCode = "", $log = false): bool
+    {
+        $result = true;
+
+        $personalPhone = $user->getPersonalPhone();
+        $userSession   = $this->apiUserSessionRepository->findBy([
+            '=USER_ID' => $user->getId(),
+        ], ['ID' => 'DESC'], 1)[0];
+
+        if (!$userSession) {
+            $result = false;
+            if ($log) {
+                $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone нет сессий в мобильном приложении");
+            }
+        } elseif (!($userSession->getPlatform() && $userSession->getPushToken())) {
+            $result = false;
+            if ($log) {
+                $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone не установлено мобильное приложение");
+            }
+        } elseif (!empty($typeCode)) {
+            if (!$this->shouldSendPushMessage($user, $typeCode)) {
+                $result = false;
+                if ($log) {
+                    $this->log()->warning("PushEventService: пользователь с номером телефона $personalPhone отключил push уведомления");
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * @param \FourPaws\UserBundle\Entity\User $user
-     * @param $typeCode
+     * @param                                  $typeCode
      * @return bool
      */
     protected function shouldSendPushMessage(\FourPaws\UserBundle\Entity\User $user, string $typeCode): bool

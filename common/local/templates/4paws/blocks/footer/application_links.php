@@ -27,7 +27,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <dt class="b-app__name">Наш рейтинг на Яндекс.Маркет</dt>
             <dd class="b-app__block">
                 <?php if (tplvar('rating_yandex')) { ?>
-                    <a class="b-app__link" href="<?= tplvar('rating_yandex') ?>" title="" target="_blank">
+                    <a class="b-app__link b-app__link--rating-yandex" href="<?= tplvar('rating_yandex') ?>" onclick="ym(18638617, 'reachGoal', 'yandex_market')" title="" target="_blank">
                         <img src="/static/build/images/inhtml/yandex.png" title="" alt="" role="presentation" />
                     </a>
                 <?php } ?>
