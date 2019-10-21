@@ -135,13 +135,13 @@ class AddressController extends Controller
 
         $fields = $request->request->all();
         $locationResult = $this->getDadataLocation($request, $fields);
-        if ($location =$locationResult['result']) {
+        if ($location = $locationResult['result']) {
             $fields['UF_CITY'] = $location->getName();
             $fields['UF_CITY_LOCATION'] = $location->getCode();
         }
 
         try {
-            if ($this->addressService->update($fields, !$locationResult['is_Moscow_district'])) {
+            if ($this->addressService->update($fields, !$locationResult['isMoscowDistrict'])) {
                 return JsonSuccessResponse::create(
                     'Адрес доставки обновлен',
                     200,
@@ -256,7 +256,7 @@ class AddressController extends Controller
 
         return [
             'result' => $result,
-            'is_Moscow_district' => $isMoscowDistrict,
+            'isMoscowDistrict' => $isMoscowDistrict,
         ];
     }
 
@@ -267,7 +267,7 @@ class AddressController extends Controller
      */
     protected function isMoscowLocation(?BitrixLocation $bitrixLocation, array $fields): bool
     {
-        if ($bitrixLocation && $bitrixLocation->getCode() === LocationService::LOCATION_CODE_MOSCOW) {
+        if ($bitrixLocation && ($bitrixLocation->getCode() === LocationService::LOCATION_CODE_MOSCOW)) {
             return true;
         }
 
