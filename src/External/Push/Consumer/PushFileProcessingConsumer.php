@@ -26,10 +26,13 @@ class PushFileProcessingConsumer extends PushBase
         /** @noinspection MissingService */
         $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.push_send_ios_producer');
 
-        $pushMessages = $this->decodeMessage($messageText);
+        $pushMessages = $this->decodeMessage([$messageText['pushMessage']]);
 
         foreach ($pushMessages as $pushMessage) {
-            $pushEventService->parseFile($pushMessage);
+            $userIds = $pushEventService->getUserIdsByPhoneNumbers([$messageText['phone']], $pushMessage->getTypeEntity()->getXmlId());
+
+            $pushMessage->setUserIds($userIds);
+//            $pushEventService->parseFile($pushMessage);
 
             $sessions = $pushEventService->findUsersSessions($pushMessage);
 
