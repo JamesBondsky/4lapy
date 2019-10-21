@@ -857,7 +857,6 @@ class OrderService
      */
     public function getDeliveryDetails()
     {
-        $basketProducts = $this->apiBasketService->getBasketProducts(true);
         /** @var DeliveryVariant $courierDelivery */
         /** @var DeliveryVariant $pickupDelivery */
         [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery] = $this->getDeliveryVariants();
@@ -874,7 +873,7 @@ class OrderService
         }
 
         if ($courierDelivery->getAvailable()) {
-            
+            $basketProducts = $this->apiBasketService->getBasketProducts(true);
             $orderStorage = $this->orderStorageService->getStorage();
             $deliveries = $this->orderStorageService->getDeliveries($orderStorage);
             $delivery = null;
