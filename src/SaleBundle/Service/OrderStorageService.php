@@ -16,6 +16,7 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use Bitrix\Sale\UserMessageException;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
@@ -334,7 +335,7 @@ class OrderStorageService
             if ($currentUser && $storage->getUserId() !== $currentUser->getId()) {
                 return $storage;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
 
         }
 
@@ -375,10 +376,11 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param string       $step
+     * @param string $step
      *
-     * @throws OrderStorageValidationException
      * @return bool
+     * @throws OrderStorageSaveException
+     * @throws OrderStorageValidationException
      */
     public function updateStorage(OrderStorage $storage, string $step = OrderStorageEnum::AUTH_STEP): bool
     {
@@ -772,6 +774,8 @@ class OrderStorageService
     }
 
     /**
+     * Проверка то, не пытаемся ли доставить заказ в прошлое
+     *
      * @param OrderStorage $storage
      * @return bool
      * @throws ApplicationCreateException
@@ -784,7 +788,6 @@ class OrderStorageService
      */
     public function validateDeliveryDate($storage): bool
     {
-        return true; // временный фикс бага, пока не будет готово полноценное решение
         if ($selectedDelivery = $this->getSelectedDelivery($storage)) {
             if ($this->deliveryService->isPickup($selectedDelivery)) {
                 return true;
@@ -801,9 +804,9 @@ class OrderStorageService
     /**
      * @param OrderStorage $storage
      * @return OrderStorage
-     * @throws \Exception
+     * @throws Exception
      */
-    public function clearDeliveryDate($storage)
+    public function clearDeliveryDate($storage): OrderStorage
     {
         $storage->setDeliveryDate(0)
             ->setDeliveryInterval(0)

@@ -6,13 +6,23 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\UserMessageException;
 use Doctrine\Common\Collections\ArrayCollection;
+use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
@@ -25,6 +35,8 @@ use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Manzana\Exception\ExecuteErrorException;
+use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\City;
@@ -46,13 +58,18 @@ use FourPaws\MobileApiBundle\Exception\OrderNotFoundException;
 use FourPaws\MobileApiBundle\Exception\ProductsAmountUnavailableException;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
+use FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException;
+use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
 use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Exception\OrderSplitException;
+use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
@@ -72,6 +89,7 @@ use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService as AppOrderSubscribeService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
+use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use JMS\Serializer\Serializer;
@@ -186,9 +204,9 @@ class OrderService
     /**
      * @param PaginationRequest $paginationRequest
      * @return ArrayCollection
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws InvalidArgumentException
      */
     public function getList($paginationRequest)
     {
@@ -210,13 +228,13 @@ class OrderService
     /**
      * @param int $orderId
      * @return Order
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Exception
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws EmptyEntityClass
+     * @throws ApplicationCreateException
+     * @throws Exception
      */
     public function getOneById(int $orderId)
     {
@@ -227,13 +245,13 @@ class OrderService
     /**
      * @param int $orderNumber
      * @return Order
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Exception
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws EmptyEntityClass
+     * @throws ApplicationCreateException
+     * @throws Exception
      */
     public function getOneByNumber(int $orderNumber)
     {
@@ -244,13 +262,13 @@ class OrderService
     /**
      * @param int $orderNumber
      * @return Order
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Exception
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws EmptyEntityClass
+     * @throws ApplicationCreateException
+     * @throws Exception
      */
     public function getOneByNumberForCurrentUser(int $orderNumber)
     {
@@ -265,10 +283,10 @@ class OrderService
     /**
      * @param int $orderNumber
      * @return array
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws ObjectException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function getHistoryForCurrentUser(int $orderNumber)
     {
@@ -295,19 +313,20 @@ class OrderService
      * @return Order
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws EmptyEntityClass
+     * @throws ExecuteErrorException
+     * @throws ExecuteException
+     * @throws IblockNotFoundException
+     * @throws NotImplementedException
      * @throws NotSupportedException
+     * @throws ObjectException
      * @throws ObjectNotFoundException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\ObjectException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    protected function toApiFormat(OrderEntity $order, OrderSubscribe $subscription = null, $text = [], $icons = [])
+    protected function toApiFormat(OrderEntity $order, OrderSubscribe $subscription = null, $text = [], $icons = []): Order
     {
         if ($subscription) {
             // toDo подписка на заказ
@@ -347,9 +366,9 @@ class OrderService
     /**
      * @param PaginationRequest $paginationRequest
      * @return ArrayCollection
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws InvalidArgumentException
      */
     public function getUserOrders($paginationRequest)
     {
@@ -359,24 +378,27 @@ class OrderService
 
     /**
      * @param BasketProductCollection $basketProducts
-     * @param null $order
+     * @param OrderEntity|null $order
      * @param array $text
      * @param array $icons
      * @return OrderParameter
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws EmptyEntityClass
+     * @throws ExecuteErrorException
+     * @throws ExecuteException
+     * @throws IblockNotFoundException
+     * @throws NotImplementedException
      * @throws NotSupportedException
+     * @throws ObjectException
      * @throws ObjectNotFoundException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\ObjectException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws BitrixOrderNotFoundException
      */
-    public function getOrderParameter(BasketProductCollection $basketProducts, $order = null, $text = [], $icons = [])
+    public function getOrderParameter(BasketProductCollection $basketProducts, $order = null, $text = [], $icons = []): OrderParameter
     {
         $orderParameter = (new OrderParameter())
             ->setProducts($basketProducts->getValues());
@@ -449,7 +471,7 @@ class OrderService
                         ->setSubscribeFrequency($orderSubscribe->getFrequency())
                         ->setPayWithBonus($orderSubscribe->isPayWithbonus() ? 1 : 0)
                     ;
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $logger = LoggerFactory::create('subscribeNotFound');
                     $logger->error(__METHOD__ . ' error. deliveryId: ' . $order->getDeliveryId() . '. userId: ' . $userId . '. orderId: ' . $order->getId() . '. Exception. : ' . $e->getMessage() . '. ' . $e->getTraceAsString());
                 }
@@ -521,12 +543,12 @@ class OrderService
             }
 
             $weight = 0;
-            /** @var \FourPaws\PersonalBundle\Entity\OrderItem $orderItem */
+            /** @var OrderItem $orderItem */
             try {
                 foreach ($order->getItems() as $orderItem) {
                     $weight += $orderItem->getWeight() * $orderItem->getQuantity();
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // do nothing
             }
 
@@ -550,7 +572,7 @@ class OrderService
      * @param float $deliveryPrice
      * @return OrderCalculate
      * @throws ApplicationCreateException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws EmptyEntityClass
      */
     public function getOrderCalculate(
         BasketProductCollection $basketProducts,
@@ -559,7 +581,7 @@ class OrderService
         OrderEntity $order = null,
         string $deliveryCode = '',
         ?float $deliveryPrice = 0.0
-    )
+    ): OrderCalculate
     {
         $basketPrice = $basketProducts->getTotalPrice();
         $basketPriceWithDiscount = $basketPrice->getActual();
@@ -580,7 +602,7 @@ class OrderService
                 $priceWithDiscount = $order->getItemsSum();
                 $bonusSubtractAmount = $order->getBonusPay();
                 $discount = max($priceWithoutDiscount - $priceWithDiscount, 0);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // do nothing
             }
 
@@ -619,7 +641,7 @@ class OrderService
                         }
                     }
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // do nothing
             }
             // if method called from the basket and there is no order yet
@@ -643,7 +665,7 @@ class OrderService
                     $totalPriceSubscribe -= $bonusSubtractAmount;
                 } catch (BonusSubtractionException $e) {
                     throw new BonusSubtractionException($e->getMessage());
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     // do nothing
                 }
             }
@@ -708,7 +730,7 @@ class OrderService
             )
             ->setIsPhoneCallAvailable(
                 $deliveryCode != 'pickup'
-                && $deliveryCode != 'dostavista'
+                && $deliveryCode !== 'dostavista'
                 && ($currentDelivery && $currentDelivery->getStockResult()->getDelayed()->isEmpty())
             );
 
@@ -732,8 +754,11 @@ class OrderService
     /**
      * @param $orderItems ArrayCollection
      * @return BasketProductCollection
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws IblockNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function getBasketProducts($orderItems): BasketProductCollection
     {
@@ -766,7 +791,7 @@ class OrderService
 
     /**
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public function getDeliveryVariants()
     {
@@ -853,9 +878,9 @@ class OrderService
 
     /**
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
-    public function getDeliveryDetails()
+    public function getDeliveryDetails(): array
     {
         /** @var DeliveryVariant $courierDelivery */
         /** @var DeliveryVariant $pickupDelivery */
@@ -922,18 +947,18 @@ class OrderService
      * @throws ObjectNotFoundException
      * @throws OrderStorageSaveException
      * @throws UserMessageException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\ObjectException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
+     * @throws IblockNotFoundException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws LoaderException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws BitrixProxyException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getBasketWithCurrentDelivery()
+    public function getBasketWithCurrentDelivery(): BasketProductCollection
     {
         Manager::disableExtendsDiscount();
         [$courierDelivery, , , ] = $this->getDeliveryVariants();
@@ -1026,7 +1051,7 @@ class OrderService
         return $basketProducts;
     }
 
-    public function getSubscribeFrequencies()
+    public function getSubscribeFrequencies(): array
     {
         $result = [];
         $frequencies = $this->appOrderSubscribeService->getFrequencies();
@@ -1049,7 +1074,7 @@ class OrderService
         return $result;
     }
 
-    protected function getDeliveryCourierDetails(CalculationResultInterface $delivery, BasketProductCollection $basketProducts)
+    protected function getDeliveryCourierDetails(CalculationResultInterface $delivery, BasketProductCollection $basketProducts): array
     {
         $result = [];
         $deliveryResult = $delivery->getStockResult()->getOrderable();
@@ -1145,25 +1170,27 @@ class OrderService
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws OrderStorageSaveException
-     * @throws UserMessageException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \FourPaws\SaleBundle\Exception\DeliveryNotAvailableException
-     * @throws \FourPaws\SaleBundle\Exception\OrderCreateException
-     * @throws \FourPaws\SaleBundle\Exception\OrderSplitException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws OrderSubscribeException
+     * @throws UserMessageException
+     * @throws IblockNotFoundException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws LoaderException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws EmptyEntityClass
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     * @throws InvalidArgumentException
+     * @throws BitrixProxyException
+     * @throws OrderSplitException
+     * @throws OrderStorageValidationException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws GuzzleException
+     * @throws Exception
      */
-    public function createOrder(UserCartOrderRequest $userCartOrderRequest)
+    public function createOrder(UserCartOrderRequest $userCartOrderRequest): array
     {
         $cartParam = $userCartOrderRequest->getCartParam();
         $deliveryType = $cartParam->getDeliveryType();
@@ -1195,7 +1222,7 @@ class OrderService
         $cartParamArray['comment2'] = $cartParamArray['secondComment'];
         $storage = $this->orderStorageService->getStorage();
         $this->couponStorage->save($storage->getPromoCode()); // because we can't use sessions we get promo code from the database, save it into session for current hit and creating order
-        foreach (\FourPaws\SaleBundle\Enum\OrderStorage::STEP_ORDER as $step) {
+        foreach (OrderStorageEnum::STEP_ORDER as $step) {
             $this->orderStorageService->setStorageValuesFromArray($storage, $cartParamArray, $step);
         }
 
@@ -1204,12 +1231,16 @@ class OrderService
             $storage->setSubscribe(true);
             $result = $this->appOrderSubscribeService->createSubscription($storage, $cartParamArray);
             if(!$result->isSuccess()){
-                throw new OrderSubscribeException(implode("; ", $result->getErrorMessages()));
+                throw new OrderSubscribeException(implode('; ', $result->getErrorMessages()));
             }
             $storage->setSubscribeId($result->getData()['subscribeId']);
             $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
         } else{
             $storage->setSubscribe(false);
+        }
+
+        if (!$this->orderStorageService->validateDeliveryDate($storage)) {
+            $storage = $this->orderStorageService->clearDeliveryDate($storage);
         }
 
         /**
@@ -1226,13 +1257,13 @@ class OrderService
             $order = $this->appOrderService->createOrder($storage);
         } catch (OrderCreateException $e) {
             if ($e->getMessage() === 'Basket is empty') {
-                throw new ProductsAmountUnavailableException();
+                throw new ProductsAmountUnavailableException('');
             }
         }
         $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
 
         $text = [];
-        if ($deliveryType == self::DELIVERY_TYPE_DOBROLAP) {
+        if ($deliveryType === self::DELIVERY_TYPE_DOBROLAP) {
             $href = new FullHrefDecorator('/static/build/images/content/dobrolap/dobrolap-logo.png');
             $mainIcon = $href->getFullPublicPath();
 
