@@ -788,12 +788,18 @@ class OrderStorageService
      */
     public function validateDeliveryDate($storage): bool
     {
+        if ($storage->getDeliveryDate() < 1) {
+            return true; // значит еще не выбрали
+        }
+
         if ($selectedDelivery = $this->getSelectedDelivery($storage)) {
             if ($this->deliveryService->isPickup($selectedDelivery)) {
                 return true;
             }
 
-            $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, 10)[$storage->getDeliveryDate()];
+            if ($selectedDelivery->isSuccess()) {
+                $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, 10)[$storage->getDeliveryDate()];
+            }
 
             return !($selectedDelivery->getDeliveryDate()->getTimestamp() < (new \DateTime())->getTimestamp());
         }
