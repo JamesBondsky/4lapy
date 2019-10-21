@@ -23,20 +23,20 @@ class ExpertSenderPetConsumer extends ExpertSenderConsumerBase
             return self::MSG_REJECT;
         }
 
-        if ($newPetId == $oldPetId) {
+        if ($newPetId === $oldPetId) {
             return self::MSG_ACK;
         }
-
 
         try {
             $result = $this->expertSenderService->sendAfterPetUpdate($userId, $newPetId, $oldPetId);
             if ($result) {
                 return self::MSG_ACK;
-            } else {
-                return self::MSG_REJECT;
             }
+
+            return self::MSG_REJECT;
         } catch (ExpertsenderServiceException $e) {
-            return self::MSG_REJECT_REQUEUE;
+            $this->log()->error(sprintf('Fail to send ExpertSender request: code - [%s], error - %s', $e->getCode(), $e->getMessage()));
+            return self::MSG_REJECT;
         }
     }
 }

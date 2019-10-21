@@ -1622,7 +1622,7 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendAfterPetUpdateAsync($currentUser, $newPetId = null, $oldPetId = null)
     {
-        if (($newPetId == $oldPetId) || (!$newPetId && !$oldPetId) || !$currentUser) {
+        if (($newPetId === $oldPetId) || (!$newPetId && !$oldPetId) || !$currentUser) {
             return;
         }
 
@@ -1657,7 +1657,7 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendAfterPetUpdate($userId = null, $newPetId = null, $oldPetId = null)
     {
-        if (($newPetId == $oldPetId) || (!$newPetId && !$oldPetId) || !$userId) {
+        if (($newPetId === $oldPetId) || (!$newPetId && !$oldPetId) || !$userId) {
             return false;
         }
 
