@@ -150,14 +150,10 @@ class PetService
     /**
      * @param int|User $user
      *
-     * @throws NotAuthorizedException
-     * @throws ConstraintDefinitionException
-     * @throws ServiceNotFoundException
-     * @throws InvalidIdentifierException
      * @throws ApplicationCreateException
-     * @throws RuntimeException
-     * @throws ServiceCircularReferenceException
+     * @throws ArgumentException
      * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function updateManzanaPets($user = null): void
     {
