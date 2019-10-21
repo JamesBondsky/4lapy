@@ -1780,6 +1780,6 @@ class BasketService implements LoggerAwareInterface
      */
     public function getBasketPropertyValueByCode(BasketItem $item, string $code): string
     {
-        return $item->getPropertyCollection()->getPropertyValues()[$code]['VALUE'] ?? '';
+        return (string)($item->getPropertyCollection()->getPropertyValues()[$code]['VALUE'] ?? '');
     }
 }
