@@ -285,6 +285,16 @@ class BasketController extends BaseController
      */
     public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
     {
+        //@todo отрефакторить дублирование
+        $storage = $this->orderStorageService->getStorage();
+        $promoCode = $storage->getPromoCode();
+    
+        if ($promoCode) {
+            $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
+            $couponStorage->clear();
+            $couponStorage->save($promoCode);
+        }
+        
         $this->mobileApiLog()->info('Request: POST postUserCartCalcAction: ' . print_r($userCartCalcRequest, true));
         if ($userCartCalcRequest->getDeliveryType() === 'courier') {
             $basketProducts = $this->apiOrderService->getBasketWithCurrentDelivery();
