@@ -22,7 +22,7 @@ use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
 use FourPaws\MobileApiBundle\Services\Api\UserService;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\StoreBundle\Service\ShopInfoService;
-use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 
 class StoreController extends BaseController
 {
@@ -112,7 +112,7 @@ class StoreController extends BaseController
      */
     public function getStoreListAvailableAction(ShopsForCheckoutRequest $shopsForCheckoutRequest): StoreListAvailableResponse
     {
-        $orderStorageService = Application::getInstance()->getContainer()->get(ApiOrderService::class);
+        $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
         
         $storage = $orderStorageService->getStorage();
         $promoCode = $storage->getPromoCode();
