@@ -365,13 +365,13 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                                 // Костыль для объединения одинаковых товаров
 	                            if (empty($detachFrom)) {
 	                                /** @var BasketItem $curItem */
-	                                foreach ($curItems as $curItem) {
-	                                    if ($item->getProductId() === $curItem->getProductId()
-	                                        && $item->getPrice() === $curItem->getPrice()
-	                                    ) {
+                                    foreach ($curItems as $curItem) {
+                                        if ($item->getProductId() === $curItem->getProductId()
+                                            && $item->getPrice() === $curItem->getPrice()
+                                        ) {
                                             $detachFrom = $curItem->getId();
-		                                }
-	                                }
+                                        }
+                                    }
 	                            }
                                 if ($isGift || $isGiftSelected || !empty($detachFrom)) {
                                     if ($item->getId() > 0) {
