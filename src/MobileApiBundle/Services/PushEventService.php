@@ -130,6 +130,12 @@ class PushEventService
 
         $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
 
+        foreach ($dataFetch as &$pushItem) {
+            $pushItem['UF_START_SEND'] = (string)$pushItem['UF_START_SEND'];
+        }
+
+        $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.push_file_processing_producer');
+
         /** @var ApiPushMessage $pushMessage */
         foreach ($pushMessages as $pushMessage) {
 //            $this->parseFile($pushMessage);
@@ -139,20 +145,38 @@ class PushEventService
 //                $pushMessage,
 //                SerializationContext::create()->setGroups([CrudGroups::UPDATE])
 //            );
+
+            $currentItem = [];
+
+            foreach ($dataFetch as $dataFetchItem) {
+                if ($dataFetchItem['ID'] == $pushMessage->getId()) {
+                    $currentItem = $dataFetchItem;
+                    break;
+                }
+            }
+
+            if (!empty($currentItem)) {
+                $phones = $this->parseFile($pushMessage->getFilePath());
+                foreach ($phones as $phoneItem) {
+                    if ($phoneItem) {
+                        $producer->publish(json_encode([
+                            'pushMessage' => $currentItem,
+                            'phone' => $phoneItem
+                        ]));
+                    }
+                }
+            }
+
             // деактивируем push-сообщение
             $hlBlockPushMessages->update($pushMessage->getId(), [
                 'UF_ACTIVE' => false,
             ]);
         }
 
-        foreach ($dataFetch as &$pushItem) {
-            $pushItem['UF_START_SEND'] = (string)$pushItem['UF_START_SEND'];
-        }
-
-        if (count($dataFetch) > 0) {
-            $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.push_file_processing_producer');
-            $producer->publish(json_encode($dataFetch));
-        }
+//        if (count($dataFetch) > 0) {
+//            $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.push_file_processing_producer');
+//            $producer->publish(json_encode($dataFetch));
+//        }
     }
 
     /**
@@ -494,35 +518,34 @@ class PushEventService
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\SystemException
      */
-    public function parseFile($pushMessage)
+    /**
+     * Получение номеров телфонов из файла
+     * @param $filePath
+     * @return array|bool
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function parseFile($filePath)
     {
-        if (!$pushMessage->getFileId()) {
+        if (!$filePath) {
             return false;
         }
 
-        $rows = file($_SERVER['DOCUMENT_ROOT'] . $pushMessage->getFilePath());
+//        $rows = file($_SERVER['DOCUMENT_ROOT'] . $pushMessage->getFilePath());
+        $rows = file($_SERVER['DOCUMENT_ROOT'] . $filePath);
 
         $phones = [];
         foreach ($rows as $row) {
             $phone = $this->normalizePhoneNumber($row);
             $phones[$phone] = $phone;
         }
-//        $phones = $this->limitToAllowedPhoneNumbersAmount(array_values($phones));
-        $phones = $this->limitToAllowedPhoneNumbersAmount(array_values($phones));
+
         if (count($phones) > 0) {
+            $phones = array_unique($phones);
             $phones = array_values($phones);
         }
-        $userIds = $this->getUserIdsByPhoneNumbers($phones, $pushMessage->getTypeEntity()->getXmlId());
 
-        $pushMessage->setUserIds($userIds);
-
-//        $data = $this->transformer->toArray(
-//            $pushMessage,
-//            SerializationContext::create()->setGroups([CrudGroups::UPDATE])
-//        );
-//        $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
-//        $hlBlockPushMessages->update($pushMessage->getId(), $data);
-        return true;
+        return $phones;
     }
 
     /**
@@ -555,7 +578,7 @@ class PushEventService
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\SystemException
      */
-    protected function getUserIdsByPhoneNumbers(array $phoneNumbers, string $typeCode): array
+    public function getUserIdsByPhoneNumbers(array $phoneNumbers, string $typeCode): array
     {
         $userIds = [];
 
@@ -614,13 +637,6 @@ class PushEventService
             $result = false;
             if ($log) {
                 $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone не установлено мобильное приложение");
-            }
-        } elseif (!empty($typeCode)) {
-            if (!$this->shouldSendPushMessage($user, $typeCode)) {
-                $result = false;
-                if ($log) {
-                    $this->log()->warning("PushEventService: пользователь с номером телефона $personalPhone отключил push уведомления");
-                }
             }
         }
 

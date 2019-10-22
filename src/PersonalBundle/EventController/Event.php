@@ -36,6 +36,7 @@ use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
+use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -405,6 +406,7 @@ class Event extends BaseServiceHandler
             return;
         }
         try {
+            /** @var PetService $petService */
             $petService = $container->get('pet.service');
         } catch (ServiceCircularReferenceException|ServiceNotFoundException $e) {
             $logger->error('ошибка загрузки сервиса - ' . $e->getMessage());
