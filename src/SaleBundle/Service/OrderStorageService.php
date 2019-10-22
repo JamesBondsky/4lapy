@@ -814,8 +814,8 @@ class OrderStorageService
      */
     public function clearDeliveryDate($storage): OrderStorage
     {
-        $storage->setDeliveryDate(0)
-            ->setDeliveryInterval(0)
+        $storage
+            ->setDeliveryDate(0)
             ->setCurrentDate(new \DateTime());
 
         return $storage;
