@@ -440,6 +440,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
 	                                    </ul>
 	                                </div>
 	                            </div>
+                                на&nbsp;доставку
 
 	                            <?php if ($subscribePriceDiff > 0): ?>
 	                              и&nbsp;получите
