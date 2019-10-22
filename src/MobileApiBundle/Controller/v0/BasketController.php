@@ -9,6 +9,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Iblock\ElementTable;
 use Doctrine\Common\Collections\ArrayCollection;
+use Exception;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -35,7 +36,6 @@ use FourPaws\MobileApiBundle\Services\Api\CityService;
 use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
 use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService as ApiUserDeliveryAddressService;
 use FourPaws\MobileApiBundle\Traits\MobileApiLoggerAwareTrait;
-use FourPaws\PersonalBundle\Service\CouponService;
 use FourPaws\SaleBundle\Dto\OrderSplit\Basket\BasketSplitItem;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
@@ -47,6 +47,7 @@ use FourPaws\StoreBundle\Service\StoreService as AppStoreService;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\UserBundle\Enum\UserLocationEnum;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
+use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
@@ -117,7 +118,7 @@ class BasketController extends BaseController
      *
      * @param UserCartRequest $userCartRequest
      * @return UserCartResponse
-     * @throws \Exception
+     * @throws Exception
      */
     public function getUserCartAction(UserCartRequest $userCartRequest)
     {
@@ -175,11 +176,11 @@ class BasketController extends BaseController
                 }
             }
         }
-    
+
         if ($promoCode) {
             $orderCalculate->setPromoCodeResult($promoCode);
         }
-        
+
         return (new UserCartResponse())
             ->setCartCalc($orderCalculate)
             ->setCartParam($orderParameter);
@@ -191,9 +192,9 @@ class BasketController extends BaseController
      * @Rest\View(serializerGroups={"Default", "basket"})
      * @param PostUserCartRequest $postUserCartRequest
      * @return UserCartResponse
-     * @throws \Exception
+     * @throws Exception
      */
-    public function postUserCartAction(PostUserCartRequest $postUserCartRequest)
+    public function postUserCartAction(PostUserCartRequest $postUserCartRequest): UserCartResponse
     {
         $gifts = [];
         foreach ($postUserCartRequest->getGoods() as $productQuantity) {
@@ -233,10 +234,11 @@ class BasketController extends BaseController
      * @Rest\View(serializerGroups={"Default", "basket"})
      * @param PutUserCartRequest $putUserCartRequest
      * @return UserCartResponse
-     * @throws \Exception
+     * @throws Exception
      */
     public function putUserCartAction(PutUserCartRequest $putUserCartRequest
     ) //TODO при указании флага useStamps передать это в Manzana и в зависимости от ответа изменить ответ в запросе (и снять флаг USE_STAMPS у товара в корзине, если манзана ответила, что обмен применить нельзя)
+    : UserCartResponse
     {
         foreach ($putUserCartRequest->getGoods() as $productQuantity) {
             $quantity = $productQuantity->getQuantity();
@@ -257,19 +259,19 @@ class BasketController extends BaseController
      * @Rest\Get(path="/user_cart_delivery/")
      * @Rest\View()
      * @return Response
-     * @throws \Exception
+     * @throws Exception
      */
-    public function getUserCartDeliveryAction()
+    public function getUserCartDeliveryAction(): Response
     {
         $storage = $this->orderStorageService->getStorage();
         $promoCode = $storage->getPromoCode();
-    
+
         if ($promoCode) {
             $couponStorage       = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
             $couponStorage->clear();
             $couponStorage->save($promoCode);
         }
-        
+
         return new Response(
             $this->apiOrderService->getDeliveryDetails()
         );
@@ -281,20 +283,20 @@ class BasketController extends BaseController
      * @Rest\View()
      * @param UserCartCalcRequest $userCartCalcRequest
      * @return UserCartCalcResponse
-     * @throws \Exception
+     * @throws Exception
      */
-    public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
+    public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest): UserCartCalcResponse
     {
         //@todo отрефакторить дублирование
         $storage = $this->orderStorageService->getStorage();
         $promoCode = $storage->getPromoCode();
-    
+
         if ($promoCode) {
             $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
             $couponStorage->clear();
             $couponStorage->save($promoCode);
         }
-        
+
         $this->mobileApiLog()->info('Request: POST postUserCartCalcAction: ' . print_r($userCartCalcRequest, true));
         if ($userCartCalcRequest->getDeliveryType() === 'courier') {
             $basketProducts = $this->apiOrderService->getBasketWithCurrentDelivery();
@@ -361,10 +363,10 @@ class BasketController extends BaseController
      * @Rest\View()
      * @param UserCartOrderRequest $userCartOrderRequest
      * @return UserCartOrderResponse
-     * @throws \Exception
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws Exception
+     * @throws GuzzleException
      */
-    public function postUserCartOrderAction(UserCartOrderRequest $userCartOrderRequest)
+    public function postUserCartOrderAction(UserCartOrderRequest $userCartOrderRequest): UserCartOrderResponse
     {
         $cartOrder = $this->apiOrderService->createOrder($userCartOrderRequest);
         return (new UserCartOrderResponse())
@@ -376,7 +378,7 @@ class BasketController extends BaseController
      * @Rest\View()
      * @param DostavistaRequest $dostavistaRequest
      * @return Response
-     * @throws \Exception
+     * @throws Exception
      */
     public function getDostavistaAction(DostavistaRequest $dostavistaRequest)
     {
@@ -462,9 +464,9 @@ class BasketController extends BaseController
      * @Rest\View(serializerGroups={"Default", "basket"})
      *
      * @return UserCouponsResponse
-     * @throws \Exception
+     * @throws Exception
      */
-    public function getUserCouponsAction()
+    public function getUserCouponsAction(): UserCouponsResponse
     {
         $couponService = Application::getInstance()->getContainer()->get('coupon.service');
         $result        = $couponService->getUserCouponsAction();
@@ -478,51 +480,51 @@ class BasketController extends BaseController
      *
      * @param Request $request
      * @return UserCouponsResponse
-     * @throws \Exception
+     * @throws Exception
      */
-    public function putUserCartCouponAction(Request $request)
+    public function putUserCartCouponAction(Request $request): UserCouponsResponse
     {
         $userPromoCodes = [];
-        
+
         $promoCode = $request->get('promoCode');
-        $use       = $request->get('use');
-        
+        $use = $request->get('use');
+
         $storage = $this->orderStorageService->getStorage();
-        
-        $couponStorage       = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
+
+        $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
         $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
-    
+
         $couponService = Application::getInstance()->getContainer()->get('coupon.service');
         $userCoupons = $couponService->getUserCouponsAction();
-        
+
         foreach ($userCoupons as $userCoupon) {
             $userPromoCodes[] = $userCoupon['promocode'];
         }
-        
+
         if (in_array($promoCode, $userPromoCodes)) {
-            switch ($use) {
-                case true:
-                    $this->manzana->setPromocode($promoCode);
-                    $this->manzana->calculate();
-            
-                    $storage->setPromoCode($promoCode);
-                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
-                    $fUserId = $this->appUserService->getCurrentFUserId() ?: 0;
-                    $this->appBasketService->getBasket(true, $fUserId);
-                    $couponStorage->clear();
-                    $couponStorage->save($promoCode);
-                    break;
-                case false:
-                    $couponStorage->delete($promoCode);
-                    $storage->setPromoCode('');
-                    $orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
-                    break;
-            }
+        switch ($use) {
+            case true:
+                $this->manzana->setPromocode($promoCode);
+                $this->manzana->calculate();
+
+                $storage->setPromoCode($promoCode);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+                $fUserId = $this->appUserService->getCurrentFUserId() ?: 0;
+                $this->appBasketService->getBasket(true, $fUserId);
+                $couponStorage->clear();
+                $couponStorage->save($promoCode);
+                break;
+            case false:
+                $couponStorage->delete($promoCode);
+                $storage->setPromoCode('');
+                $orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+                break;
         }
-        
+        }
+
         $couponService = Application::getInstance()->getContainer()->get('coupon.service');
-        $result        = $couponService->getUserCouponsAction();
-        
+        $result = $couponService->getUserCouponsAction();
+
         return (new UserCouponsResponse())->setUserCoupons($result);
     }
 }
