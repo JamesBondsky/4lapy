@@ -546,7 +546,8 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         $options = [
             'form_params' => [
                 'method' => $method,
-                'body' => $arguments
+                'body' => $arguments,
+                'type' => 'pos'
             ]
         ];
 
