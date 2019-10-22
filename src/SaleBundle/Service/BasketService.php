@@ -219,6 +219,7 @@ class BasketService implements LoggerAwareInterface
                             'MAX_STAMPS_LEVEL',
                             'STAMP_LEVELS',
                             'CAN_USE_STAMPS',
+                            'SUBSCRIBE_PRICE',
                         ], true)) {
                             $itemPropertyCollection->deleteItem($itemProperty->getInternalIndex());
                         }
