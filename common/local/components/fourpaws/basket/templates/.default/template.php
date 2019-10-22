@@ -72,20 +72,22 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
 
         <div class="b-shopping-cart__sticky-wrap" data-shopping-cart-sticky-aside="wrapper">
             <main class="b-shopping-cart__main" role="main">
-                <div class="b-panel-subscribe-cart">
-                    <div class="b-panel-subscribe-cart__content">
-                        <div class="b-panel-subscribe-cart__info">
-                            Получите <span class="orange">скидку <?= ($subscribePriceDiff > 0) ? WordHelper::numberFormat($subscribePriceDiff, 2).' ₽' : ''?></span> на&nbsp;вашу корзину&nbsp;&mdash; используйте
+                <?php if ($arResult['SUBSCRIBE_ALLOWED']) { ?>
+                    <div class="b-panel-subscribe-cart">
+                        <div class="b-panel-subscribe-cart__content">
+                            <div class="b-panel-subscribe-cart__info">
+                                Получите <span class="orange">скидку <?= ($subscribePriceDiff > 0) ? WordHelper::numberFormat($subscribePriceDiff, 2) . ' ₽' : '' ?></span> на&nbsp;вашу корзину&nbsp;&mdash; используйте
 
-                            <nobr class="b-link">
-                              <span class="logo-subscr"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
-                              Подписку
-                            </nobr>
+                                <nobr class="b-link">
+                                    <span class="logo-subscr"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
+                                    Подписку
+                                </nobr>
 
-                            на доставку
+                                на доставку
+                            </div>
                         </div>
                     </div>
-                </div>
+                <?php } ?>
 
                 <?php if ($arResult['POSSIBLE_GIFT_GROUPS']) {
                     ?>
