@@ -546,12 +546,18 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         $options = [
             'form_params' => [
                 'method' => $method,
-                'body' => $arguments
+                'body' => $arguments,
+                'type' => 'pos'
             ]
         ];
 
         if ($serviceHeaderHost) {
             $options['headers']['Host'] = $serviceHeaderHost;
+        }
+
+        if (getenv('MANZANA_SERVICE_TIMEOUT')) {
+            $options['connect_timeout'] = getenv('MANZANA_SERVICE_TIMEOUT');
+            $options['timeout'] = getenv('MANZANA_SERVICE_TIMEOUT');
         }
 
         $resultBody = $guzzleClient->post($serviceUrl, $options);
