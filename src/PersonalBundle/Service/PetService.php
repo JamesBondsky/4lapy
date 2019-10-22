@@ -7,6 +7,7 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Security\SecurityException;
@@ -14,7 +15,6 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\UserFieldTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
-use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Collection\UserFieldEnumCollection;
 use FourPaws\AppBundle\Entity\BaseEntity;
@@ -36,7 +36,6 @@ use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use FourPaws\Helpers\TaggedCacheHelper;
 use function in_array;
 use function is_array;
 use RuntimeException;
@@ -200,12 +199,11 @@ class PetService
     }
 
     /**
+     * @return ArrayCollection
+     * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @return ArrayCollection
+     * @throws SystemException
      */
     public function getCurUserPets(): ArrayCollection
     {
@@ -573,7 +571,7 @@ class PetService
     /**
      * @return \FourPaws\AppBundle\Collection\UserFieldEnumCollection
      * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\LoaderException
+     * @throws LoaderException
      */
     public function getGenders()
     {
@@ -594,7 +592,7 @@ class PetService
      * @param string $genderCode
      * @return UserFieldEnumValue
      * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\LoaderException
+     * @throws LoaderException
      */
     public function getGenderByCode(string $genderCode)
     {
@@ -609,7 +607,7 @@ class PetService
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws \Bitrix\Main\LoaderException
+     * @throws LoaderException
      */
     public function getSizes()
     {
@@ -629,6 +627,10 @@ class PetService
     /**
      * @param string $sizeCode
      * @return UserFieldEnumValue|false
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws LoaderException
      */
     public function getSizeByCode(string $sizeCode)
     {
@@ -641,6 +643,10 @@ class PetService
     /**
      * @param string $sizeId
      * @return UserFieldEnumValue|false
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws LoaderException
      */
     public function getSizeById($sizeId)
     {
@@ -648,5 +654,33 @@ class PetService
             /** @var UserFieldEnumValue $size */
             return (int)$sizeId === $size->getId();
         })->current();
+    }
+
+    /**
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws NotAuthorizedException
+     * @throws Exception
+     */
+    public function getCurUserPetSizes(): UserFieldEnumCollection
+    {
+        $petSizeIds = [];
+
+        /** @var Pet $userPet */
+        foreach ($this->getCurUserPets() as $userPet) {
+            if (!$userPet->getSize()) {
+                continue;
+            }
+
+            if (!in_array($userPet->getSize(), $petSizeIds, true)) {
+                $petSizeIds[] = $userPet->getSize();
+            }
+        }
+
+        return $this->getSizes()->filter(static function ($size) use($petSizeIds) {
+            /** @var UserFieldEnumValue $size */
+            return in_array($size->getId(), $petSizeIds, true);
+        });
     }
 }

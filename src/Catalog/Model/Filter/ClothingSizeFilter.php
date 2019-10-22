@@ -4,6 +4,7 @@ namespace FourPaws\Catalog\Model\Filter;
 
 use Bitrix\Main\ObjectPropertyException;
 use FourPaws\App\Application;
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\Catalog\Collection\VariantCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\ReferenceFilterNested;
 use FourPaws\Catalog\Model\Variant;
@@ -86,22 +87,23 @@ class ClothingSizeFilter extends ReferenceFilterNested
         /** @var PetService $petService */
         $petService = Application::getInstance()->getContainer()->get(PetService::class);
         try {
+            /* Для фильтра значения хначения хранятся в отдельном инфоблоке, а у питомцев размер одежды выбирается из списка и эти два списка не связаны, поэтому сравниваем по названию */
             $petSizes = [];
 
-            // todo получать питомцев текущей категории
-
-            /** @var  $userPet */
-            foreach ($petService->getCurUserPets() as $userPet) {
-                // todo получить размер питомца
-                $petSize = '00000003';
-                if (!in_array($petSize, $petSizes, true)) {
-                    $petSizes[] = $petSize;
+            /** @var UserFieldEnumValue $petSize */
+            foreach ($petService->getCurUserPetSizes() as $petSize) {
+                if (!in_array($petSize->getValue(), $petSizes, true)) {
+                    $petSizes[] = $petSize->getValue();
                 }
+            }
+
+            if (empty($petSizes)) {
+                return $variantCollection;
             }
 
             /** @var Variant $variant */
             foreach ($variantCollection as $variant) {
-                if (in_array($variant->getValue(), $petSizes, true)) {
+                if (in_array($variant->getName(), $petSizes, true)) {
                     $variant->withChecked(true);
                 }
             }
