@@ -107,8 +107,6 @@ class OfferService implements LoggerAwareInterface
         /* Непосредственно разделение товара */
         foreach ($detachLevels as $detachLevel => $detachAmount) {
             if ($this->detachOfferByLevel($detachLevel, $$detachAmount, $collection, $offer, $position, $quantity, $hasBonus, $stampsProductAmount, $stampsLevelInfo)) {
-                $quantity -= $dc01Amount;
-
                 if ($quantity <= 0) {
                     return;
                 }
@@ -141,44 +139,46 @@ class OfferService implements LoggerAwareInterface
      */
     protected function detachOfferByLevel(int $level, int $detachAmount, ArrayCollection $collection, OrderOffer $originOffer, &$position, &$quantity, &$hasBonus, &$stampsProductAmount, $stampsLevelInfo): bool
     {
-        if ($detachAmount && $detachAmount < $quantity) {
-            $detachedOffer = clone $originOffer;
-
-            if ($level === self::LEVEL_SHIPMENT) {
-                $detachedOffer->setDeliveryShipmentPoint(OrderOffer::DEFAULT_PROVIDER_POINT);
-
-                if ($this->detachOfferByLevel(self::LEVEL_BONUS, $hasBonus, $collection, $detachedOffer, $position, $detachAmount, $hasBonus, $stampsProductAmount, $stampsLevelInfo)) {
-                    $detachAmount -= $hasBonus;
-                }
-            }
-
-            if ($level === self::LEVEL_SHIPMENT || $level === self::LEVEL_BONUS) {
-                if ($this->detachOfferByLevel(self::LEVEL_STAMPS, $stampsProductAmount, $collection, $originOffer, $position, $detachAmount, $hasBonus, $stampsProductAmount, $stampsLevelInfo)) {
-                    $detachAmount -= $stampsProductAmount;
-                }
-            }
-
-            $detachedOffer
-                ->setPosition($position)
-                ->setQuantity($detachAmount)
-                ->setChargeBonus($this->getChargeBonusValue($hasBonus));
-
-            if ($stampsProductAmount > 0) {
-                $detachedOffer
-                    ->setExchangeName($stampsLevelInfo['title'])
-                    ->setStampsQuantity($detachAmount * $stampsLevelInfo['discountStamps']);
-            }
-
-            $hasBonus = ($hasBonus > $detachAmount) ? ($hasBonus - $detachAmount) : 0;
-            $stampsProductAmount = ($stampsProductAmount > $detachAmount) ? ($stampsProductAmount - $detachAmount) : 0;
-
-            $collection->add($detachedOffer);
-            $position++;
-
-            return true;
+        if (!$detachAmount || $detachAmount >= $quantity) {
+            return false;
         }
 
-        return false;
+        $quantity -= $detachAmount;
+
+        $detachedOffer = clone $originOffer;
+
+        if ($level === self::LEVEL_SHIPMENT) {
+            $detachedOffer->setDeliveryShipmentPoint(OrderOffer::DEFAULT_PROVIDER_POINT);
+
+            if ($this->detachOfferByLevel(self::LEVEL_BONUS, $hasBonus, $collection, $detachedOffer, $position, $detachAmount, $hasBonus, $stampsProductAmount, $stampsLevelInfo)) {
+                $detachAmount -= $hasBonus;
+            }
+        }
+
+        if ($level === self::LEVEL_SHIPMENT || $level === self::LEVEL_BONUS) {
+            if ($this->detachOfferByLevel(self::LEVEL_STAMPS, $stampsProductAmount, $collection, $originOffer, $position, $detachAmount, $hasBonus, $stampsProductAmount, $stampsLevelInfo)) {
+                $detachAmount -= $stampsProductAmount;
+            }
+        }
+
+        $detachedOffer
+            ->setPosition($position)
+            ->setQuantity($detachAmount)
+            ->setChargeBonus($this->getChargeBonusValue($hasBonus));
+
+        if ($stampsProductAmount > 0) {
+            $detachedOffer
+                ->setExchangeName($stampsLevelInfo['title'])
+                ->setStampsQuantity($detachAmount * $stampsLevelInfo['discountStamps']);
+        }
+
+        $hasBonus = ($hasBonus > $detachAmount) ? ($hasBonus - $detachAmount) : 0;
+        $stampsProductAmount = ($stampsProductAmount > $detachAmount) ? ($stampsProductAmount - $detachAmount) : 0;
+
+        $collection->add($detachedOffer);
+        $position++;
+
+        return true;
     }
 
     /**

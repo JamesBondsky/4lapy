@@ -1169,6 +1169,11 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             $options['headers']['Host'] = $serviceHeaderHost;
         }
 
+        if (getenv('MANZANA_SERVICE_TIMEOUT')) {
+            $options['connect_timeout'] = getenv('MANZANA_SERVICE_TIMEOUT');
+            $options['timeout'] = getenv('MANZANA_SERVICE_TIMEOUT');
+        }
+
         $resultBody = $guzzleClient->post($serviceUrl, $options);
 
         try {

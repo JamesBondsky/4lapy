@@ -141,10 +141,8 @@ if (!$currentOffer->getImagesIds()) {
                         ?>
                         <li class="b-weight-container__item <? if($image || $hexColor){ ?>b-weight-container__item--color-list<? } ?>">
                             <a href="javascript:void(0)"
-                               class="b-weight-container__link <? if ($image || $hexColor) { ?>b-weight-container__link--color-list<? } ?> js-price<?= $currentOffer->getId()
-                                                                           === $offer->getId() ? ' active-link' : '' ?>"
-                               data-oldprice="<?= $offer->getCatalogOldPrice()
-                                                  !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '' ?>"
+                               class="b-weight-container__link <?= ($image || $hexColor) ? 'b-weight-container__link--color-list' : '' ?> js-price <?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?>"
+                               data-oldprice="<?= $offer->getCatalogOldPrice() !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '' ?>"
                                data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
                                data-price="<?= $offer->getCatalogPrice() ?>"
                                data-subscribePrice="<?= \round($offer->getSubscribePrice()) ?>"
@@ -153,7 +151,10 @@ if (!$currentOffer->getImagesIds()) {
                                data-onmousedown="<?= $getOnMouseDown($offer) ?>"
                                data-image="<?= $offerImage ?>"
                                data-link="<?= $offer->getLink() ?>"
-                            style="background-image: url(<?=$image?>); background-color: <?= $hexColor ? '#' . $hexColor : '' ?>;"><?= $hexColor ? '' : $value ?></a>
+                                <?php if ($image && !empty($image)) { ?>
+                               style="background-image: url(<?= $image ?>); background-color: <?= $hexColor ? '#' . $hexColor : '' ?>;"><?= $hexColor ? '' : $value ?>
+                                <?php } ?>
+                            </a>
                         </li>
                         <?php
                     } ?>

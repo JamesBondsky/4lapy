@@ -618,23 +618,7 @@ class OrderController extends Controller implements LoggerAwareInterface
             $errors[] = $e->getMessage();
         }
 
-        if (empty($errors)) {
-            // проверка на корректность даты доставки
-            try {
-                /*
-                 * Обнуление просиходит в fourpaws:order для того, что бы был редирект на нужный, тут просто валидация
-                 */
-                if (($step !== OrderStorageEnum::AUTH_STEP) && (!$this->orderStorageService->validateDeliveryDate($storage))) {
-                    $step = OrderStorageEnum::AUTH_STEP;
-                    $errors[] = 'Некорректная дата доставки!';
-                }
-            } catch (\Exception $e) {
-            }
-        }
-
-        /*
-         * Если на шаге выбора доставки не выбирали адрес из подсказок, то пробуем определить его тут для проставления района Москвы
-         */
+        /* Если на шаге выбора доставки не выбирали адрес из подсказок, то пробуем определить его тут для проставления района Москвы */
         if (($step === OrderStorageEnum::DELIVERY_STEP) && ($storage->getCityCode() === DeliveryService::MOSCOW_LOCATION_CODE) && ($storage->getMoscowDistrictCode() === '') && ($storage->getStreet()) && ($storage->getHouse() !== '')) {
             $strAddress = sprintf('Москва, %s, %s', $storage->getStreet(), $storage->getHouse());
             try {
