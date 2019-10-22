@@ -162,10 +162,10 @@ class Event extends BaseServiceHandler
         ], $module);*/
 
         /** Добавление газеты октябрь (3006893) в заказ */
-        static::initHandler('OnSaleOrderBeforeSaved', [
-            self::class,
-            'addOctoberNewspaper'
-        ], $module);
+//        static::initHandler('OnSaleOrderBeforeSaved', [
+//            self::class,
+//            'addOctoberNewspaper'
+//        ], $module);
 
         /** генерация номера заказа */
         static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [

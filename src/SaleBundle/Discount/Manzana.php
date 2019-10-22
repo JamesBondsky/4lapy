@@ -282,7 +282,23 @@ class Manzana implements LoggerAwareInterface
     public function recalculateBasketFromResponse(Basket $basket, SoftChequeResponse $response): void
     {
         $manzanaItems = $response->getItems();
-        $this->setStampsToBeAdded($response->getChargedStatusBonus());
+
+        $stampsToBeAdd = $response->getChargedStatusBonus();
+
+        // если за заказ будет начислено 0 марок, то возможно пользователь не авторизован
+        if ((int)$stampsToBeAdd === 0) {
+            try {
+                $this->userService->getCurrentUserId();
+            } catch (NotAuthorizedException $e) {
+                // если пользователь не авторизован, то считаем вручную
+                $basketPrice = $response->getSummDiscounted();
+
+                $stampsToBeAdd = floor($basketPrice / StampService::MARK_RATE);
+            }
+        }
+
+        $this->setStampsToBeAdded($stampsToBeAdd);
+
 
         try {
             $activeStampsCount = $this->stampService->getActiveStampsCount();

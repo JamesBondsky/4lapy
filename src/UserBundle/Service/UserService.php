@@ -817,10 +817,10 @@ class UserService implements
 
     /**
      * @param User $user
-     *
+     * @param null $contact
      * @return bool
      */
-    public function refreshUserOpt(User $user): bool
+    public function refreshUserOpt(User $user, $contact = null): bool
     {
         if (!$user->hasPhone()) {
             return false;
@@ -835,27 +835,29 @@ class UserService implements
 
             return false;
         }
-        try {
-            $contact = $manzanaService->getContactByUser($user);
-        } catch (ApplicationCreateException $e) {
-            /** не должно сюда доходить, так как передаем объект юзера */
-            $this->log()
-                 ->error('ошибка загрузки сервиса', $e->getTrace());
+        if (is_bool($contact) || is_null($contact)) {
+            try {
+                $contact = $manzanaService->getContactByUser($user);
+            } catch (ApplicationCreateException $e) {
+                /** не должно сюда доходить, так как передаем объект юзера */
+                $this->log()
+                    ->error('ошибка загрузки сервиса', $e->getTrace());
 
-            return false;
-        } catch (ManzanaServiceContactSearchMoreOneException $e) {
-            $this->log()
-                 ->info('найдено больше одного пользователя с телефоном ' . $user->getPersonalPhone());
+                return false;
+            } catch (ManzanaServiceContactSearchMoreOneException $e) {
+                $this->log()
+                    ->info('найдено больше одного пользователя с телефоном ' . $user->getPersonalPhone());
 
-            return false;
-        } catch (ManzanaServiceContactSearchNullException $e) {
-            /** ошибка нам не нужна */
-            return false;
-        } catch (ManzanaServiceException $e) {
-            $this->log()
-                 ->error('ошибка манзаны', $e->getTrace());
+                return false;
+            } catch (ManzanaServiceContactSearchNullException $e) {
+                /** ошибка нам не нужна */
+                return false;
+            } catch (ManzanaServiceException $e) {
+                $this->log()
+                    ->error('ошибка манзаны', $e->getTrace());
 
-            return false;
+                return false;
+            }
         }
         $groupsList = [];
         $groups = $user->getGroups()
@@ -905,10 +907,9 @@ class UserService implements
 
     /**
      * @param User $user
-     *
-     * @return bool
+     * @return bool|Client
      */
-    public function refreshUserCard(User $user): bool
+    public function refreshUserCard(User $user)
     {
         if (!$user->hasPhone()) {
             return false;
@@ -962,7 +963,7 @@ class UserService implements
             $this->log()
                 ->info('обновление карты stop');
 
-            return true;
+            return $contact;
         } catch (ManzanaCardIsNotFound $e) {
             $this->log()
                  ->info('активных карт не найдено', $e->getTrace());
@@ -980,7 +981,7 @@ class UserService implements
                  ->error('ошибка манзаны', $e->getTrace());
         }
 
-        return false;
+        return $contact;
     }
 
     /**
@@ -1418,6 +1419,7 @@ class UserService implements
 
             if (count($userIdByPush) > 0) {
                 $hlBlockPushMessages = \FourPaws\App\Application::getHlBlockDataManager('bx.hlblock.pushmessages');
+                unset($data['PHOTO_URL']);
                 $hlBlockPushMessages->add($data);
                 if ($lastDate instanceof \DateTime && !$isInfiniteCoupon) {
                     $hlBlockPushMessages->add($dataLast);

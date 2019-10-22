@@ -50,6 +50,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
+use FourPaws\PersonalBundle\Service\CouponService;
 
 /**
  * Class BasketController
@@ -445,28 +446,8 @@ class BasketController extends Controller implements LoggerAwareInterface
     {
         $promoCodes = $request->get('promoCodes');
 
-        $result = [];
-
-        $appliedCoupon = $this->couponStorage->getApplicableCoupon() ?? '';
-        if ($appliedCoupon) {
-            foreach ($promoCodes as $key => $promoCode) {
-                if ($appliedCoupon === $promoCode) {
-                    $result[$promoCode] = ['active' => 1];
-                    unset($promoCodes[$key]);
-                }
-            }
-            unset($key);
-        }
-
-        if ($promoCodes) {
-            $applicableCoupons = $this->manzana->getAllowPromocodes($promoCodes);
-
-            foreach ($promoCodes as $promoCode) {
-                $result[$promoCode] = in_array($promoCode, $applicableCoupons, true)
-                    ? ['applicable' => 1]
-                    : ['disabled' => 1];
-            }
-        }
+        $couponService = App::getInstance()->getContainer()->get('coupon.service');
+        $result = $couponService->checkCouponsApplicability($promoCodes);
 
         return JsonSuccessResponse::createWithData('', ['availablecoupons' => $result]);
     }
