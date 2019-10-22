@@ -313,7 +313,7 @@ class CatalogController extends Controller
          * todo использовать cookie битрикса или symfony
          * битрикс еще не подключен, а в конце шаблонов стоит die();, следовательно с помощью symfony выставить cookie не получится
          */
-        setcookie('clear_pet_size_filter', null, -1, '/');
+        setcookie('clear_clothing_size_filter', null, -1, '/');
 
         return $this->render($tpl, [
             'productSearchResult'    => $result,
