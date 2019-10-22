@@ -329,6 +329,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
                         if (!$curBasket->isEmpty() && !$userBasket->isEmpty()) {
                             $needConfirmBasket = true;
+                            $curItems = $curBasket->getBasketItems();
+
                             /** @var BasketItem $item */
                             foreach ($userBasket->getBasketItems() as $key => $item) {
                                 if ($item->getId() <= 0) {
@@ -359,6 +361,18 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                                             break;
                                     }
                                 }
+
+                                // Костыль для объединения одинаковых товаров
+	                            if (empty($detachFrom)) {
+	                                /** @var BasketItem $curItem */
+	                                foreach ($curItems as $curItem) {
+	                                    if ($item->getProductId() === $curItem->getProductId()
+	                                        && $item->getPrice() === $curItem->getPrice()
+	                                    ) {
+                                            $detachFrom = $curItem->getId();
+		                                }
+	                                }
+	                            }
                                 if ($isGift || $isGiftSelected || !empty($detachFrom)) {
                                     if ($item->getId() > 0) {
                                         $delItemsByUnionIds[] = $item->getId();
@@ -763,7 +777,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         $addQuantityByUnion = $request->get('add_quantity_by_union', []);
-        if (!empty($addQuantityByUnion)) {
+        if (!empty($addQuantityByUnion) && !is_array($addQuantityByUnion)) {
             $addQuantityByUnion = json_decode($addQuantityByUnion, true);
         }
 
