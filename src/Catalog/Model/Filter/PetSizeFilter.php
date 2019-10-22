@@ -37,4 +37,5 @@ class PetSizeFilter extends ReferenceFilterBase
     {
         return 'PROPERTY_PET_SIZE';
     }
+
 }
