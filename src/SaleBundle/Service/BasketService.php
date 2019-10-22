@@ -200,6 +200,8 @@ class BasketService implements LoggerAwareInterface
         }
 
         if ($mergeDespiteOfCustomProperties) {
+            //TODO придумать механизм получше, чтобы введение новых свойств товаров не ломало снова merge в Битриксе. Возможно, лучше сделать whitelist свойств?
+
             // Костыль, удаляющий кастомные свойства, которые не участвуют в логике общего разделения товаров, перед объединением товаров, т.к. в
             // \Bitrix\Sale\BasketPropertiesCollectionBase::isPropertyAlreadyExists
             // свойства добавляемого и имеющегося товара должны совпадать, чтобы произошел merge
