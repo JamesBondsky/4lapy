@@ -261,6 +261,15 @@ class BasketController extends BaseController
      */
     public function getUserCartDeliveryAction()
     {
+        $storage = $this->orderStorageService->getStorage();
+        $promoCode = $storage->getPromoCode();
+    
+        if ($promoCode) {
+            $couponStorage       = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
+            $couponStorage->clear();
+            $couponStorage->save($promoCode);
+        }
+        
         return new Response(
             $this->apiOrderService->getDeliveryDetails()
         );
@@ -276,6 +285,16 @@ class BasketController extends BaseController
      */
     public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
     {
+        //@todo отрефакторить дублирование
+        $storage = $this->orderStorageService->getStorage();
+        $promoCode = $storage->getPromoCode();
+    
+        if ($promoCode) {
+            $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
+            $couponStorage->clear();
+            $couponStorage->save($promoCode);
+        }
+        
         $this->mobileApiLog()->info('Request: POST postUserCartCalcAction: ' . print_r($userCartCalcRequest, true));
         if ($userCartCalcRequest->getDeliveryType() === 'courier') {
             $basketProducts = $this->apiOrderService->getBasketWithCurrentDelivery();
@@ -463,6 +482,8 @@ class BasketController extends BaseController
      */
     public function putUserCartCouponAction(Request $request)
     {
+        $userPromoCodes = [];
+        
         $promoCode = $request->get('promoCode');
         $use       = $request->get('use');
         
@@ -470,24 +491,33 @@ class BasketController extends BaseController
         
         $couponStorage       = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
         $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
+    
+        $couponService = Application::getInstance()->getContainer()->get('coupon.service');
+        $userCoupons = $couponService->getUserCouponsAction();
         
-        switch ($use) {
-            case true:
-                $this->manzana->setPromocode($promoCode);
-                $this->manzana->calculate();
-                
-                $storage->setPromoCode($promoCode);
-                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
-                $fUserId = $this->appUserService->getCurrentFUserId() ?: 0;
-                $this->appBasketService->getBasket(true, $fUserId);
-                $couponStorage->clear();
-                $couponStorage->save($promoCode);
-                break;
-            case false:
-                $couponStorage->delete($promoCode);
-                $storage->setPromoCode('');
-                $orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
-                break;
+        foreach ($userCoupons as $userCoupon) {
+            $userPromoCodes[] = $userCoupon['promocode'];
+        }
+        
+        if (in_array($promoCode, $userPromoCodes)) {
+            switch ($use) {
+                case true:
+                    $this->manzana->setPromocode($promoCode);
+                    $this->manzana->calculate();
+            
+                    $storage->setPromoCode($promoCode);
+                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+                    $fUserId = $this->appUserService->getCurrentFUserId() ?: 0;
+                    $this->appBasketService->getBasket(true, $fUserId);
+                    $couponStorage->clear();
+                    $couponStorage->save($promoCode);
+                    break;
+                case false:
+                    $couponStorage->delete($promoCode);
+                    $storage->setPromoCode('');
+                    $orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+                    break;
+            }
         }
         
         $couponService = Application::getInstance()->getContainer()->get('coupon.service');
