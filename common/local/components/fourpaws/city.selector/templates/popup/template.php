@@ -47,7 +47,7 @@ use FourPaws\Decorators\SvgDecorator; ?>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
-            <button class="b-button b-button--pick-city">
+            <button class="b-button b-button--pick-city" disabled>
                 <span class="b-icon">
                     <?= new SvgDecorator('icon-search', 16, 16) ?>
                 </span>
