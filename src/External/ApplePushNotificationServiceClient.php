@@ -3,6 +3,7 @@
 
 namespace FourPaws\External;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Zend\Json\Encoder as JsonEncoder;
 use ZendService\Apple\Apns\Client\Message as ServiceClient;
 use ZendService\Apple\Apns\Message as ApnsMessage;
@@ -17,6 +18,12 @@ class ApplePushNotificationServiceClient extends ServiceClient
         if (! $this->isConnected()) {
             throw new Exception\RuntimeException('You must first open the connection by calling open()');
         }
+
+        $logger = LoggerFactory::create('push');
+
+        $logger->info('payload', [
+            'payload' => $message->getPayload()
+        ]);
 
         $ret = $this->write($this->getPayloadJson($message->getPayload(), $message));
         if ($ret === false) {
