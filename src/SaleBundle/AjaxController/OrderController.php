@@ -619,10 +619,8 @@ class OrderController extends Controller implements LoggerAwareInterface
         }
 
         /* Если на шаге выбора доставки не выбирали адрес из подсказок, то пробуем определить его тут для проставления района Москвы */
-        if (($step === OrderStorageEnum::DELIVERY_STEP) && ($storage->getCityCode() === DeliveryService::MOSCOW_LOCATION_CODE)) {
-            $city = (!empty($storage->getCity())) ? $storage->getCity() : 'Москва';
-
-            $strAddress = sprintf('%s, %s, %s', $city, $storage->getStreet(), $storage->getHouse());
+        if (($step === OrderStorageEnum::DELIVERY_STEP) && ($storage->getCityCode() === DeliveryService::MOSCOW_LOCATION_CODE) && ($storage->getMoscowDistrictCode() === '') && ($storage->getStreet()) && ($storage->getHouse() !== '')) {
+            $strAddress = sprintf('Москва, %s, %s', $storage->getStreet(), $storage->getHouse());
             try {
                 $okato = $this->locationService->getDadataLocationOkato($strAddress);
                 $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
