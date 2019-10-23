@@ -54,6 +54,7 @@ use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Card;
+use FourPaws\External\Manzana\Model\CardsByContractCards;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\External\ManzanaService;
@@ -1139,9 +1140,18 @@ class OrderService implements LoggerAwareInterface
 
         if (!$user->getDiscountCardNumber() && !$storage->getDiscountCardNumber()) {
             try {
-                $contact = $this->manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
-                if (($card = $contact->getCards()->first()) instanceof Card) {
-                    $storage->setDiscountCardNumber($card->cardNumber);
+//                $contact = $this->manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
+//                if (($card = $contact->getCards()->first()) instanceof Card) {
+//                    $storage->setDiscountCardNumber($card->cardNumber);
+//                }
+
+                $contactId = $this->manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
+                $cards = $this->manzanaService->getCardsByContactId($contactId);
+                foreach ($cards as $cardItem) {
+                    if ($cardItem->isActive()) {
+                        $storage->setDiscountCardNumber($cardItem->cardNumber);
+                        break;
+                    }
                 }
             } catch (WrongPhoneNumberException $e) {
             } catch (ManzanaServiceContactSearchNullException $e) {
