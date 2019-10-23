@@ -9,9 +9,9 @@ use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Sale\Basket;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Internals\OrderPropsTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
@@ -22,7 +22,6 @@ use Bitrix\Sale\ShipmentItem;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
@@ -41,6 +40,7 @@ use FourPaws\SaleBundle\Exception\OrderCopyBasketException;
 use FourPaws\SaleBundle\Exception\OrderCopyShipmentsException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Service\StoreService;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
@@ -418,6 +418,34 @@ class OrderCopy
     public function getNewOrder(): Order
     {
         return $this->newOrder;
+    }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     *
+     * @return Order
+     *
+     * @throws NotFoundException
+     */
+    protected function getFirstOrder(OrderSubscribe $orderSubscribe): Order
+    {
+        $firstOrderId = $orderSubscribe->getOrderId();
+
+        if (!$firstOrderId) {
+            throw new NotFoundException('В подписке отсутсвует ID заказа');
+        }
+
+        try {
+            $firstOrder = Order::load($firstOrderId);
+        } catch (\Exception $e) {
+            throw new NotFoundException('При поиске первого заказа по подписке произошла ошибка');
+        }
+
+        if ($firstOrder === null) {
+            throw new NotFoundException('Первый заказ по подписке не найден');
+        }
+
+        return $firstOrder;
     }
 
     /**
@@ -888,7 +916,7 @@ class OrderCopy
      * @throws ObjectNotFoundException
      * @throws OrderCreateException
      * @throws \Bitrix\Main\ObjectException
-     * @throws \Bitrix\Main\SystemException
+     * @throws SystemException
      * @throws \Exception
      */
     public function save()
@@ -1517,21 +1545,18 @@ class OrderCopy
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
      * @throws NotImplementedException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    protected function appendProps()
+    protected function appendProps(): void
     {
         $order = $this->getNewOrder();
         $subscribe = $this->getOrderSubscribe();
         $orderService = $this->getOrderService();
-        $orderSubscribeService = $this->getOrderSubscribeService();
         $deliveryService = $this->getDeliveryService();
-        $addressService = $this->getAddressService();
         $locationService = $this->getLocationService();
         $storeService = $this->getStoreService();
 
@@ -1541,6 +1566,19 @@ class OrderCopy
         // адрес доставки
         if($deliveryService->isDelivery($delivery)){
             $address = $locationService->splitAddress($subscribe->getDeliveryPlace());
+
+            if (($subscribe->getLocationId()) && ($address->getLocation() !== $subscribe->getLocationId())) {
+                $propValues = [
+                    'COM_WAY' => OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS,
+                    'CITY_CODE' => $subscribe->getLocationId(),
+                ];
+                $orderService->setOrderPropertiesByCode($order, $propValues);
+
+                try {
+                    $address = $orderService->compileOrderAddress($this->getFirstOrder($subscribe));
+                } catch (NotFoundException $e) {
+                }
+            }
         } else {
             /** @var PickupResultInterface $delivery */
             $shop = $delivery->getSelectedShop();

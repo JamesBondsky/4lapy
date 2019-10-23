@@ -20,7 +20,9 @@ use FourPaws\MobileApiBundle\Dto\Response\StoreListResponse;
 use FourPaws\MobileApiBundle\Services\Api\StoreService as ApiStoreService;
 use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
 use FourPaws\MobileApiBundle\Services\Api\UserService;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\StoreBundle\Service\ShopInfoService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 
 class StoreController extends BaseController
 {
@@ -110,6 +112,17 @@ class StoreController extends BaseController
      */
     public function getStoreListAvailableAction(ShopsForCheckoutRequest $shopsForCheckoutRequest): StoreListAvailableResponse
     {
+        $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
+        
+        $storage = $orderStorageService->getStorage();
+        $promoCode = $storage->getPromoCode();
+    
+        if ($promoCode) {
+            $couponStorage       = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
+            $couponStorage->clear();
+            $couponStorage->save($promoCode);
+        }
+        
         $metroStations = $shopsForCheckoutRequest->getMetroStations();
         $storeCollection = $this->apiStoreService->getListWithProductsInBasketAvailability($metroStations);
 

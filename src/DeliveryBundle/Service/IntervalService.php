@@ -203,4 +203,22 @@ class IntervalService implements LoggerAwareInterface
 
         return new ArrayCollection($intervalData);
     }
+
+    /**
+     * @param $deliveryInterval
+     * @return bool
+     */
+    public static function validateDeliveryInterval($deliveryInterval)
+    {
+        $value = false;
+        if ($deliveryInterval) {
+            if (preg_match('/^[0-2][0-9]:[0-5][0-9]-[0-2][0-9]:[0-5][0-9]$/', $deliveryInterval)) {
+                $value = $deliveryInterval;
+            } else if ((intval($deliveryInterval) > 0) and (intval($deliveryInterval) < 9)) {
+                $value = static::DELIVERY_INTERVALS[$deliveryInterval];
+            }
+        }
+
+        return $value;
+    }
 }

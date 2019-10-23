@@ -4,7 +4,7 @@
 namespace FourPaws\PersonalBundle\Service;
 
 
-use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentNullException;
@@ -30,6 +30,8 @@ use WebArch\BitrixCache\BitrixCache;
 class StampService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
+
+    private const HL_BLOCK_TYPE = 'StampsProductSections';
 
     public const MARK_RATE = 500;
     public const MARKS_PER_RATE = 1;
@@ -631,22 +633,16 @@ class StampService implements LoggerAwareInterface
      */
     protected function fillExchangeRules(): void
     {
-        try {
-            $iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::CATALOG_SLIDER_PRODUCTS);
-        } catch (IblockNotFoundException | \Exception $e) {
-            return;
-        }
-
-        $getExchangeRules = function () use ($iblockId) {
+        $getExchangeRules = function () {
             $exchangeRules = [];
             $sectionIds = [];
 
             // получаем разделы товаров, которые участвуют в акции
-            $rsElement = \CIBlockElement::GetList(['SORT' => SORT_ASC], ['IBLOCK_ID' => $iblockId, '=ACTIVE' => BaseEntity::BITRIX_TRUE, '=SECTION_CODE' => 'stamps'], false, false, ['ID', 'IBLOCK_ID', 'PROPERTY_SECTION']);
+            $res = HLBlockFactory::createTableObject(self::HL_BLOCK_TYPE)::query()->setSelect(['UF_PRODUCT_SECTION'])->exec();
 
-            while ($arElement = $rsElement->Fetch()) {
-                if ($arElement['PROPERTY_SECTION_VALUE']) {
-                    $sectionIds[] = $arElement['PROPERTY_SECTION_VALUE'];
+            while ($item = $res->fetch()) {
+                if ($item['UF_PRODUCT_SECTION']) {
+                    $sectionIds[] = $item['UF_PRODUCT_SECTION'];
                 }
             }
 
@@ -717,9 +713,9 @@ class StampService implements LoggerAwareInterface
 
         /** @var Variant[] $variants */
         try {
-            $result = (new BitrixCache())->withId(__METHOD__ . $iblockId)
-                ->withTime(60* 60 * 24 * 7)
-                ->withIblockTag($iblockId)
+            $result = (new BitrixCache())->withId(__METHOD__ . self::HL_BLOCK_TYPE)
+                ->withClearCache(true)
+                ->withTime(604800)
                 ->resultOf($getExchangeRules);
 
             if (isset($result['exchange_rules']) && is_array($result['exchange_rules'])) {

@@ -104,10 +104,10 @@ class PushMessagesQueue extends Command implements LoggerAwareInterface
             // отправка push`ей
             $this->pushEventService->execPushEventsForAndroid();
             $this->log()->info('execPushEventsForAndroid done.');
-            $this->pushEventService->execPushEventsForIos();
-            $this->log()->info('execPushEventsForIos done.');
+//            $this->pushEventService->execPushEventsForIos();
+//            $this->log()->info('execPushEventsForIos done.');
 
-            $this->log()->info('push messages are sent.');
+//            $this->log()->info('push messages are sent.');
         } finally {
             $this->lockerService->unlock($pipeline);
         }
