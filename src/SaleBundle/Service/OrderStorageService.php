@@ -27,7 +27,6 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
-use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\KioskBundle\Service\KioskService;
@@ -773,7 +772,7 @@ class OrderStorageService
                 if ($selectedStore && $stores->hasStore($selectedStore)) {
                     $result = $selectedStore;
                 }
-            } catch (StoreNotFoundException | TerminalNotFoundException $e) {
+            } catch (StoreNotFoundException $e) {
                 // обработка не требуется. срабатывает при смене зоны доставки / деактивации склада
             }
         }
