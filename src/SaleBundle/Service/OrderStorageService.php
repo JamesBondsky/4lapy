@@ -18,6 +18,7 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use Bitrix\Sale\UserMessageException;
+use DateTime;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -44,6 +45,8 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
+use function array_filter;
+use function in_array;
 
 class OrderStorageService
 {
@@ -72,11 +75,6 @@ class OrderStorageService
     protected $storageRepository;
 
     /**
-     * @var UserAccountService
-     */
-    protected $userAccountService;
-
-    /**
      * @var DeliveryService
      */
     protected $deliveryService;
@@ -99,11 +97,12 @@ class OrderStorageService
     /**
      * OrderStorageService constructor.
      *
-     * @param BasketService                $basketService
+     * @param BasketService $basketService
      * @param CurrentUserProviderInterface $currentUserProvider
-     * @param DatabaseStorageRepository    $storageRepository
-     * @param DeliveryService              $deliveryService
-     * @param StoreService                 $storeService
+     * @param DatabaseStorageRepository $storageRepository
+     * @param DeliveryService $deliveryService
+     * @param StoreService $storeService
+     * @param OrderSubscribeService $orderSubscribeService
      */
     public function __construct(
         BasketService $basketService,
@@ -126,7 +125,7 @@ class OrderStorageService
      * Вычисляет шаг оформления заказа в соответствии с состоянием хранилища
      *
      * @param OrderStorage $storage
-     * @param string       $startStep
+     * @param string $startStep
      *
      * @return string
      */
@@ -139,8 +138,8 @@ class OrderStorageService
     /**
      * @param int|null $fuserId
      *
-     * @throws OrderStorageSaveException
      * @return bool|OrderStorage
+     * @throws OrderStorageSaveException
      */
     public function getStorage(int $fuserId = null)
     {
@@ -195,9 +194,9 @@ class OrderStorageService
     {
         $mapping = [
             'order-pick-time' => 'split',
-            'shopId'          => 'deliveryPlaceCode',
-            'pay-type'        => 'paymentId',
-            'cardNumber'      => 'discountCardNumber',
+            'shopId' => 'deliveryPlaceCode',
+            'pay-type' => 'paymentId',
+            'cardNumber' => 'discountCardNumber',
         ];
 
         foreach ($data as $name => $value) {
@@ -237,7 +236,8 @@ class OrderStorageService
                         ) {
                             $availableValues[] = 'email';
                         }
-                    } catch (NotAuthorizedException | UsernameNotFoundException $e) {}
+                    } catch (NotAuthorizedException | UsernameNotFoundException $e) {
+                    }
                 } else {
                     $availableValues[] = 'phone';
                     $availableValues[] = 'email';
@@ -248,23 +248,21 @@ class OrderStorageService
                 try {
                     $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
 
-                    if (\in_array($deliveryCode, array_merge(DeliveryService::DELIVERY_CODES, [DeliveryService::DELIVERY_DOSTAVISTA_CODE]), true)) {
-                        switch ($data['delyveryType']) {
-                            case 'twoDeliveries':
-                                $data['deliveryInterval'] = $data['deliveryInterval1'];
-                                $data['secondDeliveryInterval'] = $data['deliveryInterval2'];
-                                $data['deliveryDate'] = $data['deliveryDate1'];
-                                $data['secondDeliveryDate'] = $data['deliveryDate2'];
-                                if ($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
-                                    $data['comment'] = $data['comment_dostavista'];
-                                } else {
-                                    $data['comment'] = $data['comment1'];
-                                    $data['secondComment'] = $data['comment2'];
-                                }
-                                $data['split'] = 1;
-                                break;
-                            default:
-                                $data['split'] = 0;
+                    if (in_array($deliveryCode, array_merge(DeliveryService::DELIVERY_CODES, [DeliveryService::DELIVERY_DOSTAVISTA_CODE]), true)) {
+                        if ($data['delyveryType'] === 'twoDeliveries') {
+                            $data['deliveryInterval'] = $data['deliveryInterval1'];
+                            $data['secondDeliveryInterval'] = $data['deliveryInterval2'];
+                            $data['deliveryDate'] = $data['deliveryDate1'];
+                            $data['secondDeliveryDate'] = $data['deliveryDate2'];
+                            if ($deliveryCode === DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+                                $data['comment'] = $data['comment_dostavista'];
+                            } else {
+                                $data['comment'] = $data['comment1'];
+                                $data['secondComment'] = $data['comment2'];
+                            }
+                            $data['split'] = 1;
+                        } else {
+                            $data['split'] = 0;
                         }
                     } elseif ((int)$data['split'] === 1) {
                         $tmpStorage = clone $storage;
@@ -346,7 +344,7 @@ class OrderStorageService
                 continue;
             }
 
-            if (!\in_array($name, $availableValues, true)) {
+            if (!in_array($name, $availableValues, true)) {
                 continue;
             }
 
@@ -361,9 +359,9 @@ class OrderStorageService
                         $storage->$setter($data['deliveryTypeId']);
                         break;
                     case 'comment':
-                        if($step == OrderStorageEnum::DELIVERY_STEP && $deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE && $data['comment_dostavista']){
+                        if (($step === OrderStorageEnum::DELIVERY_STEP) && (isset($deliveryCode)) && ($deliveryCode === DeliveryService::DELIVERY_DOSTAVISTA_CODE) && $data['comment_dostavista']) {
                             $storage->$setter($data['comment_dostavista']);
-                        } elseif(isset($data['comment'])) {
+                        } elseif (isset($data['comment'])) {
                             $storage->$setter($data['comment']);
                         }
                         break;
@@ -397,7 +395,7 @@ class OrderStorageService
      * Устанавливает код района в код города (только для Москвы)
      *
      * @param OrderStorage $storage
-     * @param string       $step
+     * @param string $step
      *
      * @return bool
      * @throws OrderStorageSaveException
@@ -405,7 +403,7 @@ class OrderStorageService
      */
     public function updateStorageMoscowZone(OrderStorage $storage, string $step = OrderStorageEnum::AUTH_STEP): bool
     {
-        if ($storage->getCityCode() == DeliveryService::MOSCOW_LOCATION_CODE) {
+        if ($storage->getCityCode() === DeliveryService::MOSCOW_LOCATION_CODE) {
             $storage->setCityCode($storage->getMoscowDistrictCode());
             try {
                 return $this->storageRepository->save($storage, $step);
@@ -476,9 +474,9 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param bool         $withInner
-     * @param bool         $filter
-     * @param float        $basketPrice
+     * @param bool $withInner
+     * @param bool $filter
+     * @param float $basketPrice
      *
      * @return array
      * @throws ArgumentException
@@ -506,15 +504,15 @@ class OrderStorageService
         /**
          * Для заказа по подписке доступна только оплата при получении
          */
-        if($storage->isSubscribe()){
-            $payments = array_filter($payments, function($item){
-                return in_array($item['CODE'], [OrderPayment::PAYMENT_CASH, OrderPayment::PAYMENT_CASH_OR_CARD]);
+        if ($storage->isSubscribe()) {
+            $payments = array_filter($payments, static function ($item) {
+                return in_array($item['CODE'], [OrderPayment::PAYMENT_CASH, OrderPayment::PAYMENT_CASH_OR_CARD], false);
             });
         }
         $deliveryCode = $this->deliveryService->getDeliveryCodeById($storage->getDeliveryId());
-        if ($this->deliveryService->isDobrolapDeliveryCode($deliveryCode)){
-            $payments = array_filter($payments, function($item){
-                return $item['CODE'] == OrderPayment::PAYMENT_ONLINE;
+        if ($this->deliveryService->isDobrolapDeliveryCode($deliveryCode)) {
+            $payments = array_filter($payments, static function ($item) {
+                return ($item['CODE'] === OrderPayment::PAYMENT_ONLINE);
             });
         }
 
@@ -567,7 +565,7 @@ class OrderStorageService
         }
         if ($deliveryCode === false || !$this->deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
             if ($filter
-                && !empty(\array_filter($payments, function ($item) {
+                && !empty(array_filter($payments, static function ($item) {
                     return $item['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD;
                 }))) {
                 foreach ($payments as $id => $payment) {
@@ -577,24 +575,22 @@ class OrderStorageService
                     }
                 }
             }
-        } else {
-            if ($filter
-                && !empty(\array_filter($payments, function ($item) {
-                    return $item['CODE'] === OrderPayment::PAYMENT_CASH;
-                }))) {
-                foreach ($payments as $id => $payment) {
-                    if ($payment['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD) {
-                        unset($payments[$id]);
-                        break;
-                    }
+        } else if ($filter
+            && !empty(array_filter($payments, static function ($item) {
+                return $item['CODE'] === OrderPayment::PAYMENT_CASH;
+            }))) {
+            foreach ($payments as $id => $payment) {
+                if ($payment['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD) {
+                    unset($payments[$id]);
+                    break;
                 }
             }
         }
 
         // в режиме киоска доступна только оплата при получении
-        if(KioskService::isKioskMode()){
+        if (KioskService::isKioskMode()) {
             foreach ($payments as $id => $payment) {
-                if (!in_array($payment['CODE'], [OrderPayment::PAYMENT_CASH_OR_CARD, OrderPayment::PAYMENT_CASH])) {
+                if (!in_array($payment['CODE'], [OrderPayment::PAYMENT_CASH_OR_CARD, OrderPayment::PAYMENT_CASH], false)) {
                     unset($payments[$id]);
                 }
             }
@@ -632,7 +628,7 @@ class OrderStorageService
             }
 
             // для подписки оставляем всё, кроме достависты
-            if($storage->isSubscribe()){
+            if ($storage->isSubscribe()) {
                 $codes = array_merge(DeliveryService::PICKUP_CODES, DeliveryService::DELIVERY_CODES);
             }
 
@@ -829,7 +825,7 @@ class OrderStorageService
                 $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, 10)[$storage->getDeliveryDate()];
             }
 
-            return !($selectedDelivery->getDeliveryDate()->getTimestamp() < (new \DateTime())->getTimestamp());
+            return !($selectedDelivery->getDeliveryDate()->getTimestamp() < (new DateTime())->getTimestamp());
         }
 
         return true;
@@ -844,7 +840,7 @@ class OrderStorageService
     {
         $storage
             ->setDeliveryDate(0)
-            ->setCurrentDate(new \DateTime());
+            ->setCurrentDate(new DateTime());
 
         return $storage;
     }
