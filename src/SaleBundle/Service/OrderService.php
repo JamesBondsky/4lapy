@@ -98,6 +98,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\External\Dostavista\Model;
 use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 use FourPaws\SapBundle\Service\Orders\OrderService as SapOrderService;
+use FourPaws\SapBundle\Service\Orders\StatusService;
 
 /**
  * Class OrderService
@@ -2539,10 +2540,10 @@ class OrderService implements LoggerAwareInterface
                 $connection->rollbackTransaction();
                 return false;
             }
-
-            // todo изначально хотели передавать в сап через файл, а сейчас хотят через АПИ
-//            $sapStatus = StatusService::STATUS_CANCELED;
-//            $this->sapOrderService->sendOrderStatus($order, $sapStatus);
+            
+            $orderNumber = $order->getField('ACCOUNT_NUMBER');
+            // $sapStatus = StatusService::STATUS_CANCELED;
+            // $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
 
             $connection->commitTransaction();
         } catch (\Exception $e) {
