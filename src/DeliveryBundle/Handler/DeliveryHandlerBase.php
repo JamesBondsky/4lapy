@@ -190,19 +190,21 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @param ArrayCollection $offers
      * @param StoreCollection $stores
      * @return StockResultCollection
+     * @throws ApplicationCreateException
      */
     public function getStocksForAllAvailableOffers(
         Basket $basket,
         ArrayCollection $offers,
         StoreCollection $stores
-    ): StockResultCollection {
+    ): StockResultCollection
+    {
         $stockResultCollection = new StockResultCollection();
         $offerData = static::getBasketPrices($basket);
         /** @var array $marksIds */
         $marksIds = $this->piggyBankService->getMarksIds();
 
         foreach ($offerData as $key => $offer) {
-            if (in_array($key, $marksIds)) {
+            if (in_array($key, $marksIds, false)) {
                 unset($offerData[$key]);
             }
         }
@@ -216,7 +218,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             if (!$store->isExpressStore()) {
                 continue;
             }
-            $allOfferAvaliable = true;
+            $allOfferAvailable = true;
             $stockResultCollectionTmp = new StockResultCollection();
             foreach ($offerData as $offerId => $priceForAmountCollection) {
                 /** @var Offer $offer */
@@ -237,17 +239,17 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 $stocks = $offer->getAllStocks();
                 if ($availableAmount = $stocks->filterByStore($store)->getTotalAmount()) {
                     if ($availableAmount < $amount) {
-                        $allOfferAvaliable = false;
+                        $allOfferAvailable = false;
                     }
                 } else {
-                    $allOfferAvaliable = false;
+                    $allOfferAvailable = false;
                 }
-                if (!$allOfferAvaliable) {
+                if (!$allOfferAvailable) {
                     break;
                 }
                 $stockResultCollectionTmp->add($stockResult);
             }
-            if ($allOfferAvaliable) {
+            if ($allOfferAvailable) {
                 foreach ($stockResultCollectionTmp as $stockResult) {
                     $stockResultCollection->add($stockResult);
                 }
