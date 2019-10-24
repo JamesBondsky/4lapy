@@ -5,9 +5,11 @@ namespace FourPaws\SaleBundle\Service;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -432,11 +434,12 @@ class OrderStorageService
     /**
      * @param OrderStorage $storage
      *
-     * @throws NotFoundException
+     * @return PaymentCollection
      * @throws ArgumentOutOfRangeException
      * @throws NotImplementedException
      * @throws ObjectNotFoundException
-     * @return PaymentCollection
+     * @throws ObjectException
+     * @throws NotFoundException
      */
     public function getPayments(OrderStorage $storage): PaymentCollection
     {
@@ -602,16 +605,21 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param bool         $reload
+     * @param bool $reload
      *
+     * @return CalculationResultInterface[]
+     * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws DeliveryNotFoundException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     * @throws UserMessageException
-     * @throws ApplicationCreateException
-     * @throws DeliveryNotFoundException
      * @throws StoreNotFoundException
-     * @return CalculationResultInterface[]
+     * @throws SystemException
+     * @throws UserMessageException
+     * @throws ArgumentNullException
+     * @throws ObjectException
      */
     public function getDeliveries(OrderStorage $storage, $reload = false): array
     {
@@ -645,11 +653,16 @@ class OrderStorageService
      * @return PickupResultInterface|null
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
      * @throws DeliveryNotFoundException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
+     * @throws SystemException
      * @throws UserMessageException
+     * @throws ArgumentNullException
+     * @throws ObjectException
      */
     public function getPickupDelivery(OrderStorage $storage): ?PickupResultInterface
     {
@@ -670,11 +683,16 @@ class OrderStorageService
      * @return DeliveryResultInterface|null
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
      * @throws DeliveryNotFoundException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
+     * @throws SystemException
      * @throws UserMessageException
+     * @throws ArgumentNullException
+     * @throws ObjectException
      */
     public function getInnerDelivery(OrderStorage $storage): ?DeliveryResultInterface
     {
@@ -692,15 +710,19 @@ class OrderStorageService
     /**
      * @param OrderStorage $storage
      *
+     * @return CalculationResultInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
      * @throws DeliveryNotFoundException
-     * @throws NotFoundException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
+     * @throws SystemException
      * @throws UserMessageException
-     * @return CalculationResultInterface
+     * @throws ArgumentNullException
+     * @throws ObjectException
      */
     public function getSelectedDelivery(OrderStorage $storage): CalculationResultInterface
     {
@@ -732,11 +754,12 @@ class OrderStorageService
     }
 
     /**
-     * @param OrderStorage          $storage
+     * @param OrderStorage $storage
      * @param PickupResultInterface $delivery
      *
-     * @throws ArgumentException
      * @return Store
+     * @throws SystemException
+     * @throws ArgumentException
      */
     public function getSelectedShop(OrderStorage $storage, PickupResultInterface $delivery): Store
     {
@@ -780,10 +803,15 @@ class OrderStorageService
      * @return bool
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
      * @throws DeliveryNotFoundException
+     * @throws NotImplementedException
      * @throws NotSupportedException
+     * @throws ObjectException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
+     * @throws SystemException
      * @throws UserMessageException
      */
     public function validateDeliveryDate($storage): bool
