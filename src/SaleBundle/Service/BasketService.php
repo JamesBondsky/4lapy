@@ -16,6 +16,7 @@ use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
@@ -40,11 +41,14 @@ use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Query\PriceQuery;
 use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Enum\IblockType;
 use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\Helpers\IblockHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
@@ -69,6 +73,7 @@ use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use WebArch\BitrixCache\BitrixCache;
 
 /** @noinspection EfferentObjectCouplingInspection */
 
@@ -95,10 +100,6 @@ class BasketService implements LoggerAwareInterface
     private $orderService;
     /** @var StampService */
     private $stampService;
-    /** @var StoreService */
-    private $storeService;
-    /** @var StockService */
-    private $stockService;
     /** @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ */
     private $promocodeDiscount = 0.0;
     private $fUserId;
@@ -106,6 +107,10 @@ class BasketService implements LoggerAwareInterface
      * @var ShareRepository
      */
     private $shareRepository;
+    /** @var StoreService $storeService */
+    private $storeService;
+    /** @var StockService $stockService */
+    private $stockService;
 
     public const GIFT_DOBROLAP_XML_ID = '3006635';
     public const GIFT_DOBROLAP_XML_ID_ALT = '3006616';
@@ -121,6 +126,8 @@ class BasketService implements LoggerAwareInterface
      * @param OrderService $orderService
      * @param ShareRepository $shareRepository
      * @param StampService $stampService
+     * @param StockService $stockService
+     * @param StoreService $storeService
      */
     public function __construct(
         CurrentUserProviderInterface $currentUserProvider,
@@ -130,7 +137,8 @@ class BasketService implements LoggerAwareInterface
         StampService $stampService,
         StockService $stockService,
         StoreService $storeService
-    ) {
+    )
+    {
         $this->currentUserProvider = $currentUserProvider;
         $this->manzanaPosService = $manzanaPosService;
         $this->orderService = $orderService;
@@ -192,6 +200,8 @@ class BasketService implements LoggerAwareInterface
         }
 
         if ($mergeDespiteOfCustomProperties) {
+            //TODO придумать механизм получше, чтобы введение новых свойств товаров не ломало снова merge в Битриксе. Возможно, лучше сделать whitelist свойств?
+
             // Костыль, удаляющий кастомные свойства, которые не участвуют в логике общего разделения товаров, перед объединением товаров, т.к. в
             // \Bitrix\Sale\BasketPropertiesCollectionBase::isPropertyAlreadyExists
             // свойства добавляемого и имеющегося товара должны совпадать, чтобы произошел merge
@@ -211,6 +221,7 @@ class BasketService implements LoggerAwareInterface
                             'MAX_STAMPS_LEVEL',
                             'STAMP_LEVELS',
                             'CAN_USE_STAMPS',
+                            'SUBSCRIBE_PRICE',
                         ], true)) {
                             $itemPropertyCollection->deleteItem($itemProperty->getInternalIndex());
                         }
@@ -1766,13 +1777,12 @@ class BasketService implements LoggerAwareInterface
     /**
      * @param BasketItem $item
      * @param string $code
-     *
      * @return string
      * @throws ArgumentException
      * @throws NotImplementedException
      */
     public function getBasketPropertyValueByCode(BasketItem $item, string $code): string
     {
-        return $item->getPropertyCollection()->getPropertyValues()[$code]['VALUE'] ?? '';
+        return (string)($item->getPropertyCollection()->getPropertyValues()[$code]['VALUE'] ?? '');
     }
 }

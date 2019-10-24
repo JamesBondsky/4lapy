@@ -21,9 +21,6 @@ class StatusService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    public const STATUS_PICKUP_EXTEND = 'X'; // статус "продлить срок хранения"
-    public const STATUS_CANCELED = 'V';
-
     private const STATUS_COURIER_MAP = [
         '1' => 'Q',
         '2' => 'C',
@@ -38,7 +35,7 @@ class StatusService implements LoggerAwareInterface
         'P' => 'J',
         'K' => '',
         'E' => '',
-        self::STATUS_CANCELED => 'A',
+        'V' => 'A',
         'C' => 'B',
     ];
 
@@ -84,8 +81,7 @@ class StatusService implements LoggerAwareInterface
         'P' => 'J',
         'K' => '',
         'E' => '',
-        self::STATUS_PICKUP_EXTEND => '',
-        self::STATUS_CANCELED => 'K',
+        'V' => 'K',
         'C' => 'B',
     ];
 

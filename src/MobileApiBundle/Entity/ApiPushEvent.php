@@ -79,6 +79,14 @@ class ApiPushEvent
 
     /**
      * @var string
+     * @Serializer\SerializedName("MESSAGE_TITLE")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $messageTitle;
+
+    /**
+     * @var string
      * @Serializer\SerializedName("MESSAGE_TEXT")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"read"})
@@ -108,6 +116,14 @@ class ApiPushEvent
      * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $viewed;
+
+    /**
+     * @var string
+     * @Serializer\SerializedName("PHOTO_URL")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $photoUrl;
 
     /**
      * @var int
@@ -250,6 +266,22 @@ class ApiPushEvent
     public function getMessageText(): string
     {
         return $this->messageText;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMessageTitle()
+    {
+        return $this->messageTitle;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPhotoUrl()
+    {
+        return $this->photoUrl;
     }
 
     /**

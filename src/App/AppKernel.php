@@ -19,6 +19,7 @@ use FourPaws\FormBundle\FourPawsFormBundle;
 use FourPaws\KkmBundle\FourPawsKkmBundle;
 use FourPaws\KioskBundle\FourPawsKioskBundle;
 use FourPaws\LocationBundle\FourPawsLocationBundle;
+use FourPaws\ManzanaApiBundle\FourPawsManzanaApiBundle;
 use FourPaws\MobileApiBundle\FourPawsMobileApiBundle;
 use FourPaws\PersonalBundle\FourPawsPersonalBundle;
 use FourPaws\ReCaptchaBundle\FourPawsReCaptchaBundle;
@@ -110,7 +111,8 @@ class AppKernel extends Kernel
             new FourPawsFormBundle(),
             new FourPawsKioskBundle(),
             new EcommerceBundle(),
-            new FourPawsKkmBundle()
+            new FourPawsKkmBundle(),
+            new FourPawsManzanaApiBundle(),
         ];
 
         if (\in_array($this->getEnvironment(), [

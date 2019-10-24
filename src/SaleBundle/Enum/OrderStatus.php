@@ -62,9 +62,9 @@ class OrderStatus
      */
     public const STATUS_CALL_BACK = 'B';
 
-    /**
-     * В пути
-     */
+    /*
+    * В пути
+    */
     public const STATUS_IN_PROGRESS = 'D';
 
     /**

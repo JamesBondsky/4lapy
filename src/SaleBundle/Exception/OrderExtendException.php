@@ -3,7 +3,8 @@
 
 namespace FourPaws\SaleBundle\Exception;
 
-class OrderExtendException  extends \Exception implements BaseExceptionInterface
+
+class OrderExtendException extends \Exception implements BaseExceptionInterface
 {
 
 }

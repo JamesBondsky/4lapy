@@ -23,7 +23,7 @@ $ajaxUrl = '/ajax/user/auth/login-r/'; ?>
                data-need_add_phone="<?= $needAddPhone ?>"
             <?= !empty($delItemsByUnion) ? 'data-del_items_by_union="' . implode(',', $delItemsByUnion) . '"' : '' ?>
             <?= !empty($delItemsByUnionKeys) ? 'data-del_items_by_union_keys="' . implode(',', $delItemsByUnionKeys) . '"' : '' ?>
-            <?= !empty($addQuantityByUnion) ? 'data-add_quantity_by_union="' . json_encode($addQuantityByUnion) . '"' : '' ?>
+            <?= !empty($addQuantityByUnion) ? 'data-add_quantity_by_union="' . htmlspecialchars(json_encode($addQuantityByUnion)) . '"' : '' ?>
         >
         <input type="button" name="confirm_no" value="Нет"
                class="b-button b-button--social b-button--full-width b-cart-combination__btn--right js-ajax-item" data-url="<?= $ajaxUrl ?>"

@@ -28,6 +28,7 @@ use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentItem;
 use Bitrix\Sale\UserMessageException;
 use COption;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
@@ -51,7 +52,6 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
-use FourPaws\External\Manzana\Model\Card;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\External\ManzanaService;
@@ -77,7 +77,6 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderExtendException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
-use FourPaws\SapBundle\Service\Orders\StatusService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
@@ -1146,13 +1145,23 @@ class OrderService implements LoggerAwareInterface
 
         if (!$user->getDiscountCardNumber() && !$storage->getDiscountCardNumber()) {
             try {
-                $contact = $this->manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
-                if (($card = $contact->getCards()->first()) instanceof Card) {
-                    $storage->setDiscountCardNumber($card->cardNumber);
+//                $contact = $this->manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
+//                if (($card = $contact->getCards()->first()) instanceof Card) {
+//                    $storage->setDiscountCardNumber($card->cardNumber);
+//                }
+
+                $contactId = $this->manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
+                $cards = $this->manzanaService->getCardsByContactId($contactId);
+                foreach ($cards as $cardItem) {
+                    if ($cardItem->isActive()) {
+                        $storage->setDiscountCardNumber($cardItem->cardNumber);
+                        break;
+                    }
                 }
             } catch (WrongPhoneNumberException $e) {
             } catch (ManzanaServiceContactSearchNullException $e) {
             } catch (ManzanaServiceException $e) {
+            } catch (Exception $e) {
                 $this->log()->error(sprintf('failed to get discount card number: %s', $e->getMessage()), [
                     'phone' => $storage->getPhone(),
                 ]);
@@ -1871,6 +1880,14 @@ class OrderService implements LoggerAwareInterface
         $value = $commWay->getValue();
         $changed = false;
 
+        $propCopyOrderId = $this->getOrderPropertyByCode($order, 'COPY_ORDER_ID');
+        if (($value === OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS) && ($propCopyOrderId) && boolval($propCopyOrderId->getValue())) {
+            /*
+             * при создании заказов по подписке dadata может неправильно определить местоположение и выставляет это поле ранее
+             */
+            return;
+        }
+
         $deliveryFromShop = $this->deliveryService->isInnerDelivery($delivery) && $delivery->getSelectedStore()->isShop();
         $stockResult = $delivery->getStockResult();
         if (!$isFastOrder) {
@@ -1901,7 +1918,7 @@ class OrderService implements LoggerAwareInterface
                     break;
                 case $this->isSubscribe($order):
 
-                    $propCopyOrderId = $this->getOrderPropertyByCode($order, 'COPY_ORDER_ID');
+
                     $isFirsSubscribeOrder = ($propCopyOrderId) ? !\boolval($propCopyOrderId->getValue()) : true;
 
                     switch (true) {
@@ -2523,8 +2540,9 @@ class OrderService implements LoggerAwareInterface
                 return false;
             }
 
-            $sapStatus = StatusService::STATUS_CANCELED;
-            $this->sapOrderService->sendOrderStatus($order, $sapStatus);
+            // todo изначально хотели передавать в сап через файл, а сейчас хотят через АПИ
+//            $sapStatus = StatusService::STATUS_CANCELED;
+//            $this->sapOrderService->sendOrderStatus($order, $sapStatus);
 
             $connection->commitTransaction();
         } catch (\Exception $e) {
@@ -2609,8 +2627,9 @@ class OrderService implements LoggerAwareInterface
                 return false;
             }
 
-            $sapStatus = StatusService::STATUS_PICKUP_EXTEND;
-            $this->sapOrderService->sendOrderStatus($order, $sapStatus);
+            // todo изначально хотели передавать в сап через файл, а сейчас хотят через АПИ
+//            $sapStatus = StatusService::STATUS_PICKUP_EXTEND;
+//            $this->sapOrderService->sendOrderStatus($order, $sapStatus);
 
             $connection->commitTransaction();
         } catch (\Exception $e) {
@@ -2619,5 +2638,21 @@ class OrderService implements LoggerAwareInterface
         }
 
         return true;
+    }
+
+
+    /**
+     * @param Order $order
+     * @param string $code
+     *
+     * @return string
+     * @throws ArgumentException
+     * @throws NotImplementedException
+     */
+    public function getPropertyValueByCode(Order $order, string $code): string
+    {
+        $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
+
+        return $propertyValue ? ($propertyValue->getValue() ?? '') : '';
     }
 }

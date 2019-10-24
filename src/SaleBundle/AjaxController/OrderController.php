@@ -27,6 +27,7 @@ use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\DaDataExecuteException;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
@@ -619,19 +620,20 @@ class OrderController extends Controller implements LoggerAwareInterface
             $errors[] = $e->getMessage();
         }
 
-        if (empty($errors)) {
-            // проверка на корректность даты доставки
+        /* Если на шаге выбора доставки не выбирали адрес из подсказок, то пробуем определить его тут для проставления района Москвы */
+        if (($step === OrderStorageEnum::DELIVERY_STEP) && ($storage->getCityCode() === DeliveryService::MOSCOW_LOCATION_CODE) && ($storage->getMoscowDistrictCode() === '') && ($storage->getStreet()) && ($storage->getHouse() !== '')) {
+            $strAddress = sprintf('Москва, %s, %s', $storage->getStreet(), $storage->getHouse());
             try {
-                if (!$this->orderStorageService->validateDeliveryDate($storage)) {
-                    /*
-                     * Обнуление просиходит в fourpaws:order для того, что бы был редирект на нужный, тут просто валидация
-                     */
-                    if ($step != OrderStorageEnum::AUTH_STEP) {
-                        $step = OrderStorageEnum::AUTH_STEP;
-                        $errors[] = 'Некорректная дата доставки!';
-                    }
+                $okato = $this->locationService->getDadataLocationOkato($strAddress);
+                $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+
+                if (count($locations)) {
+                    $location = current($locations);
+                    $storage->setCity($location['NAME']);
+                    $storage->setCityCode($location['CODE']);
+                    $storage->setMoscowDistrictCode($location['CODE']);
                 }
-            } catch (\Exception $e) {
+            } catch (DaDataExecuteException $e) {
             }
         }
 
@@ -641,17 +643,17 @@ class OrderController extends Controller implements LoggerAwareInterface
 
                 // создание подписки на доставку и установка свойства "Списывать все баллы по подписке"
                 if ($storage->isSubscribe()) {
-                    if ($step == OrderStorageEnum::DELIVERY_STEP) {
+                    if ($step === OrderStorageEnum::DELIVERY_STEP) {
                         $result = $this->orderSubscribeService->createSubscriptionByRequest($storage, $request);
                         if (!$result->isSuccess()) {
                             $this->log()->error(implode(";\r\n", $result->getErrorMessages()));
-                            throw new OrderSubscribeException("Произошла ошибка оформления подписки на доставку, пожалуйста, обратитесь к администратору");
+                            throw new OrderSubscribeException('Произошла ошибка оформления подписки на доставку, пожалуйста, обратитесь к администратору');
                         }
                         $storage->setSubscribeId($result->getData()['subscribeId']);
                         $this->orderStorageService->updateStorage($storage, $step);
-                    } else if ($step == OrderStorageEnum::PAYMENT_STEP) {
-                        if ($storage->isSubscribe() && $request->get('subscribeBonus')) {
-                            $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
+                    } else if (($step === OrderStorageEnum::PAYMENT_STEP) && $request->get('subscribeBonus')) {
+                        $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
+                        if ($subscribe) {
                             $subscribe->setPayWithbonus(true);
                             $this->orderSubscribeService->update($subscribe);
                         }
@@ -665,7 +667,7 @@ class OrderController extends Controller implements LoggerAwareInterface
                 }
                 $step = $e->getRealStep();
             } catch (\Exception $e) {
-                $errors[$e->getCode()] = "Произошла ошибка, пожалуйста, обратитесь к администратору";
+                $errors[$e->getCode()] = 'Произошла ошибка, пожалуйста, обратитесь к администратору';
                 $this->log()->error(sprintf('Error in order creating: %s: %s', \get_class($e), $e->getMessage()));
             }
         }

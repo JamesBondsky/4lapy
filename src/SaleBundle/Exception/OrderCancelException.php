@@ -3,7 +3,8 @@
 
 namespace FourPaws\SaleBundle\Exception;
 
-class OrderCancelException  extends \Exception implements BaseExceptionInterface
+
+class OrderCancelException extends \Exception implements BaseExceptionInterface
 {
 
 }
