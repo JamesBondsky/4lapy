@@ -121,6 +121,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <input <?= $deliveryService->isDelivery($selectedDel) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-telephone js-delivery"
                                         data-set-delivery-type="<?= $delivery->getDeliveryId() ?>"
+                                        data-is-dostavista="0"
                                         id="order-delivery-address"
                                         type="radio"
                                         name="deliveryId"
@@ -157,6 +158,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <input <?= $deliveryService->isPickup($selectedDelivery) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-email js-myself-shop js-delivery"
                                         data-set-delivery-type="<?= $pickup->getDeliveryId() ?>"
+                                        data-is-dostavista="0"
                                         id="order-delivery-pick-up"
                                         type="radio"
                                         name="deliveryId"
@@ -182,6 +184,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <input <?= $deliveryService->isDostavistaDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-dostavista js-delivery"
                                         data-set-delivery-type="<?= $deliveryDostavista->getDeliveryId() ?>"
+                                        data-is-dostavista="1"
                                         id="order-delivery-address"
                                         type="radio"
                                         name="deliveryId"
@@ -210,6 +213,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                     <input <?= $deliveryService->isDobrolapDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
                                             class="b-choice-recovery__input js-recovery-dobrolap js-myself-shop js-delivery"
                                             data-set-delivery-type="<?= $deliveryDobrolap->getDeliveryId() ?>"
+                                            data-is-dostavista="0"
                                             id="order-delivery-dobrolap"
                                             type="radio"
                                             name="deliveryId"

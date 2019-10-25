@@ -81,6 +81,14 @@ if ($storage->getUserId() && !$addresses->isEmpty()) {
             <span class="b-radio__text-label">Доставить по другому адресу…</span>
         </label>
     </div>
+    <div class="b-delivery-type-time__warning b-delivery-type-time__warning-hidden js-dostavista-address-error">
+        <div class="b-delivery-type-time__warning-title b-delivery-type-time__warning-title--detail">
+            Экспресс-доставка по выбранному адресу невозможна,
+        </div>
+        <div class="b-delivery-type-time__warning-title b-delivery-type-time__warning-title--detail">
+            выберите другой адрес доставки внутри МКАД или воспользуйтесь самовывозом
+        </div>
+    </div>
 </div>
 <div class="b-radio-tab__new-address js-form-new-address js-hidden-valid-fields active" <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
     <div class="b-input-line b-input-line--new-address">
@@ -121,7 +129,7 @@ if ($storage->getUserId() && !$addresses->isEmpty()) {
         </div>
     </div>
     <div class="b-radio-tab__address-house">
-        <div class="b-input-line b-input-line--house b-input-line--house-address js-small-input js-only-number js-order-address-house">
+        <div class="b-input--dostavista-form b-input-line--house b-input-line--house-address js-small-input js-only-number js-order-address-house">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="order-address-house">Дом
                 </label><span class="b-input-line__require">(обязательно)</span>
@@ -138,7 +146,7 @@ if ($storage->getUserId() && !$addresses->isEmpty()) {
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--house">
+        <div class="b-input--dostavista-form b-input-line--house">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="order-address-part">Корпус
                 </label>
@@ -153,7 +161,7 @@ if ($storage->getUserId() && !$addresses->isEmpty()) {
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--house">
+        <div class="b-input--dostavista-form b-input-line--house">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="order-address-entrance">Подъезд
                 </label>
@@ -167,7 +175,7 @@ if ($storage->getUserId() && !$addresses->isEmpty()) {
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--house">
+        <div class="b-input--dostavista-form b-input-line--house">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="order-address-floor">Этаж
                 </label>
@@ -182,7 +190,7 @@ if ($storage->getUserId() && !$addresses->isEmpty()) {
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--house">
+        <div class="b-input--dostavista-form b-input-line--house">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="order-address-apart">Кв.,
                     офис
@@ -199,7 +207,11 @@ if ($storage->getUserId() && !$addresses->isEmpty()) {
             </div>
         </div>
     </div>
-    <span>Доставка из магазина  возможна только внутри МКАД, воспользуйтесь самовывозом</span>
+    <div class="b-input--dostavista-warning b-input--dostavista-warning-hidden js-dostavista-address-warning">
+        <span>
+            Доставка из магазина  возможна только внутри МКАД, воспользуйтесь самовывозом
+        </span>
+    </div>
     <div class="b-input-line b-radio-tab__address-map js-courierdelivery-map hidden">
         <div class="b-radio-tab-map b-radio-tab-map--order">
             <div class="b-radio-tab-map__label-wrapper">
@@ -219,42 +231,70 @@ if ($storage->getUserId() && !$addresses->isEmpty()) {
     </div>
 </div>
 
-<div class="b-delivery-type-time" data-container-delivery-type-time="true">
-    <ul class="b-radio-tab">
-        <li class="b-radio-tab__tab b-radio-tab__tab--express-dostavista" data-content-type-time-delivery="express">
-            <div class="b-input-line">
-                <div class="b-input-line__label-wrapper">
-                    <span class="b-input-line__label">Время доставки</span>
-                </div>
-                <div class="b-input b-input--registration-form b-input--time-express-delivery">
-                    <input class="b-input__input-field b-input__input-field--time-express-delivery js-no-valid"
-                           id="time-express-delivery"
-                           name="express_time_delivery"
-                           disabled="disabled"
-                           value="Сегодня, <?= (new DateTime())->format('d.m.Y') ?> — в течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?> часов с момента заказа"/>
-                    <div class="b-error">
-                        <span class="js-message"></span>
+<div class="js-dostavista-available b-choice-recovery-hidden">
+    <div class="b-delivery-type-time__info js-info-express-detail" style="display: block;">
+        <div class="b-delivery-type-time__info-title <?= ($deliveryDostavista->getData()['TEXT_EXPRESS_DETAIL']) ? 'b-delivery-type-time__info-title--detail' : '' ?>">
+            <?= str_replace(['[time]', '[price]'], [round($deliveryDostavista->getPeriodTo() / 60), ($deliveryDostavista->getPrice() > 0) ? 'за ' . $deliveryDostavista->getPrice() . ' ₽' : 'бесплатно'], $deliveryDostavista->getData()['TEXT_EXPRESS_DELIVERY']); ?>
+        </div>
+        <?php if ($deliveryDostavista->getData()['TEXT_EXPRESS_DETAIL']) { ?>
+            <div class="b-delivery-type-time__info-detail js-content-info-express-detail">
+                <?= $deliveryDostavista->getData()['TEXT_EXPRESS_DETAIL']; ?>
+            </div>
+            <div class="b-delivery-type-time__info-toggle js-btn-toggle-info-express-detail"></div>
+        <?php } ?>
+    </div>
+    <div class="b-choice-recovery b-choice-recovery--order-step b-choice-recovery--delivery-type-time">
+        <input class="b-choice-recovery__input" id="order-express-courier-delivery-stub" type="radio">
+        <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step b-choice-recovery-stub" for="order-express-courier-delivery-stub" style="width: 100%;">
+        <span class="b-choice-recovery__main-text">
+            <span class="b-choice-recovery__main-text">Экспресс</span>
+        </span>
+            <span class="b-choice-recovery__addition-text">
+            В&nbsp;течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
+        </span>
+            <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
+            В&nbsp;течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
+        </span>
+        </label>
+    </div>
+
+    <div class="b-delivery-type-time">
+        <ul class="b-radio-tab">
+            <li class="b-radio-tab__tab">
+                <div class="b-input-line">
+                    <div class="b-input-line__label-wrapper">
+                        <span class="b-input-line__label">Время доставки</span>
+                    </div>
+                    <div class="b-input b-input--registration-form b-input--time-express-delivery">
+                        <input class="b-input__input-field b-input__input-field--time-express-delivery js-no-valid"
+                               id="time-express-delivery"
+                               name="express_time_delivery"
+                               disabled="disabled"
+                               value="Сегодня, <?= (new DateTime())->format('d.m.Y') ?> — в течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?> часов с момента заказа"/>
+                        <div class="b-error">
+                            <span class="js-message"></span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
-                <div class="b-input-line__label-wrapper">
-                    <label class="b-input-line__label" for="order-comment">
-                        Комментарий к заказу
-                    </label>
-                </div>
-                <div class="b-input b-input--registration-form">
+                <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
+                    <div class="b-input-line__label-wrapper">
+                        <label class="b-input-line__label" for="order-comment">
+                            Комментарий к заказу
+                        </label>
+                    </div>
+                    <div class="b-input b-input--registration-form">
                         <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form b-input__input-field--step2-order"
                                   id="comment-express-delivery"
                                   name="comment_dostavista"
                                   placeholder="Укажите здесь ваши комментарии.
 Например, если для доставки необходим въезд на закрытую территорию. Курьер свяжется с Вами для оформления пропуска.
 При отсутствии пропуска – доставка будет осуществляться до КПП/шлагбаума."><?= $storage->getComment() ?></textarea>
-                    <div class="b-error">
-                        <span class="js-message"></span>
+                        <div class="b-error">
+                            <span class="js-message"></span>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </li>
-    </ul>
+            </li>
+        </ul>
+    </div>
 </div>
