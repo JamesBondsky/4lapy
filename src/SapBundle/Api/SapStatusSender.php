@@ -36,7 +36,7 @@ class SapStatusSender implements LoggerAwareInterface
     
     public function send()
     {
-        $response = $this->guzzleClient->request('POST', $this->apiUrl, ['WebID' => $this->orderNumber, 'StatusID' => $this->orderStatus]);
+        $response = $this->guzzleClient->request('POST', $this->apiUrl, ['json' => ['WebID' => $this->orderNumber, 'StatusID' => $this->orderStatus]]);
         
         if ($response->getStatusCode() == 200) {
             $body = \json_decode($response->getBody());
@@ -70,6 +70,7 @@ class SapStatusSender implements LoggerAwareInterface
                                 $body['MSGTEXT']
                             )
                         );
+                        return false;
                     break;
             }
             

@@ -2542,9 +2542,13 @@ class OrderService implements LoggerAwareInterface
             }
             
             $orderNumber = $order->getField('ACCOUNT_NUMBER');
-            // $sapStatus = StatusService::STATUS_CANCELED;
-            // $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
-
+            $sapStatus = StatusService::STATUS_CANCELED;
+            $setStatusResult = $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
+            
+            if (!$setStatusResult) {
+                $connection->rollbackTransaction();
+            }
+            
             $connection->commitTransaction();
         } catch (\Exception $e) {
             $connection->rollbackTransaction();
