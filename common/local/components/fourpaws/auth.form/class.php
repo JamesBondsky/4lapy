@@ -343,7 +343,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
                         if (!$curBasket->isEmpty() && !$userBasket->isEmpty()) {
                             $needConfirmBasket = true;
-                            $curItems = $curBasket->getBasketItems();
+                            //$curItems = $curBasket->getBasketItems();
 
                             /** @var BasketItem $item */
                             foreach ($userBasket->getBasketItems() as $key => $item) {
@@ -377,16 +377,16 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                                 }
 
                                 // Костыль для объединения одинаковых товаров
-	                            if (empty($detachFrom)) {
-	                                /** @var BasketItem $curItem */
-                                    foreach ($curItems as $curItem) {
-                                        if ($item->getProductId() === $curItem->getProductId()
-                                            && $item->getPrice() === $curItem->getPrice()
-                                        ) {
-                                            $detachFrom = $curItem->getId();
-                                        }
-                                    }
-	                            }
+//	                            if (empty($detachFrom)) {
+//	                                /** @var BasketItem $curItem */
+//                                    foreach ($curItems as $curItem) {
+//                                        if ($item->getProductId() === $curItem->getProductId()
+//                                            && $item->getPrice() === $curItem->getPrice()
+//                                        ) {
+//                                            $detachFrom = $curItem->getId();
+//                                        }
+//                                    }
+//	                            }
                                 if ($isGift || $isGiftSelected || !empty($detachFrom)) {
                                     if ($item->getId() > 0) {
                                         $delItemsByUnionIds[] = $item->getId();
