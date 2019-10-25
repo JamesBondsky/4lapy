@@ -460,6 +460,7 @@ class LocationService
      * @param int $limit
      * @param bool $needPath
      * @param bool $findByParent искать в названиях родительских местоположений
+     * @param bool $excludeMoscowDistricts
      *
      * @return array
      */
@@ -467,10 +468,11 @@ class LocationService
         $queryParams,
         int $limit = 0,
         bool $needPath = true,
-        bool $findByParent = false
+        bool $findByParent = false,
+        bool $excludeMoscowDistricts = false
     ): array
     {
-        $cacheFinder = function () use ($queryParams, $limit, $needPath, $findByParent) {
+        $cacheFinder = function () use ($excludeMoscowDistricts, $queryParams, $limit, $needPath, $findByParent) {
             /* для поиска по родительским местоположениям $needPath должен быть true и $queryParams являться массивом, чтобы из него можно было вытащить строку поиска */
             if (($findByParent && !$needPath) || ($queryParams instanceof Query)) {
                 $findByParent = false;
@@ -553,6 +555,7 @@ class LocationService
                  */
                 $parentList = [];
                 $hasFoundByParents = false;
+                $excludeLocation = false;
 
                 /** очень долгий запрос на получение родителей */
                 if ($needPath) {
@@ -578,6 +581,11 @@ class LocationService
                         $parentItem['TYPE'] = $this->stringArrayToArray($parentItem, 'TYPE');
                         $parentList[] = $parentItem;
 
+                        if ($excludeMoscowDistricts && ($parentItem['CODE'] === LocationService::LOCATION_CODE_MOSCOW)) {
+                            $excludeLocation = true;
+                            break;
+                        }
+
                         // ищем местоположение среди родителей
                         if ($findByParent) {
                             foreach ($queryParts as $queryPart) {
@@ -590,7 +598,7 @@ class LocationService
                     $item['PATH'] = $parentList;
                 }
 
-                if ($hasFoundByParents || !$findByParent) {
+                if (($hasFoundByParents || !$findByParent) && !$excludeLocation) {
                     $locations[$item['ID']] = $item;
                     $typeList[$item['TYPE_ID']][] = $item['ID'];
                 }
@@ -640,6 +648,7 @@ class LocationService
             return (new BitrixCache())
                 ->withTag('location_finder')
                 ->withTime(360000)
+                ->withClearCache(true)
                 ->withId(__METHOD__ . serialize(['queryParams' => $queryParams, 'limit' => $limit]))
                 ->resultOf($cacheFinder);
         } catch (\Exception $e) {
