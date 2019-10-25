@@ -56,13 +56,14 @@
                            id="name-pet"
                            placeholder=""
                            data-text="0"
+                           data-name-pet-form="true"
                            name="UF_NAME" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
             </div>
             <label class="b-registration__label b-registration__label--subscribe-delivery" for="type-pet">Вид животного</label>
-            <div class="b-select b-select--subscribe-delivery js-pet-view">
+            <div class="b-select b-select--subscribe-delivery">
                 <select class="b-select__block b-select__block--subscribe-delivery js-pet-view"
                         id="type-pet"
                         name="UF_TYPE">
@@ -97,11 +98,12 @@
                     <label class="b-input-line__label" for="birthday-pet">Дата рождения</label>
                 </div>
                 <div class="b-input b-input--registration-form">
-                    <input class="b-input__input-field b-input__input-field--registration-form"
+                    <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
                            type="text"
                            id="birthday-pet"
                            placeholder=""
                            data-text="2"
+                           autocomplete="off"
                            name="UF_BIRTHDAY" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -109,7 +111,7 @@
             </div>
             <div class="b-registration__wrapper-radio js-male">
                 <div class="b-radio b-radio--add-pet">
-                    <input class="b-radio__input"
+                    <input class="b-radio__input js-no-valid"
                            type="radio"
                            name="UF_GENDER"
                            id="male"
@@ -120,7 +122,7 @@
                     </label>
                 </div>
                 <div class="b-radio b-radio--add-pet">
-                    <input class="b-radio__input"
+                    <input class="b-radio__input js-no-valid"
                            type="radio"
                            name="UF_GENDER"
                            id="female"
@@ -133,6 +135,99 @@
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
+
+            <div class="b-size-select" style="display: none; " data-lk-pets-breed="size-select">
+                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-size">
+                    <div class="b-input-line__label-wrapper">
+                        <label class="b-input-line__label" for="size-pet">Размер</label>
+                    </div>
+                    <div class="b-select b-select--size-pet">
+                        <select class="b-select__block b-select__block--size-pet js-pet-size js-no-valid"
+                                id="size-pet"
+                                name="UF_SIZE">
+                            <option value="" disabled="disabled" selected="selected">Выберите из списка</option>
+                            <?php if (\is_array($arResult['PET_SIZES']) && !empty($arResult['PET_SIZES'])) {
+                                foreach ($arResult['PET_SIZES'] as $item) {?>
+                                    <option value="<?= $item['ID'] ?>"><?= $item['VALUE'] ?></option>
+                                    <?php
+                                }
+                            } ?>
+                            <option value="UNKNOWN">не знаю</option>
+                        </select>
+                        <div class="b-error"><span class="js-message"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: none;" data-lk-pets-breed="size-select-measure">
+                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-date js-date-valid">
+                        <div class="b-input-line__label-wrapper">
+                            <div class="b-input-line__label">
+                                Измерьте свою собаку и укажите параметры:
+                            </div>
+                        </div>
+                    </div>
+
+                    <img src="/static/build/images/inhtml/icons/size-dog_violet.svg" style="display: block; margin: 0 auto 20px auto; max-width: 200px;" />
+
+                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-back">
+                        <div class="b-input-line__label-wrapper">
+                            <label class="b-input-line__label" for="back-pet">1. Длина спины, см</label>
+                        </div>
+                        <div class="b-input b-input--registration-form">
+                            <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
+                                   type="text"
+                                   id="back-pet"
+                                   placeholder=""
+                                   data-text="0"
+                                   name="UF_BACK" />
+                            <div class="b-error"><span class="js-message"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-chest">
+                        <div class="b-input-line__label-wrapper">
+                            <label class="b-input-line__label" for="chest-pet">2. Обхват груди, см</label>
+                        </div>
+                        <div class="b-input b-input--registration-form">
+                            <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
+                                   type="text"
+                                   id="chest-pet"
+                                   placeholder=""
+                                   data-text="0"
+                                   name="UF_CHEST" />
+                            <div class="b-error"><span class="js-message"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-neck">
+                        <div class="b-input-line__label-wrapper">
+                            <label class="b-input-line__label" for="neck-pet">3. Обхват шеи, см</label>
+                        </div>
+                        <div class="b-input b-input--registration-form">
+                            <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
+                                   type="text"
+                                   id="neck-pet"
+                                   placeholder=""
+                                   data-text="0"
+                                   name="UF_NECK" />
+                            <div class="b-error"><span class="js-message"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet" style="display: none;" data-lk-pets-breed="size-select-measure-concrete-block">
+                        <div class="b-input-line__label-wrapper">
+                            <div class="b-input-line__label" style="font-weight: 400;">
+                                Скорее всего, у Вашего питомца <b data-lk-pets-breed="size-select-measure-concrete-size"></b> размер.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <button class="b-button b-button--subscribe-delivery">Добавить</button>
         </form>
     </div>

@@ -46,6 +46,7 @@
                            id="name-pet"
                            placeholder=""
                            data-text="0"
+                           data-name-pet-form="true"
                            name="UF_NAME" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -87,7 +88,7 @@
                     <label class="b-input-line__label" for="birthday-pet">Дата рождения</label>
                 </div>
                 <div class="b-input b-input--registration-form">
-                    <input class="b-input__input-field b-input__input-field--registration-form"
+                    <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
                            type="text"
                            id="birthday-pet"
                            placeholder=""
@@ -100,7 +101,7 @@
             </div>
             <div class="b-registration__wrapper-radio js-male">
                 <div class="b-radio b-radio--add-pet">
-                    <input class="b-radio__input"
+                    <input class="b-radio__input js-no-valid"
                            type="radio"
                            name="UF_GENDER"
                            id="male"
@@ -111,7 +112,7 @@
                     </label>
                 </div>
                 <div class="b-radio b-radio--add-pet">
-                    <input class="b-radio__input"
+                    <input class="b-radio__input js-no-valid"
                            type="radio"
                            name="UF_GENDER"
                            id="female"
