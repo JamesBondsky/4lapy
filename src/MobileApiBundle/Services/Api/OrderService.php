@@ -795,6 +795,8 @@ class OrderService
      */
     public function getDeliveryVariants()
     {
+        $basketProducts = $this->apiBasketService->getBasketProducts(true);
+        
         $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
         $delivery   = null;
         $pickup     = null;
@@ -817,13 +819,13 @@ class OrderService
         $dostavistaDelivery = (new DeliveryVariant());
         $dobrolapDelivery = (new DeliveryVariant());
 
-        if ($delivery) {
+        if ($delivery && $basketProducts->count() != 0) {
             $courierDelivery
                 ->setAvailable(true)
                 ->setDate(DeliveryTimeHelper::showTime($delivery))
                 ->setPrice($delivery->getDeliveryPrice());
         }
-        if ($pickup) {
+        if ($pickup && $basketProducts->count() != 0) {
             $pickupDelivery
                 ->setAvailable(true)
                 ->setDate(DeliveryTimeHelper::showTime(
