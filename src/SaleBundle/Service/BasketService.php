@@ -16,7 +16,6 @@ use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
@@ -41,14 +40,12 @@ use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\Catalog\Query\PriceQuery;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Enum\IblockType;
 use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
-use FourPaws\Helpers\IblockHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
@@ -73,7 +70,7 @@ use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use WebArch\BitrixCache\BitrixCache;
+use Symfony\Component\HttpFoundation\Request;
 
 /** @noinspection EfferentObjectCouplingInspection */
 
@@ -1784,5 +1781,46 @@ class BasketService implements LoggerAwareInterface
     public function getBasketPropertyValueByCode(BasketItem $item, string $code): string
     {
         return (string)($item->getPropertyCollection()->getPropertyValues()[$code]['VALUE'] ?? '');
+    }
+
+    /**
+     * @param Request|null $request
+     * @return bool
+     */
+    public function needShowAddressPopup(Request $request = null): bool
+    {
+        /** @var LocationService $locationService */
+        $locationService = App::getInstance()->getContainer()->get('location.service');
+        if ($locationService->getCurrentLocation() !== LocationService::LOCATION_CODE_MOSCOW) {
+            return false;
+        }
+
+        if (!$this->getBasket()->isEmpty()) {
+            return false;
+        }
+
+        if ($request instanceof Request) {
+            $hasCookieValue = ((int)$request->cookies->get('show_address_popup', 0) === 1);
+        } else {
+            $hasCookieValue = (isset($_COOKIE['show_address_popup']) && ((int)$_COOKIE['show_address_popup'] === 1));
+        }
+
+        if ($hasCookieValue) {
+            return false;
+        }
+
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
+        try {
+            foreach ($deliveryService->getByBasket($this->getBasket()) as $delivery) {
+                if ($deliveryService->isDelivery($delivery) || $deliveryService->isDostavistaDelivery($delivery)) {
+                    return true;
+                }
+            }
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        return false;
     }
 }
