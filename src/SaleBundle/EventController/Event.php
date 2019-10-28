@@ -4,6 +4,7 @@ namespace FourPaws\SaleBundle\EventController;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -18,9 +19,13 @@ use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
+use Bitrix\Sale\Internals\DiscountCouponTable;
+use Bitrix\Sale\Internals\Fields;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\OrderTable;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Exception;
@@ -52,8 +57,11 @@ use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserSearchInterface;
+use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -153,6 +161,12 @@ class Event extends BaseServiceHandler
             'addMarksToOrderBasket'
         ], $module);*/
 
+        /** Добавление газеты октябрь (3006893) в заказ */
+//        static::initHandler('OnSaleOrderBeforeSaved', [
+//            self::class,
+//            'addOctoberNewspaper'
+//        ], $module);
+
         /** генерация номера заказа */
         static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [
             self::class,
@@ -206,6 +220,15 @@ class Event extends BaseServiceHandler
             self::class,
             'setCouponUsed'
         ], $module);
+
+        /*static::initHandler('OnSaleOrderSaved', [
+            self::class,
+            'addCouponForSecondOrder'
+        ], $module);
+        static::initHandler('OnSaleOrderEntitySaved', [
+            self::class,
+            'addCouponForSecondOrder'
+        ], $module);*/
 
         /**
          * Сохранение имени пользователя
@@ -434,6 +457,94 @@ class Event extends BaseServiceHandler
         }
 
         return $result;
+    }
+
+    /**
+     * @param BitrixEvent $event
+     *
+     * @return EventResult
+     */
+    public static function addOctoberNewspaper(BitrixEvent $event): EventResult
+    {
+        try {
+            $curDate = new \DateTime();
+
+            if (!(((int)$curDate->format('Y') === 2019) && ((int)$curDate->format('m') === 10) && ((int)$curDate->format('d') < 28))) {
+                return new EventResult(EventResult::SUCCESS);
+            }
+
+            /** @var BasketService $basketService */
+            $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+            /** @var OrderService $orderService */
+            $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+
+            /** @var Order $order */
+            $order = $event->getParameter('ENTITY');
+
+            if ($orderService->isSubscribe($order)) {
+                $propCopyOrderId = $orderService->getOrderPropertyByCode($order, 'COPY_ORDER_ID');
+                $isFirsSubscribeOrder = ($propCopyOrderId) ? !\boolval($propCopyOrderId->getValue()) : true;
+
+                if (!$isFirsSubscribeOrder) {
+                    return new EventResult(EventResult::SUCCESS);
+                }
+            }
+
+            /** добавляем подарок только для нового заказа */
+            if (!$order->isNew()) {
+                return new EventResult(EventResult::SUCCESS);
+            }
+
+            if ($order instanceof Order) {
+                $offer = ElementTable::getList([
+                    'select' => ['ID', 'XML_ID'],
+                    'filter' => ['XML_ID' => BasketService::GIFT_NOVEMBER_NEWSPAPER_XML_ID],
+                    'limit' => 1,
+                ])->fetch();
+
+                if (!$offer || empty($offer) || !$offer['ID']) {
+                    return new EventResult(EventResult::SUCCESS);
+                }
+
+                $offerId = $offer['ID'];
+
+                /** @var Basket $basket */
+                $basket = $order->getBasket();
+
+                $items = $basket->getOrderableItems();
+                if ($items->isEmpty())
+                {
+                    return new EventResult(EventResult::ERROR);
+                }
+
+                /** @var BasketItem $item */
+                foreach ($items as $itemIndex => $item)
+                {
+                    if ($item->getProductId() === $offerId)
+                    {
+                        $basketService->deleteOfferFromBasket($item->getId());
+                    }
+                }
+
+                $basket->save();
+
+                $basketItem = $basketService->addOfferToBasket($offerId, 1, [], true, $basket);
+
+                if ($basketItem instanceof BasketItem) {
+                    $order->setFieldNoDemand(
+                        'PRICE',
+                        $order->getBasket()->getOrderableItems()->getPrice() + $order->getDeliveryPrice()
+                    );
+
+                    return new EventResult(EventResult::SUCCESS);
+                }
+            }
+        } catch (\Exception $e) {
+            $logger = LoggerFactory::create('october newspaper');
+            $logger->critical('failed to add october newspaper for order: ' . $e->getMessage());
+        }
+
+        return new EventResult(EventResult::ERROR);
     }
 
     /**
@@ -669,6 +780,28 @@ class Event extends BaseServiceHandler
             $promocode = BxCollection::getOrderPropertyByCode($propertyCollection, 'PROMOCODE');
             if ($promocode && $promocodeValue = $promocode->getValue())
             {
+                $bitrixCouponId = DiscountCouponTable::query()
+                    ->setFilter([
+                        'COUPON' => $promocodeValue,
+                    ])
+                    ->setSelect([
+                        'ID',
+                    ])
+                    ->setLimit(1)
+                    ->exec()
+                    ->fetch();
+                $bitrixCouponDeactivateResult = DiscountCouponTable::update($bitrixCouponId, ['ACTIVE' => 'N']);
+                if (!$bitrixCouponDeactivateResult->isSuccess()) {
+                    static::getLogger()
+                        ->error(
+                            sprintf(
+                                '%s. failed to deactivate bitrix coupon: %s',
+                                __FUNCTION__,
+                                implode('.', $bitrixCouponDeactivateResult->getErrorMessages())
+                            )
+                        );
+                }
+
                 $isPromoCodeProcessed = false;
                 try {
                     /** @var CouponService $couponService */
@@ -688,7 +821,7 @@ class Event extends BaseServiceHandler
                     }
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             static::getLogger()
                 ->error(
                     sprintf(
@@ -697,6 +830,89 @@ class Event extends BaseServiceHandler
                         $e->getMessage()
                     )
                 );
+        }
+    }
+
+    /**
+     * @param BitrixEvent $event
+     */
+    public static function addCouponForSecondOrder(BitrixEvent $event): void
+    {
+        // --------- Проверка, что заказ оплачен, завершен, не отменен и хотя бы одно из этих полей было изменено ---------
+        $isCheckNeeded = false;
+        $eventType = $event->getEventType();
+        if ($eventType === 'OnSaleOrderEntitySaved' && \FourPaws\PersonalBundle\Service\OrderService::STATUS_FINAL) {
+            $isCheckNeeded = true;
+        } elseif ($eventType === 'OnSaleOrderSaved') {
+            $isNew = $event->getParameter('IS_NEW');
+            $isChanged = $event->getParameter('IS_CHANGED');
+            if ($isNew || $isChanged) {
+                $isCheckNeeded = true;
+            }
+        }
+
+        if (!$isCheckNeeded) {
+            return;
+        }
+
+        /** @var Order $order */
+        $order = $event->getParameter('ENTITY');
+        /** @var Fields $fields */
+        $fields = $order->getFields();
+        $changedFields = $fields->getChangedKeys();
+
+        if ($order->isCanceled()
+            || (
+                !in_array('PAYED', $changedFields, true)
+                && !in_array('STATUS_ID', $changedFields, true)
+                && !in_array('CANCELED', $changedFields, true)
+            )
+        ) {
+            return;
+        }
+
+        $isPaid = $order->isPaid();
+        $isFinished = in_array($order->getField('STATUS_ID'), \FourPaws\PersonalBundle\Service\OrderService::STATUS_FINAL, true);
+
+        if (!$isPaid || !$isFinished) {
+            return;
+        }
+
+        /** @var UserService $userService */
+        $userService = Application::getInstance()->getContainer()->get(UserSearchInterface::class);
+        $userId = $order->getUserId();
+        try
+        {
+            $user = $userService->findOne($userId);
+        } catch (NotFoundException $e)
+        {
+        }
+        if (isset($user) && !$user->isGotSecondOrderCoupon()) { // Если еще не был выдан купон на второй заказ
+            // --------- Проверка, что это первый завершенный заказ пользователя ---------
+            $finishedOrdersCount = (int)OrderTable::getCount([
+                    '=USER_ID' => $userId,
+                    '=PAYED' => 'Y',
+                    '=CANCELED' => 'N',
+                    '=STATUS_ID' => \FourPaws\PersonalBundle\Service\OrderService::STATUS_FINAL,
+                ]);
+            if ($finishedOrdersCount === 1) {
+                /** @var PersonalOffersService $personalOffersService */
+                $personalOffersService = Application::getInstance()->getContainer()->get('personal_offers.service');
+                try
+                {
+                    $personalOffersService->addUniqueOfferCoupon($userId, $personalOffersService::SECOND_ORDER_OFFER_CODE);
+
+                    $user->setGotSecondOrderCoupon(true);
+                    Application::getInstance()->getContainer()->get(UserRepository::class)->update($user);
+                } catch (Exception $e) {
+                    self::getLogger()
+                        ->critical(\sprintf(
+                            '%s. Ошибка добавления купона на второй заказ: %s',
+                            __FUNCTION__,
+                            $e->getMessage()
+                        ));
+                }
+            }
         }
     }
 
@@ -992,7 +1208,7 @@ class Event extends BaseServiceHandler
                 );
 
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $logger = LoggerFactory::create('piggyBank');
             $logger->critical('failed to add PiggyBank marks for order: ' . $e->getMessage());
         }

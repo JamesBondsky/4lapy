@@ -8,6 +8,10 @@ namespace FourPaws\Search\Helper;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Iblock\ElementTable;
+use Bitrix\Iblock\PropertyTable;
+use Bitrix\Main\Entity\Base;
+use Bitrix\Main\Result;
 use Elastica\Client;
 use Elastica\Document;
 use Elastica\Exception\InvalidException;
@@ -16,20 +20,27 @@ use Elastica\Index;
 use Elastica\Query;
 use Elastica\Search;
 use Exception;
+use FourPaws\App\Application;
 use FourPaws\App\Env;
 use FourPaws\BitrixOrm\Collection\CollectionBase;
 use FourPaws\Catalog\Model\Brand;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\BrandQuery;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\Search\Enum\DocumentType;
 use FourPaws\Search\Exception\Index\IndexExceptionInterface;
 use FourPaws\Search\Exception\Index\NotActiveException;
 use FourPaws\Search\Exception\Index\WrongEntityPassedException;
 use FourPaws\Search\Factory;
 use FourPaws\Search\Model\CatalogSyncMsg;
+use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Serializer;
 use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Psr\Log\LoggerAwareInterface;
@@ -402,7 +413,7 @@ class IndexHelper implements LoggerAwareInterface
                         'hasActions'                       => ['type' => 'boolean'],
                         'hasImages'                        => ['type' => 'boolean'],
                         'hasStocks'                        => ['type' => 'boolean'],
-                        'deliveryAvailability'             => ['type' => 'keyword'],
+                        'availableStores'                  => ['type' => 'keyword'],
                         'searchBooster'                    => ['type' => 'text', 'analyzer' => 'detail-text-analyzator']
                     ],
                 ],
@@ -466,6 +477,7 @@ class IndexHelper implements LoggerAwareInterface
 
             return $result;
         });
+
         $documents = array_map(function (Product $product) {
             return $this->factory->makeProductDocument($product);
         }, $products);

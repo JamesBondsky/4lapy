@@ -2,6 +2,9 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Sale\Location\ExternalServiceTable;
+use Bitrix\Sale\Location\ExternalTable;
 use Closure;
 use Exception;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -19,6 +22,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\PersonalBundle\Service\AddressService;
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use FourPaws\MobileApiBundle\Exception\SystemException;
+use WebArch\BitrixCache\BitrixCache;
 
 class CityService implements LoggerAwareInterface
 {
@@ -244,5 +248,85 @@ class CityService implements LoggerAwareInterface
             ->setHasMetro($data['CODE'] === LocationService::LOCATION_CODE_MOSCOW)
             ->setLatitude($data['LATITUDE'])
             ->setLongitude($data['LONGITUDE']);
+    }
+
+    public function getKladrIdByLocationsIds(array $locationsIds)
+    {
+        $getData = function () use ($locationsIds) {
+            $results = ExternalTable::query()
+                ->setSelect(['LOCATION_ID', 'XML_ID'])
+                ->setFilter([
+                    'SERVICE.CODE' => LocationService::KLADR_SERVICE_CODE,
+                    '=LOCATION_ID'      => $locationsIds,
+                ])
+                ->registerRuntimeField(
+                    new ReferenceField(
+                        'SERVICE',
+                        ExternalServiceTable::getEntity(),
+                        ['=this.SERVICE_ID' => 'ref.ID']
+                    )
+                )
+                ->exec()->fetchAll();
+
+            $result = [];
+            foreach ($results as $res) {
+                $result[$res['LOCATION_ID']] = $res['XML_ID'];
+            }
+
+            return $result;
+        };
+
+        $dataKey = md5(implode(',', $locationsIds));
+
+        return (new BitrixCache())
+            ->withTag('location_finder')
+            ->withTime(360000)
+            ->withId(__METHOD__ . $dataKey)
+            ->resultOf($getData);
+    }
+
+    /**
+     * @param array $locations
+     * @return array
+     */
+    public function convertInDadataFormat(array $locations)
+    {
+        $allowLocations = [];
+
+        $ignoreTypes = ['COUNTRY_DISTRICT', 'COUNTRY'];
+
+        foreach ($locations as $locationItem) {
+            //$locationItem
+            $regionWithType = '';
+            if ($locationItem['PATH']) {
+                $region = [];
+
+                foreach ($locationItem['PATH'] as $pathItem) {
+                    if (!in_array($pathItem['TYPE']['CODE'], $ignoreTypes)) {
+                        $region[] = $pathItem['NAME'];
+                    }
+                }
+
+                if ($region) {
+                    $regionWithType = implode(',', $region);
+                }
+            }
+
+            $allowLocations[] = [
+                'data' => [
+                    'city' => $locationItem['NAME'],
+                    'region_with_type' => $regionWithType,
+                    'kladr_id' => $locationItem['CODE'],
+                    'code' => $locationItem['CODE'],
+                ],
+                'unrestricted_value' => $locationItem['NAME'],
+            ];
+        }
+
+        usort($allowLocations, function ($a, $b) {
+            return mb_strlen($a['data']['city'], 'UTF-8') - mb_strlen($b['data']['city'], 'UTF-8');
+        });
+
+        return $allowLocations;
     }
 }

@@ -6,19 +6,17 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\Error;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
-use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
-use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use Bitrix\Sale\UserMessageException;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
@@ -28,10 +26,6 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Service\IntervalService;
-use FourPaws\PersonalBundle\Entity\OrderSubscribe;
-use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
-use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -164,11 +158,15 @@ class OrderStorageService
      * @param Request $request
      * @param string $step
      *
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     * @throws OrderSubscribeException
      * @return OrderStorage
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
      */
     public function setStorageValuesFromRequest(OrderStorage $storage, Request $request, string $step): OrderStorage
     {
@@ -176,6 +174,21 @@ class OrderStorageService
         return $this->setStorageValuesFromArray($storage, $data, $step);
     }
 
+    /**
+     * @param OrderStorage $storage
+     * @param array $data
+     * @param string $step
+     *
+     * @return OrderStorage
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     */
     public function setStorageValuesFromArray(OrderStorage $storage, array $data, string $step): OrderStorage
     {
         $mapping = [
@@ -232,6 +245,7 @@ class OrderStorageService
             case OrderStorageEnum::DELIVERY_STEP:
                 try {
                     $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
+
                     if (\in_array($deliveryCode, array_merge(DeliveryService::DELIVERY_CODES, [DeliveryService::DELIVERY_DOSTAVISTA_CODE]), true)) {
                         switch ($data['delyveryType']) {
                             case 'twoDeliveries':
@@ -315,6 +329,16 @@ class OrderStorageService
                 break;
         }
 
+        try {
+            $currentUser = $this->currentUserProvider->getCurrentUser();
+
+            if ($currentUser && $storage->getUserId() !== $currentUser->getId()) {
+                return $storage;
+            }
+        } catch (Exception $e) {
+
+        }
+
         foreach ($data as $name => $value) {
             if (null === $value) {
                 continue;
@@ -352,10 +376,11 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param string       $step
+     * @param string $step
      *
-     * @throws OrderStorageValidationException
      * @return bool
+     * @throws OrderStorageSaveException
+     * @throws OrderStorageValidationException
      */
     public function updateStorage(OrderStorage $storage, string $step = OrderStorageEnum::AUTH_STEP): bool
     {
@@ -746,5 +771,53 @@ class OrderStorageService
     public function storageToArray(OrderStorage $storage): array
     {
         return $this->storageRepository->toArray($storage);
+    }
+
+    /**
+     * Проверка то, не пытаемся ли доставить заказ в прошлое
+     *
+     * @param OrderStorage $storage
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @throws UserMessageException
+     */
+    public function validateDeliveryDate($storage): bool
+    {
+        if ($storage->getDeliveryInterval() < 1) {
+            return true; // значит еще не выбрали
+        }
+
+        if ($selectedDelivery = $this->getSelectedDelivery($storage)) {
+            if ($this->deliveryService->isPickup($selectedDelivery)) {
+                return true;
+            }
+
+            if ($selectedDelivery->isSuccess()) {
+                $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, 10)[$storage->getDeliveryDate()];
+            }
+
+            return !($selectedDelivery->getDeliveryDate()->getTimestamp() < (new \DateTime())->getTimestamp());
+        }
+
+        return true;
+    }
+
+    /**
+     * @param OrderStorage $storage
+     * @return OrderStorage
+     * @throws Exception
+     */
+    public function clearDeliveryDate($storage): OrderStorage
+    {
+        $storage
+            ->setDeliveryDate(0)
+            ->setCurrentDate(new \DateTime());
+
+        return $storage;
     }
 }

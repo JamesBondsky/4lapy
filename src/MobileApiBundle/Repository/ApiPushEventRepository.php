@@ -83,7 +83,9 @@ class ApiPushEventRepository implements ApiPushEventRepositoryInterface
             ->addSelect('*')
             ->addSelect('MESSAGE.UF_MESSAGE', 'MESSAGE_TEXT')
             ->addSelect('MESSAGE.UF_TYPE', 'MESSAGE_TYPE')
-            ->addSelect('MESSAGE.UF_EVENT_ID', 'EVENT_ID');
+            ->addSelect('MESSAGE.UF_EVENT_ID', 'EVENT_ID')
+            ->addSelect('MESSAGE.UF_TITLE', 'MESSAGE_TITLE')
+            ->addSelect('URL', 'PHOTO_URL');
         if ($criteria) {
             $query->setFilter($criteria);
         }
@@ -102,6 +104,7 @@ class ApiPushEventRepository implements ApiPushEventRepositoryInterface
         if ($dbResult->getSelectedRowsCount() === 0) {
             return [];
         }
+
         return $this->transformer->fromArray(
             $dbResult->fetchAll(),
             'array<' . ApiPushEvent::class . '>',
@@ -138,6 +141,33 @@ class ApiPushEventRepository implements ApiPushEventRepositoryInterface
             throw new BitrixException($exception->getMessage(), $exception->getCode(), $exception);
         }
         return $result->isSuccess();
+    }
+
+    /**
+     * @param ApiPushEvent $pushEvent
+     * @return \Bitrix\Main\Entity\AddResult
+     */
+    public function createEvent(ApiPushEvent $pushEvent)
+    {
+        $validationResult = $this->validator->validate($pushEvent, null, [CrudGroups::CREATE]);
+        if ($validationResult->count() > 0) {
+            throw new ValidationException('Wrong push event passed');
+        }
+        $data = $this
+            ->transformer
+            ->toArray(
+                $pushEvent,
+                SerializationContext::create()->setGroups([CrudGroups::CREATE])
+            );
+        if (!\is_array($data)) {
+            throw new WrongTransformerResultException('Wrong transform result for push event');
+        }
+        try {
+            $result = ApiPushEventTable::add($data);
+        } catch (\Exception $exception) {
+            throw new BitrixException($exception->getMessage(), $exception->getCode(), $exception);
+        }
+        return $result;
     }
 
     /**

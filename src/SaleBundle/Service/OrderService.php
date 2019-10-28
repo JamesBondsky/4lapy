@@ -10,6 +10,7 @@ use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -26,6 +27,7 @@ use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentItem;
 use Bitrix\Sale\UserMessageException;
 use COption;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
@@ -42,6 +44,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
+use FourPaws\DeliveryBundle\Exception\RuntimeException;
 use FourPaws\DeliveryBundle\Service\DeliveryScheduleResultService;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\DostavistaService;
@@ -51,6 +54,7 @@ use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Card;
+use FourPaws\External\Manzana\Model\CardsByContractCards;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\External\ManzanaService;
@@ -311,8 +315,8 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @param OrderStorage                    $storage
-     * @param Basket|null                     $basket
+     * @param OrderStorage $storage
+     * @param Basket|null $basket
      * @param CalculationResultInterface|null $selectedDelivery
      *
      * @return Order
@@ -320,16 +324,16 @@ class OrderService implements LoggerAwareInterface
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
-     * @throws BitrixProxyException
      * @throws DeliveryNotAvailableException
      * @throws DeliveryNotFoundException
-     * @throws LoaderException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
      * @throws OrderCreateException
      * @throws StoreNotFoundException
      * @throws UserMessageException
+     * @throws ObjectException
      */
     public function initOrder(
         OrderStorage $storage,
@@ -412,17 +416,30 @@ class OrderService implements LoggerAwareInterface
                 } elseif ($diff > 0) {
                     $toUpdate['QUANTITY'] = $resultByOffer->getAmount();
 
-                    $this->basketService->addOfferToBasket(
-                        $basketItem->getProductId(),
-                        $diff,
-                        [
-                            'CUSTOM_PRICE' => 'Y',
-                            'DELAY' => BitrixUtils::BX_BOOL_TRUE,
-                            'PROPS' => $basketItem->getPropertyCollection()->getPropertyValues(),
-                        ],
-                        false,
-                        $basket
-                    );
+                    /*
+                     * $this->basketService->addOfferToBasket нельзя использовать, так как он обновит QUANTITY
+                     * у элемента корзины, а нам нужно создать новый basketItem с DELAY => 'Y'
+                     */
+
+                    $delayBasketItem = $basket->createItem('catalog', $basketItem->getProductId());
+
+                    $delayBasketItem->setFields([
+                        'CUSTOM_PRICE' => BitrixUtils::BX_BOOL_TRUE,
+                        'DELAY' => BitrixUtils::BX_BOOL_TRUE,
+                    ]);
+
+                    $delayItemPropertyCollection = $delayBasketItem->getPropertyCollection();
+
+                    foreach ($basketItem->getPropertyCollection()->getPropertyValues() as $property) {
+                        if (in_array($property['CODE'], ['CATALOG.XML_ID', 'PRODUCT.XML_ID'])) {
+                            $delayItemProperty = $delayItemPropertyCollection->createItem();
+                            $delayItemProperty->setFields([
+                                'NAME' => $property['NAME'],
+                                'CODE' => $property['CODE'],
+                                'VALUE' => $property['VALUE'],
+                            ]);
+                        }
+                    }
                 }
 
                 if (!empty($toUpdate)) {
@@ -531,6 +548,8 @@ class OrderService implements LoggerAwareInterface
                     if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
                         /** @var PickupResult $selectedDelivery */
                         $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
+                    } else if ($this->deliveryService->isDpdDelivery($selectedDelivery) || $this->deliveryService->isDpdPickup($selectedDelivery)) {
+                        $value = $selectedDelivery->getSelectedStore()->getXmlId();
                     } else if ($this->deliveryService->isPickup($selectedDelivery)) {
                         /** @var PickupResult $selectedDelivery */
                         $value = $storage->getDeliveryPlaceCode() ?: $selectedDelivery->getSelectedShop()->getXmlId();
@@ -628,13 +647,17 @@ class OrderService implements LoggerAwareInterface
                     'SHIPMENT_PLACE_CODE' => $nearShop->getXmlId(),
                 ]
             );
-        } elseif (!($selectedDelivery->getStockResult()->getDelayed()->isEmpty() &&
+        } elseif (
+            !($selectedDelivery->getStockResult()->getDelayed()->isEmpty()
+                &&
                 (
-                    ($this->deliveryService->isInnerDelivery($selectedDelivery) && $selectedDelivery->getSelectedStore()->isShop()) ||
-                    $this->deliveryService->isInnerPickup($selectedDelivery)
-                )) ||
-            mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                    ($this->deliveryService->isInnerDelivery($selectedDelivery) && $selectedDelivery->getSelectedStore()->isShop())
+                    || $this->deliveryService->isInnerPickup($selectedDelivery)
+                )
+            )
+            ||  mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
         ) {
+
             /**
              * Месье Костелье для районов Москвы (установка SHIPMENT_PLACE_CODE если есть базовый магазин для зоны)
              */
@@ -646,11 +669,13 @@ class OrderService implements LoggerAwareInterface
             foreach ($order->getBasket() as $itemKey => $item) {
                 $offer = OfferQuery::getById($item->getProductId());
                 $selectedShop = $selectedDelivery->getSelectedStore();
+
                 if ($selectedShop instanceof Store) {
                     $shipmentPlaceCode = $selectedShop->getXmlId();
                 } else {
                     $shipmentPlaceCode = self::STORE;
                 }
+
                 /** @var DeliveryScheduleResult $deliveryResult */
                 if ($shipmentResults &&
                     ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
@@ -661,6 +686,7 @@ class OrderService implements LoggerAwareInterface
                         $shipmentDays[$shipmentPlaceCode] = $days;
                     }
                 }
+
                 $arShipmentPlaceCode[$itemKey] = $shipmentPlaceCode;
                 if ($offer->isAvailable() && $offer->isByRequest()) {
                     $isSetParam[] = $item->getProductId();
@@ -674,8 +700,8 @@ class OrderService implements LoggerAwareInterface
                         $shipmentPlaceCodeDefault = $shipmentPlaceCode;
                     }
                 }
-
             }
+
             foreach ($order->getBasket() as $itemKey => $item) {
                 if (!in_array($item->getProductId(), $isSetParam)) {
                     $this->basketService->setBasketItemPropertyValue(
@@ -685,12 +711,15 @@ class OrderService implements LoggerAwareInterface
                     );
                 }
             }
+
             $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', $shipmentPlaceCodeDefault);
             if (!empty($shipmentDays)) {
                 arsort($shipmentDays);
                 $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
             }
         }
+
+        $this->basketService->setDC01AmountProperty($basket);
 
         /**
          * Задание способов оплаты
@@ -1111,13 +1140,23 @@ class OrderService implements LoggerAwareInterface
 
         if (!$user->getDiscountCardNumber() && !$storage->getDiscountCardNumber()) {
             try {
-                $contact = $this->manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
-                if (($card = $contact->getCards()->first()) instanceof Card) {
-                    $storage->setDiscountCardNumber($card->cardNumber);
+//                $contact = $this->manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
+//                if (($card = $contact->getCards()->first()) instanceof Card) {
+//                    $storage->setDiscountCardNumber($card->cardNumber);
+//                }
+
+                $contactId = $this->manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
+                $cards = $this->manzanaService->getCardsByContactId($contactId);
+                foreach ($cards as $cardItem) {
+                    if ($cardItem->isActive()) {
+                        $storage->setDiscountCardNumber($cardItem->cardNumber);
+                        break;
+                    }
                 }
             } catch (WrongPhoneNumberException $e) {
             } catch (ManzanaServiceContactSearchNullException $e) {
             } catch (ManzanaServiceException $e) {
+            } catch (Exception $e) {
                 $this->log()->error(sprintf('failed to get discount card number: %s', $e->getMessage()), [
                     'phone' => $storage->getPhone(),
                 ]);
@@ -1836,6 +1875,14 @@ class OrderService implements LoggerAwareInterface
         $value = $commWay->getValue();
         $changed = false;
 
+        $propCopyOrderId = $this->getOrderPropertyByCode($order, 'COPY_ORDER_ID');
+        if (($value === OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS) && ($propCopyOrderId) && boolval($propCopyOrderId->getValue())) {
+            /*
+             * при создании заказов по подписке dadata может неправильно определить местоположение и выставляет это поле ранее
+             */
+            return;
+        }
+
         $deliveryFromShop = $this->deliveryService->isInnerDelivery($delivery) && $delivery->getSelectedStore()->isShop();
         $stockResult = $delivery->getStockResult();
         if (!$isFastOrder) {
@@ -1861,26 +1908,25 @@ class OrderService implements LoggerAwareInterface
                 case $isFastOrder:
                     $value = OrderPropertyService::COMMUNICATION_ONE_CLICK;
                     break;
+                case $this->deliveryService->isDelivery($delivery) && $address && !$address->isValid():
+                    $value = OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS;
+                    break;
                 case $this->isSubscribe($order):
 
-                    $propCopyOrderId = $this->getOrderPropertyByCode($order, 'COPY_ORDER_ID');
+
                     $isFirsSubscribeOrder = ($propCopyOrderId) ? !\boolval($propCopyOrderId->getValue()) : true;
 
                     switch (true) {
-                        case ($isFirsSubscribeOrder && ($value == OrderPropertyService::COMMUNICATION_SMS)):
+                        case ($isFirsSubscribeOrder && (($value == OrderPropertyService::COMMUNICATION_SMS) || $delivery->getSelectedStore()->isShop())):
                             $value = OrderPropertyService::COMMUNICATION_FIRST_SUBSCRIBE_SMS;
                             break;
-                        case ($isFirsSubscribeOrder && ($value == OrderPropertyService::COMMUNICATION_PHONE)):
+                        case ($isFirsSubscribeOrder && ($value == OrderPropertyService::COMMUNICATION_PHONE) && !$delivery->getSelectedStore()->isShop()):
                             $value = OrderPropertyService::COMMUNICATION_FIRST_SUBSCRIBE_PHONE;
                             break;
                         default:
                             $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
                             break;
                     }
-                    break;
-
-                case $this->deliveryService->isDelivery($delivery) && $address && !$address->isValid():
-                    $value = OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS;
                     break;
                 // способ получения 07
                 case $this->deliveryService->isDpdPickup($delivery):
@@ -2404,5 +2450,20 @@ class OrderService implements LoggerAwareInterface
         }
 
         return $scheduleResultOptimal;
+    }
+
+    /**
+     * @param Order $order
+     * @param string $code
+     *
+     * @return string
+     * @throws ArgumentException
+     * @throws NotImplementedException
+     */
+    public function getPropertyValueByCode(Order $order, string $code): string
+    {
+        $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
+
+        return $propertyValue ? ($propertyValue->getValue() ?? '') : '';
     }
 }

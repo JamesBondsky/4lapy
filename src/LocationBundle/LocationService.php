@@ -14,6 +14,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\ORM\Query\Result;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Location\ExternalServiceTable;
 use Bitrix\Sale\Location\ExternalTable;
@@ -26,6 +27,7 @@ use CBitrixLocationSelectorSearchComponent;
 use CIBlockElement;
 use Exception;
 use FourPaws\Adapter\DaDataLocationAdapter;
+use FourPaws\Adapter\Model\Input\DadataLocation;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -455,49 +457,106 @@ class LocationService
      * Поиск местоположения по названию
      *
      * @param Query|array $queryParams
-     * @param int         $limit
-     * @param bool        $needPath
+     * @param int $limit
+     * @param bool $needPath
+     * @param bool $findByParent искать в названиях родительских местоположений
      *
      * @return array
      */
     public function findLocationNew(
         $queryParams,
         int $limit = 0,
-        bool $needPath = true
-    ): array {
-        $cacheFinder = function () use ($queryParams, $limit, $needPath) {
+        bool $needPath = true,
+        bool $findByParent = false
+    ): array
+    {
+        $cacheFinder = function () use ($queryParams, $limit, $needPath, $findByParent) {
+            /* для поиска по родительским местоположениям $needPath должен быть true и $queryParams являться массивом, чтобы из него можно было вытащить строку поиска */
+            if (($findByParent && !$needPath) || ($queryParams instanceof Query)) {
+                $findByParent = false;
+            }
+
+            $locationQueryOrder = ['TYPE.DISPLAY_SORT' => 'asc', 'SORT' => 'asc'];
+            $locationQueryFilter = $queryParams;
+            $locationQuerySelect = [
+                'ID',
+                'CODE',
+                'DEPTH_LEVEL',
+                'LEFT_MARGIN',
+                'RIGHT_MARGIN',
+                'TYPE_ID',
+                'LATITUDE',
+                'LONGITUDE'
+            ];
+
             if (!($queryParams instanceof Query)) {
                 /** сразу в селект не добалять позиции с join - получать их позже - для скорости
                  * поиск по коду и только по названию без родителя будет быстрее */
-                $query = LocationTable::query()->setFilter($queryParams)->setSelect([
-                    'ID',
-                    'CODE',
-                    'DEPTH_LEVEL',
-                    'LEFT_MARGIN',
-                    'RIGHT_MARGIN',
-                    'TYPE_ID',
-                    'LATITUDE',
-                    'LONGITUDE'
-                ]);
+                $query = LocationTable::query()->setOrder($locationQueryOrder)->setFilter($locationQueryFilter)->setSelect($locationQuerySelect);
             } else {
                 $query = $queryParams;
             }
+
             if ($limit > 0) {
                 $query->setLimit($limit);
             }
-            $res = $query->exec();
+
+            $res = $query->exec()->fetchAll();
+
+            $queryParts = [];
+
+            /* Если включена опция "поиск с учетом названий родительских местоположений" и данная выборка пустая,
+             * то возможно в запросе несколько слов, в которых содержится информация о регионе */
+            if ($findByParent && (!$res || empty($res))) {
+                /* Пробуем найти в фильтре название местоположения, чтобы заменить его */
+                $queryString = false;
+                $filterKeyName = false;
+
+                foreach ($queryParams as $key => $value) {
+                    if (strpos($key, 'NAME.NAME_UPPER') !== false) {
+                        $queryString = $value;
+                        $filterKeyName = $key;
+                    }
+                }
+
+                if (($queryString !== false) && ($filterKeyName !== false)) {
+                    $queryParts = explode(' ', $queryString);
+
+                    if (empty($queryParts)) {
+                        return [];
+                    }
+
+                    foreach ($queryParts as $key => $queryPart) {
+                        $queryParts[$key] = ToUpper($queryPart);
+                    }
+
+                    $locationQueryFilter[$filterKeyName] = $queryParts[0];
+                    $query = LocationTable::query()->setOrder($locationQueryOrder)->setFilter($locationQueryFilter)->setSelect($locationQuerySelect);
+
+                    unset($queryParts[0]);
+
+                    $res = $query->exec()->fetchAll();
+                }
+            } else {
+                // если ищем в названиях родителей, а выборка не пустая, то не ищем среди родителей
+                $findByParent = false;
+            }
+
             $locations = [];
             $typeList = [];
-            while ($item = $res->fetch()) {
-                $typeList[$item['TYPE_ID']][] = $item['ID'];
+
+            foreach ($res as $item) {
                 /** для получения родетелей от запроса в цикле не уйти -
                  * если делать в основ запросе- то запрос буде слишком тяжелый,
                  * так как стандартно идет подключение через left_join
                  * в подзапросе уже используем поля с join так как выборка маленькая
                  */
                 $parentList = [];
+                $hasFoundByParents = false;
+
                 /** очень долгий запрос на получение родителей */
                 if ($needPath) {
+                    /** @var Result $parentRes */
                     $parentRes = LocationTable::query()
                         ->where('DEPTH_LEVEL', '<', $item['DEPTH_LEVEL'])
                         ->where('LEFT_MARGIN', '<', $item['LEFT_MARGIN'])
@@ -505,42 +564,66 @@ class LocationService
                         ->setSelect([
                             'ID',
                             'CODE',
-                            'DISPLAY'    => 'NAME.NAME',
-                            '_TYPE_ID'   => 'TYPE.ID',
+                            'DISPLAY' => 'NAME.NAME',
+                            '_TYPE_ID' => 'TYPE.ID',
                             '_TYPE_CODE' => 'TYPE.CODE',
                             '_TYPE_NAME' => 'TYPE.NAME.NAME',
                         ])
                         ->setOrder(['_TYPE_ID' => 'ASC'])
                         ->exec();
+
                     while ($parentItem = $parentRes->fetch()) {
                         $parentItem['NAME'] = $parentItem['DISPLAY'];
                         unset($parentItem['DISPLAY']);
                         $parentItem['TYPE'] = $this->stringArrayToArray($parentItem, 'TYPE');
                         $parentList[] = $parentItem;
+
+                        // ищем местоположение среди родителей
+                        if ($findByParent) {
+                            foreach ($queryParts as $queryPart) {
+                                if (!$hasFoundByParents && (strpos(ToUpper($parentItem['NAME']), $queryPart) !== false)) {
+                                    $hasFoundByParents = true;
+                                }
+                            }
+                        }
                     }
                     $item['PATH'] = $parentList;
                 }
-                $locations[$item['ID']] = $item;
+
+                if ($hasFoundByParents || !$findByParent) {
+                    $locations[$item['ID']] = $item;
+                    $typeList[$item['TYPE_ID']][] = $item['ID'];
+                }
             }
+
             if (!empty($locations)) {
                 $locationIds = array_keys($locations);
-                $res = NameLocationTable::query()->setSelect([
-                    'NAME',
-                    'LOCATION_ID',
-                ])->setFilter(['=LOCATION_ID' => $locationIds])->exec();
+                $res = NameLocationTable::query()
+                    ->setSelect([
+                        'NAME',
+                        'LOCATION_ID',
+                    ])
+                    ->setFilter(['=LOCATION_ID' => $locationIds])
+                    ->exec();
+
                 while ($item = $res->fetch()) {
                     $locations[$item['LOCATION_ID']]['NAME'] = $item['NAME'];
                 }
-                $res = TypeTable::query()->setSelect([
-                    'ID',
-                    'CODE',
-                    'DISPLAY' => 'NAME.NAME',
-                ])->setFilter(['=ID' => array_keys($typeList)])->exec();
+
+                $res = TypeTable::query()
+                    ->setSelect([
+                        'ID',
+                        'CODE',
+                        'DISPLAY' => 'NAME.NAME',
+                    ])
+                    ->setFilter(['=ID' => array_keys($typeList)])
+                    ->exec();
+
                 while ($item = $res->fetch()) {
                     if (\is_array($typeList[$item['ID']])) {
                         foreach ($typeList[$item['ID']] as $itemId) {
                             $locations[$itemId]['TYPE'] = [
-                                'ID'   => $item['ID'],
+                                'ID' => $item['ID'],
                                 'CODE' => $item['CODE'],
                                 'NAME' => $item['DISPLAY'],
                             ];
@@ -550,13 +633,14 @@ class LocationService
             } else {
                 return [];
             }
+
             return $locations;
         };
         try {
             return (new BitrixCache())
                 ->withTag('location_finder')
                 ->withTime(360000)
-                ->withId(__METHOD__ . serialize($queryParams))
+                ->withId(__METHOD__ . serialize(['queryParams' => $queryParams, 'limit' => $limit]))
                 ->resultOf($cacheFinder);
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get location: %s', $e->getMessage()), [
@@ -757,7 +841,7 @@ class LocationService
             if (!isset($this->locationsByCode[$code])) {
                 $this->locationsByCode[$code] = reset($this->findLocationNew([
                     '=CODE'     => $code,
-                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE, static::TYPE_DISTRICT, static::TYPE_DISTRICT_MOSCOW],
+//                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE, static::TYPE_DISTRICT, static::TYPE_DISTRICT_MOSCOW],
                 ]));
             }
             if (!empty($this->locationsByCode[$code]) && !\is_bool($this->locationsByCode[$code])) {
@@ -1319,5 +1403,21 @@ class LocationService
         }
 
         return $result;
+    }
+
+    /**
+     * @param string $address
+     * @return DadataLocation
+     * @throws DaDataExecuteException
+     */
+    public function getDadataLocationOkato(string $address): string
+    {
+        $dadataLocation = $this->daDataService->splitAddress($address);
+        if (!$dadataLocation->getOkato()) {
+            throw new DaDataExecuteException('dadata location not found');
+        }
+
+        $okato = $dadataLocation->getOkato();
+        return substr($okato, 0, 8);
     }
 }

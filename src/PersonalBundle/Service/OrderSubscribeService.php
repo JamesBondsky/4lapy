@@ -65,6 +65,7 @@ use FourPaws\PersonalBundle\Repository\OrderSubscribeItemRepository;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
+use FourPaws\SaleBundle\EventController\Event;
 use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
@@ -827,7 +828,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                 );
             }
 
-            if($deliveryService->isPickup($calculationResult)){
+            if($deliveryService->isPickup($calculationResult) && ($calculationResult->getDeliveryCode() !== DeliveryService::DPD_PICKUP_CODE)){
                 try {
                     $store = $storeService->getStoreByXmlId($subscribe->getDeliveryPlace());
                 } catch (\Exception $e) {
@@ -1314,10 +1315,17 @@ class OrderSubscribeService implements LoggerAwareInterface
                     'COPY_ORDER_ID',
                     $copyOrderId
                 );
-                $orderCopyHelper->setPropValueByCode(
-                    'COM_WAY',
-                    $comWayValue
-                );
+
+                /*
+                 * Способ коммуникации - "анализ адрес" выставляется ранее и если он выставлен, то не меняем его
+                 */
+                $newOrderComWayProp = $this->getOrderService()->getOrderPropertyByCode($orderCopyHelper->getNewOrder(), 'COM_WAY');
+                if (!(($newOrderComWayProp) && ($newOrderComWayProp->getValue() === OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS))) {
+                    $orderCopyHelper->setPropValueByCode(
+                        'COM_WAY',
+                        $comWayValue
+                    );
+                }
             } catch (\Exception $exception) {
                 $result->addError(
                     new Error(
@@ -1879,12 +1887,10 @@ class OrderSubscribeService implements LoggerAwareInterface
                     throw new OrderSubscribeException(sprintf('Failed to create order subscribe: %s', print_r($result->getErrorMessages(), true)));
                 }
 
-                $items = $this->basketService->getBasket()->getOrderableItems();
-                /** @var BasketItem $basketItem */
-                foreach ($items as $basketItem) {
+                foreach ($this->basketService->getItemsForSubscribe() as $offerId => $quantity) {
                     $subscribeItem = (new OrderSubscribeItem())
-                        ->setOfferId($basketItem->getProductId())
-                        ->setQuantity($basketItem->getQuantity());
+                        ->setOfferId($offerId)
+                        ->setQuantity($quantity);
 
                     if (!$this->addSubscribeItem($subscribe, $subscribeItem)) {
                         throw new OrderSubscribeException(sprintf('Failed to create order subscribe item: %s', print_r($data, true)));
@@ -1966,6 +1972,7 @@ class OrderSubscribeService implements LoggerAwareInterface
             NotificationService::class
         );
         $notificationService->sendAutoUnsubscribeOrderMessage($orderSubscribe);
+        $notificationService->sendOrderSubscribeCancelMessage($orderSubscribe);
     }
 
     /**
@@ -2106,6 +2113,8 @@ class OrderSubscribeService implements LoggerAwareInterface
      */
     public function deleteNotDeliveredOrders(OrderSubscribe $orderSubscribe)
     {
+        Event::disableEvents();
+
         $result = new Result();
         try {
             $orderIdsForDelete = $this->getOrderSubscribeHistoryService()->getNotDeliveredOrderIds($orderSubscribe);

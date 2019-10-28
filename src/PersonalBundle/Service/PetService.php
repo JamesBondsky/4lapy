@@ -16,6 +16,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Collection\UserFieldEnumCollection;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
@@ -51,9 +52,7 @@ use FourPaws\AppBundle\Service\UserFieldEnumService;
  */
 class PetService
 {
-    /**
-     * @var PetRepository
-     */
+    /** @var PetRepository */
     private $petRepository;
 
     /** @var CurrentUserProviderInterface $currentUser */
@@ -62,10 +61,14 @@ class PetService
     /** @var ManzanaService $currentUser */
     private $manzanaService;
 
-    /**
-     * @var UserFieldEnumService
-     */
+    /** @var UserFieldEnumService */
     private $userFieldEnumService;
+
+    /** @var UserFieldEnumCollection */
+    private $genders;
+
+    /** @var UserFieldEnumCollection */
+    private $sizes;
 
     /**
      * @var ExpertsenderService
@@ -132,6 +135,11 @@ class PetService
         /** @var Pet $entity */
         $entity = $this->petRepository->dataToEntity($data, Pet::class);
 
+        if(!$this->isDogType($entity)){
+            $entity->deleteSizeInfo();
+        }
+
+
         $res = HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()->setFilter(['ID' => $entity->getType()])->setSelect(
             [
                 'ID',
@@ -140,7 +148,7 @@ class PetService
         )->setOrder(['UF_SORT' => 'asc'])->exec();
 
         if (($petType = $res->Fetch()) && ($petType['UF_EXPERT_SENDER_ID'])) {
-            $this->expertSenderService->sendAfterPetUpdate($this->currentUser->getCurrentUser(), $petType['UF_EXPERT_SENDER_ID']);
+            $this->expertSenderService->sendAfterPetUpdateAsync($this->currentUser, $petType['UF_EXPERT_SENDER_ID']);
         }
 
         $this->petRepository->setEntity($entity);
@@ -150,14 +158,10 @@ class PetService
     /**
      * @param int|User $user
      *
-     * @throws NotAuthorizedException
-     * @throws ConstraintDefinitionException
-     * @throws ServiceNotFoundException
-     * @throws InvalidIdentifierException
      * @throws ApplicationCreateException
-     * @throws RuntimeException
-     * @throws ServiceCircularReferenceException
+     * @throws ArgumentException
      * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function updateManzanaPets($user = null): void
     {
@@ -357,13 +361,33 @@ class PetService
             $expertSenderPetIds[$petType['ID']] = $petType['UF_EXPERT_SENDER_ID'];
         }
 
-        $this->expertSenderService->sendAfterPetUpdate($this->currentUser->getCurrentUser(), $expertSenderPetIds[$entity->getType()], $expertSenderPetIds[$updateEntity->getType()]);
+        $this->expertSenderService->sendAfterPetUpdateAsync($this->currentUser, $expertSenderPetIds[$entity->getType()], $expertSenderPetIds[$updateEntity->getType()]);
 
         if ($entity->getUserId() === 0) {
             $entity->setUserId($updateEntity->getUserId());
         }
 
+        if(
+            (!$entity->getType() && !$this->isDogType($updateEntity))
+            ||
+            ($entity->getType() > 0 && !$this->isDogType($entity))
+        ){
+            $entity->deleteSizeInfo();
+        }
+
         return $this->petRepository->setEntity($entity)->update();
+    }
+
+    /**
+     * @param Pet $pet
+     * @return bool
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function isDogType(Pet $pet){
+        $petType = array_pop($this->getPetTypes(['ID' => $pet->getType()]));
+        return $petType['UF_NAME'] == 'Собаки';
     }
 
     /**
@@ -399,7 +423,7 @@ class PetService
         )->setOrder(['UF_SORT' => 'asc'])->exec();
 
         if (($petType = $res->Fetch()) && ($petType['UF_EXPERT_SENDER_ID'])) {
-            $this->expertSenderService->sendAfterPetUpdate($this->currentUser->getCurrentUser(), null, $petType['UF_EXPERT_SENDER_ID']);
+            $this->expertSenderService->sendAfterPetUpdateAsync($this->currentUser, null, $petType['UF_EXPERT_SENDER_ID']);
         }
 
         return $this->petRepository->delete($id);
@@ -549,13 +573,17 @@ class PetService
      */
     public function getGenders()
     {
-        $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
-            [
-                'FIELD_NAME' => 'UF_GENDER',
-                'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
-            ]
-        )->exec()->fetch()['ID'];
-        return $this->userFieldEnumService->getEnumValueCollection($userFieldId);
+        if(null === $this->genders){
+            $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
+                [
+                    'FIELD_NAME' => 'UF_GENDER',
+                    'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
+                ]
+            )->exec()->fetch()['ID'];
+            $this->genders = $this->userFieldEnumService->getEnumValueCollection($userFieldId);
+        }
+
+        return $this->genders;
     }
 
     /**
@@ -569,6 +597,52 @@ class PetService
         return $this->getGenders()->filter(function ($gender) use($genderCode) {
             /** @var UserFieldEnumValue $gender */
             return $genderCode === $gender->getXmlId();
+        })->current();
+    }
+
+    /**
+     * @return UserFieldEnumCollection
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public function getSizes()
+    {
+        if(null === $this->sizes){
+            $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
+                [
+                    'FIELD_NAME' => 'UF_SIZE',
+                    'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
+                ]
+            )->exec()->fetch()['ID'];
+            $this->sizes = $this->userFieldEnumService->getEnumValueCollection($userFieldId);
+        }
+
+        return $this->sizes;
+    }
+
+    /**
+     * @param string $sizeCode
+     * @return UserFieldEnumValue|false
+     */
+    public function getSizeByCode(string $sizeCode)
+    {
+        return $this->getSizes()->filter(function ($size) use($sizeCode) {
+            /** @var UserFieldEnumValue $size */
+            return $sizeCode === $size->getXmlId();
+        })->current();
+    }
+
+    /**
+     * @param string $sizeId
+     * @return UserFieldEnumValue|false
+     */
+    public function getSizeById($sizeId)
+    {
+        return $this->getSizes()->filter(function ($size) use($sizeId) {
+            /** @var UserFieldEnumValue $size */
+            return (int)$sizeId === $size->getId();
         })->current();
     }
 }

@@ -141,6 +141,11 @@ class DeliveryService implements LoggerAwareInterface
     public const ADD_DELIVERY_ZONE_10 = 'ADD_DELIVERY_ZONE_10';
 
     /**
+     * Исключения для DPD
+     */
+    public const ZONE_DPD_EXCLUDE = 'ZONE_DPD_EXCLUDE';
+
+    /**
      * Новые зоны - районы Москвы
      */
     public const ZONE_MOSCOW_DISTRICT_CODE_PATTERN = 'ZONE_MOSCOW_DISTRICT_';
