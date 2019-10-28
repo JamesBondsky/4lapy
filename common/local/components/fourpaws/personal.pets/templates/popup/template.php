@@ -36,22 +36,6 @@
                             title="" />
                 </a>
             </div>
-            <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-name js-small-input">
-                <div class="b-input-line__label-wrapper">
-                    <label class="b-input-line__label" for="name-pet">Имя питомца</label>
-                </div>
-                <div class="b-input b-input--registration-form">
-                    <input class="b-input__input-field b-input__input-field--registration-form"
-                           type="text"
-                           id="name-pet"
-                           placeholder=""
-                           data-text="0"
-                           data-name-pet-form="true"
-                           name="UF_NAME" />
-                    <div class="b-error"><span class="js-message"></span>
-                    </div>
-                </div>
-            </div>
             <label class="b-registration__label b-registration__label--subscribe-delivery" for="type-pet">Вид животного</label>
             <div class="b-select b-select--subscribe-delivery">
                 <select class="b-select__block b-select__block--subscribe-delivery js-pet-view"
@@ -66,6 +50,22 @@
                     } ?>
                 </select>
                 <div class="b-error"><span class="js-message"></span>
+                </div>
+            </div>
+            <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet b-input-line--name-pet js-name js-small-input">
+                <div class="b-input-line__label-wrapper">
+                    <label class="b-input-line__label" for="name-pet">Имя питомца</label>
+                </div>
+                <div class="b-input b-input--registration-form">
+                    <input class="b-input__input-field b-input__input-field--registration-form"
+                           type="text"
+                           id="name-pet"
+                           placeholder=""
+                           data-text="0"
+                           data-name-pet-form="true"
+                           name="UF_NAME" />
+                    <div class="b-error"><span class="js-message"></span>
+                    </div>
                 </div>
             </div>
             <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-breed">
