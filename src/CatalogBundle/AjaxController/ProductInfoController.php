@@ -5,7 +5,12 @@ namespace FourPaws\CatalogBundle\AjaxController;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
+use CMain;
+use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
@@ -26,11 +31,10 @@ use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SapBundle\Repository\BasketRulesRepository;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use Psr\Log\LoggerAwareInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use WebArch\BitrixCache\BitrixCache;
@@ -182,9 +186,8 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
      * @return JsonResponse
      *
      * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws \Exception
-     * @global \CMain $APPLICATION
+     * @throws Exception
+     * @global CMain $APPLICATION
      */
     public function infoAction(ProductListRequest $productListRequest): JsonResponse
     {
@@ -202,6 +205,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
         $response = (new BitrixCache())
             ->withId(__METHOD__ . '_' . md5(serialize($productListRequest)) . '_' . $locationCode)
             ->withTag('infoAction')
+            ->withClearCache(true)
             ->withTime(600) // 10 минут
             ->resultOf(
                 static function () use ($productListRequest, $response, $validator, $getProductInfo) {
@@ -302,8 +306,8 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
      * @param Request $request
      *
      * @return JsonResponse
-     * @throws \Exception
-     * @global \CMain $APPLICATION
+     * @throws Exception
+     * @global CMain $APPLICATION
      */
     public function infoProductDeliveryAction(Request $request): JsonResponse
     {
@@ -448,7 +452,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                 $catalogBrandRequest->getSearchString()
             );
             $count = $productSearchResult->getResultSet()->getTotalHits();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $logger->error('Ошибка подгрузки количества итемов в фильтре ' . $e->getMessage());
         }
         return JsonSuccessResponse::createWithData('подгрузка количества успешна',
@@ -477,7 +481,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                 $searchRequest->getSearchString()
             );
             $count = $productSearchResult->getResultSet()->getTotalHits();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $logger->error('Ошибка подгрузки количества итемов в фильтре ' . $e->getMessage());
         }
         return JsonSuccessResponse::createWithData('подгрузка количества успешна',
@@ -506,7 +510,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                 $categoryRequest->getSearchString()
             );
             $count = $productSearchResult->getResultSet()->getTotalHits();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $logger->error('Ошибка подгрузки количества итемов в фильтре ' . $e->getMessage());
         }
         return JsonSuccessResponse::createWithData('подгрузка количества успешна',
@@ -528,15 +532,18 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
      * $offer->isPickupAvailable() - Не ставить в начало условия, он генерирует много PHP-кода и может отрабатывать по 0.5с
      *
      * @param Product $product
-     * @param Offer   $offer
+     * @param Offer $offer
      *
      * @return array
-     * @throws ArgumentException
      * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
-     * @throws ServiceNotFoundException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws NotFoundException
      */
-    private function getProductInfo(Product $product, Offer $offer)
+    private function getProductInfo(Product $product, Offer $offer): array
     {
         $available = $offer->isAvailable();
         $price = $offer->getCatalogPrice();
