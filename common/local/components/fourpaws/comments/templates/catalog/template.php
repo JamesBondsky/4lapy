@@ -216,15 +216,16 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                     <div class="b-error"><span class="js-message"></span></div>
                 </div>
 
-                <div class="b-form-review__add-photos" data-multiple-add-photo="true">
-                    <div class="list-add-photos" data-list-add-photos="true"></div>
-                    <div class="btn-add-photos" data-btn-multiple-add-photo="true">
-                        <input class="btn-add-photos__load js-no-valid js-multiple-drag-n-drop"
-                               type="file"
-                               name="UF_PHOTOS[]"
-                               multiple
-                               data-max-add-photos="5"
-                               accept="image/jpg,image/jpeg, image/png" />
+                <div class="b-form-review__add-photos" data-container-add-photo-review="true">
+                    <div class="list-add-photos" data-list-add-photos-review="true"></div>
+                    <div class="btn-add-photos" data-btn-add-photo-review="true">
+                        <div class="btn-add-photos__input-wrap" data-list-input-add-photo-review="true">
+                            <input class="btn-add-photos__load js-no-valid"
+                                   type="file"
+                                   name="UF_PHOTOS[]"
+                                   data-input-add-photo-review="true"
+                                   accept="image/jpg,image/jpeg, image/png" />
+                        </div>
                         <span class="b-icon b-icon--upload">
                             <?= new SvgDecorator('icon-upload', 69, 57) ?>
                         </span>
