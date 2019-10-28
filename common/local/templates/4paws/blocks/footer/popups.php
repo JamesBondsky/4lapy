@@ -12,7 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var CMain $APPLICATION */
 /** @noinspection PhpUnhandledExceptionInspection */
 $template = MainTemplate::getInstance(Application::getInstance()->getContext()); ?>
-<div class="b-popup-wrapper js-popup-wrapper <?php $APPLICATION->ShowViewContent('is_active_popup'); ?>">
+<div class="b-popup-wrapper js-popup-wrapper active <?php $APPLICATION->ShowViewContent('is_active_popup'); ?>">
     <?php
     /**
      * Область для вставки инлайновых попапов
@@ -95,6 +95,8 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 
     // собираем данные с ЛК с кучей и кучей условий, поэтому выносим отдельно..
     include __DIR__ . '/collect_data_popup.php';
+
+    include __DIR__ . '/dostavista-address.php';
     ?>
 
     <div class="b-popup-preloader b-popup-preloader--fixed js-popup-preloader">

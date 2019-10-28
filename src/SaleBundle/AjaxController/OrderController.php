@@ -447,7 +447,7 @@ class OrderController extends Controller implements LoggerAwareInterface
     /**
      * @Route("/validate/delivery", methods={"POST"})
      *
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
      * @return JsonResponse
      * @throws ApplicationCreateException
@@ -794,5 +794,65 @@ class OrderController extends Controller implements LoggerAwareInterface
                 'delivery_dates'     => $deliveryDates
             ]
         );
+    }
+
+    /**
+     * @Route("/set-address/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     *
+     * @throws ApplicationCreateException
+     */
+    public function setAddressAction(Request $request): JsonResponse
+    {
+        $step = OrderStorageEnum::NOVALIDATE_STEP;
+        try {
+            $storage = $this->orderStorageService->getStorage();
+
+            $this->orderStorageService->setStorageValuesFromRequest($storage, $request, $step);
+
+            $deliveries = $this->orderStorageService->getDeliveries($storage);
+            $delivery = null;
+            $deliveryDostavista = null;
+
+            foreach ($deliveries as $availableDelivery) {
+                if ($this->deliveryService->isDelivery($availableDelivery)) {
+                    $delivery = $availableDelivery;
+                }
+
+                if ($this->deliveryService->isDostavistaDelivery($availableDelivery)) {
+                    $deliveryDostavista = $availableDelivery;
+                }
+            }
+
+            if ($deliveryDostavista) {
+                $selectedDelivery = $deliveryDostavista;
+            } else if ($delivery) {
+                $selectedDelivery = $delivery;
+            } else  {
+                return JsonErrorResponse::create('Для данного адреса нет доступных доставок');
+            }
+
+            $storage->setDeliveryId($selectedDelivery->getDeliveryId());
+
+            if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
+                $nextDeliveryText = str_replace(['[time]', '[date]'], [round($selectedDelivery->getPeriodTo() / 60), ($selectedDelivery->getPrice() > 0) ? 'за ' . $selectedDelivery->getPrice() . ' ₽' : 'бесплатно'], $selectedDelivery->getData()['TEXT_EXPRESS_DELIVERY_TIME']);
+            } else {
+                /** @var DeliveryResultInterface $nextDelivery */
+                $nextDelivery = current($this->deliveryService->getNextDeliveries($selectedDelivery, 1));
+                $nextDeliveryText = sprintf('Заказ будет доставлен - %s', DeliveryTimeHelper::showTime($nextDelivery));
+            }
+
+            $this->orderStorageService->updateStorage($storage, $step);
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('%s при сохранении адреса в orderStorage произошла ошибка: %s', __METHOD__, $e->getMessage()));
+            return JsonErrorResponse::create('При добавлении адреса произошла ошибка');
+        }
+
+        return JsonSuccessResponse::createWithData('Адрес успешно сохранен', [
+            'next_delivery_text' => $nextDeliveryText,
+        ]);
     }
 }
