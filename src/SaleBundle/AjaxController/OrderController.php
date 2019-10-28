@@ -811,7 +811,13 @@ class OrderController extends Controller implements LoggerAwareInterface
         try {
             $storage = $this->orderStorageService->getStorage();
 
-            $this->orderStorageService->setStorageValuesFromRequest($storage, $request, $step);
+            $storage
+                ->setStreet($request->get('street', ''))
+                ->setHouse($request->get('house', ''))
+                ->setBuilding($request->get('building', ''))
+                ->setPorch($request->get('porch', ''))
+                ->setFloor($request->get('floor', ''))
+                ->setApartment($request->get('apartment', ''));
 
             $deliveries = $this->orderStorageService->getDeliveries($storage);
             $delivery = null;
