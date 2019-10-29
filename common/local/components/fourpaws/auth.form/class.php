@@ -10,9 +10,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
-use Bitrix\Main\LoaderException;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Context;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\FuserTable;
@@ -33,7 +35,7 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\Model\City;
-use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
+use FourPaws\UserBundle\Service\UserService;
 use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
@@ -54,6 +56,8 @@ use FourPaws\UserBundle\Service\UserSearchInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Csrf\CsrfToken;
+use Symfony\Component\Security\Csrf\CsrfTokenManager;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsAuthFormComponent extends \CBitrixComponent
@@ -98,6 +102,14 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @var KioskService
      */
     private $kioskService;
+    /**
+     * @var CsrfTokenManager
+     */
+    private $tokenProvider;
+    /**
+     * @var int
+     */
+    private $limitAuthAuthorizeAttempts;
 
     /**
      * FourPawsAuthFormComponent constructor.
@@ -158,6 +170,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->arResult['IS_SHOW_CAPTCHA'] = $this->isShowCapthca();
             $this->setSocial();
 
+            $this->arResult['LOGIN'] = $this->getRawLogin();
+
+            $this->arResult['LIMIT_AUTH_ATTEMPT'] = $this->getLimitAuthAuthorizeAttempts($this->arResult['LOGIN']);
             $this->includeComponentTemplate();
         } catch (Exception $e) {
             try {
@@ -212,14 +227,12 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @throws ApplicationCreateException
      * @throws SystemException
      * @throws WrongPhoneNumberException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
      */
     public function ajaxLogin(string $rawLogin, string $password, string $backUrl = '', $token = false): JsonResponse
     {
-        // CSRF-защита
-        if (!ProtectorHelper::checkToken($token, ProtectorHelper::TYPE_AUTH))
-        {
+        if (!$this->getTokenProvider()->isTokenValid(new CsrfToken(ProtectorHelper::TYPE_AUTH, $token))) {
             $options = ['reload' => true];
             if (!empty($backUrl)) {
                 $options = ['redirect' => $backUrl];
@@ -227,11 +240,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return JsonSuccessResponse::createWithData('Вы успешно авторизованы.', [], 200, $options); // на самом деле, нет
         }
 
-        $newToken = ProtectorHelper::generateToken(ProtectorHelper::TYPE_AUTH);
+        $newToken = $this->getTokenProvider()->refreshToken(ProtectorHelper::TYPE_AUTH)->getValue();
         $this->arResult['token'] = $newToken;
-        $newToken['value'] = $newToken['token'];
-        unset($newToken['token']);
         $newTokenResponse = ['token' => $newToken];
+
+        $this->arResult['LOGIN'] = $rawLogin;
 
         try {
             $container = App::getInstance()->getContainer();
@@ -252,9 +265,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
         $_SESSION['COUNT_AUTH_AUTHORIZE']++;
 
-        if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
+        if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > $this->getLimitAuthAuthorizeAttempts($rawLogin)) {
             try {
-                if ($this->showBitrixCaptcha()) {
+                if ($this->showBitrixCaptcha($rawLogin)) {
                     $recaptchaService = $container->get(ReCaptchaInterface::class);
                     $checkedCaptcha = $recaptchaService->checkCaptcha();
 
@@ -283,6 +296,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
         $needConfirmBasket = false;
         try {
+            /** @var BasketService $basketService */
             $basketService = $container->get(BasketService::class);
         } catch (Exception $e) {
             return $this->ajaxMess->getSystemError()->extendData($newTokenResponse);
@@ -329,6 +343,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
                         if (!$curBasket->isEmpty() && !$userBasket->isEmpty()) {
                             $needConfirmBasket = true;
+                            //$curItems = $curBasket->getBasketItems();
+
                             /** @var BasketItem $item */
                             foreach ($userBasket->getBasketItems() as $key => $item) {
                                 if ($item->getId() <= 0) {
@@ -359,6 +375,18 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                                             break;
                                     }
                                 }
+
+                                // Костыль для объединения одинаковых товаров
+//	                            if (empty($detachFrom)) {
+//	                                /** @var BasketItem $curItem */
+//                                    foreach ($curItems as $curItem) {
+//                                        if ($item->getProductId() === $curItem->getProductId()
+//                                            && $item->getPrice() === $curItem->getPrice()
+//                                        ) {
+//                                            $detachFrom = $curItem->getId();
+//                                        }
+//                                    }
+//	                            }
                                 if ($isGift || $isGiftSelected || !empty($detachFrom)) {
                                     if ($item->getId() > 0) {
                                         $delItemsByUnionIds[] = $item->getId();
@@ -390,7 +418,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
             }
         } catch (UsernameNotFoundException $e) {
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 2) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] >= $token-$this->getLimitAuthAuthorizeAttempts($rawLogin)) {
                 try {
                     $this->setSocial();
                     $html = $this->getHtml(
@@ -414,7 +442,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
             return $this->ajaxMess->getWrongPasswordError($newTokenResponse);
         } catch (InvalidCredentialException $e) {
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 2 && $this->showBitrixCaptcha()) {
+            if (($_SESSION['COUNT_AUTH_AUTHORIZE'] >= $this->getLimitAuthAuthorizeAttempts($rawLogin)) && $this->showBitrixCaptcha($rawLogin)) {
                 try {
                     $this->setSocial();
                     $html = $this->getHtml(
@@ -502,6 +530,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @param string $phone
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
      */
     public function ajaxResendSms($phone): JsonResponse
     {
@@ -535,6 +564,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @param string $backUrl
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
      */
     public function ajaxSavePhone(string $phone, string $confirmCode, string $backUrl): JsonResponse
     {
@@ -696,6 +726,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function ajaxGet($request): JsonResponse
     {
@@ -743,6 +777,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
      */
     public function ajaxUnionBasket(Request $request): JsonResponse
     {
@@ -763,7 +798,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         $addQuantityByUnion = $request->get('add_quantity_by_union', []);
-        if (!empty($addQuantityByUnion)) {
+        if (!empty($addQuantityByUnion) && !is_array($addQuantityByUnion)) {
             $addQuantityByUnion = json_decode($addQuantityByUnion, true);
         }
 
@@ -844,6 +879,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
      */
     public function ajaxNotUnionBasket(Request $request): JsonResponse
     {
@@ -927,7 +963,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
     /**
      * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @return string
      */
@@ -944,7 +979,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     }
 
     /**
-     * @throws LoaderException
      * @throws SystemException
      */
     protected function setSocial(): void
@@ -998,6 +1032,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if (!empty($params)) {
             extract($params, EXTR_OVERWRITE);
         }
+
+        $this->arResult['LOGIN'] = $this->getRawLogin();
+
         ob_start();
         if (!empty($title)) {
             ?>
@@ -1017,6 +1054,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @param string $phone
      *
      * @return JsonResponse|string
+     * @throws SystemException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
      */
     private function ajaxGetSendSmsCode($phone)
     {
@@ -1066,20 +1106,70 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         return $mess;
     }
 
-    protected function isShowCapthca()
+    protected function isShowCapthca(): bool
     {
         return !KioskService::isKioskMode();
     }
 
-    protected function showBitrixCaptcha()
+    protected function showBitrixCaptcha($rawLogin = '')
     {
-        $this->arResult['IS_SHOW_CAPTCHA'] = $_SESSION['COUNT_AUTH_AUTHORIZE'] > 2;
+        $this->arResult['IS_SHOW_CAPTCHA'] = ($_SESSION['COUNT_AUTH_AUTHORIZE'] >= $this->getLimitAuthAuthorizeAttempts($rawLogin));
 
         return $this->arResult['IS_SHOW_CAPTCHA'];
     }
 
-    protected function isShowBitrixCaptcha($word, $code)
+    protected function isShowBitrixCaptcha($word, $code): bool
     {
         return !empty($code) && !empty($word);
+    }
+
+    /**
+     * @param string $rawLogin
+     * @return int
+     */
+    protected function getLimitAuthAuthorizeAttempts(string $rawLogin = ''): int
+    {
+        if ($this->limitAuthAuthorizeAttempts === null) {
+            if (!$rawLogin || empty($rawLogin)) {
+                return UserService::DEFAULT_AUTH_ATTEMPTS;
+            }
+
+            try {
+                $this->limitAuthAuthorizeAttempts = $this->userSearchService->getLimitAuthAuthorizeAttemptsByRawLogin($rawLogin);
+            } catch (\Exception $e) {
+                return UserService::DEFAULT_AUTH_ATTEMPTS;
+            }
+        }
+
+        return $this->limitAuthAuthorizeAttempts;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getRawLogin(): string
+    {
+        if (isset($this->arResult['LOGIN']) && !empty($this->arResult['LOGIN'])) {
+            return $this->arResult['LOGIN'];
+        }
+
+        $rowLogin = Context::getCurrent()->getRequest()->getCookie('LOGIN');
+        if ($rowLogin && !empty($rowLogin)) {
+            return $rowLogin;
+        }
+
+        return '';
+    }
+
+    /**
+     * @return CsrfTokenManager
+     */
+    public function getTokenProvider(): CsrfTokenManager
+    {
+        if ($this->tokenProvider === null) {
+            $this->tokenProvider = App::getInstance()->getContainer()->get('security.csrf.token_manager');
+        }
+
+        return $this->tokenProvider;
     }
 }
