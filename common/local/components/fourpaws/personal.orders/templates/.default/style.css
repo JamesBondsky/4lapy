@@ -1,3 +1,7 @@
 .b-account__accordion-order-list + .b-account__title{
   margin-top: 50px;
 }
+
+.b-link__canceled {
+  cursor: default !important;
+}

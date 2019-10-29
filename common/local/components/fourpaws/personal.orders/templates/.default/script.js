@@ -113,6 +113,7 @@ $(document).ready(function () {
                     msg = json.message;
 
                     cancelOrderItem.find('.js-link-text').text('Отменен');
+                    cancelOrderItem.find('.b-link__button').classList.add("b-link__canceled");
 
                     cancelOrderItem.unbind();
                 } else {

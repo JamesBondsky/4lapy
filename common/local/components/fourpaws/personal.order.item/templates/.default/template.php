@@ -318,7 +318,8 @@ if ($orderSubscribe) {
                     <?php $isFirstButton = false; ?>
                 <?php } ?>
                 <?php if ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) { ?>
-                    <div class="b-link b-link__button <?= ($arResult['CAN_CANCEL']) ? 'js-cancel-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?>" data-order-id="<?= $order->getId() ?>">
+                    <div class="b-link b-link__button
+                    <?= ($arResult['CAN_CANCEL']) ? 'js-cancel-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?><?= ($arResult['CANCELED']) ? 'b-link__canceled' : '' ?>" data-order-id="<?= $order->getId() ?>">
                         <span class="b-link__text js-link-text">
                             <?php if ($arResult['CAN_CANCEL']) { ?>
                                 Отменить заказ
@@ -331,7 +332,7 @@ if ($orderSubscribe) {
                     </div>
                     <?php $isFirstButton = false; ?>
                 <?php } ?>
-                <?php if (!$arResult['FINISHED'] && ($arResult['CAN_EXTEND'] || $arResult['EXTENDED'])) { ?>
+                <?php /* if (!$arResult['FINISHED'] && ($arResult['CAN_EXTEND'] || $arResult['EXTENDED'])) { ?>
                     <div class="b-link b-link__button <?= ($arResult['CAN_EXTEND']) ? 'js-extend-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?>" data-order-id="<?= $order->getId() ?>">
                         <span class="b-link__text js-link-text">
                             <?php if ($arResult['CAN_EXTEND']) { ?>
@@ -341,7 +342,7 @@ if ($orderSubscribe) {
                             <?php } ?>
                         </span>
                     </div>
-                <?php } ?>
+                <?php } */ ?>
             </div>
         </div>
         <div class="b-accordion-order-item__hidden js-hidden-order">
