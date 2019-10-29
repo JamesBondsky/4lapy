@@ -276,16 +276,16 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                                         </div>
                                     <?php } ?>
                                 </div>
-                                <div class="b-review__text" itemprop="description" >
+                                <div class="b-review__text" itemprop="description">
                                     <p><?= $comment['UF_TEXT'] ?></p>
                                 </div>
                             </div>
-                            <?php if ($comment['UF_PHOTOS']) { ?>
-                                <div class="b-review__list-img" data-review-list-img="true">
+                            <div class="b-review__list-img" data-review-list-img="<?= (bool)$comment['UF_PHOTOS'] ?>">
+                                <?php if ($comment['UF_PHOTOS']) { ?>
                                     <?php foreach ($comment['UF_PHOTOS'] as $imageId) { ?>
                                         <?php if ($commentImage = $arResult['COMMENT_IMAGES'][$imageId]) { ?>
                                             <div class="item-gallery-review">
-                                                <a href="javascript:void(0);" data-src="#gallery-photo<?= $imageId ?>" data-fancybox="group-<?= $comment['ID']?>" class="item-gallery-review__link">
+                                                <a href="javascript:void(0);" data-src="#gallery-photo<?= $imageId ?>" data-fancybox="group-<?= $comment['ID'] ?>" class="item-gallery-review__link">
                                                     <img src="<?= $commentImage ?>" alt="">
                                                 </a>
 
@@ -295,8 +295,8 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                                             </div>
                                         <?php } ?>
                                     <?php } ?>
-                                </div>
-                            <?php } ?>
+                                <?php } ?>
+                            </div>
                         </li>
                     <?php } ?>
                 </ul>
