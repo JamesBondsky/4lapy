@@ -420,39 +420,38 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                                       <nobr>Получите <span class="b-cart-aside-subscription__title-highlight">скидку</span></nobr>
                                   <?php endif ?>
 
-                                  <nobr>
-                                      за
-                                      <div class="b-cart-aside-subscription__tooltip">
-                                          <button type="button" class="b-cart-aside-subscription__tooltip-toggle">
-                                              <span class="b-cart-aside-subscription__title-icon"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
-                                              Подписку
-                                          </button>
+                                  <br/>
+                                  за
+                                  <div class="b-cart-aside-subscription__tooltip">
+                                      <button type="button" class="b-cart-aside-subscription__tooltip-toggle">
+                                          <span class="b-cart-aside-subscription__title-icon"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
+                                          Подписку
+                                      </button>
 
-                                          <div class="b-cart-aside-subscription__tooltip-content">
-                                                <ul class="b-cart-aside-subscription__features">
-                                                    <li class="b-cart-aside-subscription__features-item">
-                                                        <span class="b-cart-aside-subscription__features-icon">
-                                                            <?= new SvgDecorator('icon-calendar', 24, 24) ?>
-                                                        </span>
-                                                        Установите удобное расписание доставок
-                                                    </li>
-                                                    <li class="b-cart-aside-subscription__features-item">
-                                                        <span class="b-cart-aside-subscription__features-icon">
-                                                            <?= new SvgDecorator('icon-cancel', 24, 24) ?>
-                                                        </span>
-                                                        Переносите или отменяйте доставку в&nbsp;любое время
-                                                    </li>
-                                                    <li class="b-cart-aside-subscription__features-item">
-                                                        <span class="b-cart-aside-subscription__features-icon">
-                                                            <?= new SvgDecorator('icon-price', 24, 24) ?>
-                                                        </span>
-                                                        Наслаждайтесь экономией денег и времени
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                      </div>
-                                      на&nbsp;доставку
-                                  </nobr>
+                                      <div class="b-cart-aside-subscription__tooltip-content">
+                                            <ul class="b-cart-aside-subscription__features">
+                                                <li class="b-cart-aside-subscription__features-item">
+                                                    <span class="b-cart-aside-subscription__features-icon">
+                                                        <?= new SvgDecorator('icon-calendar', 24, 24) ?>
+                                                    </span>
+                                                    Установите удобное расписание доставок
+                                                </li>
+                                                <li class="b-cart-aside-subscription__features-item">
+                                                    <span class="b-cart-aside-subscription__features-icon">
+                                                        <?= new SvgDecorator('icon-cancel', 24, 24) ?>
+                                                    </span>
+                                                    Переносите или отменяйте доставку в&nbsp;любое время
+                                                </li>
+                                                <li class="b-cart-aside-subscription__features-item">
+                                                    <span class="b-cart-aside-subscription__features-icon">
+                                                        <?= new SvgDecorator('icon-price', 24, 24) ?>
+                                                    </span>
+                                                    Наслаждайтесь экономией денег и времени
+                                                </li>
+                                            </ul>
+                                        </div>
+                                  </div>
+                                  на&nbsp;доставку
 	                          </div>
 
 	                          <div class="b-cart-aside-subscription__toggles" data-basket-subscription-price="input-wrapper">
