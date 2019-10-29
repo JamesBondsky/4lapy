@@ -2547,6 +2547,7 @@ class OrderService implements LoggerAwareInterface
             
             if (!$setStatusResult) {
                 $connection->rollbackTransaction();
+                return false;
             }
             
             $connection->commitTransaction();

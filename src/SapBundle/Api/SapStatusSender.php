@@ -41,7 +41,7 @@ class SapStatusSender implements LoggerAwareInterface
         if ($response->getStatusCode() == 200) {
             $body = \json_decode($response->getBody());
             
-            switch ($body['MSGTYPE']) {
+            switch ($body->MSGTYPE) {
                 case self::SAP_SUCCESS:
                     $this->log()
                         ->info(
@@ -66,11 +66,11 @@ class SapStatusSender implements LoggerAwareInterface
                             \sprintf(
                                 'Отмена заказа номер %s завершилась неудачей =( Код ошибки: %s . Текстовое описание ошибки %s .',
                                 $this->orderNumber,
-                                $body['MSGCODE'],
-                                $body['MSGTEXT']
+                                $body->MSGCODE,
+                                $body->MSGTEXT
                             )
                         );
-                        return false;
+                    return false;
                     break;
             }
             
