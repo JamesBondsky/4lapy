@@ -581,7 +581,7 @@ class LocationService
                         $parentItem['TYPE'] = $this->stringArrayToArray($parentItem, 'TYPE');
                         $parentList[] = $parentItem;
 
-                        if ($excludeMoscowDistricts && ($parentItem['CODE'] === LocationService::LOCATION_CODE_MOSCOW)) {
+                        if ($excludeMoscowDistricts && $this->isMoscowRegionLocation($parentItem)) {
                             $excludeLocation = true;
                             break;
                         }
@@ -656,6 +656,23 @@ class LocationService
             ]);
             return [];
         }
+    }
+
+    /**
+     * @param $location
+     * @return bool
+     */
+    protected function isMoscowRegionLocation($location): bool
+    {
+        if (($location['CODE'] === self::LOCATION_CODE_MOSCOW) || ($location['CODE'] === self::LOCATION_CODE_MOSCOW_REGION)) {
+            return true;
+        }
+
+        if (($location['TYPE'] === self::TYPE_SUBREGION) || ($location['TYPE'] === self::TYPE_DISTRICT_MOSCOW)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
