@@ -281,11 +281,17 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                                 </div>
                             </div>
                             <?php if ($comment['UF_PHOTOS']) { ?>
-                                <div class="b-review__list-img">
+                                <div class="b-review__list-img" data-review-list-img="true">
                                     <?php foreach ($comment['UF_PHOTOS'] as $imageId) { ?>
                                         <?php if ($commentImage = $arResult['COMMENT_IMAGES'][$imageId]) { ?>
-                                            <div class="b-review__img">
-                                                <img src="<?= $commentImage ?>" alt="">
+                                            <div class="item-gallery-review">
+                                                <a href="javascript:void(0);" data-src="#gallery-photo<?= $imageId ?>" data-fancybox="group" class="item-gallery-review__link">
+                                                    <img src="<?= $commentImage ?>" alt="">
+                                                </a>
+
+                                                <div id="gallery-photo<?= $imageId ?>" class="item-gallery-review__content fancybox-content">
+                                                    <img src="<?= $commentImage ?>" alt="">
+                                                </div>
                                             </div>
                                         <?php } ?>
                                     <?php } ?>
