@@ -2044,9 +2044,6 @@ class Offer extends IblockElement
      */
     protected function getAvailableAmount(string $locationId = '', $deliveryCodes = []): int
     {
-        if ($this->getId() === 31622) {
-            $a = 1;
-        }
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
         $deliveries = $deliveryService->getByLocation($locationId, $deliveryCodes);

@@ -205,7 +205,6 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
         $response = (new BitrixCache())
             ->withId(__METHOD__ . '_' . md5(serialize($productListRequest)) . '_' . $locationCode)
             ->withTag('infoAction')
-            ->withClearCache(true)
             ->withTime(600) // 10 минут
             ->resultOf(
                 static function () use ($productListRequest, $response, $validator, $getProductInfo) {
