@@ -5,7 +5,13 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
+global $USER;
 
+if ($USER->isAdmin()) {
+    echo '<pre>';
+    print_r($_SERVER['REQUEST_URI']);
+    echo '</pre>';
+}
 $APPLICATION->SetPageProperty('title', 'Выгодные и интересные акции на товары для животных от зоомагазина Четыре Лапы');
 $APPLICATION->SetTitle("Акции");
 
@@ -112,4 +118,5 @@ $APPLICATION->IncludeComponent(
         'HIDE_ICONS' => 'Y'
     ]
 );
+
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'; ?>
