@@ -262,6 +262,52 @@ if ($orderSubscribe) {
                     </div>
                 </div>
                 <div class="b-accordion-order-item__button js-button-default">
+                    <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full b-accordion-order-item__subscribe-link-mobile">
+                        <?php $isFirstButton = true; ?>
+                        <?php
+                        if (!$isOrderSubscribePage && (!$order->getManzanaId())) {
+                            $uri = new Uri(Application::getInstance()
+                                ->getContext()
+                                ->getRequest()
+                                ->getRequestUri());
+                            $uri->addParams([
+                                'reply_order' => 'Y',
+                                'id' => $order->getId()
+                            ]); ?>
+
+                            <a class="b-link b-link__button b-link__button-first" href="<?= $uri->getUri() ?>"
+                               title="Повторить заказ">
+                                <span class="b-link__text">Повторить заказ</span>
+                            </a>
+                            <?php $isFirstButton = false; ?>
+                        <?php } ?>
+                        <?php if ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) { ?>
+                            <div class="b-link b-link__button
+                    <?= ($arResult['CAN_CANCEL']) ? 'js-cancel-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?><?= ($arResult['CANCELED']) ? 'b-link__canceled' : '' ?>" data-order-id="<?= $order->getId() ?>">
+                        <span class="b-link__text js-link-text">
+                            <?php if ($arResult['CAN_CANCEL']) { ?>
+                                Отменить заказ
+                            <?php } else if ($arResult['CANCELED']) { ?>
+                                Отменен
+                            <?php } else if ($arResult['FINISHED']) { ?>
+                                Выполнен
+                            <?php } ?>
+                        </span>
+                            </div>
+                            <?php $isFirstButton = false; ?>
+                        <?php } ?>
+                        <?php /* if (!$arResult['FINISHED'] && ($arResult['CAN_EXTEND'] || $arResult['EXTENDED'])) { ?>
+                    <div class="b-link b-link__button <?= ($arResult['CAN_EXTEND']) ? 'js-extend-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?>" data-order-id="<?= $order->getId() ?>">
+                        <span class="b-link__text js-link-text">
+                            <?php if ($arResult['CAN_EXTEND']) { ?>
+                                Продлить срок хранения
+                            <?php } else if ($arResult['EXTENDED']) { ?>
+                                Срок хранения продлен до 5-ти дней
+                            <?php } ?>
+                        </span>
+                    </div>
+                <?php } */ ?>
+                    </div>
                     <?php
                     /*
                     if (!$isOrderSubscribePage && !$order->isClosed() && !$order->isPayed() && !$order->getManzanaId() && $order->getPayment()->getCode() === 'card-online') {
@@ -298,7 +344,7 @@ if ($orderSubscribe) {
                     ?>
                 </div>
             </div>
-            <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
+            <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full b-accordion-order-item__subscribe-link-desktop">
                 <?php $isFirstButton = true; ?>
                 <?php
                 if (!$isOrderSubscribePage && (!$order->getManzanaId())) {

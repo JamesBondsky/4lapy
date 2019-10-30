@@ -1,7 +1,27 @@
-.b-account__accordion-order-list + .b-account__title{
-  margin-top: 50px;
+.b-account__accordion-order-list + .b-account__title {
+	margin-top: 50px;
 }
 
 .b-link__canceled {
-  cursor: default !important;
+	cursor: default !important;
+}
+
+@media (min-width: 756px) {
+	.b-accordion-order-item__subscribe-link-desktop {
+		display: block;
+	}
+
+	.b-accordion-order-item__subscribe-link-mobile {
+		display: none;
+	}
+}
+
+@media (max-width: 755px) {
+	.b-accordion-order-item__subscribe-link-desktop {
+		display: none;
+	}
+
+	.b-accordion-order-item__subscribe-link-mobile {
+		display: block;
+	}
 }
