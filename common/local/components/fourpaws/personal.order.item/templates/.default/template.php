@@ -46,22 +46,23 @@ $isOrderSubscribePage = $orderSubscribe ? true : false;
 $subscribeOrderAddControls = '';
 $subscribeOrderEditControls = '';
 
-$genSubscribeControls = false;
-if (!$genSubscribeControls
-    && $component->getOrderSubscribeService()
-        ->canBeSubscribed($order)) {
-    $genSubscribeControls = true;
-}
-if (!$genSubscribeControls && $orderSubscribe) {
-    $genSubscribeControls = true;
-}
-$tmpOrderSubscribe = null;
-if (!$genSubscribeControls && !$orderSubscribe) {
-    // здесь проверяем, нет ли уже оформленной подписки на заказ,
-    // на который по новым условиям уже подписаться нельзя
-    $tmpOrderSubscribe = $component->getOrderSubscribeService()
-        ->getSubscribeByOrderId($order->getId());
-    $genSubscribeControls = $tmpOrderSubscribe ? true : false;
+try {
+    $genSubscribeControls = false;
+    if (!$genSubscribeControls && $component->getOrderSubscribeService()->canBeSubscribed($order)) {
+        $genSubscribeControls = true;
+    }
+    if (!$genSubscribeControls && $orderSubscribe) {
+        $genSubscribeControls = true;
+    }
+    $tmpOrderSubscribe = null;
+    if (!$genSubscribeControls && !$orderSubscribe) {
+        // здесь проверяем, нет ли уже оформленной подписки на заказ,
+        // на который по новым условиям уже подписаться нельзя
+        $tmpOrderSubscribe = $component->getOrderSubscribeService()->getSubscribeByOrderId($order->getId());
+        $genSubscribeControls = $tmpOrderSubscribe ? true : false;
+    }
+} catch (\Exception $e) {
+    $genSubscribeControls = false;
 }
 
 if ($genSubscribeControls) {
