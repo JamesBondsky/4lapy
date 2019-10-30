@@ -1076,8 +1076,9 @@ class ExpertsenderService implements LoggerAwareInterface
         $snippets[] = new Snippet('next_delivery_date', $orderSubscribe->getNextDate()->format('d.m.Y'));
         $snippets[] = new Snippet('sale_bonus', abs($saleBonus));
 
-        $basket = $orderSubscribeService->getBasketBySubscribeId($orderSubscribe->getId());
-        $items = $this->getAltProductsItems($order, $basket->getBasketItems());
+        // $basket = $orderSubscribeService->getBasketBySubscribeId($orderSubscribe->getId());
+        // $items = $this->getAltProductsItems($order, $basket->getBasketItems());
+        $items = $this->getAltProductsItems($order);
 
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
