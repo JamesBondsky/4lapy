@@ -2,8 +2,6 @@
 
 namespace FourPaws\CatalogBundle\Controller;
 
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use Bitrix\Main\Entity\DataManager;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Query\CategoryQuery;
@@ -16,8 +14,6 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
-use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockType;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\ProductSearchResult;
@@ -312,6 +308,12 @@ class CatalogController extends Controller
         if ($request->query->get('partial') === 'Y') {
             $tpl = 'FourPawsCatalogBundle:Catalog:catalog.filter.container.html.php';
         }
+
+        /*
+         * todo использовать cookie битрикса или symfony
+         * битрикс еще не подключен, а в конце шаблонов стоит die();, следовательно с помощью symfony выставить cookie не получится
+         */
+        setcookie('clear_clothing_size_filter', null, -1, '/');
 
         return $this->render($tpl, [
             'productSearchResult'    => $result,

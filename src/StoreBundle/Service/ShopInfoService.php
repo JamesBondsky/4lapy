@@ -542,6 +542,7 @@ class ShopInfoService
                     )
                 )
                 ->setAvailableAmount(str_replace(' ', '&nbsp;', $amountString))
+                ->setAvailableAmountDigit($amount)
                 ->setAvailability(
                     $stockResultByStore->getType() === StockResult::TYPE_AVAILABLE
                         ? OrderAvailability::AVAILABLE

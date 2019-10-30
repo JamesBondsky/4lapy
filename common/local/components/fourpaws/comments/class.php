@@ -112,14 +112,14 @@ class CCommentsComponent extends \CBitrixComponent
     /**
      * @param int $hlID
      *
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
+     * @return mixed
+     *@throws ObjectPropertyException
      * @throws \Exception
-     * @throws \LogicException
+     * @throws LogicException
      * @throws LoaderException
      * @throws SystemException
-     * @throws \RuntimeException
-     * @return mixed
+     * @throws RuntimeException
+     * @throws ArgumentException
      */
     public static function getHLEntity(int $hlID)
     {
@@ -129,13 +129,13 @@ class CCommentsComponent extends \CBitrixComponent
         $result = HighloadBlockTable::query()->setSelect(['*'])->setFilter(['ID' => $hlID])->exec();
 
         if ($result->getSelectedRowsCount() > 1) {
-            throw new \LogicException('Неверный фильтр: найдено несколько HLBlock.');
+            throw new LogicException('Неверный фильтр: найдено несколько HLBlock.');
         }
 
         $hlBlockFields = $result->fetch();
 
         if (!\is_array($hlBlockFields)) {
-            throw new \RuntimeException('HLBlock не найден.');
+            throw new RuntimeException('HLBlock не найден.');
         }
 
         $dataManager = HighloadBlockTable::compileEntity($hlBlockFields)->getDataClass();
@@ -148,17 +148,18 @@ class CCommentsComponent extends \CBitrixComponent
             return $dataManager;
         }
 
-        throw new \RuntimeException('Ошибка компиляции сущности для HLBlock.');
+        throw new RuntimeException('Ошибка компиляции сущности для HLBlock.');
     }
 
     /**
-     * @throws \LogicException
+     * @return array
      * @throws ServiceNotFoundException
      * @throws SystemException
      * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws LoaderException
-     * @return array
+     * @throws RuntimeException
+     * @throws LoaderException*
+     * @throws ApplicationCreateException
+     * @throws LogicException
      */
     public static function getNextItems(): array
     {
@@ -174,6 +175,24 @@ class CCommentsComponent extends \CBitrixComponent
         $class->arParams['ACTIVE_DATE_FORMAT'] = $request->get('active_date_format') ?? 'd.m.Y';
         $class->setHLEntity();
         $items = $class->getComments();
+
+        // формируем массив, чтобы на фронте можно было отрендерить изображения к комментариям
+        foreach ($items['ITEMS'] as &$comment) {
+            if ($comment['UF_PHOTOS'] && !empty($comment['UF_PHOTOS'])) {
+                $photos = [];
+                foreach ($comment['UF_PHOTOS'] as $photoId) {
+                    if (isset($items['IMAGES'][$photoId])) {
+                        $photos[] = [
+                          'ID' => $photoId,
+                          'URL' =>   $items['IMAGES'][$photoId],
+                        ];
+                    }
+                }
+                $comment['UF_PHOTOS'] = $photos;
+            } else {
+                $comment['UF_PHOTOS'] = false;
+            }
+        }
 
         return $items['ITEMS'];
     }
@@ -204,9 +223,8 @@ class CCommentsComponent extends \CBitrixComponent
      * {@inheritdoc}
      * @throws SystemException
      * @throws ServiceNotFoundException
-     * @throws \RuntimeException
-     * @throws \LogicException
-     * @throws LoaderException
+     * @throws RuntimeException
+     * @throws LogicException
      * @throws Exception
      */
     public function executeComponent()
@@ -364,7 +382,7 @@ class CCommentsComponent extends \CBitrixComponent
      * @throws FileTypeException
      * @throws SystemException
      */
-    public function getPhotoData()
+    public function getPhotoData(): ?array
     {
         $fileList = Application::getInstance()->getContext()->getRequest()->getFileList()->toArray();
 
@@ -378,7 +396,7 @@ class CCommentsComponent extends \CBitrixComponent
 
         $filesCount = count($fileList['name']);
 
-        if (count($fileList['name']) > 5) {
+        if (count($fileList['name']) > 6) { // на самом деле 5, но с фронта приходит незаполненное поле
             throw new FileCountException('');
         }
 
@@ -390,6 +408,10 @@ class CCommentsComponent extends \CBitrixComponent
                 'error' => $fileList['error'][$i],
                 'size' => $fileList['size'][$i],
             ];
+
+            if ($file['error'] === 4) {
+                continue; // на фронте всегда остается одно незаполненное поле
+            }
 
             if ($file['error'] !== 0) {
                 throw new FileSaveException('');
@@ -430,10 +452,10 @@ class CCommentsComponent extends \CBitrixComponent
      * @throws \Exception
      * @throws ObjectPropertyException
      * @throws ArgumentException
-     * @throws \LogicException
+     * @throws LogicException
      * @throws LoaderException
      * @throws SystemException
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     protected function setHLEntity(): void
     {

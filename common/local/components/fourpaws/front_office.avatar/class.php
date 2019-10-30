@@ -15,6 +15,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 class FourPawsFrontOfficeAvatarComponent extends \FourPaws\FrontOffice\Bitrix\Component\SubmitForm
 {
+    protected $specialGroupLocks = ['43' => [
+        'lastName',
+        'firstName',
+        'secondName',
+        'birthDay'
+    ]];
+    
     /** операции, к одной из которых у пользователя должен быть доступ (по умолчанию) */
     const CAN_ACCESS_USER_OPERATIONS_DEFAULT = [
         'view_subordinate_users',
@@ -183,7 +190,8 @@ class FourPawsFrontOfficeAvatarComponent extends \FourPaws\FrontOffice\Bitrix\Co
         $this->arResult['CAN_ACCESS'] = $this->canEnvUserAccess() ? 'Y' : 'N';
         $this->arResult['ACTION'] = $this->getAction();
         $this->arResult['IS_AVATAR_AUTHORIZED'] = $this->getUserService()->isAvatarAuthorized() ? 'Y' : 'N';
-
+        $this->arResult['LOCKS'] = $this->checkLocksForGroup();
+        
         $this->includeComponentTemplate();
     }
 
@@ -593,5 +601,24 @@ class FourPawsFrontOfficeAvatarComponent extends \FourPaws\FrontOffice\Bitrix\Co
         //*/
 
         return $usersList;
+    }
+    
+    protected function checkLocksForGroup()
+    {
+        $result = [];
+        
+        $currentUSerGroups = $this->getEnvUserGroups();
+        
+        foreach ($this->specialGroupLocks as $groupId => $locks) {
+            if (in_array($groupId, $currentUSerGroups)) {
+                foreach ($locks as $lock) {
+                    $result[] = $lock;
+                }
+            }
+        }
+        
+        $result = array_unique($result);
+        
+        return $result;
     }
 }

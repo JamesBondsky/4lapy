@@ -245,4 +245,12 @@ abstract class BitrixArrayItemBase implements ActiveReadModelInterface, ItemInte
     {
         return property_exists($this, $fieldName);
     }
+
+    /**
+     * @return bool
+     */
+    public function getCtm(): bool
+    {
+        return $this->PROPERTY_STM;
+    }
 }

@@ -9,23 +9,27 @@
 namespace FourPaws\CatalogBundle\Service;
 
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Iblock\PropertyTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Base;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
-use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\LocationService;
 
 class SubscribeDiscountService
 {
     // код скидки для всех
-    const ALL = 'ALL';
+    public const ALL = 'ALL';
 
-    private $multipleProps = ['BRAND', 'REGION_CODE'];
+    private $multipleProps = ['BRAND', 'REGION_CODE', 'SECTION'];
     private $discounts;
     private $regionCode;
 
@@ -34,21 +38,23 @@ class SubscribeDiscountService
      * Заполняет массив всеми скидками
      *
      * @return array
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function getDiscounts(): array
     {
         if (null === $this->discounts) {
+            $subscribeIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::SUBSCRIBE_PRICES);
+
             $res = ElementTable::getList([
                 'select' => [
                     'ID',
                 ],
                 'filter' => [
                     'ACTIVE' => 'Y',
-                    'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::SUBSCRIBE_PRICES),
+                    'IBLOCK_ID' => $subscribeIblockId,
                 ],
             ]);
 
@@ -69,15 +75,13 @@ class SubscribeDiscountService
                     'CODE'
                 ],
                 'filter' => [
-                    'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::SUBSCRIBE_PRICES),
-                    'CODE' => ['BRAND', 'REGION_CODE', 'PERCENT'],
+                    'IBLOCK_ID' => $subscribeIblockId,
+                    'CODE' => ['BRAND', 'REGION_CODE', 'PERCENT', 'SECTION'],
                 ]
             ]);
 
-            $discountProperties = [];
             $discountPropertyIds = [];
             while ($row = $res->fetch()) {
-                $discountProperties[$row['CODE']] = $row;
                 $discountPropertyIds[$row['CODE']] = $row['ID'];
             }
 
@@ -102,9 +106,10 @@ class SubscribeDiscountService
                 ],
             ]);
 
+            $discounts = [];
             while ($row = $rsProps->fetch()) {
-                $code = array_search($row['IBLOCK_PROPERTY_ID'], $discountPropertyIds);
-                if (in_array($code, $this->multipleProps)) {
+                $code = array_search($row['IBLOCK_PROPERTY_ID'], $discountPropertyIds, false);
+                if (in_array($code, $this->multipleProps, false)) {
                     $discounts[$row['IBLOCK_ELEMENT_ID']][$code][] = $row['VALUE'];
                 } else {
                     $discounts[$row['IBLOCK_ELEMENT_ID']][$code] = $row['VALUE'];
@@ -127,8 +132,9 @@ class SubscribeDiscountService
 
     /**
      * @param array $discounts
+     * @return SubscribeDiscountService
      */
-    public function setDiscounts(array $discounts)
+    public function setDiscounts(array $discounts): SubscribeDiscountService
     {
         $this->discounts = $discounts;
         return $this;
@@ -138,7 +144,7 @@ class SubscribeDiscountService
      * @param $discount
      * @return int
      */
-    public function getDiscountValue($discount)
+    public function getDiscountValue($discount): int
     {
         return (int)$discount['PERCENT'];
     }
@@ -146,52 +152,70 @@ class SubscribeDiscountService
     /**
      * @param $region
      * @return array
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function getDiscountsByRegion($region)
+    public function getDiscountsByRegion($region): array
     {
         return $this->getDiscounts()[$region] ?: [];
     }
 
     /**
      * @return array
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function getBaseDiscounts()
+    public function getBaseDiscounts(): array
     {
         return $this->getDiscounts()[self::ALL] ?: [];
     }
 
-
     /**
      * Находит наиболее подходящую скидку для торгового предложения
      *
-     * @param $discounts
      * @param Offer $offer
+     * @param bool|string $regionCode
      * @return null
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws IblockNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function getBestDiscount(Offer $offer, $regionCode = false)
     {
+        $discountBest = $this->extractBaseDiscount($this->getDiscountsByRegion($regionCode), $offer, $regionCode);
+
+        if (!$discountBest) {
+            $discountBest = $this->extractBaseDiscount($this->getBaseDiscounts(), $offer, $regionCode);
+        }
+
+        return $discountBest;
+    }
+
+    /**
+     * @param array $discounts
+     * @param Offer $offer
+     * @param bool|string $regionCode
+     * @return mixed|null
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     */
+    protected function extractBaseDiscount(array $discounts, Offer $offer, $regionCode = false)
+    {
         $discountBest = null;
         $discountWithoutBrand = null;
+
         if (!$regionCode) {
             $regionCode = $this->getRegion();
         }
 
-        $discountsByRegion = $this->getDiscountsByRegion($regionCode);
-        if (!empty($discountsByRegion)) {
-            foreach ($discountsByRegion as $discount) {
+        if (!empty($discounts)) {
+            foreach ($discounts as $discount) {
                 if ($this->canBeApplied($discount, $offer, $regionCode) && ($discountBest['PERCENT'] > $discount['PERCENT'] || !$discountBest)) {
                     $discountBest = $discount;
                 } elseif (empty($discount['BRAND']) && (!$discountWithoutBrand || $discount['PERCENT'] > $discountWithoutBrand['PERCENT'])) {
@@ -202,50 +226,51 @@ class SubscribeDiscountService
                 $discountBest = $discountWithoutBrand;
             }
         }
-        if(!$discountBest){
-            $discountsBase = $this->getBaseDiscounts($regionCode);
-            if(!empty($discountsBase)){
-                foreach ($discountsBase as $discount) {
-                    if ($this->canBeApplied($discount, $offer, $regionCode) && ($discountBest['PERCENT'] > $discount['PERCENT'] || !$discountBest)) {
-                        $discountBest = $discount;
-                    } elseif (empty($discount['BRAND']) && (!$discountWithoutBrand || $discount['PERCENT'] > $discountWithoutBrand['PERCENT'])) {
-                        $discountWithoutBrand = $discount;
-                    }
-                }
-                if (!$discountBest && $discountWithoutBrand) {
-                    $discountBest = $discountWithoutBrand;
-                }
-            }
-        }
 
         return $discountBest;
     }
 
     /**
+     * @param $discount
+     * @param Offer $offer
+     * @param $region
      * @return bool
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
+     * @throws SystemException
      */
-    protected function canBeApplied($discount, Offer $offer, $region)
+    protected function canBeApplied($discount, Offer $offer, $region): bool
     {
-        return in_array($offer->getProduct()->getBrandId(), $discount['BRAND'])
-            && (in_array($region, $discount['REGION_CODE']) || (count($discount['REGION_CODE']) == 1 && $discount['REGION_CODE'][0] == self::ALL));
+        if (!(in_array($region, $discount['REGION_CODE'], false) || ((count($discount['REGION_CODE']) === 1) && ($discount['REGION_CODE'][0] === self::ALL)))) {
+            return false;
+        }
+
+        if (!in_array($offer->getProduct()->getBrandId(), $discount['BRAND'], false)) {
+            return false;
+        }
+
+        if (!isset($discount['SECTION']) || empty($discount['SECTION'])) {
+            return true;
+        }
+
+        foreach ($offer->getProduct()->getSectionsIdList() as $sectionId) {
+            if (in_array($sectionId, $discount['SECTION'], false)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
      * @return string
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
-    protected function getRegion()
+    protected function getRegion(): string
     {
-        if (null == $this->regionCode) {
+        if (null === $this->regionCode) {
             /** @var LocationService $locationService */
             $locationService = Application::getInstance()->getContainer()->get('location.service');
             $this->regionCode = $locationService->getCurrentRegionCode();
         }
         return $this->regionCode;
     }
-
 }
