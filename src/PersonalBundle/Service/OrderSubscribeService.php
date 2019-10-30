@@ -9,6 +9,7 @@
 namespace FourPaws\PersonalBundle\Service;
 
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -17,7 +18,6 @@ use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\Entity\Base;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\Error;
@@ -32,9 +32,9 @@ use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
-use Bitrix\Sale\Shipment;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Collection\UserFieldEnumCollection;
+use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -42,7 +42,6 @@ use FourPaws\AppBundle\Traits\UserFieldEnumTrait;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
-use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -55,6 +54,7 @@ use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\HighloadHelper;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyResult;
@@ -71,7 +71,6 @@ use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
-use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -606,14 +605,17 @@ class OrderSubscribeService implements LoggerAwareInterface
      *
      * @param Order $order
      * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
+     * @throws SystemException
      */
     public function canBeSubscribed(Order $order): bool
     {
         //$result = $order->isPayed() && (!$order->isManzana() || $order->isNewManzana());
         // LP12-26: Сделать подписку на доставку и повтор заказа возможными для любых заказов.
-        $result = !$order->getManzanaId();
-
-        return $result;
+        return (!$order->getManzanaId() && $this->availableSubscribe($order));
     }
 
     /**
@@ -2143,4 +2145,41 @@ class OrderSubscribeService implements LoggerAwareInterface
         return $result;
     }
 
+    /**
+     * @param Order $order
+     * @return bool
+     * @throws SystemException
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws EmptyEntityClass
+     * @throws ApplicationCreateException
+     */
+    protected function availableSubscribe(Order $order): bool
+    {
+        $orderItemsQuantity = [];
+        $totalPrice = 0;
+        $subscribePrice = 0;
+
+        /** @var OrderItem $item */
+        foreach ($order->getItems() as $item) {
+            $orderItemsQuantity[$item->getProductId()] = $item->getQuantity();
+            $totalPrice += $item->getPrice();
+        }
+
+        if (empty($orderItemsQuantity)) {
+            return false;
+        }
+
+        $offers = (new OfferQuery())->withFilter(['=ID' => array_keys($orderItemsQuantity)])->exec();
+
+        /** @var Offer $offer */
+        foreach ($offers as $offer) {
+            $offerSubscribePrice = ($offer->getSubscribePrice() < $offer->getPrice()) ? $offer->getSubscribePrice() : $offer->getPrice();
+            if (isset($orderItemsQuantity[$offer->getId()])) {
+                $subscribePrice += $offerSubscribePrice * $orderItemsQuantity[$offer->getId()];
+            }
+        }
+
+        return ($subscribePrice < $totalPrice);
+    }
 }

@@ -15,11 +15,9 @@ use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
-use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\ArrayTransformerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -34,7 +32,7 @@ class PetRepository extends BaseHlRepository
 {
     public const HL_NAME = 'Pet';
     /**
-     * @var UserService
+     * @var CurrentUserProviderInterface
      */
     public $curUserService;
     /** @var Pet $entity */
@@ -80,9 +78,10 @@ class PetRepository extends BaseHlRepository
     }
 
     /**
-     * @return ArrayCollection|Pet[]
+     * @return ArrayCollection
      * @throws ArgumentException
      * @throws ObjectPropertyException
+     * @throws NotAuthorizedException
      * @throws SystemException
      */
     public function findByCurUser(): ArrayCollection
