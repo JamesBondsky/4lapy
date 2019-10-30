@@ -1175,6 +1175,13 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 $this->arResult['DADATA_CONSTRAINTS'] = $this->getLocationService()->getDadataJsonFromLocationArray($selectedCity);
                 $this->arResult['METRO'] = $this->getStoreService()->getMetroInfo();
                 $this->arResult['IS_SINGLE_SUBSCRIBE'] = $isSingleSubscribe;
+                $this->arResult['SELECTED_DATE'] = $orderSubscribe->getNearestDelivery();
+                $this->arResult['SELECTED_TIME'] = $orderSubscribe->getDeliveryTime();
+                if($orderSubscribeSingle){
+                    $this->arResult['SELECTED_DATE'] = $orderSubscribeSingle->getSubscribe()->getNextDate();
+                    $this->arResult['SELECTED_TIME'] = $orderSubscribeSingle->getSubscribe()->getDeliveryTime();
+                }
+
                 // $this->arResult['MIN_DELIVERY_DATE'] = new \DateTime($this->getOrderSubscribeHistoryService()->getNearestDelivery($orderSubscribe));
             } catch (\Exception $e) {
                 $result->addError(new Error(

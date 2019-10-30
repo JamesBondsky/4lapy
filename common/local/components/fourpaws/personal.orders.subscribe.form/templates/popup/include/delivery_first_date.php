@@ -17,13 +17,15 @@ $nextDeliveries = $deliveryService->getNextDeliveries($currentDelivery, 10);
 $isHidden = $selectedDelivery->getDeliveryId() != $currentDelivery->getDeliveryId();
 
 // выбранные опции
-$selectedFirstDate = null;
-$selectedInterval = null;
-$orderSubscribe = $component->getOrderSubscribe();
-if($orderSubscribe && $orderSubscribe->getId() > 0){
-    $selectedFirstDate = $orderSubscribe->getNearestDelivery();
-    $selectedInterval = $orderSubscribe->getDeliveryTime();
-}
+//$selectedFirstDate = null;
+//$selectedInterval = null;
+//$orderSubscribe = $component->getOrderSubscribe();
+//if($orderSubscribe && $orderSubscribe->getId() > 0){
+//    $selectedFirstDate = $orderSubscribe->getNearestDelivery();
+//    $selectedInterval = $orderSubscribe->getDeliveryTime();
+//}
+$selectedFirstDate = $arResult['SELECTED_DATE'];
+$selectedInterval = $arResult['SELECTED_TIME'];
 ?>
 <div class="b-delivery-type-time" data-container-delivery-type-time="true">
     <ul class="b-radio-tab">
