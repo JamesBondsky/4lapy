@@ -649,7 +649,7 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
         }
 
         $this->arResult['SUBSCRIBE_PRICE'] = $subscribePrice;
-        $this->arResult['SUBSCRIBE_ALLOWED'] = ($subscribeAllowed && (($this->arResult['TOTAL_PRICE'] - $this->arResult['SUBSCRIBE_PRICE'] > 0)));
+        $this->arResult['SUBSCRIBE_ALLOWED'] = $subscribeAllowed;
     }
 
     /**
