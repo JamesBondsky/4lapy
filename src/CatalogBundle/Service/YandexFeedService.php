@@ -132,6 +132,13 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     /** @var array $arSupplierStocks */
     private $arSupplierStocks = [233, 234, 247, 250, 251, 252, 263, 267, 268, 270, 271, 272, 273, 274, 275, 287, 311, 315, 319];
 
+    /** @var array $arSalesNotesSections */
+    private $arSalesNotesSections = [];
+
+    /** @var array $arSaleNoteText */
+    private $arSaleNoteText = [];
+
+
     /**
      * YandexFeedService constructor.
      *
@@ -296,6 +303,23 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 )
             );
 
+
+        $container = Application::getInstance()->getContainer();
+        $filterSalesNotesDM = $container->get('bx.hlblock.yandexfeedfields');
+        $filterSalesNotes = $filterSalesNotesDM::query()->setSelect([
+            'ID',
+            'UF_SORT',
+            'UF_TEXT',
+            'UF_GROUPS',
+        ])->setOrder(['UF_SORT' => 'asc'])->exec()->fetchAll();
+
+        foreach ($filterSalesNotes as $salesNoteElement) {
+            $this->arSalesNotesSections = array_merge($this->arSalesNotesSections,$salesNoteElement["UF_GROUPS"]);
+            /* Здесь в любом случае M:1 отношение */
+            $this->arSaleNoteText = array_fill_keys(array_values($salesNoteElement["UF_GROUPS"]), $salesNoteElement["UF_TEXT"]);
+        }
+        
+
         foreach ($offerCollection as $k => $offer) {
             ++$offset;
 
@@ -372,6 +396,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $sectionId = $offer->getProduct()->getIblockSectionId();
         $this->categoriesInProducts[$sectionId] = $sectionId;
 
+
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
         $yandexOffer =
@@ -403,6 +428,14 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     ->getBrandName())
                 ->setDeliveryOptions($deliveryInfo)
                 ->setVendorCode(\array_shift($offer->getBarcodes()) ?: '');
+
+        /** #tr-531 */
+        if(\in_array($sectionId, $this->arSalesNotesSections)) {
+            $findedKey = \array_key_exists($sectionId,$this->arSaleNoteText);
+            if($findedKey && $this->arSaleNoteText[$sectionId]) {
+                $yandexOffer->setSalesNotes(\substr(\strip_tags($this->arSaleNoteText[$sectionId]), 0, 3990));
+            }
+        }
 
         $country = $offer
             ->getProduct()
