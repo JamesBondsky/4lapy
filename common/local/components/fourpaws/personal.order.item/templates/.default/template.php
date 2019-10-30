@@ -281,7 +281,7 @@ if ($orderSubscribe) {
                             </a>
                             <?php $isFirstButton = false; ?>
                         <?php } ?>
-                        <?php if ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) { ?>
+                        <?php /*if ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) { ?>
                             <div class="b-link b-link__button
                     <?= ($arResult['CAN_CANCEL']) ? 'js-cancel-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?><?= ($arResult['CANCELED']) ? 'b-link__canceled' : '' ?>" data-order-id="<?= $order->getId() ?>">
                         <span class="b-link__text js-link-text">
@@ -295,7 +295,7 @@ if ($orderSubscribe) {
                         </span>
                             </div>
                             <?php $isFirstButton = false; ?>
-                        <?php } ?>
+                        <?php } */?>
                         <?php /* if (!$arResult['FINISHED'] && ($arResult['CAN_EXTEND'] || $arResult['EXTENDED'])) { ?>
                     <div class="b-link b-link__button <?= ($arResult['CAN_EXTEND']) ? 'js-extend-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?>" data-order-id="<?= $order->getId() ?>">
                         <span class="b-link__text js-link-text">
@@ -363,7 +363,7 @@ if ($orderSubscribe) {
                     </a>
                     <?php $isFirstButton = false; ?>
                 <?php } ?>
-                <?php if ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) { ?>
+                <?php /*if ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) { ?>
                     <div class="b-link b-link__button
                     <?= ($arResult['CAN_CANCEL']) ? 'js-cancel-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?><?= ($arResult['CANCELED']) ? 'b-link__canceled' : '' ?>" data-order-id="<?= $order->getId() ?>">
                         <span class="b-link__text js-link-text">
@@ -377,7 +377,7 @@ if ($orderSubscribe) {
                         </span>
                     </div>
                     <?php $isFirstButton = false; ?>
-                <?php } ?>
+                <?php } */?>
                 <?php /* if (!$arResult['FINISHED'] && ($arResult['CAN_EXTEND'] || $arResult['EXTENDED'])) { ?>
                     <div class="b-link b-link__button <?= ($arResult['CAN_EXTEND']) ? 'js-extend-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?>" data-order-id="<?= $order->getId() ?>">
                         <span class="b-link__text js-link-text">
