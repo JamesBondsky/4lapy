@@ -432,7 +432,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         /** #tr-531 */
         if(\in_array($sectionId, $this->arSalesNotesSections)) {
             $findedKey = \array_key_exists($sectionId,$this->arSaleNoteText);
-            if($findedKey && $this->arSaleNoteText[$sectionId]) {
+            if($findedKey && $this->arSaleNoteText[$sectionId]!="") {
                 $yandexOffer->setSalesNotes(\substr(\strip_tags($this->arSaleNoteText[$sectionId]), 0, 3990));
             }
         }
