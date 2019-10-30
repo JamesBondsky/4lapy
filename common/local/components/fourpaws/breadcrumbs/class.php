@@ -38,9 +38,13 @@ class FourPawsBreadCrumbs extends FourPawsComponent
          * @var MainTemplate $template
          */
         $template = MainTemplate::getInstance(Application::getInstance()->getContext());
-        $params['IS_CATALOG'] = $template->isCatalog();
+        $params['IS_CATALOG'] = $template->isCatalog() || $template->isCatalogPopup();
         $params['IS_CATALOG_DETAIL'] = $template->isCatalogDetail();
         $params['IS_LANDING'] = CatalogLandingService::isLandingPage();
+
+        if($template->isCatalogPopup()){
+            $params['SHOW_LINK_TO_MAIN'] = false;
+        }
 
         return parent::onPrepareComponentParams($params);
     }
