@@ -241,7 +241,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     public function transformOrderToMessage(Order $order): SourceMessage
     {
         $orderDto = new OrderDtoOut();
-
+        $orderShop = '';
+        
         $this->getPropertyCollection($order);
 
         try {
@@ -280,6 +281,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         }
         if(KioskService::isKioskMode()){
             $orderSource = OrderDtoOut::ORDER_SOURCE_KIOSK;
+            
+            $orderShop = KioskService::getOrderShop();
         }
 
         $description = \trim(\implode("\n",
@@ -294,6 +297,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $this->populateOrderDtoUserCoords($orderDto, $order);
         }
 
+        if (!$orderShop) {
+            $orderShop = $this->getPropertyValueByCode($order, 'OPERATOR_SHOP');
+        }
+        
         $orderDto
             ->setId($order->getField('ACCOUNT_NUMBER'))
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()
@@ -312,7 +319,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setOrderSource($orderSource)
             ->setBonusCard($this->getPropertyValueByCode($order, 'DISCOUNT_CARD'))
             ->setAvatarEmail($this->getPropertyValueByCode($order, 'OPERATOR_EMAIL'))
-            ->setAvatarDepartment($this->getPropertyValueByCode($order, 'OPERATOR_SHOP'));
+            ->setAvatarDepartment($orderShop);
 
         if ($this->deliveryService->isDobrolapDeliveryCode($deliveryTypeCode)) {
             $orderDto->setFastDeliv('P');
