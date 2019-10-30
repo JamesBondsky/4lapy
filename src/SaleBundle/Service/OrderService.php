@@ -63,6 +63,7 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\LocationService;
@@ -81,6 +82,7 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Repository\OrderStatusRepository;
+use FourPaws\SapBundle\Dto\Out\Orders\Order as OrderDtoOut;
 use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
@@ -872,7 +874,15 @@ class OrderService implements LoggerAwareInterface
                 );
             }
         }
-
+    
+        if(KioskService::isKioskMode()) {
+            $this->setOrderPropertyByCode(
+                $order,
+                'OPERATOR_SHOP',
+                KioskService::getOrderShop()
+            );
+        }
+        
         if ($storage->isFastOrder()) {
             $fastOrderProperties = [
                 'NAME',

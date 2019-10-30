@@ -46,6 +46,9 @@ class KioskService
         return self::$menu;
     }
     
+    /**
+     * @return string
+     */
     public static function getOrderShop()
     {
         return 'R238';

@@ -279,10 +279,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     break;
             }
         }
-        if(KioskService::isKioskMode()){
+        if(KioskService::isKioskMode()) {
             $orderSource = OrderDtoOut::ORDER_SOURCE_KIOSK;
-            
-            $orderShop = KioskService::getOrderShop();
         }
 
         $description = \trim(\implode("\n",
@@ -295,10 +293,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $deliveryTypeCode = $this->getDeliveryCode($order);
         if ($deliveryTypeCode == DeliveryService::INNER_DELIVERY_CODE || $deliveryTypeCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
             $this->populateOrderDtoUserCoords($orderDto, $order);
-        }
-
-        if (!$orderShop) {
-            $orderShop = $this->getPropertyValueByCode($order, 'OPERATOR_SHOP');
         }
         
         $orderDto
@@ -319,7 +313,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setOrderSource($orderSource)
             ->setBonusCard($this->getPropertyValueByCode($order, 'DISCOUNT_CARD'))
             ->setAvatarEmail($this->getPropertyValueByCode($order, 'OPERATOR_EMAIL'))
-            ->setAvatarDepartment($orderShop);
+            ->setAvatarDepartment($this->getPropertyValueByCode($order, 'OPERATOR_SHOP'));
 
         if ($this->deliveryService->isDobrolapDeliveryCode($deliveryTypeCode)) {
             $orderDto->setFastDeliv('P');
