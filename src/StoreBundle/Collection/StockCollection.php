@@ -72,6 +72,25 @@ class StockCollection extends BaseCollection
     }
 
     /**
+     * @param $corrNum
+     * @return int
+     * @throws NotFoundException
+     */
+    public function getTotalAmountDC(): int
+    {
+        $amount = 0;
+        /** @var Stock $item */
+        foreach ($this->getIterator() as $item) {
+            if($item->getStore()->getXmlId() == 'DC01') {
+                $amount += $item->getAmount();
+                break;
+            }
+        }
+
+        return $amount;
+    }
+
+    /**
      * @param Offer $offer
      * @return int
      */
