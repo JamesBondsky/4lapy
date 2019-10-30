@@ -963,7 +963,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws \InvalidArgumentException
      * @throws \LogicException
      */
-    protected function getAltProductsItems(Order $order, $basketItems = false): array
+    protected function getAltProductsItems(Order $order): array
     {
         /** @var PaymentService $paymentService */
         $paymentService = Application::getInstance()->getContainer()->get(PaymentService::class);
@@ -973,9 +973,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $fiscalization = $paymentService->getFiscalization($order, 0, false);
         $items = [];
         try {
-            if(!$basketItems){
-                $basketItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
-            }
+            $basketItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
             /** @var Item $basketItem */
             foreach ($basketItems as $basketItem) {
 
@@ -999,16 +997,19 @@ class ExpertsenderService implements LoggerAwareInterface
                 if (!$currentOffer) {
                     throw new ExpertSenderOfferNotFoundException(sprintf('Не найден товар %s', $basketItem->getCode()));
                 }
+
+
                 $link = ($currentOffer->getXmlId()[0] === '3') ? '' : new FullHrefDecorator($currentOffer->getDetailPageUrl());
-                $item = '';
-                $item .= '<Product>';
-                $item .= '<Name>' . $currentOffer->getName(). '</Name>';
-                $item .= '<PicUrl>' . new FullHrefDecorator((string)$currentOffer->getImages()->first()) . '</PicUrl>';
-                $item .= '<Link>' . $link . '</Link>';
-                $item .= '<Price1>' . $currentOffer->getOldPrice() . '</Price1>';
-                $item .= '<Price2>' . ($basketItem->getPrice() / 100) . '</Price2>';
-                $item .= '<Amount>' . $basketItem->getQuantity()->getValue() . '</Amount>';
-                $item .= '</Product>';
+
+                $params = [
+                    'name' => $currentOffer->getName(),
+                    'picurl' => new FullHrefDecorator((string)$currentOffer->getImages()->first()),
+                    'link' => $link,
+                    'price1' => $currentOffer->getOldPrice(),
+                    'price2' => ($basketItem->getPrice() / 100),
+                    'amount' => $basketItem->getQuantity()->getValue(),
+                ];
+                $item = $this->getProductFormatted($params);
                 $items[] = $item;
             }
         } catch (NotFoundException $e) {
@@ -1016,6 +1017,21 @@ class ExpertsenderService implements LoggerAwareInterface
         }
 
         return $items;
+    }
+
+    protected function getProductFormatted($params)
+    {
+        $item = '';
+        $item .= '<Product>';
+        $item .= '<Name>' . $params['name'] . '</Name>';
+        $item .= '<PicUrl>' . $params['picurl'] . '</PicUrl>';
+        $item .= '<Link>' . $params['link'] . '</Link>';
+        $item .= '<Price1>' . $params['price1'] . '</Price1>';
+        $item .= '<Price2>' . $params['price2'] . '</Price2>';
+        $item .= '<Amount>' . $params['amount'] . '</Amount>';
+        $item .= '</Product>';
+
+        return $item;
     }
 
     /**
@@ -1076,9 +1092,8 @@ class ExpertsenderService implements LoggerAwareInterface
         $snippets[] = new Snippet('next_delivery_date', $orderSubscribe->getNextDate()->format('d.m.Y'));
         $snippets[] = new Snippet('sale_bonus', abs($saleBonus));
 
-        // $basket = $orderSubscribeService->getBasketBySubscribeId($orderSubscribe->getId());
-        // $items = $this->getAltProductsItems($order, $basket->getBasketItems());
-        $items = $this->getAltProductsItems($order);
+        $basket = $orderSubscribeService->getBasketBySubscribeId($orderSubscribe->getId());
+        $items = $this->getAltProductsItemsByBasket($basket);
 
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
