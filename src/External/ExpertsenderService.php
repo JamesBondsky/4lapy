@@ -1058,7 +1058,8 @@ class ExpertsenderService implements LoggerAwareInterface
         $frequencyList = $orderSubscribeService->getFrequencies();
         $curFrequency = current(array_filter($frequencyList, function($item) use ($frequency) { return $item['ID'] == $frequency; }));
         $saleBonus = $orderSubscribeService->countBasketPriceDiff($order->getBasket());
-        $deliveryDate = $orderSubscribeHistoryService->getLastOrderDeliveryDate($orderSubscribe);
+        //$deliveryDate = $orderSubscribeHistoryService->getLastOrderDeliveryDate($orderSubscribe);
+        $deliveryDate = $orderSubscribe->getNearestDelivery();
         $deliveryDate = $deliveryDate ? $deliveryDate->format('d.m.Y') : '';
 
         $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));

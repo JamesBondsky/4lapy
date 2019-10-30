@@ -21,7 +21,7 @@ $selectedFirstDate = null;
 $selectedInterval = null;
 $orderSubscribe = $component->getOrderSubscribe();
 if($orderSubscribe && $orderSubscribe->getId() > 0){
-    $selectedFirstDate = $orderSubscribe->getNextDate();
+    $selectedFirstDate = $orderSubscribe->getNearestDelivery();
     $selectedInterval = $orderSubscribe->getDeliveryTime();
 }
 ?>
