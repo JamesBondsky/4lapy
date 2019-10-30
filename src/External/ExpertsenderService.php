@@ -14,6 +14,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
+use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -962,7 +963,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws \InvalidArgumentException
      * @throws \LogicException
      */
-    protected function getAltProductsItems(Order $order): array
+    protected function getAltProductsItems(Order $order, $basketItems = false): array
     {
         /** @var PaymentService $paymentService */
         $paymentService = Application::getInstance()->getContainer()->get(PaymentService::class);
@@ -972,7 +973,9 @@ class ExpertsenderService implements LoggerAwareInterface
         $fiscalization = $paymentService->getFiscalization($order, 0, false);
         $items = [];
         try {
-            $basketItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
+            if(!$basketItems){
+                $basketItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
+            }
             /** @var Item $basketItem */
             foreach ($basketItems as $basketItem) {
 
@@ -1073,7 +1076,9 @@ class ExpertsenderService implements LoggerAwareInterface
         $snippets[] = new Snippet('next_delivery_date', $orderSubscribe->getNextDate()->format('d.m.Y'));
         $snippets[] = new Snippet('sale_bonus', abs($saleBonus));
 
-        $items = $this->getAltProductsItems($order);
+        $basketItems = $orderSubscribeService->getBasketBySubscribeId($orderSubscribe->getId());
+        $items = $this->getAltProductsItems($order, $basketItems);
+
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
