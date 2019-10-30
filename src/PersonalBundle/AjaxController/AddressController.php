@@ -77,6 +77,7 @@ class AddressController extends Controller
      *
      * @return JsonResponse
      * @throws \RuntimeException
+     * @throws ApplicationCreateException
      */
     public function addAction(Request $request): JsonResponse
     {
@@ -85,7 +86,7 @@ class AddressController extends Controller
         }
 
         $fields = $request->request->all();
-        if ($location = $this->getDadataLocation($request)) {
+        if ($location = $this->getDadataLocation($request, $fields)['result']) {
             $fields['UF_CITY'] = $location->getName();
             $fields['UF_CITY_LOCATION'] = $location->getCode();
         }
@@ -124,6 +125,7 @@ class AddressController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
      */
     public function updateAction(Request $request): JsonResponse
     {
@@ -132,13 +134,14 @@ class AddressController extends Controller
         }
 
         $fields = $request->request->all();
-        if ($location = $this->getDadataLocation($request)) {
+        $locationResult = $this->getDadataLocation($request, $fields);
+        if ($location = $locationResult['result']) {
             $fields['UF_CITY'] = $location->getName();
             $fields['UF_CITY_LOCATION'] = $location->getCode();
         }
 
         try {
-            if ($this->addressService->update($fields)) {
+            if ($this->addressService->update($fields, !$locationResult['isMoscowDistrict'])) {
                 return JsonSuccessResponse::create(
                     'Адрес доставки обновлен',
                     200,
@@ -210,13 +213,15 @@ class AddressController extends Controller
     /**
      * @param Request $request
      *
+     * @param array $fields
      * @return BitrixLocation
      * @throws ApplicationCreateException
-     * @throws \RuntimeException
      */
-    protected function getDadataLocation(Request $request): ?BitrixLocation
+    protected function getDadataLocation(Request $request, array $fields): array
     {
         $result = null;
+        $isMoscowDistrict = false;
+
         try {
             $dadata = json_decode($request->get('dadata', ''), true);
             if ($dadata && \is_array($dadata)) {
@@ -225,6 +230,56 @@ class AddressController extends Controller
         } catch (CityNotFoundException $e) {
         }
 
-        return $result;
+        /* Если Москва, то пробуем найти район в дадате */
+        if ($this->isMoscowLocation($result, $fields) && $this->isValidAddressFields($fields)) {
+            $strAddress = sprintf('%s, %s, %s', $fields['UF_CITY'], $fields['UF_STREET'], $fields['UF_HOUSE']);
+            try {
+                $okato = $this->locationService->getDadataLocationOkato($strAddress);
+                $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+
+                if (count($locations)) {
+                    $location = current($locations);
+
+                    if (($locationCode = $location['CODE']) && (!empty($locationCode))) {
+                        $isMoscowDistrict = true;
+                        if ($result === null) {
+                            $result = new BitrixLocation();
+                            $result->setName($fields['UF_CITY']);
+                        }
+                        $result->setCode($locationCode);
+                    }
+                }
+
+            } catch (\Exception $e) {
+            }
+        }
+
+        return [
+            'result' => $result,
+            'isMoscowDistrict' => $isMoscowDistrict,
+        ];
+    }
+
+    /**
+     * @param BitrixLocation $bitrixLocation
+     * @param array $fields
+     * @return bool
+     */
+    protected function isMoscowLocation(?BitrixLocation $bitrixLocation, array $fields): bool
+    {
+        if ($bitrixLocation && ($bitrixLocation->getCode() === LocationService::LOCATION_CODE_MOSCOW)) {
+            return true;
+        }
+
+        if (ToUpper($fields['UF_CITY']) === 'МОСКВА') {
+            return true;
+        }
+
+        return false;
+    }
+
+    protected function isValidAddressFields(array $fields): bool
+    {
+        return (isset($fields['UF_CITY'], $fields['UF_STREET'], $fields['UF_HOUSE']) && !empty($fields['UF_CITY']) && !empty($fields['UF_STREET']) && !empty($fields['UF_HOUSE']));
     }
 }
