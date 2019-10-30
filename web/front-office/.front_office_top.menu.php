@@ -11,7 +11,7 @@ $aMenuLinks = [
         "История по карте",
         "history/",
         [],
-        [],
+        ['deniedGroups' => ['43']],
         "",
     ],
     /*
@@ -27,7 +27,7 @@ $aMenuLinks = [
         "Бонусы",
         "http://corp.4lapy.ru/company/bonus.php?login=yes",
         [],
-        [],
+        ['deniedGroups' => ['43']],
         "",
     ],
     /*
