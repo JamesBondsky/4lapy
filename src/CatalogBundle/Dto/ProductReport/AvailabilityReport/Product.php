@@ -114,6 +114,81 @@ class Product
     protected $brand;
 
     /**
+     * @var int
+     *
+     * @Serializer\SerializedName("Суммарный остаток во всех магазинах")
+     * @Serializer\Type("int")
+     */
+    protected $summQOffers;
+
+    /**
+     * @var int
+     *
+     * @Serializer\SerializedName("Суммарный остаток на складе транзитного поставщика")
+     * @Serializer\Type("int")
+     */
+    protected $summQExporterDelivery;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("Вес")
+     * @Serializer\Type("string")
+     */
+    protected $weight;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("Длина")
+     * @Serializer\Type("string")
+     */
+    protected $length;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("Ширина")
+     * @Serializer\Type("string")
+     */
+    protected $width;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("Высота")
+     * @Serializer\Type("string")
+     */
+    protected $height;
+
+
+    /**
+     * @var int
+     *
+     * @Serializer\SerializedName("Сортировка (из товара)")
+     * @Serializer\Type("int")
+     */
+    protected $sort;
+
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("СТМ (из товара)")
+     * @Serializer\Type("string")
+     */
+    protected $ctm;
+
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("Основной раздел (из товара)")
+     * @Serializer\Type("string")
+     */
+    protected $group;
+
+    /**
      * @return string
      */
     public function getXmlId(): string
@@ -358,5 +433,176 @@ class Product
         $this->brand = $brand;
 
         return $this;
+    }
+
+    /**
+     * @param int $summQOffers
+     * @return Product
+     */
+    public function setSummQOffers(int $summQOffers): Product
+    {
+        $this->summQOffers = $summQOffers;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSummQOffers(): int
+    {
+        return $this->summQOffers;
+    }
+
+    /**
+     * @param int $summQExporterDelivery
+     * @return Product
+     */
+    public function setSummQExporterDelivery(int $summQExporterDelivery): Product
+    {
+        $this->summQExporterDelivery = $summQExporterDelivery;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSummQExporterDelivery(): int
+    {
+        return $this->summQExporterDelivery;
+    }
+
+    /**
+     * @param string $weight
+     * @return Product
+     */
+    public function setWeight(string $weight): Product
+    {
+        $this->weight = $weight;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getWeight(): string
+    {
+        return $this->weight;
+    }
+
+    /**
+     * @param string $length
+     * @return Product
+     */
+    public function setLength(string $length): Product
+    {
+        $this->length = $length;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLength(): string
+    {
+        return $this->length;
+    }
+
+    /**
+     * @param string $width
+     * @return Product
+     */
+    public function setWidth(string $width): Product
+    {
+        $this->width = $width;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getWidth(): string
+    {
+        return $this->width;
+    }
+
+    /**
+     * @param string $height
+     * @return Product
+     */
+    public function setHeight(string $height): Product
+    {
+        $this->height = $height;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getHeight(): string
+    {
+        return $this->height;
+    }
+
+    /**
+     * @param string $sort
+     * @return Product
+     */
+    public function setSort(string $sort): Product
+    {
+        $this->sort = $sort;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSort(): string
+    {
+        return $this->sort;
+    }
+
+    /**
+     * @param string $ctm
+     * @return Product
+     */
+    public function setCtm(string $ctm): Product
+    {
+        $this->ctm = $ctm;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCtm(): string
+    {
+        return $this->ctm;
+    }
+
+    /**
+     * @param string $groupId
+     * @return Product
+     */
+    public function setGroup(string $group): Product
+    {
+        $this->group = $group;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getGroup(): string
+    {
+        return $this->group;
     }
 }

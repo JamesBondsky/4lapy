@@ -150,6 +150,15 @@ class Shop
     protected $availableAmount;
 
     /**
+     * @Serializer\SerializedName("amount_digit")
+     * @Serializer\Type("integer")
+     * @Serializer\SkipWhenEmpty()
+     *
+     * @var integer
+     */
+    protected $availableAmountDigit;
+
+    /**
      * @Serializer\SerializedName("location_type")
      * @Serializer\Type("string")
      * @Serializer\SkipWhenEmpty()
@@ -481,6 +490,18 @@ class Shop
     public function setAvailableAmount(string $availableAmount): Shop
     {
         $this->availableAmount = $availableAmount;
+
+        return $this;
+    }
+
+    /**
+     * @param int $availableAmountDigit
+     *
+     * @return Shop
+     */
+    public function setAvailableAmountDigit(int $availableAmountDigit): Shop
+    {
+        $this->availableAmountDigit = $availableAmountDigit;
 
         return $this;
     }
