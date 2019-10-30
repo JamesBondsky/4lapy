@@ -390,6 +390,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ->setDescription(\substr(\strip_tags($offer->getProduct()
                     ->getDetailText()
                     ->getText()), 0, 2990))
+                ->setSalesNotes(\substr(\strip_tags($offer->getProduct()
+                    ->getSalesNotes()), 0, 3990))
                 ->setManufacturerWarranty(true)
                 ->setAvailable((!empty($stockID) && $tpz) ? false : ($offer->isAvailable() && !$offer->isByRequest()) )
                 ->setCurrencyId('RUB')
