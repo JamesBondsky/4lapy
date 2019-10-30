@@ -441,7 +441,7 @@ class KkmService implements LoggerAwareInterface
             foreach ($products as $product) {
                 if (strripos($product['uid'], '300') !== 0) {
                     $offerXmlIds[] = $product['uid'];
-                    $quantities[$product['uid']] = $product['count'];
+                    $quantities[$product['uid']] += $product['count'];
                 }
             }
 
