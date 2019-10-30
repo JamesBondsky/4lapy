@@ -615,7 +615,7 @@ class OrderSubscribeService implements LoggerAwareInterface
     {
         //$result = $order->isPayed() && (!$order->isManzana() || $order->isNewManzana());
         // LP12-26: Сделать подписку на доставку и повтор заказа возможными для любых заказов.
-        return (!$order->getManzanaId() && $this->availableSubscribe($order));
+        return !$order->getManzanaId();
     }
 
     /**
@@ -2143,43 +2143,5 @@ class OrderSubscribeService implements LoggerAwareInterface
         }
 
         return $result;
-    }
-
-    /**
-     * @param Order $order
-     * @return bool
-     * @throws SystemException
-     * @throws IblockNotFoundException
-     * @throws ArgumentException
-     * @throws EmptyEntityClass
-     * @throws ApplicationCreateException
-     */
-    protected function availableSubscribe(Order $order): bool
-    {
-        $orderItemsQuantity = [];
-        $totalPrice = 0;
-        $subscribePrice = 0;
-
-        /** @var OrderItem $item */
-        foreach ($order->getItems() as $item) {
-            $orderItemsQuantity[$item->getProductId()] = $item->getQuantity();
-            $totalPrice += $item->getPrice();
-        }
-
-        if (empty($orderItemsQuantity)) {
-            return false;
-        }
-
-        $offers = (new OfferQuery())->withFilter(['=ID' => array_keys($orderItemsQuantity)])->exec();
-
-        /** @var Offer $offer */
-        foreach ($offers as $offer) {
-            $offerSubscribePrice = ($offer->getSubscribePrice() < $offer->getPrice()) ? $offer->getSubscribePrice() : $offer->getPrice();
-            if (isset($orderItemsQuantity[$offer->getId()])) {
-                $subscribePrice += $offerSubscribePrice * $orderItemsQuantity[$offer->getId()];
-            }
-        }
-
-        return ($subscribePrice < $totalPrice);
     }
 }
