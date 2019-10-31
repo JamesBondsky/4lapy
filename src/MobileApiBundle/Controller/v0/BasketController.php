@@ -478,12 +478,6 @@ class BasketController extends BaseController
         
         $promoCode = $couponStorage->getApplicableCoupon() ?: $storage->getPromoCode();
         
-        if ($promoCode) {
-            echo '<pre>';
-            print_r($promoCode);
-            echo '</pre>';
-        }
-        
         $couponService = Application::getInstance()->getContainer()->get('coupon.service');
         $result        = $couponService->getUserCouponsAction();
         
@@ -563,7 +557,7 @@ class BasketController extends BaseController
         }
         
         $couponService = Application::getInstance()->getContainer()->get('coupon.service');
-        $result        = $couponService->getUserCouponsAction($promoCode);
+        $result        = $couponService->getUserCouponsAction($promoCode, $use);
         
         return (new UserCouponsResponse())->setUserCoupons($result);
     }

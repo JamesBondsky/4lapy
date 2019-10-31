@@ -241,7 +241,7 @@ class CouponService implements LoggerAwareInterface
     /**
      * @return array
      */
-    public function getUserCouponsAction($promoCode = ''): array
+    public function getUserCouponsAction($promoCode = '', $use = false): array
     {
         $result     = [];
         $promoCodes = [];
@@ -289,7 +289,7 @@ class CouponService implements LoggerAwareInterface
             }
         }
         
-        if (!in_array($promoCode, $coupons)) {
+        if (!in_array($promoCode, $coupons) && $use) {
             $result[$key + 1] = $this->getCouponInfo($promoCode);
         }
         
