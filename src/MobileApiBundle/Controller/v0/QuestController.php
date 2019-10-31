@@ -4,11 +4,25 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FourPaws\MobileApiBundle\Controller\BaseController;
+use FourPaws\MobileApiBundle\Services\Api\QuestService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class QuestController extends BaseController
 {
+    /**
+     * @var QuestService
+     */
+    protected $apiQuestService;
+
+    /**
+     * @param QuestService $apiQuestService
+     */
+    public function __construct(QuestService $apiQuestService)
+    {
+        $this->apiQuestService = $apiQuestService;
+    }
+
     /**
      * @Rest\Get(path="/quest_register/")
      * @Rest\View()
