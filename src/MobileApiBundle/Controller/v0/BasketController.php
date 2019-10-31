@@ -468,6 +468,18 @@ class BasketController extends BaseController
      */
     public function getUserCouponsAction(): UserCouponsResponse
     {
+        $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
+    
+        $storage = $this->orderStorageService->getStorage();
+        
+        $promoCode = $couponStorage->getApplicableCoupon() ?: $storage->getPromoCode();
+        
+        if ($promoCode) {
+            echo '<pre>';
+            print_r($promoCode);
+            echo '</pre>';
+        }
+        
         $couponService = Application::getInstance()->getContainer()->get('coupon.service');
         $result        = $couponService->getUserCouponsAction();
         
