@@ -28,6 +28,7 @@ https://api.esv2.com - валидный адрес
 ## Запуск консьюмеров для rabbit'а
 
 ```
+- ./bin/symfony_console rabbitmq:consumer expert_sender_send_pets # отправка сообщений с информацией о питомцах в ES
 - ./bin/symfony_console rabbitmq:consumer manzana_update # обработка очереди передачи контактов в ML
 - ./bin/symfony_console rabbitmq:consumer catalog_sync   # обработка очереди изменения элементов каталога для изменения индекса elastic 
 - ./bin/symfony_console rabbitmq:consumer callback_set   # обработка очереди отправки сообщений о запросе обратного звонка на АТС
@@ -35,6 +36,9 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console rabbitmq:consumer manzana_orders_import # обработка очереди запроса заказов пользователей в ML
 - ./bin/symfony_console rabbitmq:consumer import_offers # обработка очереди импорта промокодов
 - ./bin/symfony_console rabbitmq:consumer manzana_mobile_update # обработка очереди обновления параметров пользователя в манзане
+- ./bin/symfony_console rabbitmq:consumer push_processing #обработка обычных пушей
+- ./bin/symfony_console rabbitmq:consumer push_file_processing #обработка пушей из файла
+- ./bin/symfony_console rabbitmq:consumer push_send_ios #отправка ios пушей
 ```
 
 ## Перезапуск консьюмеров манзаны по расписанию
@@ -104,10 +108,11 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console bitrix:mobileApi:push:queue
 ```
 
-## Рассылка персональных предложений на почту
+## Рассылка персональных предложений на почту (не используется, работает некорректно)
 
 ```
-- ./bin/symfony_console fourpaws:popup:notification
+- ./bin/symfony_console fourpaws:popup:notification                  # рассылает уведомления по персональным предложениям, которые закончатся через 4 дня
+- ./bin/symfony_console fourpaws:popup:notification -t start         # рассылает уведомления по персональным предложениям, которые начинаются в текущий день
 ```
 
 ## Фабрика фидов

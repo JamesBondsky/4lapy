@@ -18,6 +18,7 @@ use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
@@ -60,6 +61,8 @@ use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SapBundle\Repository\ShareRepository;
+use FourPaws\StoreBundle\Service\StockService;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -104,10 +107,16 @@ class BasketService implements LoggerAwareInterface
      * @var ShareRepository
      */
     private $shareRepository;
+    /** @var StoreService $storeService */
+    private $storeService;
+    /** @var StockService $stockService */
+    private $stockService;
 
     public const GIFT_DOBROLAP_XML_ID = '3006635';
     public const GIFT_DOBROLAP_XML_ID_ALT = '3006616';
     private $dobrolapMagnets;
+
+    public const GIFT_NOVEMBER_NEWSPAPER_XML_ID = '3006893';
 
     /**
      * BasketService constructor.
@@ -117,19 +126,26 @@ class BasketService implements LoggerAwareInterface
      * @param OrderService $orderService
      * @param ShareRepository $shareRepository
      * @param StampService $stampService
+     * @param StockService $stockService
+     * @param StoreService $storeService
      */
     public function __construct(
         CurrentUserProviderInterface $currentUserProvider,
         ManzanaPosService $manzanaPosService,
         OrderService $orderService,
         ShareRepository $shareRepository,
-        StampService $stampService
-    ) {
+        StampService $stampService,
+        StockService $stockService,
+        StoreService $storeService
+    )
+    {
         $this->currentUserProvider = $currentUserProvider;
         $this->manzanaPosService = $manzanaPosService;
         $this->orderService = $orderService;
         $this->shareRepository = $shareRepository;
         $this->stampService = $stampService;
+        $this->stockService = $stockService;
+        $this->storeService = $storeService;
     }
 
     /**
@@ -184,6 +200,8 @@ class BasketService implements LoggerAwareInterface
         }
 
         if ($mergeDespiteOfCustomProperties) {
+            //TODO придумать механизм получше, чтобы введение новых свойств товаров не ломало снова merge в Битриксе. Возможно, лучше сделать whitelist свойств?
+
             // Костыль, удаляющий кастомные свойства, которые не участвуют в логике общего разделения товаров, перед объединением товаров, т.к. в
             // \Bitrix\Sale\BasketPropertiesCollectionBase::isPropertyAlreadyExists
             // свойства добавляемого и имеющегося товара должны совпадать, чтобы произошел merge
@@ -203,6 +221,7 @@ class BasketService implements LoggerAwareInterface
                             'MAX_STAMPS_LEVEL',
                             'STAMP_LEVELS',
                             'CAN_USE_STAMPS',
+                            'SUBSCRIBE_PRICE',
                         ], true)) {
                             $itemPropertyCollection->deleteItem($itemProperty->getInternalIndex());
                         }
@@ -318,9 +337,10 @@ class BasketService implements LoggerAwareInterface
             throw new InvalidArgumentException('Wrong $basketId');
         }
 
+        /** @var BasketItem $basketItem */
         $basketItem = $this->getBasket()->getItemById($basketId);
         if (null === $basketItem) {
-            throw new NotFoundException('BasketItem');
+            throw new NotFoundException('BasketItem is not found');
         }
 
         //$basketPropertyCollection = $basketItem->getPropertyCollection();
@@ -346,9 +366,15 @@ class BasketService implements LoggerAwareInterface
             }
         }
 
+        $hasUseStamps = false;
+        if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
+            $hasUseStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
+        }
+
         $this->setBasketItemPropertyValue($basketItem, 'USE_STAMPS', (string)$useStamps);
 
-        if ($useStamps) {
+
+        if ($useStamps && !$hasUseStamps) {
             $maxStampsLevelProp = $this->getBasketItemPropertyValue($basketItem, 'MAX_STAMPS_LEVEL');
             if ($maxStampsLevelProp) {
                 $maxStampsLevelPropValue = unserialize($maxStampsLevelProp);
@@ -357,6 +383,7 @@ class BasketService implements LoggerAwareInterface
                     $parsedStampsLevelKey = $this->stampService->parseLevelKey($maxStampsLevelKey);
                     $stampsUsed = $parsedStampsLevelKey['discountStamps'] * $maxStampsLevelPropValue['value'];
                     $usedStampsInfo = [
+                        'exchangeName' => $maxStampsLevelKey,
                         'stampsUsed' => $stampsUsed,
                         'discountValue' => $parsedStampsLevelKey['discountValue'],
                         'discountType' => $parsedStampsLevelKey['discountType'],
@@ -365,7 +392,7 @@ class BasketService implements LoggerAwareInterface
                     $this->setBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL', serialize($usedStampsInfo));
                 }
             }
-        } else {
+        } else if (!$useStamps && $hasUseStamps) {
             $this->setBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL', (string)false);
         }
 
@@ -1597,7 +1624,7 @@ class BasketService implements LoggerAwareInterface
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotImplementedException
+     * @throws NotImplementedException
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectException
      * @throws Exception
@@ -1715,5 +1742,47 @@ class BasketService implements LoggerAwareInterface
         }
 
         return $result;
+    }
+
+    /**
+     * проставляем наличие товара на DC01, если товар берется у поставщика
+     *
+     * @param Basket $basket
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     */
+    public function setDC01AmountProperty(Basket $basket): void
+    {
+        /** @var BasketItem $basketItem */
+        foreach ($basket->getOrderableItems() as $basketItem) {
+            $shipmentPlaceCode = $this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE');
+            if ($shipmentPlaceCode) {
+                try {
+                    $store = $this->storeService->getStoreByXmlId($shipmentPlaceCode);
+                } catch (\FourPaws\StoreBundle\Exception\NotFoundException $e) {
+                    continue;
+                }
+                if ($store->isSupplier() && $rcStock = $this->stockService->getStocksByOfferIds([$basketItem->getProductId()], [1])) {
+                    $this->setBasketItemPropertyValue(
+                        $basketItem,
+                        'DC01_AMOUNT',
+                        (string)$rcStock->getTotalAmount()
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * @param BasketItem $item
+     * @param string $code
+     * @return string
+     * @throws ArgumentException
+     * @throws NotImplementedException
+     */
+    public function getBasketPropertyValueByCode(BasketItem $item, string $code): string
+    {
+        return (string)($item->getPropertyCollection()->getPropertyValues()[$code]['VALUE'] ?? '');
     }
 }

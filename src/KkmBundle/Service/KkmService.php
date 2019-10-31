@@ -14,6 +14,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\StoreBundle\Entity\Stock;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreBundleNotFoundException;
 use SimpleXMLElement;
 use Bitrix\Main\SystemException;
@@ -141,6 +142,8 @@ class KkmService implements LoggerAwareInterface
         $this->deliveryService = $deliveryService;
         $this->basicUser = getenv('BASIC_AUTH_LOGIN');
         $this->basicPassword = getenv('BASIC_AUTH_PASSWORD');
+
+        putenv('KKM_USE_INTERVALS=Y');
     }
 
     /**
@@ -438,7 +441,7 @@ class KkmService implements LoggerAwareInterface
             foreach ($products as $product) {
                 if (strripos($product['uid'], '300') !== 0) {
                     $offerXmlIds[] = $product['uid'];
-                    $quantities[$product['uid']] = $product['count'];
+                    $quantities[$product['uid']] += $product['count'];
                 }
             }
 
@@ -486,16 +489,6 @@ class KkmService implements LoggerAwareInterface
                 );
             }
 
-            $errorsOffers = [];
-            $sumOffers = 0;
-
-            foreach ($offers->getValues() as $offerItem) {
-                if (($quantities[$offerItem->getXmlId()] + 3) > $offerItem->getQuantity() || $quantities[$offerItem->getXmlId()] == 0) {
-                    $errorsOffers[] = $offerItem->getXmlId();
-                }
-                $sumOffers += $quantities[$offerItem->getXmlId()] * $offerItem->getPrice();
-            }
-
             try {
                 $deliveries = $this->deliveryService->getByOfferCollection($offers, $quantities, $location, static::DELIVERY_CODES);
             } catch (
@@ -522,6 +515,18 @@ class KkmService implements LoggerAwareInterface
                         static::RESPONSE_STATUSES['success_no_items']['code']
                     );
                 }
+            }
+
+            $errorsOffers = [];
+            $sumOffers = 0;
+
+            /** @var Offer $offerItem */
+            foreach ($offers->getValues() as $offerItem) {
+                $quantity = $offerItem->getStocks()->getTotalAmountDC();
+                if (($quantities[$offerItem->getXmlId()] + 3) > $quantity || $quantities[$offerItem->getXmlId()] == 0) {
+                    $errorsOffers[] = $offerItem->getXmlId();
+                }
+                $sumOffers += $quantities[$offerItem->getXmlId()] * $offerItem->getPrice();
             }
 
             $rc = false;
@@ -569,9 +574,7 @@ class KkmService implements LoggerAwareInterface
                 $rc = false;
             }
 
-            //временный костыль
-            $rc = false;
-
+            $rc = false; //временно
             $deliveryRules = [
                 'rc'      => $rc,
                 'courier' => [

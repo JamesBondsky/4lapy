@@ -13,6 +13,7 @@ use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketPropertyItem;
+use Bitrix\Sale\Internals\DiscountCouponTable;
 use Bitrix\Sale\Order;
 use Exception;
 use FourPaws\App\Application;
@@ -109,7 +110,29 @@ class Manager
 
                 try {
                     $manzana->calculate($order);
-                    $basketService->setPromocodeDiscount($manzana->getDiscount());
+                    $isBitrixCoupon = (bool)DiscountCouponTable::getCount([
+                        'COUPON' => $promoCode,
+                        'USER_ID' => $order->getUserId(),
+                    ]);
+                    if ($promoCode && $isBitrixCoupon)
+                    {
+                        if (($discountApplyResult = $order->getDiscount()->getApplyResult()) && $discountApplyResult['ORDER']) {
+                            $basketDiscountApplyResult = array_values(array_filter($discountApplyResult['ORDER'], function($discount) {
+                                return (bool)$discount['COUPON_ID'];
+                            }))[0]['RESULT']['BASKET'];
+
+                            $couponDiscountSum = 0;
+                            $basket = $basketService->getBasket();
+                            foreach ($basketDiscountApplyResult as $basketItemId => $basketItem)
+                            {
+                                $couponDiscountSum += (float)$basketItem['DESCR_DATA'][0]['RESULT_VALUE'] * $basket->getItemByBasketCode($basketItemId)->getField('QUANTITY');
+                            }
+
+                            $basketService->setPromocodeDiscount($couponDiscountSum);
+                        }
+                    } else {
+                        $basketService->setPromocodeDiscount($manzana->getDiscount());
+                    }
                 } catch (ManzanaPromocodeUnavailableException $e) {
                     $couponStorage->delete($promoCode);
                 }

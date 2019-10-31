@@ -394,6 +394,14 @@ class User implements UserInterface
      */
     protected $giftDobrolap = false;
 
+    /**
+     * @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_2ND_ORDER_COUPON")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     */
+    protected $gotSecondOrderCoupon = false;
+
     public function __construct()
     {
         $this->roles = new ArrayCollection();
@@ -1406,6 +1414,25 @@ class User implements UserInterface
     }
 
     /**
+     * @return bool
+     */
+    public function isGotSecondOrderCoupon(): bool
+    {
+        return $this->gotSecondOrderCoupon ?? false;
+    }
+
+    /**
+     * @param bool $gotSecondOrderCoupon
+     * @return User
+     */
+    public function setGotSecondOrderCoupon(bool $gotSecondOrderCoupon): User
+    {
+        $this->gotSecondOrderCoupon = $gotSecondOrderCoupon;
+
+        return $this;
+    }
+
+    /**
      * @return DateTime|null
      */
     public function getBonusUpdateDate(): ?DateTime
@@ -1457,7 +1484,7 @@ class User implements UserInterface
      */
     public function setActiveBonus(float $activeBonus): User
     {
-        $this->activeBonus = $activeBonus;
+        $this->activeBonus = $activeBonus >= 0 ? $activeBonus : 0;
 
         return $this;
     }

@@ -185,7 +185,7 @@ class BonusService
             $contact = null;
         }
 
-        if ($contact instanceof Client && $contact->isLoyaltyProgramContact()) {
+//        if ($contact instanceof Client && $contact->isLoyaltyProgramContact()) {
             /** @var CardByContractCards $card */
             $cardBonus = new CardBonus();
             $cardBonus->setEmpty(true);
@@ -210,6 +210,9 @@ class BonusService
             if ($isActiveCardGettingNeeded) {
                 /** @var ArrayCollection $cards */
                 $cards = $contact->cards;
+                if (!$cards) {
+                    $cards = new ArrayCollection();
+                }
                 if (!$cards->isEmpty()) {
                     foreach ($cards as $userCard) {
                         $card = $manzanaService->getCardInfo($userCard->cardNumber, $contact->contactId);
@@ -233,9 +236,12 @@ class BonusService
             }
             if (!$cardBonus->isEmpty()) {
                 $cardBonusNumber = $cardBonus->getCardNumber();
-                $currentCard = $contact->getCards()->filter(function(\FourPaws\External\Manzana\Model\Card $card) use($cardBonusNumber) {
-                    return $card->cardNumber == $cardBonusNumber;
-                })->first();
+//                $currentCard = $contact->getCards()->filter(function(\FourPaws\External\Manzana\Model\Card $card) use($cardBonusNumber) {
+//                    return $card->cardNumber == $cardBonusNumber;
+//                })->first();
+
+                $currentCard = $cardBonus;
+
                 //$temporaryBonus = (float)$currentCard->balanceExtraNoLimit; // на тестовой Manzana
                 $temporaryBonus = (float)$currentCard->balanceExtraLimit; // на боевой Manzana
                 $activeBonus = (float)$contact->plActiveBalance;
@@ -261,7 +267,7 @@ class BonusService
                 ;
                 App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
             }
-        }
+//        }
         return $bonus;
     }
 

@@ -7,16 +7,19 @@
 namespace FourPaws\UserBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use CBitrixComponent;
 use Exception;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\ProtectorHelper;
 use FourPawsAuthFormComponent;
 use FourPawsRegisterComponent;
-use InvalidArgumentException;
 use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -50,12 +53,16 @@ class AuthController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
-     * @throws InvalidArgumentException
+     * @throws SystemException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws ApplicationCreateException
+     * @throws WrongPhoneNumberException
      */
     public function loginAction(Request $request): JsonResponse
     {
         $action = $request->get('action', '');
-        if ($action == 'login' && !check_bitrix_sessid()) {
+        if ($action === 'login' && !check_bitrix_sessid()) {
             return JsonErrorResponse::createWithData('Ошибка проверки сессии');
         }
         CBitrixComponent::includeComponentClass('fourpaws:auth.form');
@@ -72,12 +79,12 @@ class AuthController extends Controller
                     $request->get('login', ''),
                     $request->get('password', ''),
                     $request->get('backurl', ''),
-                    $request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_AUTH), false)
+                    $request->get('_csrf', '')
                 );
 
-                if ($response instanceof JsonErrorResponse) {
+                //if ($response instanceof JsonErrorResponse) {
                     //$response->setStatusCode(418, 'I’m a teapot');
-                }
+                //}
 
                 return $response;
                 break;
@@ -107,6 +114,8 @@ class AuthController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws SystemException
      */
     public function registerAction(Request $request): JsonResponse
     {

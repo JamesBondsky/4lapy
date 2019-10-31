@@ -108,6 +108,22 @@ class ApiPushMessage
      */
     protected $isSendingToAllUsers;
 
+    /**
+     * @var string
+     * @Serializer\SerializedName("PHOTO_URL")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read","update","create"})
+     */
+    protected $photoUrl = '';
+
+    /**
+     * @var string
+     * @Serializer\SerializedName("UF_TITLE")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read","update","create"})
+     */
+    protected $messageTitle;
+
     /** @var UserFieldEnumValue $typeEntity */
     private $typeEntity;
 
@@ -384,5 +400,15 @@ class ApiPushMessage
     {
         $this->isSendingToAllUsers = $isSendingToAllUsers;
         return $this;
+    }
+
+    public function getPhotoUrl()
+    {
+        return $this->photoUrl;
+    }
+
+    public function getMessageTitle()
+    {
+        return $this->messageTitle;
     }
 }

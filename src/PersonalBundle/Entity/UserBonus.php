@@ -8,7 +8,7 @@ namespace FourPaws\PersonalBundle\Entity;
 
 class UserBonus
 {
-    
+
     public static $discountTable = [
         3 => 0,
         4 => 9000,
@@ -16,14 +16,14 @@ class UserBonus
         6 => 39000,
         7 => 59000,
     ];
-    
+
     /**
      * текущие бонусы
      *
      * @var float
      */
     private $activeBonus = 0;
-    
+
     /**
      * общее количество бонусов
      *
@@ -37,21 +37,21 @@ class UserBonus
      * @var float
      */
     private $temporaryBonus = 0;
-    
+
     /**
      * потраченные бонусы
      *
      * @var float
      */
     private $credit = 0;
-    
+
     /**
      * полученные бонусы
      *
      * @var float
      */
     private $debit = 0;
-    
+
     /**
      * сумма покупок
      *
@@ -65,41 +65,41 @@ class UserBonus
      * @var float
      */
     private $sumDiscounted = 0;
-    
+
     /**
      * скидка по карте - не верная - из манзаны
      *
      * @var float
      */
     private $discount = 0;
-    
+
     /**
      * сумма до следующей скидки
      *
      * @var float
      */
     private $sumToNext = 0;
-    
+
     /** @var float */
     private $nextDiscount = 0;
-    
+
     /** @var bool */
     private $empty = true;
-    
+
     /**
      * активная карта
      *
      * @var CardBonus
      */
     private $card;
-    
+
     /**
      * реальная скидка
      *
      * @var int
      */
     private $realDiscount = 0;
-    
+
     /** @var int */
     private $progress = 0;
     private $startDiscount;
@@ -122,7 +122,7 @@ class UserBonus
      */
     public function setActiveBonus(float $activeBonus): self
     {
-        $this->activeBonus = $activeBonus;
+        $this->activeBonus = $activeBonus >= 0 ? $activeBonus : 0;
         return $this;
     }
 
@@ -144,7 +144,7 @@ class UserBonus
         $this->temporaryBonus = $temporaryBonus;
         return $this;
     }
-    
+
     /**
      * @return float
      */
@@ -163,7 +163,7 @@ class UserBonus
         $this->allBonus = $allBonus;
         return $this;
     }
-    
+
     /**
      * @return CardBonus
      */
@@ -190,7 +190,7 @@ class UserBonus
     {
         return !empty($this->getCard()->getCardId());
     }
-    
+
     /**
      * @return float
      */
@@ -209,7 +209,7 @@ class UserBonus
         $this->credit = $credit;
         return $this;
     }
-    
+
     /**
      * @return float
      */
@@ -228,7 +228,7 @@ class UserBonus
         $this->debit = $debit;
         return $this;
     }
-    
+
     /**
      * @return bool
      */
@@ -247,7 +247,7 @@ class UserBonus
         $this->empty = $empty;
         return $this;
     }
-    
+
     /**
      * @return float
      */
@@ -267,7 +267,7 @@ class UserBonus
         $this->discount = $discount;
         return $this;
     }
-    
+
     /**
      * @return float
      */
@@ -276,7 +276,7 @@ class UserBonus
         if ($this->sumToNext <= 0) {
             $this->sumToNext = $this->getGeneratedSumToNext();
         }
-        
+
         return $this->sumToNext ?? 0;
     }
 
@@ -290,7 +290,7 @@ class UserBonus
         $this->sumToNext = $sumToNext;
         return $this;
     }
-    
+
     /**
      * @return float
      */
@@ -319,10 +319,10 @@ class UserBonus
             $discountTable = static::$discountTable;
             $sumToNext = next($discountTable);
         }
-        
+
         return $sumToNext;
     }
-    
+
     /**
      * @return int
      */
@@ -352,7 +352,7 @@ class UserBonus
         $this->realDiscount = $realDiscount;
         return $this;
     }
-    
+
     /**
      * @return int
      */
@@ -373,10 +373,10 @@ class UserBonus
         if($discount === 0 && !$this->isEmpty() && !$this->getCard()->isEmpty()) {
             $discount = $this->getStartDiscount();
         }
-        
+
         return $discount;
     }
-    
+
     /**
      * @return float
      */
@@ -422,7 +422,7 @@ class UserBonus
         if ((int)$this->nextDiscount <= 0) {
             $this->nextDiscount = $this->getGeneratedNextDiscount();
         }
-        
+
         return $this->nextDiscount;
     }
 
@@ -436,14 +436,14 @@ class UserBonus
         $this->nextDiscount = $nextDiscount;
         return $this;
     }
-    
+
     /**
      * @return float
      */
     public function getGeneratedNextDiscount() : float
     {
         $sum = $this->getSumDiscounted();
-        
+
         $discountTable = static::$discountTable;
         end($discountTable);
         $nextDiscount = key($discountTable);
@@ -456,10 +456,10 @@ class UserBonus
                 break;
             }
         }
-        
+
         return $nextDiscount;
     }
-    
+
     /**
      * @return int
      */
@@ -502,7 +502,7 @@ class UserBonus
             }
             $this->progress = $progress;
         }
-        
+
         return $this->progress;
     }
 

@@ -4,15 +4,21 @@ declare(strict_types=1);
 
 namespace FourPaws\Components;
 
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Iblock\ElementTable;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
+use Bitrix\Sale\BasketPropertyItem;
+use Bitrix\Sale\Discount;
+use Bitrix\Sale\DiscountCouponsManager;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\PriceMaths;
 use CBitrixComponent;
@@ -27,11 +33,9 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
-use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
-use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Gift;
@@ -39,7 +43,6 @@ use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Discount\Utils\Detach\Adder;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
-use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
@@ -118,7 +121,6 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
      */
     public function __construct(CBitrixComponent $component = null)
     {
@@ -142,7 +144,7 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
      *
      * @return void
      *
-     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws ArgumentNullException
      * @throws ApplicationCreateException
      * @throws Exception
      * @throws SystemException
@@ -190,6 +192,30 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
                 $this->basketService->setBasketItemPropertyValue($basketItem, 'SUBSCRIBE_PRICE', '0');
             }
 
+
+            $coupon = $this->couponsStorage->getApplicableCoupon();
+            /*$isBitrixCoupon = (bool)DiscountCouponTable::getCount([
+                'COUPON' => $coupon,
+                'USER_ID' => $order->getUserId(),
+            ]);*/
+
+            //if ($isBitrixCoupon) {
+                DiscountCouponsManager::get();
+                DiscountCouponsManager::init(DiscountCouponsManager::MODE_CLIENT, array('userId' => $userId));
+                if ($coupon) {
+                    DiscountCouponsManager::add($coupon);
+                } else {
+                    DiscountCouponsManager::clear(true);
+                }
+
+                $discounts = Discount::loadByBasket($basket);
+                $basket->refreshData(array('PRICE', 'COUPONS'));
+                if ($discounts) {
+                    $discounts->calculate();
+                    $discountResult = $discounts->getApplyResult();
+                    $basket->save();
+                }
+            //}
             $order = Order::create(SITE_ID, $userId);
             $order->setBasket($basket);
             // но иногда он так просто не запускается
@@ -285,10 +311,10 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
      * @param bool $onlyApplied
      * @return array
      * @throws ApplicationCreateException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\NotImplementedException
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
      */
     public function getPromoLink(BasketItem $basketItem, bool $onlyApplied = false): array
     {
@@ -300,7 +326,7 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
         $applyResult = $this->arResult['DISCOUNT_RESULT'];
         $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
         if (!$basketDiscounts) {
-            /** @var \Bitrix\Sale\BasketPropertyItem $basketPropertyItem */
+            /** @var BasketPropertyItem $basketPropertyItem */
             foreach ($basketItem->getPropertyCollection() as $basketPropertyItem) {
                 if ($basketPropertyItem->getField('CODE') === 'DETACH_FROM') {
                     $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketPropertyItem->getField('VALUE')];
@@ -490,7 +516,7 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
     /**
      *
      *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      * @throws RuntimeException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
@@ -514,10 +540,10 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
     }
 
     /**
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \Bitrix\Main\ArgumentNullException
      * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
      */
     private function calcTemplateFields(): void
     {
@@ -583,9 +609,17 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
 
     /**
      * @throws ApplicationCreateException
+     * @throws SystemException
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws ObjectPropertyException
      */
     private function calcSubscribeFields()
     {
+        $subscribeAllowed = false;
+
         $subscribePrice = 0;
         /** @var Basket $basket */
         $basket = $this->arResult['BASKET'];
@@ -607,11 +641,15 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
                 }
 
                 $subscribePrice += $price;
+
+                if ($offer->getSubscribeDiscount()) {
+                    $subscribeAllowed = true;
+                }
             }
         }
 
         $this->arResult['SUBSCRIBE_PRICE'] = $subscribePrice;
-        $this->arResult['SUBSCRIBE_ALLOWED'] = true;
+        $this->arResult['SUBSCRIBE_ALLOWED'] = $subscribeAllowed;
     }
 
     /**

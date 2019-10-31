@@ -453,7 +453,7 @@ class StoreService
                 }
 
                 $prices[] = (new PriceWithQuantity())
-                    ->setQuantity($basketItem->getQuantity())
+                    ->setQuantity($quantity)
                     ->setPrice((new Price())->setActual($basketItem->getPrice())->setOld($basketItem->getBasePrice()));
             }
             if ($orderableItems)

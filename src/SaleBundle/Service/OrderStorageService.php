@@ -6,19 +6,17 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\Error;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
-use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
-use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use Bitrix\Sale\UserMessageException;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
@@ -28,10 +26,6 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Service\IntervalService;
-use FourPaws\PersonalBundle\Entity\OrderSubscribe;
-use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
-use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -341,7 +335,7 @@ class OrderStorageService
             if ($currentUser && $storage->getUserId() !== $currentUser->getId()) {
                 return $storage;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
 
         }
 
@@ -382,10 +376,11 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param string       $step
+     * @param string $step
      *
-     * @throws OrderStorageValidationException
      * @return bool
+     * @throws OrderStorageSaveException
+     * @throws OrderStorageValidationException
      */
     public function updateStorage(OrderStorage $storage, string $step = OrderStorageEnum::AUTH_STEP): bool
     {
@@ -779,6 +774,8 @@ class OrderStorageService
     }
 
     /**
+     * Проверка то, не пытаемся ли доставить заказ в прошлое
+     *
      * @param OrderStorage $storage
      * @return bool
      * @throws ApplicationCreateException
@@ -789,21 +786,22 @@ class OrderStorageService
      * @throws StoreNotFoundException
      * @throws UserMessageException
      */
-    public function validateDeliveryDate($storage)
+    public function validateDeliveryDate($storage): bool
     {
-        return true; // временный фикс бага, пока не будет готово полноценное решение
+        if ($storage->getDeliveryInterval() < 1) {
+            return true; // значит еще не выбрали
+        }
+
         if ($selectedDelivery = $this->getSelectedDelivery($storage)) {
             if ($this->deliveryService->isPickup($selectedDelivery)) {
                 return true;
             }
 
-            $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, 10)[$storage->getDeliveryDate()];
-
-            if ($selectedDelivery->getDeliveryDate()->getTimestamp() < (new \DateTime())->getTimestamp()) {
-                return false;
-            } else {
-                return true;
+            if ($selectedDelivery->isSuccess()) {
+                $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, 10)[$storage->getDeliveryDate()];
             }
+
+            return !($selectedDelivery->getDeliveryDate()->getTimestamp() < (new \DateTime())->getTimestamp());
         }
 
         return true;
@@ -812,12 +810,12 @@ class OrderStorageService
     /**
      * @param OrderStorage $storage
      * @return OrderStorage
-     * @throws \Exception
+     * @throws Exception
      */
-    public function clearDeliveryDate($storage)
+    public function clearDeliveryDate($storage): OrderStorage
     {
-        $storage->setDeliveryDate(0)
-            ->setDeliveryInterval(0)
+        $storage
+            ->setDeliveryDate(0)
             ->setCurrentDate(new \DateTime());
 
         return $storage;

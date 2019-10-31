@@ -7,7 +7,6 @@
 namespace FourPaws\SaleBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -20,7 +19,6 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\MainTemplate;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -39,7 +37,9 @@ use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
+use FourPaws\SaleBundle\Exception\OrderCancelException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Exception\OrderExtendException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
@@ -52,7 +52,6 @@ use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\ShopInfoService as StoreShopInfoService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
-use Protobuf\Exception;
 use Psr\Log\LoggerAwareInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -117,15 +116,15 @@ class OrderController extends Controller implements LoggerAwareInterface
     /**
      * OrderController constructor.
      *
-     * @param OrderService               $orderService
-     * @param DeliveryService            $deliveryService
-     * @param OrderStorageService        $orderStorageService
-     * @param OrderSubscribeService      $orderSubscribeService
+     * @param OrderService $orderService
+     * @param DeliveryService $deliveryService
+     * @param OrderStorageService $orderStorageService
+     * @param OrderSubscribeService $orderSubscribeService
      * @param UserAuthorizationInterface $userAuthProvider
-     * @param ShopInfoService            $shopInfoService
-     * @param StoreShopInfoService       $storeShopInfoService
-     * @param LocationService            $locationService
-     * @param ReCaptchaService           $recaptcha
+     * @param ShopInfoService $shopInfoService
+     * @param StoreShopInfoService $storeShopInfoService
+     * @param LocationService $locationService
+     * @param ReCaptchaService $recaptcha
      */
     public function __construct(
         OrderService $orderService,
@@ -535,6 +534,9 @@ class OrderController extends Controller implements LoggerAwareInterface
          */
         if ($storage->getMoscowDistrictCode() != '') {
             $this->orderStorageService->updateStorageMoscowZone($storage, OrderStorageEnum::NOVALIDATE_STEP);
+
+            // необходимо обновить службы доставки, чтобы применилась зона
+            $this->orderStorageService->getDeliveries($storage, true);
         }
 
 
@@ -599,37 +601,41 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param string       $step
      *
      * @return array
-     * @throws ArgumentException
-     * @throws SystemException
-     * @throws ObjectPropertyException
      */
     protected function fillStorage(OrderStorage $storage, Request $request, string $step): array
     {
         $errors = [];
 
-        try{
+        try {
             $this->orderStorageService->setStorageValuesFromRequest(
                 $storage,
                 $request,
                 $step
             );
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             $errors[] = $e->getMessage();
         }
 
-        if (empty($errors)) {
-            // проверка на корректность даты доставки
+        /* Если на шаге выбора доставки не выбирали адрес из подсказок, то пробуем определить его тут для проставления района Москвы */
+        if (($step === OrderStorageEnum::DELIVERY_STEP) && ($storage->getCityCode() === DeliveryService::MOSCOW_LOCATION_CODE)) {
+            $city = (!empty($storage->getCity())) ? $storage->getCity() : 'Москва';
+            $strAddress = sprintf('%s, %s, %s', $city, $storage->getStreet(), $storage->getHouse());
+
+            $this->log()->info(sprintf('Попытка определить район москвы для данных %s', $strAddress));
             try {
-                if (!$this->orderStorageService->validateDeliveryDate($storage)) {
-                    /*
-                     * Обнуление просиходит в fourpaws:order для того, что бы был редирект на нужный, тут просто валидация
-                     */
-                    if ($step != OrderStorageEnum::AUTH_STEP) {
-                        $step = OrderStorageEnum::AUTH_STEP;
-                        $errors[] = 'Некорректная дата доставки!';
-                    }
+                $okato = $this->locationService->getDadataLocationOkato($strAddress);
+                $this->log()->info(sprintf('Okato - %s', $okato));
+                $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+
+                if (count($locations)) {
+                    $location = current($locations);
+                    $storage->setCity($location['NAME']);
+                    $storage->setCityCode($location['CODE']);
+                    $storage->setMoscowDistrictCode($location['CODE']);
+                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
                 }
             } catch (\Exception $e) {
+                $this->log()->info(sprintf('Произошла ошибка при установке местоположения - %s', $e->getMessage()));
             }
         }
 
@@ -639,17 +645,17 @@ class OrderController extends Controller implements LoggerAwareInterface
 
                 // создание подписки на доставку и установка свойства "Списывать все баллы по подписке"
                 if ($storage->isSubscribe()) {
-                    if ($step == OrderStorageEnum::DELIVERY_STEP) {
+                    if ($step === OrderStorageEnum::DELIVERY_STEP) {
                         $result = $this->orderSubscribeService->createSubscriptionByRequest($storage, $request);
                         if (!$result->isSuccess()) {
                             $this->log()->error(implode(";\r\n", $result->getErrorMessages()));
-                            throw new OrderSubscribeException("Произошла ошибка оформления подписки на доставку, пожалуйста, обратитесь к администратору");
+                            throw new OrderSubscribeException('Произошла ошибка оформления подписки на доставку, пожалуйста, обратитесь к администратору');
                         }
                         $storage->setSubscribeId($result->getData()['subscribeId']);
                         $this->orderStorageService->updateStorage($storage, $step);
-                    } else if ($step == OrderStorageEnum::PAYMENT_STEP) {
-                        if ($storage->isSubscribe() && $request->get('subscribeBonus')) {
-                            $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
+                    } else if (($step === OrderStorageEnum::PAYMENT_STEP) && $request->get('subscribeBonus')) {
+                        $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
+                        if ($subscribe) {
                             $subscribe->setPayWithbonus(true);
                             $this->orderSubscribeService->update($subscribe);
                         }
@@ -663,7 +669,7 @@ class OrderController extends Controller implements LoggerAwareInterface
                 }
                 $step = $e->getRealStep();
             } catch (\Exception $e) {
-                $errors[$e->getCode()] = "Произошла ошибка, пожалуйста, обратитесь к администратору";
+                $errors[$e->getCode()] = 'Произошла ошибка, пожалуйста, обратитесь к администратору';
                 $this->log()->error(sprintf('Error in order creating: %s: %s', \get_class($e), $e->getMessage()));
             }
         }
@@ -792,5 +798,59 @@ class OrderController extends Controller implements LoggerAwareInterface
                 'delivery_dates'     => $deliveryDates
             ]
         );
+    }
+
+    /**
+     * @Route("/cancel/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     */
+    public function orderCancelAction(Request $request): JsonResponse
+    {
+        $orderId = intval($request->request->get('orderId'));
+
+        try {
+            $cancelResult = $this->orderService->cancelOrder($orderId);
+        } catch (OrderCancelException | \FourPaws\SaleBundle\Exception\NotFoundException  $e) {
+            return JsonErrorResponse::createWithData('', ['errors' => [$e->getMessage()]]);
+        } catch (\Exception $e) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка']]);
+        }
+
+        if (!$cancelResult) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка']]);
+        }
+
+        return JsonSuccessResponse::createWithData('Заказ успешно отменен', []);
+    }
+
+    /**
+     * @Route("/extend/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     */
+    public function orderExtendAction(Request $request): JsonResponse
+    {
+        $orderId = intval($request->request->get('orderId'));
+
+        try {
+            $extendResult = $this->orderService->extendOrder($orderId);
+        } catch (OrderExtendException | \FourPaws\SaleBundle\Exception\NotFoundException  $e) {
+            return JsonErrorResponse::createWithData('', ['errors' => [$e->getMessage()]]);
+        } catch (\Exception $e) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['При продлении срока хранения произошла ошибка']]);
+        }
+
+        if (!$extendResult) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['При продлении срока хранения произошла ошибка']]);
+        }
+
+        return JsonSuccessResponse::createWithData('Срок хранения заказа успешно продлен до 5-ти дней', []);
     }
 }
