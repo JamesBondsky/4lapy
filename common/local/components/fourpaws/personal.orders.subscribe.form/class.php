@@ -1175,22 +1175,20 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 $this->arResult['DADATA_CONSTRAINTS'] = $this->getLocationService()->getDadataJsonFromLocationArray($selectedCity);
                 $this->arResult['METRO'] = $this->getStoreService()->getMetroInfo();
                 $this->arResult['IS_SINGLE_SUBSCRIBE'] = $isSingleSubscribe;
-                $this->arResult['SELECTED_DATE'] = $orderSubscribe->getNearestDelivery();
-                $this->arResult['SELECTED_TIME'] = $orderSubscribe->getDeliveryTime();
-                if($orderSubscribeSingle){
+
+                if($orderSubscribeSingle) {
                     $arOrderSubscribe = $orderSubscribeSingle->getSubscribe();
                     $orderSubscribe = $this->arrayTransformer->fromArray($arOrderSubscribe, OrderSubscribe::class);
-                    $this->arResult['SELECTED_DATE'] = $orderSubscribe->getNextDate();
-                    $this->arResult['SELECTED_TIME'] = $orderSubscribe->getDeliveryTime();
                 }
+                $this->arResult['SELECTED_DATE'] = $orderSubscribe->getNearestDelivery();
+                $this->arResult['SELECTED_TIME'] = $orderSubscribe->getDeliveryTime();
+                $this->arResult['SELECTED_FREQUENCY'] = $orderSubscribe->getFrequency();
 
-                // $this->arResult['MIN_DELIVERY_DATE'] = new \DateTime($this->getOrderSubscribeHistoryService()->getNearestDelivery($orderSubscribe));
             } catch (\Exception $e) {
                 $result->addError(new Error(
                     sprintf("Не удалось активировать 2 шаг: %s", $e->getMessage())
                 ));
             }
-
         }
 
         if(!$result->isSuccess()){
