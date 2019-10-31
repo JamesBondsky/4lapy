@@ -2188,6 +2188,9 @@ class OrderSubscribeService implements LoggerAwareInterface
             $this->orderSubscribeSingleRepository->delete($singleSubscribe->getId());
         }
 
+        // в оригинальной подписке хранится дата доставки через одну
+        $orderSubscribe->setNextDate($orderSubscribe->getPreviousDate());
+
         $arOrderSubscribe = $this->arrayTransformer->toArray($orderSubscribe);
         $arOrderSubscribeItems = [];
 
