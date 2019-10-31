@@ -241,7 +241,7 @@ class CouponService implements LoggerAwareInterface
     /**
      * @return array
      */
-    public function getUserCouponsAction(): array
+    public function getUserCouponsAction($promoCode = ''): array
     {
         $result     = [];
         $promoCodes = [];
@@ -289,7 +289,19 @@ class CouponService implements LoggerAwareInterface
             }
         }
         
+        if (!in_array($promoCode, $coupons)) {
+            $this->getCouponInfo();
+        }
+        
         return $result;
     }
     
+    public function getCouponInfo($promoCode)
+    {
+        $personalOffers = App::getInstance()->getContainer()->get(PersonalOffersService::class);
+        $offerFields = $personalOffers->getOfferFieldsByPromoCode($promoCode);
+        echo '<pre>';
+        print_r($offerFields);
+        echo '</pre>';
+    }
 }

@@ -473,7 +473,7 @@ class BasketController extends BaseController
     public function getUserCouponsAction(): UserCouponsResponse
     {
         $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
-    
+        
         $storage = $this->orderStorageService->getStorage();
         
         $promoCode = $couponStorage->getApplicableCoupon() ?: $storage->getPromoCode();
@@ -500,9 +500,7 @@ class BasketController extends BaseController
      */
     public function putUserCartCouponAction(Request $request): UserCouponsResponse
     {
-        $userPromoCodes = [];
-        $result = [];
-        $success = false;
+        $result         = [];
         
         $promoCode = $request->get('promoCode');
         $use       = $request->get('use');
@@ -511,22 +509,14 @@ class BasketController extends BaseController
         
         $couponStorage       = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
         $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
-        $ajaxBasket = Application::getInstance()->getContainer()->get(AjaxBasket::class);
-        
-        $couponService = Application::getInstance()->getContainer()->get('coupon.service');
-        
-        // $userCoupons   = $couponService->getUserCouponsAction();
-        //
-        // foreach ($userCoupons as $userCoupon) {
-        //     $userPromoCodes[] = $userCoupon['promocode'];
-        // }
+        $ajaxBasket          = Application::getInstance()->getContainer()->get(AjaxBasket::class);
         
         switch ($use) {
             case true:
                 try {
                     $personalOfferService = $ajaxBasket->getPersonalOffersService();
                     $personalOfferService->checkCoupon($promoCode);
-    
+                    
                     $bitrixCoupon = DiscountCouponTable::query()
                         ->setFilter([
                             'COUPON' => $promoCode,
@@ -539,23 +529,18 @@ class BasketController extends BaseController
                         ->setLimit(1)
                         ->exec()
                         ->fetch();
-                    if ($bitrixCoupon && (
+                    if ($bitrixCoupon
+                        && (
                             $bitrixCoupon['ACTIVE'] === BitrixUtils::BX_BOOL_FALSE
                             || ($bitrixCoupon['ACTIVE_FROM'] && $bitrixCoupon['ACTIVE_FROM'] > new DateTime())
                             || ($bitrixCoupon['ACTIVE_TO'] && $bitrixCoupon['ACTIVE_TO'] < new DateTime())
                         )) {
                         throw new CouponIsNotAvailableForUseException(__FUNCTION__ . '. Купон ' . $promoCode . ' неактивен');
                     }
-    
+                    
                     $this->manzana->setPromocode($promoCode);
                     $couponStorage->clear();
                     $couponStorage->save($promoCode);
-                    echo '<pre>';
-                    print_r($promoCode);
-                    echo '</pre>';
-                    echo '<pre>';
-                    print_r($bitrixCoupon);
-                    echo '</pre>';
                 } catch (ManzanaPromocodeUnavailableException $e) {
                     /**
                      * Возвращаем ответ
@@ -577,11 +562,9 @@ class BasketController extends BaseController
                 break;
         }
         
-        if ($success) {
-            $couponService = Application::getInstance()->getContainer()->get('coupon.service');
-            $result        = $couponService->getUserCouponsAction();
-        }
-    
+        $couponService = Application::getInstance()->getContainer()->get('coupon.service');
+        $result        = $couponService->getUserCouponsAction($promoCode);
+        
         return (new UserCouponsResponse())->setUserCoupons($result);
     }
 }
