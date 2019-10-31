@@ -291,21 +291,36 @@ class CouponService implements LoggerAwareInterface
         
         if ($promoCode && !in_array($promoCode, $coupons) && $use) {
             if (!$result[0]) {
-                $result[0] = $this->getCouponInfo($promoCode);
+                $result[0] = $this->getCouponInfo($promoCode, $use);
             } else {
-                $result[$key + 1] = $this->getCouponInfo($promoCode);
+                $result[$key + 1] = $this->getCouponInfo($promoCode, $use);
+            }
+        } elseif (!in_array($promoCode, $coupons) && $use == false) {
+            if (!$result[0]) {
+                $result[0] = $this->getCouponInfo($promoCode, $use);
+            } else {
+                $result[$key + 1] = $this->getCouponInfo($promoCode, $use);
             }
         }
         
         return $result;
     }
     
-    public function getCouponInfo($promoCode)
+    public function getCouponInfo($promoCode, $use)
     {
+        if ($use) {
+            return [
+                'promocode'  => $promoCode,
+                'actionType' => 2,
+                'actionText' => 'Отменить',
+            ];
+        }
+    
         return [
             'promocode'  => $promoCode,
-            'actionType' => 2,
-            'actionText' => 'Отменить',
+            'actionType' => 1,
+            'actionText' => 'Применить',
         ];
+     
     }
 }

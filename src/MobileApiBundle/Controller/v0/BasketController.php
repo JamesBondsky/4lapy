@@ -55,6 +55,7 @@ use Symfony\Component\HttpFoundation\Request;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
 use FourPaws\SaleBundle\AjaxController\BasketController as AjaxBasket;
+use Bitrix\Main\Type\DateTime;
 
 /**
  * Class BasketController
@@ -185,7 +186,7 @@ class BasketController extends BaseController
             $orderCalculate->setPromoCodeResult($promoCode);
         }
         
-        if (!$orderCalculate->getCoupon()) {
+        if ($promoCode && $orderCalculate->getPromoCodeResult()) {
             $orderCalculate->setCoupon((new Coupon())->setPromocode($promoCode)
                 ->setActionType(Coupon::DISABLE));
         }
@@ -538,6 +539,12 @@ class BasketController extends BaseController
                     }
                     
                     $this->manzana->setPromocode($promoCode);
+                    $this->manzana->calculate();
+    
+                    $storage->setPromoCode($promoCode);
+                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+                    $fUserId = $this->appUserService->getCurrentFUserId() ?: 0;
+                    $this->appBasketService->getBasket(true, $fUserId);
                     $couponStorage->clear();
                     $couponStorage->save($promoCode);
                 } catch (ManzanaPromocodeUnavailableException $e) {
