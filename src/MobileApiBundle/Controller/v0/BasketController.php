@@ -509,7 +509,7 @@ class BasketController extends BaseController
         
         $couponStorage       = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
         $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
-        
+        $couponService = Application::getInstance()->getContainer()->get('coupon.service');
         switch ($use) {
             case true:
                 try {
@@ -548,9 +548,8 @@ class BasketController extends BaseController
                     $couponStorage->clear();
                     $couponStorage->save($promoCode);
                 } catch (ManzanaPromocodeUnavailableException $e) {
-                    /**
-                     * Возвращаем ответ
-                     */
+                    $result        = $couponService->getUserCouponsAction();
+                    return (new UserCouponsResponse())->setUserCoupons($result);
                 } catch (Exception $e) {
                     $this->mobileApiLog()->error(
                         \sprintf(
@@ -568,7 +567,6 @@ class BasketController extends BaseController
                 break;
         }
         
-        $couponService = Application::getInstance()->getContainer()->get('coupon.service');
         $result        = $couponService->getUserCouponsAction($promoCode, $use);
         
         return (new UserCouponsResponse())->setUserCoupons($result);
