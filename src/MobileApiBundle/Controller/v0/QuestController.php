@@ -5,9 +5,9 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
+use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Services\Api\QuestService;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 
