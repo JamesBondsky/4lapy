@@ -557,8 +557,12 @@ class LocationService
                 $hasFoundByParents = false;
                 $excludeLocation = false;
 
+                if ($excludeMoscowDistricts && $this->isMoscowRegionLocation($res)) {
+                    $excludeLocation = true;
+                }
+
                 /** очень долгий запрос на получение родителей */
-                if ($needPath) {
+                if ($needPath && !$excludeLocation) {
                     /** @var Result $parentRes */
                     $parentRes = LocationTable::query()
                         ->where('DEPTH_LEVEL', '<', $item['DEPTH_LEVEL'])
@@ -581,14 +585,16 @@ class LocationService
                         $parentItem['TYPE'] = $this->stringArrayToArray($parentItem, 'TYPE');
                         $parentList[] = $parentItem;
 
-                        if ($excludeMoscowDistricts && $this->isMoscowRegionLocation($parentItem)) {
-                            $excludeLocation = true;
-                            break;
-                        }
+
 
                         // ищем местоположение среди родителей
                         if ($findByParent) {
                             foreach ($queryParts as $queryPart) {
+                                if ($excludeMoscowDistricts && $this->isMoscowRegionLocation($parentItem)) {
+                                    $excludeLocation = true;
+                                    break;
+                                }
+
                                 if (!$hasFoundByParents && (strpos(ToUpper($parentItem['NAME']), $queryPart) !== false)) {
                                     $hasFoundByParents = true;
                                 }
