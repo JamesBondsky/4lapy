@@ -12,6 +12,7 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use CBitrixComponent;
 use Exception;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
@@ -49,7 +50,100 @@ class AuthController extends Controller
     }
 
     /**
+     * Метод-заглушка для сбора IP ддосера
+     *
      * @Route("/login-r/", methods={"GET", "POST"})
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws SystemException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws ApplicationCreateException
+     * @throws WrongPhoneNumberException
+     */
+    public function fakeLoginAction(Request $request): JsonResponse
+    {
+        $ipLogger = LoggerFactory::create('ddos', 'ddos_logs');
+        $ipLogger->info(date('Y-m-d H:i:s') . '. IP: ' . $_SERVER['REMOTE_ADDR'] . '. Request: ' . print_r($_REQUEST, true));
+
+        $tokenProvider = Application::getInstance()->getContainer()->get('security.csrf.token_manager');
+        $newToken = $tokenProvider->refreshToken(ProtectorHelper::TYPE_AUTH)->getValue();
+        $newTokenResponse = ['token' => $newToken];
+
+        $html = '    <div class="b-registration b-registration--popup-authorization js-auth-block js-ajax-replace-block" data-registration-popup-authorization="true">
+        <header class="b-registration__header">
+            <div class="b-title b-title--h1 b-title--registration">Авторизация</div>
+            <div class="b-title b-title--h1 b-title--registration-subscribe">Авторизуйтесь на&nbsp;сайте, чтобы оформить подписку</div>
+        </header>
+        <form class="b-registration__form js-form-validation js-auth-2way"
+              data-url="/ajax/user/auth/login-o/"
+              method="post">
+            <input type="hidden" name="sessid" id="sessid" value="' . $_REQUEST['sessid'] . '" />            <input type="hidden" name="action" value="login" class="js-no-valid">
+                            <input type="hidden" name="backurl" value="/" class="js-no-valid">
+                        <div class="b-input-line b-input-line--popup-authorization">
+                <div class="b-input-line__label-wrapper">
+                    <label class="b-input-line__label" for="tel-email-authorization">
+                        Телефон или эл.почта
+                    </label>
+                </div>
+                <div class="b-input b-input--registration-form">
+                    <input class="b-input__input-field b-input__input-field--registration-form"
+                           type="text"
+                           id="tel-email-authorization"
+                           name="login"
+                           value="' . $_REQUEST['login'] . '"
+                           data-type="telEmail"/>
+                    <div class="b-error"><span class="js-message"></span></div>
+                </div>
+            </div>
+            <div class="b-input-line b-input-line--popup-authorization">
+                <div class="b-input-line__label-wrapper">
+                    <label class="b-input-line__label" for="password-authorization">Пароль</label>
+                                            <a class="b-link-gray b-link-gray--label"
+                           href="/personal/forgot-password/?backurl=/"
+                           title="Забыли пароль?">Забыли пароль?</a>
+                                    </div>
+                <div class="b-input b-input--registration-form">
+                    <input class="b-input__input-field b-input__input-field--registration-form"
+                           type="password"
+                           id="password-authorization"
+                           name="password"/>
+                    <div class="b-error"><span class="js-message"></span>
+                    </div>
+                </div>
+            </div>
+            <script>try {grecaptcha.getResponse()} catch(err) {grecaptcha.render($(\'.g-recaptcha\')[0], {sitekey : $(\'.g-recaptcha\').data(\'sitekey\')})}</script><script data-skip-moving=true async src="https://www.google.com/recaptcha/api.js?hl=ru"></script><div id="" class="g-recaptcha " data-sitekey="6LfS1IQUAAAAAGkc8KI9W1Ki44ek0NOx527Q6h-3" data-callback=""></div>            <div>
+                <span class="b-registration__auth-error">
+                    Неверный логин или пароль                </span>
+            </div>
+            <button class="b-button b-button--social b-button--full-width b-button--popup-authorization">
+                Войти
+            </button>
+            <span class="b-registration__else b-registration__else--authorization">или</span>
+                            
+<ul class="b-registration__social-wrapper b-registration__social-wrapper--authorization">
+    </ul>
+                <div class="b-registration__new-user">Я новый покупатель.
+                    <a class="b-link b-link--authorization b-link--authorization"
+                       href="/personal/register/?backurl=/"
+                       title="Зарегистрироваться"><span
+                                class="b-link__text b-link__text--authorization">Зарегистрироваться</span></a>
+                </div>
+            
+                        <input type="hidden" name="_csrf" value="' . $newToken . '">
+        </form>
+    </div>
+';
+
+        return $this->ajaxMess->getWrongPasswordError(array_merge(
+            ['html' => $html],
+            $newTokenResponse
+        ));
+    }
+
+    /**
+     * @Route("/login-o/", methods={"GET", "POST"})
      * @param Request $request
      *
      * @return JsonResponse
