@@ -1495,20 +1495,84 @@ class PaymentService implements LoggerAwareInterface
         if (count($newItemArr) > 0) {
             $itemPosition = 0;
             if ($bonusAmount) {
+                $debitBonus = function ($productItem, $amountBonus) use (&$productItemsPrices) {
+                    $sumItem = $productItemsPrices[$productItem->getId()]*$productItem->getQuantity();
+                    $sumItem -= $amountBonus;
+                    $productItemsPrices[$productItem->getId()] = $sumItem/$productItem->getQuantity();
+                };
+
                 foreach ($xmlIdsItems as $xmlIdItem) {
                     foreach ($newItemArr[$xmlIdItem] as $productItem) {
-                        $sumItem = $productItem->getPrice()*$productItem->getQuantity();
-
-                        if ($sumItem > $bonusAmount) {
-                            $sumItem -= $bonusAmount;
-                            $productItemsPrices[$productItem->getId()] = $sumItem/$productItem->getQuantity();
-                            $bonusAmount = 0;
-                            break;
-                        }
-
-                        ++$itemPosition;
+                        $productItemsPrices[$productItem->getId()] = $productItem->getPrice();
                     }
                 }
+
+                $nextStep = false;
+
+                while ($bonusAmount > 0 && !$nextStep) {
+                    $isDebit = false;
+                    foreach ($xmlIdsItems as $xmlIdItem) {
+                        foreach ($newItemArr[$xmlIdItem] as $productItem) {
+                            if ($productItemsPrices[$productItem->getId()] > 1) {
+                                $bonusAmount -= 1;
+
+                                $debitBonus($productItem, 1);
+                                $isDebit = true;
+                            } else if ($productItem->getQuantity()*$productItemsPrices[$productItem->getId()] > 1) {
+                                $bonusAmount -= 1;
+
+                                $debitBonus($productItem, 1);
+                                $isDebit = true;
+                            }
+                        }
+                    }
+                    $nextStep = !$isDebit;
+                }
+
+                if ($nextStep) {
+                    foreach ($xmlIdsItems as $xmlIdItem) {
+                        foreach ($newItemArr[$xmlIdItem] as $productItem) {
+                            $sumItem = $productItemsPrices[$productItem->getId()] * $productItem->getQuantity();
+
+                            if ($sumItem > $bonusAmount) {
+                                $sumItem -= $bonusAmount;
+                                $productItemsPrices[$productItem->getId()] = $sumItem / $productItem->getQuantity();
+                                $bonusAmount = 0;
+                                break;
+                            }
+
+                            ++$itemPosition;
+                        }
+                    }
+                }
+            }
+
+//            if ($bonusAmount) {
+//                $sumItem = null;
+//
+//                foreach ($xmlIdsItems as $xmlIdItem) {
+//                    foreach ($newItemArr[$xmlIdItem] as $productItem) {
+//                        if ($bonusAmount) {
+//                            $sumItem = $productItemsPrices[$productItem->getId()] * $productItem->getQuantity();
+//
+//                            $discountSum = (round($sumItem) - 1);
+//
+//                            if ($discountSum > $bonusAmount) {
+//                                $discountSum = $bonusAmount;
+//                            }
+//
+//                            $productItemsPrices[$productItem->getId()] = $sumItem - $discountSum;
+//                            $bonusAmount -= $discountSum;
+//                        }
+//
+//                        break;
+//                    }
+//                }
+//            }
+
+            if ($bonusAmount && $order->getDeliveryPrice() > $bonusAmount) {
+                $order->setFieldNoDemand('PRICE_DELIVERY', $order->getDeliveryPrice() - $bonusAmount);
+                $bonusAmount = 0;
             }
 
 
