@@ -6,10 +6,12 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Iblock\ElementTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
+use Bitrix\Sale\Internals\DiscountCouponTable;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -36,6 +38,7 @@ use FourPaws\MobileApiBundle\Services\Api\CityService;
 use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
 use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService as ApiUserDeliveryAddressService;
 use FourPaws\MobileApiBundle\Traits\MobileApiLoggerAwareTrait;
+use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
 use FourPaws\SaleBundle\Dto\OrderSplit\Basket\BasketSplitItem;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
@@ -51,6 +54,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
+use FourPaws\SaleBundle\AjaxController\BasketController as AjaxBasket;
 
 /**
  * Class BasketController
@@ -507,28 +511,51 @@ class BasketController extends BaseController
         
         $couponStorage       = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
         $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
+        $ajaxBasket = Application::getInstance()->getContainer()->get(AjaxBasket::class);
         
         $couponService = Application::getInstance()->getContainer()->get('coupon.service');
-        $userCoupons   = $couponService->getUserCouponsAction();
         
-        foreach ($userCoupons as $userCoupon) {
-            $userPromoCodes[] = $userCoupon['promocode'];
-        }
+        // $userCoupons   = $couponService->getUserCouponsAction();
+        //
+        // foreach ($userCoupons as $userCoupon) {
+        //     $userPromoCodes[] = $userCoupon['promocode'];
+        // }
         
         switch ($use) {
             case true:
                 try {
+                    $personalOfferService = $ajaxBasket->getPersonalOffersService();
+                    $personalOfferService->checkCoupon($promoCode);
+    
+                    $bitrixCoupon = DiscountCouponTable::query()
+                        ->setFilter([
+                            'COUPON' => $promoCode,
+                        ])
+                        ->setSelect([
+                            'ACTIVE',
+                            'ACTIVE_FROM',
+                            'ACTIVE_TO',
+                        ])
+                        ->setLimit(1)
+                        ->exec()
+                        ->fetch();
+                    if ($bitrixCoupon && (
+                            $bitrixCoupon['ACTIVE'] === BitrixUtils::BX_BOOL_FALSE
+                            || ($bitrixCoupon['ACTIVE_FROM'] && $bitrixCoupon['ACTIVE_FROM'] > new DateTime())
+                            || ($bitrixCoupon['ACTIVE_TO'] && $bitrixCoupon['ACTIVE_TO'] < new DateTime())
+                        )) {
+                        throw new CouponIsNotAvailableForUseException(__FUNCTION__ . '. Купон ' . $promoCode . ' неактивен');
+                    }
+    
                     $this->manzana->setPromocode($promoCode);
-                    $this->manzana->calculate();
-                    
-                    $storage->setPromoCode($promoCode);
-                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
-                    $fUserId = $this->appUserService->getCurrentFUserId() ?: 0;
-                    $this->appBasketService->getBasket(true, $fUserId);
                     $couponStorage->clear();
                     $couponStorage->save($promoCode);
-                    
-                    $success = true;
+                    echo '<pre>';
+                    print_r($promoCode);
+                    echo '</pre>';
+                    echo '<pre>';
+                    print_r($bitrixCoupon);
+                    echo '</pre>';
                 } catch (ManzanaPromocodeUnavailableException $e) {
                     /**
                      * Возвращаем ответ
@@ -544,6 +571,7 @@ class BasketController extends BaseController
                 break;
             case false:
                 $couponStorage->delete($promoCode);
+                $couponStorage->clear();
                 $storage->setPromoCode('');
                 $orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
                 break;
