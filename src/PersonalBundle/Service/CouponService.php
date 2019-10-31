@@ -289,8 +289,8 @@ class CouponService implements LoggerAwareInterface
             }
         }
         
-        if (!in_array($promoCode, $coupons) && $use) {
-            if ($result[0]) {
+        if ($promoCode && !in_array($promoCode, $coupons) && $use) {
+            if (!$result[0]) {
                 $result[0] = $this->getCouponInfo($promoCode);
             } else {
                 $result[$key + 1] = $this->getCouponInfo($promoCode);

@@ -185,6 +185,11 @@ class BasketController extends BaseController
             $orderCalculate->setPromoCodeResult($promoCode);
         }
         
+        if (!$orderCalculate->getCoupon()) {
+            $orderCalculate->setCoupon((new Coupon())->setPromocode($promoCode)
+                ->setActionType(Coupon::DISABLE));
+        }
+        
         return (new UserCartResponse())
             ->setCartCalc($orderCalculate)
             ->setCartParam($orderParameter);
@@ -479,7 +484,7 @@ class BasketController extends BaseController
         $promoCode = $couponStorage->getApplicableCoupon() ?: $storage->getPromoCode();
         
         $couponService = Application::getInstance()->getContainer()->get('coupon.service');
-        $result        = $couponService->getUserCouponsAction();
+        $result        = $couponService->getUserCouponsAction($promoCode, true);
         
         return (new UserCouponsResponse())->setUserCoupons($result);
     }
@@ -503,11 +508,11 @@ class BasketController extends BaseController
         
         $couponStorage       = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
         $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
-        $ajaxBasket          = Application::getInstance()->getContainer()->get(AjaxBasket::class);
         
         switch ($use) {
             case true:
                 try {
+                    $ajaxBasket          = Application::getInstance()->getContainer()->get(AjaxBasket::class);
                     $personalOfferService = $ajaxBasket->getPersonalOffersService();
                     $personalOfferService->checkCoupon($promoCode);
                     
