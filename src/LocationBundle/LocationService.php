@@ -557,7 +557,7 @@ class LocationService
                 $hasFoundByParents = false;
                 $excludeLocation = false;
 
-                if ($excludeMoscowDistricts && $this->isMoscowRegionLocation($res)) {
+                if ($excludeMoscowDistricts && $this->isMoscowRegionLocation($item)) {
                     $excludeLocation = true;
                 }
 
@@ -585,16 +585,9 @@ class LocationService
                         $parentItem['TYPE'] = $this->stringArrayToArray($parentItem, 'TYPE');
                         $parentList[] = $parentItem;
 
-
-
                         // ищем местоположение среди родителей
                         if ($findByParent) {
                             foreach ($queryParts as $queryPart) {
-                                if ($excludeMoscowDistricts && $this->isMoscowRegionLocation($parentItem)) {
-                                    $excludeLocation = true;
-                                    break;
-                                }
-
                                 if (!$hasFoundByParents && (strpos(ToUpper($parentItem['NAME']), $queryPart) !== false)) {
                                     $hasFoundByParents = true;
                                 }
