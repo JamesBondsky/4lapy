@@ -4,9 +4,12 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FourPaws\MobileApiBundle\Controller\BaseController;
+use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
 use FourPaws\MobileApiBundle\Services\Api\QuestService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+
 
 class QuestController extends BaseController
 {
@@ -26,6 +29,7 @@ class QuestController extends BaseController
     /**
      * @Rest\Get(path="/quest_register/")
      * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
      *
      * @param Request $request
      * @return Response
@@ -38,18 +42,20 @@ class QuestController extends BaseController
     /**
      * @Rest\Post(path="/quest_register/")
      * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
      *
-     * @param Request $request
+     * @param QuestRegisterRequest $questRegisterRequest
      * @return Response
      */
-    public function postRegisterAction(Request $request): Response
+    public function postRegisterAction(QuestRegisterRequest $questRegisterRequest): Response
     {
-        return new Response();
+        return (new Response())->setData($this->apiQuestService->registerUser($questRegisterRequest));
     }
 
     /**
      * @Rest\Post(path="/quest_pet/")
      * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
      *
      * @param Request $request
      * @return Response
@@ -62,6 +68,7 @@ class QuestController extends BaseController
     /**
      * @Rest\Post(path="/quest_barcode/")
      * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
      *
      * @param Request $request
      * @return Response
@@ -74,6 +81,7 @@ class QuestController extends BaseController
     /**
      * @Rest\Post(path="/quest_question/")
      * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
      *
      * @param Request $request
      * @return Response
@@ -86,6 +94,7 @@ class QuestController extends BaseController
     /**
      * @Rest\Post(path="/quest_prize/")
      * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
      *
      * @param Request $request
      * @return Response
