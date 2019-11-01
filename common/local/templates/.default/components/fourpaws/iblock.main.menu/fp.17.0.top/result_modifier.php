@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
+use FourPaws\KioskBundle\Service\KioskService;
 
 /**
  * Главное меню сайта
@@ -30,27 +31,30 @@ $arParams['RESIZE_WIDTH'] = $arParams['RESIZE_WIDTH'] ?? 115;
 $arParams['RESIZE_HEIGHT'] = $arParams['RESIZE_HEIGHT'] ?? 43;
 $arParams['RESIZE_TYPE'] = $arParams['RESIZE_TYPE'] ?? 'BX_RESIZE_IMAGE_PROPORTIONAL';
 
-$funcWalkRecursive = function($arData, $funcSelf) {
+$isKioskMode = KioskService::isKioskMode();
+
+$funcWalkRecursive = static function ($arData, $funcSelf, $isKioskMode) {
     foreach ($arData as &$arItem) {
         $arItem['_TEXT_'] = $arItem['NAME'];
         $arItem['_URL_'] = $arItem['URL'] !== '' ? $arItem['URL'] : 'javascript:void(0);';
         $arItem['_LINK_ATTR1_'] = '';
         $arItem['_LINK_ATTR2_'] = '';
 
-        if ($arItem['TARGET_BLANK'] && $arItem['URL'] !== '') {
+        if (!$isKioskMode && $arItem['TARGET_BLANK'] && $arItem['URL'] !== '') {
             $arItem['_LINK_ATTR1_'] .= ' target="_blank"';
         }
-        $arItem['_LINK_ATTR2_'] .= ' title="'.$arItem['NAME'].'"';
+        $arItem['_LINK_ATTR2_'] .= ' title="' . $arItem['NAME'] . '"';
 
         if ($arItem['NESTED']) {
-            $arItem['NESTED'] = $funcSelf($arItem['NESTED'], $funcSelf);
+            $arItem['NESTED'] = $funcSelf($arItem['NESTED'], $funcSelf, $isKioskMode);
         }
     }
     unset($arItem);
 
     return $arData;    
 };
-$arResult['MENU_TREE'] = $funcWalkRecursive($arResult['MENU_TREE'], $funcWalkRecursive);
+
+$arResult['MENU_TREE'] = $funcWalkRecursive($arResult['MENU_TREE'], $funcWalkRecursive, $isKioskMode);
 
 // масштабирование изображений
 if ($arResult['SECTIONS_POPULAR_BRANDS']) {

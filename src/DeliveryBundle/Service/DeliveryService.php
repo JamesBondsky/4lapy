@@ -170,11 +170,11 @@ class DeliveryService implements LoggerAwareInterface
 
     /** @var string */
     protected $currentDeliveryZone;
-    
+
     protected $allZones;
 
     protected $deliveryByZoneMap;
-    
+
     /**
      * DeliveryService public constructor.
      *
@@ -495,16 +495,16 @@ class DeliveryService implements LoggerAwareInterface
                     if (!empty($location)) {
                         $shipment = $this->generateShipment($location);
                         $availableServices = Manager::getRestrictedObjectsList($shipment);
-                
+
                         foreach ($availableServices as $service) {
                             $result[] = $service->getCode();
                         }
                     }
                 }
-        
+
                 return ['result' => $result];
             };
-    
+
             $result = [];
             try {
                 $result = (new BitrixCache())
@@ -1289,7 +1289,8 @@ class DeliveryService implements LoggerAwareInterface
         $priceForAmountCollection = new PriceForAmountCollection();
         $priceForAmountCollection->add((new PriceForAmount())
             ->setAmount($quantity ?? 1)
-            ->setPrice($price ?? $offer->getPrice())
+//            ->setPrice($price ?? $offer->getPrice())
+            ->setPrice($offer->getPrice())
         );
 
         return DeliveryHandlerBase::getStocksForItem(

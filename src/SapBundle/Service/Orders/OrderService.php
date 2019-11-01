@@ -63,6 +63,7 @@ use FourPaws\SapBundle\Exception\NotFoundOrderShipmentException;
 use FourPaws\SapBundle\Exception\NotFoundOrderStatusException;
 use FourPaws\SapBundle\Exception\NotFoundOrderUserException;
 use FourPaws\SapBundle\Exception\NotFoundProductException;
+use FourPaws\SapBundle\Api\SapStatusSender;
 use FourPaws\SapBundle\Service\SapOutFile;
 use FourPaws\SapBundle\Service\SapOutInterface;
 use FourPaws\SapBundle\Source\SourceMessage;
@@ -1369,5 +1370,13 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         /** @var UserFieldEnumValue $regularityFastDeliv */
         $regularityFastDeliv = $scheduleResultService->getRegularityEnumByXmlId(ScheduleResultService::FAST_DELIV);
         return $regularityName == $regularityFastDeliv->getValue();
+    }
+    
+    public function sendOrderStatus($orderNumber, $status)
+    {
+        $sapStatusSender = new SapStatusSender($orderNumber, $status);
+        $result = $sapStatusSender->send();
+        
+        return $result;
     }
 }

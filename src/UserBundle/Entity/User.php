@@ -1484,7 +1484,7 @@ class User implements UserInterface
      */
     public function setActiveBonus(float $activeBonus): User
     {
-        $this->activeBonus = $activeBonus;
+        $this->activeBonus = $activeBonus >= 0 ? $activeBonus : 0;
 
         return $this;
     }
