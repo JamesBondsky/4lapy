@@ -190,7 +190,7 @@ trait Pet
     /**
      * @return \DateTime
      */
-    public function getBirthday(): \DateTime
+    public function getBirthday(): ?\DateTime
     {
         return $this->birthday;
     }
