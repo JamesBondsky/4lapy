@@ -67,6 +67,8 @@ class StatusService implements LoggerAwareInterface
         '6' => 'canceled',
         'K' => 'delayed'
     ];
+    
+    public const STATUS_CANCELED = 6;
 
     private const STATUS_PICKUP_MAP = [
         '1' => 'N',

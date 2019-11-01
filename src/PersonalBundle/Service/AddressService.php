@@ -166,7 +166,7 @@ class AddressService
         if ($address->isMain()) {
             $this->disableMainItem();
         }
-        
+
         $res = $this->addressRepository->setEntity($address)->create();
         if ($res) {
             if ($address->isMain()
@@ -224,23 +224,17 @@ class AddressService
     /**
      * @param array $data
      *
-     * @throws ObjectPropertyException
-     * @throws NotFoundException
-     * @throws SecurityException
-     * @throws NotAuthorizedException
-     * @throws EmptyEntityClass
-     * @throws \RuntimeException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws ValidationException
-     * @throws InvalidIdentifierException
-     * @throws \Exception
-     * @throws BitrixRuntimeException
-     * @throws ConstraintDefinitionException
+     * @param bool $checkLocation
      * @return bool
+     * @throws ApplicationCreateException
+     * @throws CityNotFoundException
+     * @throws EmptyEntityClass
+     * @throws NotFoundException
+     * @throws ObjectPropertyException
+     * @throws SecurityException
+     * @throws \Exception
      */
-    public function update(array $data): bool
+    public function update(array $data, $checkLocation = true): bool
     {
         /** @var Address $entity */
         $entity = $this->addressRepository->dataToEntity($data, Address::class);
@@ -258,9 +252,12 @@ class AddressService
             $this->disableMainItem();
         }
 
-        $entity->setLocation(
-            $this->getCityLocationCode($entity->getCity())
-        );
+        if ($checkLocation) {
+            $entity->setLocation(
+                $this->getCityLocationCode($entity->getCity())
+            );
+        }
+
         $res = $this->addressRepository->setEntity($entity)->update();
         if ($res) {
             if ($entity->isMain()
