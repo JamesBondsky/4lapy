@@ -21,7 +21,7 @@ class UserPetAddRequest implements SimpleUnserializeRequest, PostRequest
     /**
      * @return string
      */
-    public function getGender(): string
+    public function getGender(): ?string
     {
         return $this->gender;
     }
