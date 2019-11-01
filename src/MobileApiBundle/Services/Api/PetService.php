@@ -287,23 +287,26 @@ class PetService
      */
     public function map($pet)
     {
-        $birthdayStmp = $pet->getBirthday()->getTimestamp();
-        $birthday = (new \DateTime())->setTimestamp($birthdayStmp);
         $result = (new Pet())
             ->setId($pet->getId())
             ->setName($pet->getName())
             ->setCategoryId($pet->getType())
             ->setBreedId($pet->getBreedId())
             ->setBreedOther($pet->getBreed())
-            ->setBirthday($birthday)
             ->setBirthdayString($pet->getAgeString())
             ->setPhoto(
                 (new PetPhoto())
                     ->setId($pet->getPhoto())
                     ->setPreview($pet->getImgPath())
                     ->setSrc($pet->getResizePopupImgPath())
-            )
-        ;
+            );
+
+        if ($pet->getBirthday()) {
+            $birthdayStmp = $pet->getBirthday()->getTimestamp();
+            $birthday = (new \DateTime())->setTimestamp($birthdayStmp);
+            $result->setBirthday($birthday);
+        }
+
         if ($genderCode = $pet->getGender()) {
             $result->setGender(
                 (new PetGender())

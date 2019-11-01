@@ -154,7 +154,7 @@ trait Pet
     /**
      * @return string
      */
-    public function getBreedOther(): string
+    public function getBreedOther(): ?string
     {
         return $this->breedOther;
     }
@@ -172,7 +172,7 @@ trait Pet
     /**
      * @return PetGender
      */
-    public function getGender(): PetGender
+    public function getGender(): ?PetGender
     {
         return $this->gender;
     }
@@ -208,7 +208,7 @@ trait Pet
     /**
      * @return string
      */
-    public function getBirthdayString(): string
+    public function getBirthdayString(): ?string
     {
         return $this->birthdayString;
     }
@@ -226,7 +226,7 @@ trait Pet
     /**
      * @return PetPhoto
      */
-    public function getPhoto(): PetPhoto
+    public function getPhoto(): ?PetPhoto
     {
         return $this->photo;
     }
