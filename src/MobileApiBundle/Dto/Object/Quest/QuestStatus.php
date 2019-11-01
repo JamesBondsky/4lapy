@@ -23,7 +23,7 @@ class QuestStatus
     /**
      * @Serializer\SerializedName("prev_tasks")
      * @Serializer\Type("array<boolean>")
-     * @var int
+     * @var boolean[]
      */
     protected $prevTasks = [];
 
@@ -64,18 +64,18 @@ class QuestStatus
     }
 
     /**
-     * @return int
+     * @return boolean[]
      */
-    public function getPrevTasks(): int
+    public function getPrevTasks(): array
     {
         return $this->prevTasks;
     }
 
     /**
-     * @param int $prevTasks
+     * @param array $prevTasks
      * @return QuestStatus
      */
-    public function setPrevTasks(int $prevTasks): QuestStatus
+    public function setPrevTasks(array $prevTasks): QuestStatus
     {
         $this->prevTasks = $prevTasks;
         return $this;

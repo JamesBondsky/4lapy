@@ -31,7 +31,7 @@ class QuestBarcodeTaskResponse
 
     /**
      * @Serializer\SerializedName("question_task")
-     * @Serializer\Type("int")
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Quest\QuestionTask")
      * @var QuestionTask
      */
     protected $questionTask;

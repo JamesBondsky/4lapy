@@ -52,7 +52,7 @@ class QuestRegisterGetResponse
 
     /**
      * @Serializer\SerializedName("prizes")
-     * @Serializer\Type("<FourPaws\MobileApiBundle\Dto\Object\Quest\Prize>")
+     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Quest\Prize>")
      * @var Prize[]
      */
     protected $prizes = [];
