@@ -152,12 +152,15 @@ class PetService
         $currentUser = $this->userBundleService->getCurrentUser();
 
         $petEntity = (new \FourPaws\PersonalBundle\Entity\Pet())
-            ->setName($addUserPetRequest->getName())
             ->setType($addUserPetRequest->getCategoryId())
             ->setUserId($currentUser->getId())
             ->setBreed($addUserPetRequest->getBreedOther())
             ->setBreedId($addUserPetRequest->getBreedId())
            ;
+
+        if ($petName = $addUserPetRequest->getName()) {
+            $petEntity->setName($petName);
+        }
 
         if ($birthday = $addUserPetRequest->getBirthday()) {
             $petEntity->setBirthday((new Date($birthday->format('d.m.Y'))));
