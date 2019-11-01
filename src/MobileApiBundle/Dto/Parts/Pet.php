@@ -23,7 +23,6 @@ trait Pet
     /**
      * @Serializer\Type("string")
      * @Serializer\SerializedName("name")
-     * @Assert\NotBlank()
      * @var string
      */
     protected $name;
