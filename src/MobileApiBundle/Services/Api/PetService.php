@@ -98,6 +98,7 @@ class PetService
             $result[$type['ID']] = [
                 'id' => $type['ID'],
                 'title' => $type['UF_NAME'],
+                'name_require' => (($type['UF_CODE'] === 'koshki') || ($type['UF_CODE'] === 'sobaki')),
                 'gender' => $genders,
                 'breeds' => []
             ];
