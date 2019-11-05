@@ -87,6 +87,41 @@ class HLBlockLectionAppsCreate05112019171256 extends SprintMigrationBase
                 'ru' => 'Телефон',
             ],
         ],
+        [
+            'FIELD_NAME'        => 'UF_EVENT',
+            'USER_TYPE_ID'      => 'hlblock',
+            'XML_ID'            => 'UF_EVENT',
+            'SORT'              => '1000',
+            'MULTIPLE'          => 'N',
+            'MANDATORY'         => 'N',
+            'SHOW_FILTER'       => 'N',
+            'SHOW_IN_LIST'      => 'Y',
+            'EDIT_IN_LIST'      => 'Y',
+            'IS_SEARCHABLE'     => 'N',
+            'SETTINGS'          => [
+                'DISPLAY'       => 'LIST',
+                'LIST_HEIGHT'   => 5,
+                // 'IBLOCK_ID'    => $HLBlockId,
+                // 'HLFIELD_ID'    => $userField['ID'],
+                'DEFAULT_VALUE' => 0,
+            ],
+            'EDIT_FORM_LABEL'   => [
+                'ru' => 'Лекция',
+            ],
+            'LIST_COLUMN_LABEL' => [
+                'ru' => 'Лекция',
+            ],
+            'LIST_FILTER_LABEL' => [
+                'ru' => 'Лекция',
+            ],
+            'ERROR_MESSAGE'     => [
+                'ru' => '',
+            ],
+            'HELP_MESSAGE'      => [
+                'ru' => 'Лекция, на которую записался пользователь',
+            ],
+        ],
+    
     ];
     
     public function up()
