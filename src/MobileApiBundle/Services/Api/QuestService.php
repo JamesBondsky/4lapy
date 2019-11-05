@@ -22,13 +22,12 @@ use FourPaws\UserBundle\Service\UserSearchInterface;
 
 class QuestService
 {
-    protected const QUEST_CODE = 'KEK';
+    protected const QUEST_CODE = 'QUEST';
 
     protected const PET_HL_NAME = 'QuestPet';
     protected const PRIZE_HL_NAME = 'QuestPrize';
     protected const RESULT_HL_NAME = 'QuestResult';
-    protected const BARCODE_TASK_HL_NAME = 'QuestBarcodeTask';
-    protected const QUESTION_TASK_HL_NAME = 'QuestQuestionTask';
+    protected const TASK_HL_NAME = 'QuestTask';
 
     /**
      * @var ImageProcessor
