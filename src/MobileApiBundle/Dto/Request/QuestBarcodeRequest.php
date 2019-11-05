@@ -10,28 +10,28 @@ use Symfony\Component\Validator\Constraints as Assert;
 class QuestBarcodeRequest implements SimpleUnserializeRequest, PostRequest
 {
     /**
-     * @Serializer\SerializedName("vendor_code")
+     * @Serializer\SerializedName("barcode")
      * @Serializer\Type("string")
      * @Assert\NotBlank()
-     * @var $vendorCode
+     * @var $barcode
      */
-    protected $vendorCode;
+    protected $barcode;
 
     /**
      * @return mixed
      */
-    public function getVendorCode()
+    public function getBarcode()
     {
-        return $this->vendorCode;
+        return $this->barcode;
     }
 
     /**
-     * @param mixed $vendorCode
+     * @param $barcode
      * @return QuestBarcodeRequest
      */
-    public function setVendorCode($vendorCode): QuestBarcodeRequest
+    public function setBarcode($barcode): QuestBarcodeRequest
     {
-        $this->vendorCode = $vendorCode;
+        $this->barcode = $barcode;
         return $this;
     }
 }

@@ -17,6 +17,7 @@ use FourPaws\BitrixOrm\Model\Interfaces\ImageInterface;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\AnswerVariant;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\BarcodeTask;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\Pet;
@@ -27,11 +28,15 @@ use FourPaws\MobileApiBundle\Dto\Object\User;
 use FourPaws\MobileApiBundle\Dto\Request\QuestBarcodeRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestStartRequest;
+use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\QuestRegisterGetResponse;
 use FourPaws\MobileApiBundle\Exception\AccessDeinedException;
+use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
+use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use FourPaws\MobileApiBundle\Exception\RuntimeException as ApiRuntimeException;
+use Symfony\Component\HttpFoundation\Request;
 
 class QuestService
 {
@@ -41,6 +46,11 @@ class QuestService
     protected const PRIZE_HL_NAME = 'QuestPrize';
     protected const RESULT_HL_NAME = 'QuestResult';
     protected const TASK_HL_NAME = 'QuestTask';
+
+    /**
+     * @var ApiProductService
+     */
+    private $apiProductService;
 
     /**
      * @var ImageProcessor
@@ -79,12 +89,19 @@ class QuestService
 
     /**
      * QuestService constructor.
+     * @param ProductService $apiProductService
      * @param ImageProcessor $imageProcessor
      * @param UserService $apiUserService
      * @param UserSearchInterface $appUserService
      */
-    public function __construct(ImageProcessor $imageProcessor, UserService $apiUserService, UserSearchInterface $appUserService)
+    public function __construct(
+        ApiProductService $apiProductService,
+        ImageProcessor $imageProcessor,
+        UserService $apiUserService,
+        UserSearchInterface $appUserService
+    )
     {
+        $this->apiProductService = $apiProductService;
         $this->imageProcessor = $imageProcessor;
         $this->apiUserService = $apiUserService;
         $this->appUserService = $appUserService;
@@ -270,13 +287,25 @@ class QuestService
      */
     public function checkBarcodeTask(QuestBarcodeRequest $questBarcodeRequest): int
     {
-        $task = $this->getCurrentTask();
+        $productList = $this->apiProductService->getList(new Request(), 0, 'relevance', 1, 1, $questBarcodeRequest->getBarcode());
 
-        $offerCollection = (new OfferQuery())->withFilter(['=XML_ID' => $questBarcodeRequest->getVendorCode()])->exec();
+        $product = null;
+        if ($currentProduct = $productList->current()) {
+            /** @var FullProduct $product */
+            $product = $currentProduct[0];
+        }
+
+        if ($product === null) {
+            return BarcodeTask::SCAN_ERROR;
+        }
+
+        $offerCollection = (new OfferQuery())->withFilter(['=ID' => $product->getId()])->exec();
 
         if ($offerCollection->isEmpty()) {
             return BarcodeTask::SCAN_ERROR;
         }
+
+        $task = $this->getCurrentTask();
 
         /** @var Offer $offer */
         $offer = $offerCollection->first();

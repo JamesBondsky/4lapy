@@ -121,9 +121,9 @@ class QuestController extends BaseController
         $task = $this->apiQuestService->getCurrentTask();
 
         $response = (new QuestBarcodeTaskResponse())
+            ->setResult($this->apiQuestService->checkBarcodeTask($questBarcodeRequest))
             ->setCorrectText($task['UF_CORRECT_TEXT'])
             ->setErrorText($task['UF_BARCODE_ERROR'])
-            ->setResult($this->apiQuestService->checkBarcodeTask($questBarcodeRequest))
             ->setQuestStatus($this->apiQuestService->getQuestStatus());
 
 
@@ -140,9 +140,9 @@ class QuestController extends BaseController
      * @Security("has_role('REGISTERED_USERS')")
      *
      * @param Request $request
-     * @return QuestQuestionTaskResponse
+     * @return Response
      */
-    public function postQuestionAction(Request $request): QuestQuestionTaskResponse
+    public function postQuestionAction(Request $request): Response
     {
         $response = new QuestQuestionTaskResponse();
 
@@ -176,7 +176,7 @@ class QuestController extends BaseController
             ->setPrizes($prizes)
             ->setQuestStatus($questStatus);
 
-        return $response;
+        return new Response(['task_result' => $response]);
     }
 
     /**
