@@ -7,6 +7,10 @@ use JMS\Serializer\Annotation as Serializer;
 
 class BarcodeTask
 {
+    public const SCAN_ERROR = 0;
+    public const INCORRECT_PRODUCT = 1;
+    public const SUCCESS_SCAN = 2;
+
     /**
      * @Serializer\SerializedName("title")
      * @Serializer\Type("string")

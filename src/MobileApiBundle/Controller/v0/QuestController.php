@@ -13,6 +13,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Quest\BarcodeTask;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\Prize;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestionTask;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestStatus;
+use FourPaws\MobileApiBundle\Dto\Request\QuestBarcodeRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestStartRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
@@ -51,7 +52,7 @@ class QuestController extends BaseController
      * @Rest\View()
      *
      * @param Request $request
-     * @return QuestRegisterGetResponse
+     * @return Response
      *
      * @throws ArgumentException
      * @throws ObjectPropertyException
@@ -59,9 +60,7 @@ class QuestController extends BaseController
      */
     public function getRegisterAction(Request $request): Response
     {
-        return (new Response())->setData(['register' => $this->apiQuestService->getQuestStatus()]);
-
-        return $response;
+        return new Response(['register' => $this->apiQuestService->getQuestRegisterStatus()]);
     }
 
     /**
@@ -92,16 +91,18 @@ class QuestController extends BaseController
      * @Security("has_role('REGISTERED_USERS')")
      *
      * @param QuestStartRequest $questStartRequest
-     * @return QuestStartResponse
+     * @return Response
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function postStartAction(QuestStartRequest $questStartRequest): QuestStartResponse
+    public function postStartAction(QuestStartRequest $questStartRequest): Response
     {
         $this->apiQuestService->startQuest($questStartRequest);
 
-        return (new QuestStartResponse())->setBarcodeTask($this->apiQuestService->getCurrentBarcodeTask());
+        return new Response(
+            $this->apiQuestService->getCurrentBarcodeTask()
+        );
     }
 
     /**
@@ -109,44 +110,28 @@ class QuestController extends BaseController
      * @Rest\View()
      * @Security("has_role('REGISTERED_USERS')")
      *
-     * @param Request $request
-     * @return QuestBarcodeTaskResponse
+     * @param QuestBarcodeRequest $questBarcodeRequest
+     * @return Response
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function postBarcodeAction(Request $request): QuestBarcodeTaskResponse
+    public function postBarcodeAction(QuestBarcodeRequest $questBarcodeRequest): Response
     {
-        $response = new QuestBarcodeTaskResponse();
+        $task = $this->apiQuestService->getCurrentTask();
 
-        $variants = [];
+        $response = (new QuestBarcodeTaskResponse())
+            ->setCorrectText($task['UF_CORRECT_TEXT'])
+            ->setErrorText($task['UF_BARCODE_ERROR'])
+            ->setResult($this->apiQuestService->checkBarcodeTask($questBarcodeRequest))
+            ->setQuestStatus($this->apiQuestService->getQuestStatus());
 
-        $variants[] = (new AnswerVariant())
-            ->setId(1)
-            ->setVariant('Раз');
 
-        $variants[] = (new AnswerVariant())
-            ->setId(2)
-            ->setVariant('2 Раза');
+        if ($response->getResult() === BarcodeTask::SUCCESS_SCAN) {
+            $response->setQuestionTask($this->apiQuestService->getCurrentQuestionTask());
+        }
 
-        $variants[] = (new AnswerVariant())
-            ->setId(3)
-            ->setVariant('3 Раза');
-
-        $questionTask = (new QuestionTask())
-            ->setQuestion('Знаете ли вы, сколько раз в день необходимо кормить взрослую собаку сухим кормом?')
-            ->setVariants($variants);
-
-        $questStatus = (new QuestStatus())
-            ->setNumber(3)
-            ->setTotalCount(7)
-            ->setPrevTasks([true, false]);
-
-        $response
-            ->setResult(2)
-            ->setCorrectText('Чтобы приготовить 1 кг сухого корма на произодстве используется 3 кг натурального мяса!')
-            ->setErrorText('поясняющий текст')
-            ->setQuestionTask($questionTask)
-            ->setQuestStatus($questStatus);
-
-        return $response;
+        return new Response(['task_result' => $response]);
     }
 
     /**

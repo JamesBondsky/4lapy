@@ -9,22 +9,26 @@ use Bitrix\Main\FileTable;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Exception;
+use Faker\Provider\Barcode;
 use FourPaws\App\Application;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Interfaces\ImageInterface;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\MobileApiBundle\Dto\Object\Quest\AnswerVariant;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\BarcodeTask;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\Pet;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\Prize;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestionTask;
+use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestStatus;
 use FourPaws\MobileApiBundle\Dto\Object\User;
+use FourPaws\MobileApiBundle\Dto\Request\QuestBarcodeRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestStartRequest;
 use FourPaws\MobileApiBundle\Dto\Response\QuestRegisterGetResponse;
 use FourPaws\MobileApiBundle\Exception\AccessDeinedException;
-use FourPaws\MobileApiBundle\Exception\NotFoundUserException;
-use FourPaws\UserBundle\Exception\EmptyPhoneException;
 use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use FourPaws\MobileApiBundle\Exception\RuntimeException as ApiRuntimeException;
@@ -69,6 +73,11 @@ class QuestService
     protected $currentUserResult;
 
     /**
+     * @var array|null
+     */
+    protected $currentTask;
+
+    /**
      * QuestService constructor.
      * @param ImageProcessor $imageProcessor
      * @param UserService $apiUserService
@@ -83,11 +92,12 @@ class QuestService
 
     /**
      * @return QuestRegisterGetResponse
+     *
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function getQuestStatus(): QuestRegisterGetResponse
+    public function getQuestRegisterStatus(): QuestRegisterGetResponse
     {
         $userResult = $this->getCurrentUserResult();
         $result = (new QuestRegisterGetResponse())
@@ -127,6 +137,7 @@ class QuestService
 
     /**
      * @return array|null
+     *
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -152,6 +163,7 @@ class QuestService
 
     /**
      * @param $userResult
+     *
      * @throws Exception
      */
     protected function updateCurrentUserResult($userResult): void
@@ -165,6 +177,7 @@ class QuestService
     /**
      * @param QuestRegisterRequest $questRegisterRequest
      * @return void
+     *
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -219,6 +232,7 @@ class QuestService
 
     /**
      * @param QuestStartRequest $questStartRequest
+     *
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -246,7 +260,84 @@ class QuestService
     }
 
     /**
+     * @param QuestBarcodeRequest $questBarcodeRequest
+     * @return int
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function checkBarcodeTask(QuestBarcodeRequest $questBarcodeRequest): int
+    {
+        $task = $this->getCurrentTask();
+
+        $offerCollection = (new OfferQuery())->withFilter(['=XML_ID' => $questBarcodeRequest->getVendorCode()])->exec();
+
+        if ($offerCollection->isEmpty()) {
+            return BarcodeTask::SCAN_ERROR;
+        }
+
+        /** @var Offer $offer */
+        $offer = $offerCollection->first();
+
+        if (in_array($task['UF_CATEGORY'], $offer->getProduct()->getSectionsIdList(), false)) {
+            $userResult = $this->getCurrentUserResult();
+
+            if ($userResult === false) {
+                throw new ApiRuntimeException('Начните проходить квест');
+            }
+
+            $tasks = unserialize($userResult['UF_TASKS']);
+
+            if (!isset($tasks[$userResult['UF_CURRENT_TASK']]['ID'])) {
+                throw new ApiRuntimeException('Задание не найдено');
+            }
+
+            $tasks[$userResult['UF_CURRENT_TASK']]['BARCODE_COMPLETE'] = true;
+
+            $userResult['UF_TASKS'] = serialize($tasks);
+
+            $this->updateCurrentUserResult($userResult);
+
+            return BarcodeTask::SUCCESS_SCAN;
+        }
+
+        return BarcodeTask::INCORRECT_PRODUCT;
+    }
+
+    /**
+     * @return QuestStatus
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getQuestStatus(): QuestStatus
+    {
+        $userResult = $this->getCurrentUserResult();
+
+        $taskResult = unserialize($userResult['UF_TASKS']);
+
+        $prevResult = [];
+
+        foreach ($taskResult as $result) {
+            if ($result['QUESTION_RESULT'] === QuestionTask::STATUS_SUCCESS_COMPLETE) {
+                $prevResult[] = false;
+            } else if ($result['QUESTION_RESULT'] === QuestionTask::STATUS_FAIL_COMPLETE) {
+                $prevResult[] = true;
+            }
+        }
+
+        return (new QuestStatus())
+            ->setNumber($userResult['UF_CURRENT_TASK'])
+            ->setTotalCount(count($taskResult))
+            ->setPrevTasks($prevResult);
+    }
+
+    /**
      * @return BarcodeTask
+     *
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -254,32 +345,12 @@ class QuestService
      */
     public function getCurrentBarcodeTask(): BarcodeTask
     {
-        $userResult = $this->getCurrentUserResult();
-
-        if ($userResult === false) {
-            throw new ApiRuntimeException('Начните проходить квест');
-        }
-
-        $tasks = unserialize($userResult['UF_TASKS']);
-
-        if (!isset($tasks[$userResult['UF_CURRENT_TASK']]['ID'])) {
-            throw new ApiRuntimeException('Задание не найдено');
-        }
-
-        $barcodeTask = $this->getDataManager(self::TASK_HL_NAME)::query()
-            ->setSelect(['ID', 'UF_TITLE', 'UF_TASK', 'UF_IMAGE'])
-            ->setFilter(['=ID' => $tasks[$userResult['UF_CURRENT_TASK']]['ID']])
-            ->exec()
-            ->fetch();
-
-        if ($barcodeTask === false) {
-            throw new ApiRuntimeException('Задание не найдено');
-        }
+        $task = $this->getCurrentTask();
 
         $image = null;
-        if ($barcodeTask['UF_IMAGE']) {
+        if ($task['UF_IMAGE']) {
 
-            $item = FileTable::query()->addFilter('=ID', $barcodeTask['UF_IMAGE'])->addSelect('*')->exec()->fetch();
+            $item = FileTable::query()->addFilter('=ID', $task['UF_IMAGE'])->addSelect('*')->exec()->fetch();
             if ($item === false) {
                 $item = null;
             } else {
@@ -288,14 +359,77 @@ class QuestService
         }
 
         return (new BarcodeTask())
-            ->setTask($barcodeTask['UF_TASK'])
-            ->setTitle($barcodeTask['UF_TITLE'])
+            ->setTask($task['UF_TASK'])
+            ->setTitle($task['UF_TITLE'])
             ->setImage($image);
+    }
+
+    /**
+     * @return QuestionTask
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getCurrentQuestionTask(): QuestionTask
+    {
+        $task = $this->getCurrentTask();
+        $variants = [];
+
+        foreach ($task['UF_VARIANTS'] as $key => $variant) {
+            $variants[] = (new AnswerVariant())
+                ->setId($key)
+                ->setVariant($variant);
+        }
+
+        return (new QuestionTask())
+            ->setQuestion($task['UF_QUESTION'])
+            ->setVariants($variants);
+    }
+
+    /**
+     * @return array|false
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function getCurrentTask(): array
+    {
+        if ($this->currentTask === null) {
+            $userResult = $this->getCurrentUserResult();
+
+            if ($userResult === false) {
+                throw new ApiRuntimeException('Начните проходить квест');
+            }
+
+            $tasks = unserialize($userResult['UF_TASKS']);
+
+            if (!isset($tasks[$userResult['UF_CURRENT_TASK']]['ID'])) {
+                throw new ApiRuntimeException('Задание не найдено');
+            }
+
+            $task = $this->getDataManager(self::TASK_HL_NAME)::query()
+                ->setSelect(['ID', 'UF_TITLE', 'UF_TASK', 'UF_IMAGE', 'UF_VARIANTS', 'UF_QUESTION', 'UF_CATEGORY', 'UF_CORRECT_TEXT', 'UF_BARCODE_ERROR', 'UF_QUESTION_ERROR'])
+                ->setFilter(['=ID' => $tasks[$userResult['UF_CURRENT_TASK']]['ID']])
+                ->exec()
+                ->fetch();
+
+            if ($task === false) {
+                throw new ApiRuntimeException('Задание не найдено');
+            }
+
+            $this->currentTask = $task;
+        }
+
+        return $this->currentTask;
     }
 
     /**
      * @param array $petTypeId
      * @return array
+     *
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -357,6 +491,7 @@ class QuestService
     /**
      * @param array $prizeIds
      * @return array
+     *
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -400,6 +535,7 @@ class QuestService
      * @param $imageId
      * @param $imageCollection
      * @return ImageInterface|null
+     *
      */
     protected function getImageFromCollection($imageId, $imageCollection): ?ImageInterface
     {
@@ -407,22 +543,9 @@ class QuestService
     }
 
     /**
-     * @param $entityName
-     * @return DataManager
-     * @throws Exception
-     */
-    protected function getDataManager($entityName): DataManager
-    {
-        if (!isset($this->dataManagers[$entityName])) {
-            $this->dataManagers[$entityName] = HLBlockFactory::createTableObject($entityName);
-        }
-
-        return $this->dataManagers[$entityName];
-    }
-
-    /**
      * @param $petTypeId
      * @return array
+     *
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -455,5 +578,20 @@ class QuestService
         }
 
         return $result;
+    }
+
+    /**
+     * @param $entityName
+     * @return DataManager
+     *
+     * @throws Exception
+     */
+    protected function getDataManager($entityName): DataManager
+    {
+        if (!isset($this->dataManagers[$entityName])) {
+            $this->dataManagers[$entityName] = HLBlockFactory::createTableObject($entityName);
+        }
+
+        return $this->dataManagers[$entityName];
     }
 }
