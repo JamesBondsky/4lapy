@@ -15,6 +15,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Quest\Prize;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestionTask;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestStatus;
 use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
+use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\QuestBarcodeTaskResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestPrizeResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestQuestionTaskResponse;
@@ -69,22 +70,21 @@ class QuestController extends BaseController
      * @Rest\View()
      *
      * @param QuestRegisterRequest $questRegisterRequest
-     * @return QuestRegisterPostResponse
      *
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     * @throws ApplicationCreateException
-     * @throws EmptyPhoneException
+     * @return Response|QuestRegisterPostResponse
      */
-    public function postRegisterAction(QuestRegisterRequest $questRegisterRequest): QuestRegisterPostResponse
+    public function postRegisterAction(QuestRegisterRequest $questRegisterRequest)
     {
-        $this->apiQuestService->registerUser($questRegisterRequest);
+        try {
+            $this->apiQuestService->registerUser($questRegisterRequest);
+        } catch (Exception $e) {
+            return (new Response())->setErrors([$e->getMessage()]);
+        }
 
         try {
             return (new QuestRegisterPostResponse())->setPetTypes($this->apiQuestService->getPetTypes());
         } catch (Exception $e) {
-            throw new RuntimeException('Произошла ошибка');
+            return (new Response())->setErrors(['Произошла ошибка']);
         }
     }
 
