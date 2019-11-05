@@ -236,7 +236,9 @@ if(KioskService::isKioskMode()) {
 			                        <div class="b-person-coupon__inner">
 			                            <div class="b-person-coupon__close js-close-person-coupon-popup"></div>
 				                        <? if ($offerDiscountText) { ?>
-			                                <div class="b-person-coupon__persent">-<?= $offerDiscountText ?></div>
+                                            <div class="b-person-coupon__persent" data-text-fill-title-coupon="true" data-max-size-title-desktop="46" data-max-size-title-mobile="33">
+                                                <span>-<?= $offerDiscountText ?></span>
+                                            </div>
 										<? } ?>
 			                            <div class="b-person-coupon__descr"><?= $lastCouponOffer['~PREVIEW_TEXT'] ?></div>
 			                            <a href="/personal/personal-offers/" class="b-person-coupon__btn">Подробнее</a>
