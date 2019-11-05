@@ -5,22 +5,29 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\FileTable;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
+use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Interfaces\ImageInterface;
+use FourPaws\MobileApiBundle\Dto\Object\Quest\BarcodeTask;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\Pet;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\Prize;
+use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestionTask;
 use FourPaws\MobileApiBundle\Dto\Object\User;
 use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
+use FourPaws\MobileApiBundle\Dto\Request\QuestStartRequest;
+use FourPaws\MobileApiBundle\Dto\Response\QuestRegisterGetResponse;
 use FourPaws\MobileApiBundle\Exception\AccessDeinedException;
 use FourPaws\MobileApiBundle\Exception\NotFoundUserException;
 use FourPaws\UserBundle\Exception\EmptyPhoneException;
 use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Service\UserSearchInterface;
+use FourPaws\MobileApiBundle\Exception\RuntimeException as ApiRuntimeException;
 
 class QuestService
 {
@@ -75,16 +82,26 @@ class QuestService
     }
 
     /**
-     * @return bool
-     * @throws Exception
+     * @return QuestRegisterGetResponse
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws AccessDeinedException
      */
-    public function needRegister(): bool
+    public function getQuestStatus(): QuestRegisterGetResponse
     {
-        return ($this->getCurrentUserResult() === null);
+        $userResult = $this->getCurrentUserResult();
+        $result = (new QuestRegisterGetResponse())
+            ->setNeedRegister(($userResult === null))
+            ->setHasEmail(!empty($this->getCurrentUser()->getEmail()))
+            ->setUserEmail($this->getCurrentUser()->getEmail());
+
+        if (!$result->isNeedRegister()) {
+            $result->setNeedChoosePet(true);
+            $result->setPetTypes($this->getPetTypes());
+        }
+
+
+        return $result;
     }
 
     /**
@@ -121,7 +138,7 @@ class QuestService
         if ($this->currentUserResult === null) {
             $result = $this->getDataManager(self::RESULT_HL_NAME)::query()
                 ->setFilter(['=UF_USER_ID' => $this->getCurrentUser()->getId()])
-                ->setSelect(['ID'])
+                ->setSelect(['ID', 'UF_PET', 'UF_TASKS', 'UF_CURRENT_TASK'])
                 ->exec()
                 ->fetch();
 
@@ -134,23 +151,29 @@ class QuestService
     }
 
     /**
+     * @param $userResult
+     * @throws Exception
+     */
+    protected function updateCurrentUserResult($userResult): void
+    {
+        $updateResult = $this->getDataManager(self::RESULT_HL_NAME)::update($userResult['ID'], $userResult);
+        if ($updateResult->isSuccess()) {
+            $this->currentUserResult = $userResult;
+        }
+    }
+
+    /**
      * @param QuestRegisterRequest $questRegisterRequest
      * @return void
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws ApplicationCreateException
-     * @throws EmptyPhoneException
      * @throws AccessDeinedException
      * @throws Exception
      */
     public function registerUser(QuestRegisterRequest $questRegisterRequest): void
     {
-        try {
-            $user = $this->apiUserService->getCurrentApiUser();
-        } catch (AccessDeinedException $e) {
-            throw new AccessDeinedException('Авторизуйтесь для участия в квесте');
-        }
+        $user = $this->getCurrentUser();
 
         $needUpdateUser = false;
 
@@ -179,15 +202,13 @@ class QuestService
             // todo обновить пользователя и послать письмо с подтвержение почты
         }
 
-        $res = $this->getDataManager(self::RESULT_HL_NAME)::query()
-            ->setFilter(['=UF_USER_ID' => $user->getId()])
-            ->setSelect(['ID'])
-            ->exec();
+        $userResult = $this->getCurrentUserResult();
 
-        if ($questResult = $res->fetch()) {
-            $this->getDataManager(self::RESULT_HL_NAME)::update($questResult['ID'], [
+        if ($userResult !== null) {
+            $this->getDataManager(self::RESULT_HL_NAME)::update($userResult['ID'], [
                 'UF_PET' => null,
                 'UF_TASKS' => null,
+                'UF_CURRENT_TASK' => 0,
             ]);
         } else {
             $this->getDataManager(self::RESULT_HL_NAME)::add([
@@ -197,13 +218,90 @@ class QuestService
     }
 
     /**
+     * @param QuestStartRequest $questStartRequest
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws AccessDeinedException
+     * @throws Exception
+     */
+    public function startQuest(QuestStartRequest $questStartRequest): void
+    {
+        $userResult = $this->getCurrentUserResult();
+
+        $pets = $this->getPetTypes([$questStartRequest->getPetTypeId()]);
+
+        if (!isset($pets[$questStartRequest->getPetTypeId()])) {
+            throw new AccessDeinedException('Неккоректный ID питомца');
+        }
+
+        /** @var Pet $pet */
+        $pet = $pets[$questStartRequest->getPetTypeId()];
+
+        $userResult['UF_PET'] = $pet->getId();
+        $userResult['UF_TASKS'] = serialize($this->generateTasks($pet->getId()));
+        $userResult['UF_CURRENT_TASK'] = 1;
+
+        $this->updateCurrentUserResult($userResult);
+    }
+
+    /**
+     * @return BarcodeTask
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function getCurrentBarcodeTask(): BarcodeTask
+    {
+        $userResult = $this->getCurrentUserResult();
+
+        if ($userResult === false) {
+            throw new ApiRuntimeException('Начните проходить квест');
+        }
+
+        $tasks = unserialize($userResult['UF_TASKS']);
+
+        if (!isset($tasks[$userResult['UF_CURRENT_TASK']]['ID'])) {
+            throw new ApiRuntimeException('Задание не найдено');
+        }
+
+        $barcodeTask = $this->getDataManager(self::TASK_HL_NAME)::query()
+            ->setSelect(['ID', 'UF_TITLE', 'UF_TASK', 'UF_IMAGE'])
+            ->setFilter(['=ID' => $tasks[$userResult['UF_CURRENT_TASK']]['ID']])
+            ->exec()
+            ->fetch();
+
+        if ($barcodeTask === false) {
+            throw new ApiRuntimeException('Задание не найдено');
+        }
+
+        $image = null;
+        if ($barcodeTask['UF_IMAGE']) {
+
+            $item = FileTable::query()->addFilter('=ID', $barcodeTask['UF_IMAGE'])->addSelect('*')->exec()->fetch();
+            if ($item === false) {
+                $item = null;
+            } else {
+                $image = (new Image($item))->getSrc();
+            }
+        }
+
+        return (new BarcodeTask())
+            ->setTask($barcodeTask['UF_TASK'])
+            ->setTitle($barcodeTask['UF_TITLE'])
+            ->setImage($image);
+    }
+
+    /**
+     * @param array $petTypeId
      * @return array
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
      * @throws Exception
      */
-    public function getPetTypes(): array
+    public function getPetTypes(array $petTypeId = []): array
     {
         $result = [];
         $pets = [];
@@ -211,10 +309,15 @@ class QuestService
         $prizeIds = [];
 
         $res = $this->getDataManager(self::PET_HL_NAME)::query()
-            ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE', 'UF_DESCRIPTION', 'UF_PRIZES'])
-            ->exec();
+            ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE', 'UF_DESCRIPTION', 'UF_PRIZES']);
 
-        foreach ($res as $pet) {
+        if ($petTypeId && !empty($petTypeId)) {
+            $res->setFilter(['ID' => $petTypeId]);
+        }
+
+        $res->exec();
+
+        foreach ($res->fetchAll() as $pet) {
             $pets[$pet['ID']] = $pet;
 
             if ($pet['UF_IMAGE']) {
@@ -315,5 +418,42 @@ class QuestService
         }
 
         return $this->dataManagers[$entityName];
+    }
+
+    /**
+     * @param $petTypeId
+     * @return array
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws Exception
+     */
+    protected function generateTasks($petTypeId): array
+    {
+        $res = $this->getDataManager(self::TASK_HL_NAME)::query()
+            ->setFilter(['=UF_PET' => $petTypeId])
+            ->setSelect(['ID'])
+            ->exec();
+
+        $tasks = [];
+        foreach ($res as $task) {
+            $tasks[] = [
+                'ID' => $task['ID'],
+                'BARCODE_COMPLETE' => false,
+                'QUESTION_RESULT' => QuestionTask::STATUS_NOT_START
+            ];
+        }
+
+        shuffle($tasks);
+        $number = 1;
+
+        $result = [];
+
+        foreach ($tasks as $task) {
+            $result[$number] = $task;
+            $number++;
+        }
+
+        return $result;
     }
 }

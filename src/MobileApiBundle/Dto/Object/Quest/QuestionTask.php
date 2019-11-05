@@ -6,6 +6,10 @@ use JMS\Serializer\Annotation as Serializer;
 
 class QuestionTask
 {
+    public const STATUS_NOT_START = 0;
+    public const STATUS_SUCCESS_COMPLETE = 1;
+    public const STATUS_FAIL_COMPLETE = 2;
+
     /**
      * @Serializer\SerializedName("question")
      * @Serializer\Type("string")

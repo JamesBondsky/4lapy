@@ -7,7 +7,6 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Exception;
 use FOS\RestBundle\Controller\Annotations as Rest;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\AnswerVariant;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\BarcodeTask;
@@ -15,6 +14,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Quest\Prize;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestionTask;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestStatus;
 use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
+use FourPaws\MobileApiBundle\Dto\Request\QuestStartRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\QuestBarcodeTaskResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestPrizeResponse;
@@ -24,7 +24,6 @@ use FourPaws\MobileApiBundle\Dto\Response\QuestRegisterPostResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestStartResponse;
 use FourPaws\MobileApiBundle\Exception\RuntimeException as ApiRuntimeException;
 use FourPaws\MobileApiBundle\Services\Api\QuestService;
-use FourPaws\UserBundle\Exception\EmptyPhoneException;
 use Symfony\Component\HttpFoundation\Request;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
@@ -58,13 +57,9 @@ class QuestController extends BaseController
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function getRegisterAction(Request $request): QuestRegisterGetResponse
+    public function getRegisterAction(Request $request): Response
     {
-        $response = new QuestRegisterGetResponse();
-        $response
-            ->setNeedRegister($this->apiQuestService->needRegister())
-            ->setHasEmail(!empty($this->apiQuestService->getCurrentUser()->getEmail()))
-            ->setUserEmail($this->apiQuestService->getCurrentUser()->getEmail());
+        return (new Response())->setData(['register' => $this->apiQuestService->getQuestStatus()]);
 
         return $response;
     }
@@ -76,9 +71,7 @@ class QuestController extends BaseController
      * @param QuestRegisterRequest $questRegisterRequest
      *
      * @return Response|QuestRegisterPostResponse
-     * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws EmptyPhoneException
      * @throws ObjectPropertyException
      * @throws SystemException
      */
@@ -98,19 +91,17 @@ class QuestController extends BaseController
      * @Rest\View()
      * @Security("has_role('REGISTERED_USERS')")
      *
-     * @param Request $request
+     * @param QuestStartRequest $questStartRequest
      * @return QuestStartResponse
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function postStartAction(Request $request): QuestStartResponse
+    public function postStartAction(QuestStartRequest $questStartRequest): QuestStartResponse
     {
-        $response = new QuestStartResponse();
+        $this->apiQuestService->startQuest($questStartRequest);
 
-        $response->setBarcodeTask((new BarcodeTask())
-            ->setTask('Найди в магазине отдел сухого корма для собак и отсканируй штрихкод на любом сухом корме Грандин!')
-            ->setTitle('Основа правильного питания')
-            ->setImage('https://4lapy.ru/resize/240x240/upload/iblock/d69/d691aca429186f820ffb8415203b0956.jpg'));
-
-        return $response;
+        return (new QuestStartResponse())->setBarcodeTask($this->apiQuestService->getCurrentBarcodeTask());
     }
 
     /**

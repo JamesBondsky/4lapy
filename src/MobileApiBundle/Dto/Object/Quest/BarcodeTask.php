@@ -2,6 +2,7 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Object\Quest;
 
+use FourPaws\Decorators\FullHrefDecorator;
 use JMS\Serializer\Annotation as Serializer;
 
 class BarcodeTask
@@ -75,9 +76,9 @@ class BarcodeTask
      * @param string $image
      * @return BarcodeTask
      */
-    public function setImage(string $image): BarcodeTask
+    public function setImage(?string $image): BarcodeTask
     {
-        $this->image = $image;
+        $this->image = (string) new FullHrefDecorator($image);
         return $this;
     }
 }
