@@ -16,6 +16,7 @@ use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestStartRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\QuestBarcodeTaskResponse;
+use FourPaws\MobileApiBundle\Dto\Response\QuestStartResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestPrizeResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestQuestionTaskResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestRegisterPostResponse;
@@ -87,18 +88,16 @@ class QuestController extends BaseController
      * @Security("has_role('REGISTERED_USERS')")
      *
      * @param QuestStartRequest $questStartRequest
-     * @return Response
+     * @return QuestStartResponse
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function postStartAction(QuestStartRequest $questStartRequest): Response
+    public function postStartAction(QuestStartRequest $questStartRequest): QuestStartResponse
     {
         $this->apiQuestService->startQuest($questStartRequest);
 
-        return new Response(
-            $this->apiQuestService->getCurrentBarcodeTask()
-        );
+        return (new QuestStartResponse())->setBarcodeTask($this->apiQuestService->getCurrentBarcodeTask());
     }
 
     /**
