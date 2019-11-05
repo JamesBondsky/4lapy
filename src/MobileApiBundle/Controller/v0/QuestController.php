@@ -2,11 +2,15 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use Exception;
 use FOS\RestBundle\Controller\Annotations as Rest;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\AnswerVariant;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\BarcodeTask;
-use FourPaws\MobileApiBundle\Dto\Object\Quest\Pet;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\Prize;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestionTask;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestStatus;
@@ -18,10 +22,15 @@ use FourPaws\MobileApiBundle\Dto\Response\QuestRegisterGetResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestRegisterPostResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestStartResponse;
 use FourPaws\MobileApiBundle\Services\Api\QuestService;
+use FourPaws\UserBundle\Exception\EmptyPhoneException;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
-
+/**
+ * Class QuestController
+ * @package FourPaws\MobileApiBundle\Controller
+ */
 class QuestController extends BaseController
 {
     /**
@@ -40,7 +49,6 @@ class QuestController extends BaseController
     /**
      * @Rest\Get(path="/quest_register/")
      * @Rest\View()
-     * @Security("has_role('REGISTERED_USERS')")
      *
      * @param Request $request
      * @return QuestRegisterGetResponse
@@ -59,73 +67,25 @@ class QuestController extends BaseController
     /**
      * @Rest\Post(path="/quest_register/")
      * @Rest\View()
-     * @Security("has_role('REGISTERED_USERS')")
      *
      * @param QuestRegisterRequest $questRegisterRequest
      * @return QuestRegisterPostResponse
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     * @throws EmptyPhoneException
      */
     public function postRegisterAction(QuestRegisterRequest $questRegisterRequest): QuestRegisterPostResponse
     {
-        $response = new QuestRegisterPostResponse();
+        $this->apiQuestService->registerUser($questRegisterRequest);
 
-        $petTypes = [];
-
-        $prizes = [];
-
-        $prizes[] = (new Prize())
-            ->setId(1)
-            ->setName('Лакомство')
-            ->setImage('https://4lapy.ru/resize/240x240/upload/iblock/360/360004ada6f462b0b2eeb0c92c69a08a.jpg');
-
-        $prizes[] = (new Prize())
-            ->setId(2)
-            ->setName('Игрушка')
-            ->setImage('https://4lapy.ru/resize/240x240/upload/iblock/44b/44bb31933296cd569313f298a50250f1.jpg');
-
-
-        $petTypes[] = (new Pet())
-            ->setId(1)
-            ->setName('Кошка')
-            ->setImage('https://4lapy.ru/resize/240x240/upload/iblock/332/33251b91dd0fc09c0c7b650555ba6d9b.jpg')
-            ->setDescription("1. Пройди квест и стань самым лучшим хозяином для своей кошки\n\n
-            2. Найди 7 товаров в магазине.\n
-            Отсканирую штрихкод\n
-            Узнай любопытный факт\n
-            Получи подарок!\n\n
-            3. Время прохождения: 5 минут\n\n
-            Приз за прохождение: Лакомство или игрушка для кошек")
-            ->setPrizes($prizes);
-
-        $prizes = [];
-
-        $prizes[] = (new Prize())
-            ->setId(3)
-            ->setName('Лакомство')
-            ->setImage('https://4lapy.ru/resize/240x240/upload/iblock/e0b/e0bfb55cf5ec5c9a6c56e0dcf6db0146.jpg');
-
-        $prizes[] = (new Prize())
-            ->setId(4)
-            ->setName('Игрушка')
-            ->setImage('https://4lapy.ru/resize/240x240/upload/iblock/3a0/3a0f4960dffe56ece31ec8b98e3a7af1.jpg');
-
-        $petTypes[] = (new Pet())
-            ->setId(2)
-            ->setName('Собака')
-            ->setImage('https://4lapy.ru/resize/240x240/upload/iblock/a5c/a5c3d99c0137b39ef621269c234b0fdd.jpg')
-            ->setDescription("1. Пройди квест и стань самым лучшим хозяином для своей собаки\n\n
-            2. Найди 7 товаров в магазине.\n
-            Отсканирую штрихкод\n
-            Узнай любопытный факт\n
-            Получи подарок!\n\n
-            3. Время прохождения: 5 минут\n\n
-            Приз за прохождение: Лакомство или игрушка для собак")
-            ->setPrizes($prizes);
-
-        $response
-            ->setPetTypes($petTypes);
-
-
-        return $response;
+        try {
+            return (new QuestRegisterPostResponse())->setPetTypes($this->apiQuestService->getPetTypes());
+        } catch (Exception $e) {
+            throw new RuntimeException('Произошла ошибка');
+        }
     }
 
     /**
@@ -141,9 +101,9 @@ class QuestController extends BaseController
         $response = new QuestStartResponse();
 
         $response->setBarcodeTask((new BarcodeTask())
-        ->setTask('Найди в магазине отдел сухого корма для собак и отсканируй штрихкод на любом сухом корме Грандин!')
-        ->setTitle('Основа правильного питания')
-        ->setImage('https://4lapy.ru/resize/240x240/upload/iblock/d69/d691aca429186f820ffb8415203b0956.jpg'));
+            ->setTask('Найди в магазине отдел сухого корма для собак и отсканируй штрихкод на любом сухом корме Грандин!')
+            ->setTitle('Основа правильного питания')
+            ->setImage('https://4lapy.ru/resize/240x240/upload/iblock/d69/d691aca429186f820ffb8415203b0956.jpg'));
 
         return $response;
     }
@@ -179,9 +139,9 @@ class QuestController extends BaseController
             ->setVariants($variants);
 
         $questStatus = (new QuestStatus())
-        ->setNumber(3)
-        ->setTotalCount(7)
-        ->setPrevTasks([true, false]);
+            ->setNumber(3)
+            ->setTotalCount(7)
+            ->setPrevTasks([true, false]);
 
         $response
             ->setResult(2)

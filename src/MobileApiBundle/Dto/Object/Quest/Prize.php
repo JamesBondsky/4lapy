@@ -2,6 +2,7 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Object\Quest;
 
+use FourPaws\Decorators\FullHrefDecorator;
 use JMS\Serializer\Annotation as Serializer;
 
 class Prize
@@ -77,7 +78,7 @@ class Prize
      */
     public function setImage(string $image): Prize
     {
-        $this->image = $image;
+        $this->image = (string) new FullHrefDecorator($image);
         return $this;
     }
 }
