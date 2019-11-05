@@ -102,6 +102,11 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     if (!$template->isOrderPage() && !$template->isBasket() && $basketService->needShowAddressPopup()) {
         include __DIR__ . '/dostavista-address.php';
     }
+
+    if ($template->isOrderHistoryPage()) {
+        include __DIR__ . '/cancel_order_popup.php';
+        include __DIR__ . '/extend_order_popup.php';
+    }
     ?>
 
     <div class="b-popup-preloader b-popup-preloader--fixed js-popup-preloader">

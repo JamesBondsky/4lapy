@@ -460,6 +460,7 @@ class LocationService
      * @param int $limit
      * @param bool $needPath
      * @param bool $findByParent искать в названиях родительских местоположений
+     * @param bool $excludeMoscowDistricts
      *
      * @return array
      */
@@ -467,10 +468,11 @@ class LocationService
         $queryParams,
         int $limit = 0,
         bool $needPath = true,
-        bool $findByParent = false
+        bool $findByParent = false,
+        bool $excludeMoscowDistricts = false
     ): array
     {
-        $cacheFinder = function () use ($queryParams, $limit, $needPath, $findByParent) {
+        $cacheFinder = function () use ($excludeMoscowDistricts, $queryParams, $limit, $needPath, $findByParent) {
             /* для поиска по родительским местоположениям $needPath должен быть true и $queryParams являться массивом, чтобы из него можно было вытащить строку поиска */
             if (($findByParent && !$needPath) || ($queryParams instanceof Query)) {
                 $findByParent = false;
@@ -553,9 +555,14 @@ class LocationService
                  */
                 $parentList = [];
                 $hasFoundByParents = false;
+                $excludeLocation = false;
+
+                if ($excludeMoscowDistricts && $this->isMoscowRegionLocation($item)) {
+                    $excludeLocation = true;
+                }
 
                 /** очень долгий запрос на получение родителей */
-                if ($needPath) {
+                if ($needPath && !$excludeLocation) {
                     /** @var Result $parentRes */
                     $parentRes = LocationTable::query()
                         ->where('DEPTH_LEVEL', '<', $item['DEPTH_LEVEL'])
@@ -590,7 +597,7 @@ class LocationService
                     $item['PATH'] = $parentList;
                 }
 
-                if ($hasFoundByParents || !$findByParent) {
+                if (($hasFoundByParents || !$findByParent) && !$excludeLocation) {
                     $locations[$item['ID']] = $item;
                     $typeList[$item['TYPE_ID']][] = $item['ID'];
                 }
@@ -648,6 +655,23 @@ class LocationService
             ]);
             return [];
         }
+    }
+
+    /**
+     * @param $location
+     * @return bool
+     */
+    protected function isMoscowRegionLocation($location): bool
+    {
+        if (($location['CODE'] === self::LOCATION_CODE_MOSCOW) || ($location['CODE'] === self::LOCATION_CODE_MOSCOW_REGION)) {
+            return true;
+        }
+
+        if (($location['TYPE'] === self::TYPE_SUBREGION) || ($location['TYPE'] === self::TYPE_DISTRICT_MOSCOW)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

@@ -349,7 +349,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 
         try {
             if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
-                $rawResult = $this->newExec(__METHOD__, func_get_args());
+                $rawResult = $this->newExec(__METHOD__, $data);
             } else {
                 $rawResult = $this->execute(self::CONTRACT_CONTACT_UPDATE, $bag->getParameters());
             }

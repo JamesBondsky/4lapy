@@ -337,7 +337,7 @@ class BasketService implements LoggerAwareInterface
         /** @var BasketItem $basketItem */
         $basketItem = $this->getBasket()->getItemById($basketId);
         if (null === $basketItem) {
-            throw new NotFoundException('BasketItem');
+            throw new NotFoundException('BasketItem is not found');
         }
 
         //$basketPropertyCollection = $basketItem->getPropertyCollection();

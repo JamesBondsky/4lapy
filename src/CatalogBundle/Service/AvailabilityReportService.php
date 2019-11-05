@@ -11,6 +11,7 @@ use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
@@ -21,9 +22,12 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\StoreBundle\Service\StockService;
+use FourPaws\StoreBundle\Service\ShopInfoService;
 use JMS\Serializer\ArrayTransformerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class AvailabilityReportService
@@ -202,6 +206,12 @@ class AvailabilityReportService
             ->exec();
 
         $result = [];
+        $storesTPZIds = [];
+        $request = new Request();
+        $shopInfoService = Application::getInstance()->getContainer()->get(ShopInfoService::class);
+        $stockService = Application::getInstance()->getContainer()->get(StockService::class);
+        $storeService = Application::getInstance()->getContainer()->get('store.service');
+
         /** @var Offer $offer */
         foreach ($offers as $offer) {
             $product = $offer->getProduct();
@@ -217,6 +227,49 @@ class AvailabilityReportService
                 $categoryNames = \array_reverse($categoryNames);
             }
 
+            /** @var int $amountDigit */
+            $amountDigit = 0;
+            $storesCheck = $offer->getAvailableStores();
+
+            if(count(array_values($storesCheck))>0){
+                $shops = $shopInfoService->getShopsByOffer($offer);
+
+                $storesAmount = $shopInfoService->shopListToArray(
+                    $shopInfoService->getShopList(
+                        $shops,
+                        $shopInfoService->getLocationByRequest($request),
+                        [],
+                        $offer
+                    )
+                );
+
+                $amountDigit = array_sum(array_column($storesAmount["items"], 'amount_digit'));
+            }
+
+            /** @var int $weightOffer */
+            $weightOffer = $offer->getCatalogProduct()->getWeight();
+            /** @var string $heightOffer */
+            $heightOffer = $offer->getCatalogProduct()->getHeight();
+            /** @var string $widthOffer */
+            $widthOffer = $offer->getCatalogProduct()->getWidth();
+            /** @var string $lengthOffer */
+            $lengthOffer = $offer->getCatalogProduct()->getLength();
+            /** @var string $groupName */
+            $groupName = $product->getSection()->getName();
+            /** @var string $sort */
+            $sortVal = $product->getSort();
+            /** @var string $ctm */
+            $ctmVal = $product->getCtm();
+
+            /* stocks supplier */
+            $storesTPZ = $storeService->getSupplierStores();
+            foreach ($storesTPZ->getIterator() as $item) {
+                $storesTPZIds[] = $item->getId();
+            }
+
+            $rcStock = $stockService->getStocksByOfferIds([$offer->getId()], $storesTPZIds);
+            $amountTpz = $rcStock->getTotalAmount();
+
             $result[] = (new Product())
                 ->setXmlId($offer->getXmlId())
                 ->setName($offer->getName())
@@ -230,7 +283,16 @@ class AvailabilityReportService
                 ->setFirstLevelCategory($categoryNames[0] ?: '-')
                 ->setSecondLevelCategory($categoryNames[1] ?: '-')
                 ->setThirdLevelCategory($categoryNames[2] ?: '-')
-                ->setBrand($product->getBrandName() ?: '-');
+                ->setBrand($product->getBrandName() ?: '-')
+                ->setSummQOffers($amountDigit)
+                ->setSummQExporterDelivery($amountTpz)
+                ->setWeight($weightOffer)
+                ->setLength($lengthOffer)
+                ->setWidth($widthOffer)
+                ->setHeight($heightOffer)
+                ->setSort($sortVal)
+                ->setCtm($ctmVal)
+                ->setGroup($groupName);
         }
 
         return $result;

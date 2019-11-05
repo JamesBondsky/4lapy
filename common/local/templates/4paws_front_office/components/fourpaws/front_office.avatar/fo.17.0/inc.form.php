@@ -29,236 +29,247 @@ if ($showForm) {
             
             echo '<p class="text-h3 mb-l">Заполните любое из полей для поиска пользователя:</p>';
     
-            // Поле: Номер карты
-            $fieldName = 'cardNumber';
-            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
-            $value     = $fieldMeta['VALUE'];
-            $attr      = '';
-            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
-            $attr      .= ' maxlength="13"';
-            $errMess   = '';
-            /** @var Bitrix\Main\Error $error */
-            $error = $fieldMeta['ERROR'];
-            if ($error) {
-                switch ($error->getCode()) {
-                    case 'empty':
-                        $errMess = 'Пожалуйста, укажите номер карты';
-                        break;
-                    case 'not_valid':
-                    case 'incorrect_value':
-                        $errMess = 'Номер карты задан в неверном формате';
-                        break;
-                    case 'runtime':
-                        $errMess = $error->getMessage();
-                        break;
-                    default:
-                        $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
-                        break;
+            if (!in_array('cardNumber', $arResult['LOCKS'])) :
+                // Поле: Номер карты
+                $fieldName = 'cardNumber';
+                $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+                $value     = $fieldMeta['VALUE'];
+                $attr      = '';
+                $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
+                $attr      .= ' maxlength="13"';
+                $errMess   = '';
+                /** @var Bitrix\Main\Error $error */
+                $error = $fieldMeta['ERROR'];
+                if ($error) {
+                    switch ($error->getCode()) {
+                        case 'empty':
+                            $errMess = 'Пожалуйста, укажите номер карты';
+                            break;
+                        case 'not_valid':
+                        case 'incorrect_value':
+                            $errMess = 'Номер карты задан в неверном формате';
+                            break;
+                        case 'runtime':
+                            $errMess = $error->getMessage();
+                            break;
+                        default:
+                            $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
+                            break;
+                    }
                 }
-            }
-            ?>
-            <div class="form-page__field-wrap">
-                <label for="<?= $fieldName ?>" class="form-page__label">Номер карты</label>
-                <input id="<?= $fieldName ?>"
-                       name="<?= $fieldName ?>"
-                       value="<?= $value ?>"<?= $attr ?>
-                       class="form-page__field mb-l"
-                       type="text">
-                <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
-            </div>
+                ?>
+                <div class="form-page__field-wrap">
+                    <label for="<?= $fieldName ?>" class="form-page__label">Номер карты</label>
+                    <input id="<?= $fieldName ?>"
+                           name="<?= $fieldName ?>"
+                           value="<?= $value ?>"<?= $attr ?>
+                           class="form-page__field mb-l"
+                           type="text">
+                    <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
+                </div>
+            <?php endif; ?>
             <?php
-
-            // Поле: Мобильный телефон (10 знаков без 7 или 8 в формате 9ХХХХХХХХХ)
-            $fieldName = 'phone';
-            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
-            $value     = $fieldMeta['VALUE'];
-            $attr      = '';
-            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
-            $attr      .= ' maxlength="10"';
-            $errMess   = '';
-            /** @var Bitrix\Main\Error $error */
-            $error = $fieldMeta['ERROR'];
-            if ($error) {
-                switch ($error->getCode()) {
-                    case 'empty':
-                        $errMess = 'Пожалуйста, укажите номер телефона';
-                        break;
-                    case 'not_valid':
-                        $errMess = 'Телефон задан в неверном формате';
-                        break;
-                    case 'runtime':
-                        $errMess = $error->getMessage();
-                        break;
-                    default:
-                        $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
-                        break;
+    
+            if (!in_array('phone', $arResult['LOCKS'])) :
+                // Поле: Мобильный телефон (10 знаков без 7 или 8 в формате 9ХХХХХХХХХ)
+                $fieldName = 'phone';
+                $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+                $value     = $fieldMeta['VALUE'];
+                $attr      = '';
+                $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
+                $attr      .= ' maxlength="10"';
+                $errMess   = '';
+                /** @var Bitrix\Main\Error $error */
+                $error = $fieldMeta['ERROR'];
+                if ($error) {
+                    switch ($error->getCode()) {
+                        case 'empty':
+                            $errMess = 'Пожалуйста, укажите номер телефона';
+                            break;
+                        case 'not_valid':
+                            $errMess = 'Телефон задан в неверном формате';
+                            break;
+                        case 'runtime':
+                            $errMess = $error->getMessage();
+                            break;
+                        default:
+                            $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
+                            break;
+                    }
                 }
-            }
-            ?>
-            <div class="form-page__field-wrap">
-                <label for="<?= $fieldName ?>" class="form-page__label">Мобильный телефон (10 знаков без 7 или 8 в
-                                                                        формате 9ХХХХХХХХХ)</label>
-                <input id="<?= $fieldName ?>"
-                       name="<?= $fieldName ?>"
-                       value="<?= $value ?>"<?= $attr ?>
-                       class="form-page__field mb-l"
-                       type="text">
-                <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
-            </div>
+                ?>
+                <div class="form-page__field-wrap">
+                    <label for="<?= $fieldName ?>" class="form-page__label">Мобильный телефон (10 знаков без 7 или 8 в
+                                                                            формате 9ХХХХХХХХХ)</label>
+                    <input id="<?= $fieldName ?>"
+                           name="<?= $fieldName ?>"
+                           value="<?= $value ?>"<?= $attr ?>
+                           class="form-page__field mb-l"
+                           type="text">
+                    <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
+                </div>
+            <?php endif; ?>
             <?php
 
             // Поле: Фамилия
-            $fieldName = 'lastName';
-            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
-            $value     = $fieldMeta['VALUE'];
-            $attr      = '';
-            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
-            $attr      .= ' maxlength="100"';
-            $errMess   = '';
-            /** @var Bitrix\Main\Error $error */
-            $error = $fieldMeta['ERROR'];
-            if ($error) {
-                switch ($error->getCode()) {
-                    case 'empty':
-                        $errMess = 'Поле не заполнено';
-                        break;
-                    case 'not_valid':
-                        $errMess = 'Введите корректные данные';
-                        break;
-                    case 'runtime':
-                        $errMess = $error->getMessage();
-                        break;
-                    default:
-                        $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
-                        break;
+            if (!in_array('lastName', $arResult['LOCKS'])) :
+                $fieldName = 'lastName';
+                $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+                $value     = $fieldMeta['VALUE'];
+                $attr      = '';
+                $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
+                $attr      .= ' maxlength="100"';
+                $errMess   = '';
+                /** @var Bitrix\Main\Error $error */
+                $error = $fieldMeta['ERROR'];
+                if ($error) {
+                    switch ($error->getCode()) {
+                        case 'empty':
+                            $errMess = 'Поле не заполнено';
+                            break;
+                        case 'not_valid':
+                            $errMess = 'Введите корректные данные';
+                            break;
+                        case 'runtime':
+                            $errMess = $error->getMessage();
+                            break;
+                        default:
+                            $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
+                            break;
+                    }
                 }
-            }
-            ?>
-            <div class="form-page__field-wrap">
-                <label for="<?= $fieldName ?>" class="form-page__label">Фамилия</label>
-                <input id="<?= $fieldName ?>"
-                       name="<?= $fieldName ?>"
-                       value="<?= $value ?>"<?= $attr ?>
-                       class="form-page__field mb-l"
-                       type="text">
-                <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
-            </div>
+                ?>
+                <div class="form-page__field-wrap">
+                    <label for="<?= $fieldName ?>" class="form-page__label">Фамилия</label>
+                    <input id="<?= $fieldName ?>"
+                           name="<?= $fieldName ?>"
+                           value="<?= $value ?>"<?= $attr ?>
+                           class="form-page__field mb-l"
+                           type="text">
+                    <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
+                </div>
+            <?php endif; ?>
             <?php
-
             // Поле: Имя
-            $fieldName = 'firstName';
-            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
-            $value     = $fieldMeta['VALUE'];
-            $attr      = '';
-            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
-            $attr      .= ' maxlength="100"';
-            $errMess   = '';
-            /** @var Bitrix\Main\Error $error */
-            $error = $fieldMeta['ERROR'];
-            if ($error) {
-                switch ($error->getCode()) {
-                    case 'empty':
-                        $errMess = 'Поле не заполнено';
-                        break;
-                    case 'not_valid':
-                        $errMess = 'Введите корректные данные';
-                        break;
-                    case 'runtime':
-                        $errMess = $error->getMessage();
-                        break;
-                    default:
-                        $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
-                        break;
+            if (!in_array('firstName', $arResult['LOCKS'])) :
+                $fieldName = 'firstName';
+                $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+                $value     = $fieldMeta['VALUE'];
+                $attr      = '';
+                $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
+                $attr      .= ' maxlength="100"';
+                $errMess   = '';
+                /** @var Bitrix\Main\Error $error */
+                $error = $fieldMeta['ERROR'];
+                if ($error) {
+                    switch ($error->getCode()) {
+                        case 'empty':
+                            $errMess = 'Поле не заполнено';
+                            break;
+                        case 'not_valid':
+                            $errMess = 'Введите корректные данные';
+                            break;
+                        case 'runtime':
+                            $errMess = $error->getMessage();
+                            break;
+                        default:
+                            $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
+                            break;
+                    }
                 }
-            }
-            ?>
-            <div class="form-page__field-wrap">
-                <label for="<?= $fieldName ?>" class="form-page__label">Имя</label>
-                <input id="<?= $fieldName ?>"
-                       name="<?= $fieldName ?>"
-                       value="<?= $value ?>"<?= $attr ?>
-                       class="form-page__field mb-l"
-                       type="text">
-                <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
-            </div>
+                ?>
+                <div class="form-page__field-wrap">
+                    <label for="<?= $fieldName ?>" class="form-page__label">Имя</label>
+                    <input id="<?= $fieldName ?>"
+                           name="<?= $fieldName ?>"
+                           value="<?= $value ?>"<?= $attr ?>
+                           class="form-page__field mb-l"
+                           type="text">
+                    <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
+                </div>
+            <?php endif; ?>
             <?php
 
             // Поле: Отчество
-            $fieldName = 'secondName';
-            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
-            $value     = $fieldMeta['VALUE'];
-            $attr      = '';
-            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
-            $attr      .= ' maxlength="100"';
-            $errMess   = '';
-            /** @var Bitrix\Main\Error $error */
-            $error = $fieldMeta['ERROR'];
-            if ($error) {
-                $errMess = 'Неизвестная ошибка';
-                switch ($error->getCode()) {
-                    case 'empty':
-                        $errMess = 'Поле не заполнено';
-                        break;
-                    case 'not_valid':
-                        $errMess = 'Введите корректные данные';
-                        break;
-                    case 'runtime':
-                        $errMess = $error->getMessage();
-                        break;
-                    default:
-                        $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
-                        break;
+            if (!in_array('secondName', $arResult['LOCKS'])) :
+                $fieldName = 'secondName';
+                $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+                $value     = $fieldMeta['VALUE'];
+                $attr      = '';
+                $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
+                $attr      .= ' maxlength="100"';
+                $errMess   = '';
+                /** @var Bitrix\Main\Error $error */
+                $error = $fieldMeta['ERROR'];
+                if ($error) {
+                    $errMess = 'Неизвестная ошибка';
+                    switch ($error->getCode()) {
+                        case 'empty':
+                            $errMess = 'Поле не заполнено';
+                            break;
+                        case 'not_valid':
+                            $errMess = 'Введите корректные данные';
+                            break;
+                        case 'runtime':
+                            $errMess = $error->getMessage();
+                            break;
+                        default:
+                            $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
+                            break;
+                    }
                 }
-            }
-            ?>
-            <div class="form-page__field-wrap">
-                <label for="<?= $fieldName ?>" class="form-page__label">Отчество</label>
-                <input id="<?= $fieldName ?>"
-                       name="<?= $fieldName ?>"
-                       value="<?= $value ?>"<?= $attr ?>
-                       class="form-page__field mb-l"
-                       type="text">
-                <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
-            </div>
+                ?>
+                <div class="form-page__field-wrap">
+                    <label for="<?= $fieldName ?>" class="form-page__label">Отчество</label>
+                    <input id="<?= $fieldName ?>"
+                           name="<?= $fieldName ?>"
+                           value="<?= $value ?>"<?= $attr ?>
+                           class="form-page__field mb-l"
+                           type="text">
+                    <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
+                </div>
+            <?php endif; ?>
             <?php
-
-            // Поле: Дата рождения дд.мм.гггг
-            $fieldName = 'birthDay';
-            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
-            $value     = $fieldMeta['VALUE'];
-            $attr      = '';
-            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
-            $attr      .= ' maxlength="10"';
-            $errMess   = '';
-            /** @var Bitrix\Main\Error $error */
-            $error = $fieldMeta['ERROR'];
-            if ($error) {
-                $errMess = 'Неизвестная ошибка';
-                switch ($error->getCode()) {
-                    case 'empty':
-                        $errMess = 'Поле не заполнено';
-                        break;
-                    case 'not_valid':
-                        $errMess = 'Дата указана в неверном формате';
-                        break;
-                    case 'runtime':
-                        $errMess = $error->getMessage();
-                        break;
-                    default:
-                        $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
-                        break;
+    
+            if (!in_array('birthDay', $arResult['LOCKS'])) :
+                // Поле: Дата рождения дд.мм.гггг
+                $fieldName = 'birthDay';
+                $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+                $value     = $fieldMeta['VALUE'];
+                $attr      = '';
+                $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
+                $attr      .= ' maxlength="10"';
+                $errMess   = '';
+                /** @var Bitrix\Main\Error $error */
+                $error = $fieldMeta['ERROR'];
+                if ($error) {
+                    $errMess = 'Неизвестная ошибка';
+                    switch ($error->getCode()) {
+                        case 'empty':
+                            $errMess = 'Поле не заполнено';
+                            break;
+                        case 'not_valid':
+                            $errMess = 'Дата указана в неверном формате';
+                            break;
+                        case 'runtime':
+                            $errMess = $error->getMessage();
+                            break;
+                        default:
+                            $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
+                            break;
+                    }
                 }
-            }
-            ?>
-            <div class="form-page__field-wrap">
-                <label for="<?= $fieldName ?>" class="form-page__label">Дата рождения дд.мм.гггг</label>
-                <input id="<?= $fieldName ?>"
-                       name="<?= $fieldName ?>"
-                       value="<?= $value ?>"<?= $attr ?>
-                       class="form-page__field mb-l"
-                       type="text">
-                <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
-            </div>
+                ?>
+                <div class="form-page__field-wrap">
+                    <label for="<?= $fieldName ?>" class="form-page__label">Дата рождения дд.мм.гггг</label>
+                    <input id="<?= $fieldName ?>"
+                           name="<?= $fieldName ?>"
+                           value="<?= $value ?>"<?= $attr ?>
+                           class="form-page__field mb-l"
+                           type="text">
+                    <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
+                </div>
+            <?php endif; ?>
             <?php
 
             // вывод общих ошибок, если есть

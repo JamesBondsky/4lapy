@@ -1167,7 +1167,7 @@ class SearchService implements LoggerAwareInterface
             }
         }
 
-        if(in_array('d', $availabilityFlags) && $delivery){
+        if(in_array('d', $availabilityFlags) && $delivery){ // Доставка
             $storesAvailable = DeliveryHandlerBase::getAvailableStores($delivery->getDeliveryCode(), $deliveryZone);
             /** @var Store $store */
             foreach ($storesAvailable as $store){
@@ -1175,7 +1175,7 @@ class SearchService implements LoggerAwareInterface
                 $storeIdsAll[] = $store->getId();
             }
         }
-        if(in_array('p', $availabilityFlags) && $pickup){
+        if(in_array('p', $availabilityFlags) && $pickup){ // Самовывоз
             $storesAvailable = DeliveryHandlerBase::getAvailableStores($pickup->getDeliveryCode(), $deliveryZone);
             /** @var Store $stock */
             foreach ($storesAvailable as $store){
@@ -1183,7 +1183,9 @@ class SearchService implements LoggerAwareInterface
                 $storeIdsAll[] = $store->getId();
             }
         }
-        if(in_array('r', $availabilityFlags)){
+        if(in_array('r', $availabilityFlags) // Под заказ
+            || in_array('d', $availabilityFlags, true) // в фильтре "Доставка" учитываем и товары "Под заказ"
+        ){
             /** @var StoreService $storeService */
             $storeService = App::getInstance()->getContainer()->get('store.service');
             $storesAvailable = $storeService->getStores(StoreService::TYPE_SUPPLIER);
@@ -1194,6 +1196,7 @@ class SearchService implements LoggerAwareInterface
                 $storeIdsAll[] = $store->getId();
             }
         }
+        unset($storesAvailable);
 
         $stockCollection = $stockService->getStocksByOfferIds($offerIds, $storeIdsAll);
 
@@ -1205,7 +1208,10 @@ class SearchService implements LoggerAwareInterface
 
                 if(in_array('d', $availabilityFlags)
                     && !$offer->getProduct()->isDeliveryForbidden()
-                    && !$stockCollection->filterByOffer($offer)->filterByStores($stores['delivery'])->isEmpty()
+                    && (
+                        !$stockCollection->filterByOffer($offer)->filterByStores($stores['delivery'])->isEmpty()
+                            || !$stockCollection->filterByOffer($offer)->filterByStores($stores['request'])->isEmpty()
+                    )
                 ){
                     $remove = false;
                 }
