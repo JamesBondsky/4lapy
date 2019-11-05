@@ -5,6 +5,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -78,13 +79,17 @@ class QuestController extends BaseController
         try {
             $this->apiQuestService->registerUser($questRegisterRequest);
         } catch (Exception $e) {
-            return (new Response())->setErrors([$e->getMessage()]);
+            $errors = (new ArrayCollection());
+            $errors->add($e->getMessage());
+            return (new Response())->setErrors($errors);
         }
 
         try {
             return (new QuestRegisterPostResponse())->setPetTypes($this->apiQuestService->getPetTypes());
         } catch (Exception $e) {
-            return (new Response())->setErrors(['Произошла ошибка']);
+            $errors = (new ArrayCollection());
+            $errors->add('Произошла ошибка');
+            return (new Response())->setErrors($errors);
         }
     }
 
