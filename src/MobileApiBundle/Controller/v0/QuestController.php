@@ -76,13 +76,13 @@ class QuestController extends BaseController
      */
     public function postRegisterAction(QuestRegisterRequest $questRegisterRequest)
     {
-        try {
+//        try {
             $this->apiQuestService->registerUser($questRegisterRequest);
-        } catch (Exception $e) {
-            $errors = (new ArrayCollection());
-            $errors->add($e->getMessage());
-            return (new Response())->setErrors($errors);
-        }
+//        } catch (Exception $e) {
+//            $errors = (new ArrayCollection());
+//            $errors->add($e->getMessage());
+//            return (new Response())->setErrors($errors);
+//        }
 
         try {
             return (new QuestRegisterPostResponse())->setPetTypes($this->apiQuestService->getPetTypes());
