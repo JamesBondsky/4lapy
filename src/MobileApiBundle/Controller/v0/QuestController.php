@@ -5,7 +5,6 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -23,10 +22,9 @@ use FourPaws\MobileApiBundle\Dto\Response\QuestQuestionTaskResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestRegisterGetResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestRegisterPostResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestStartResponse;
-use FourPaws\MobileApiBundle\Exception\AccessDeinedException;
+use FourPaws\MobileApiBundle\Exception\RuntimeException as ApiRuntimeException;
 use FourPaws\MobileApiBundle\Services\Api\QuestService;
 use FourPaws\UserBundle\Exception\EmptyPhoneException;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
@@ -55,14 +53,18 @@ class QuestController extends BaseController
      *
      * @param Request $request
      * @return QuestRegisterGetResponse
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function getRegisterAction(Request $request): QuestRegisterGetResponse
     {
         $response = new QuestRegisterGetResponse();
         $response
-            ->setNeedRegister(true)
-            ->setHasEmail(true)
-            ->setUserEmail('test@test.test');
+            ->setNeedRegister($this->apiQuestService->needRegister())
+            ->setHasEmail(!empty($this->apiQuestService->getCurrentUser()->getEmail()))
+            ->setUserEmail($this->apiQuestService->getCurrentUser()->getEmail());
 
         return $response;
     }
@@ -85,9 +87,9 @@ class QuestController extends BaseController
         $this->apiQuestService->registerUser($questRegisterRequest);
 
         try {
-            return (new Response())->setData(['pets' => ['pet_types' => $this->apiQuestService->getPetTypes()]]);
+            return (new QuestRegisterPostResponse())->setPetTypes($this->apiQuestService->getPetTypes());
         } catch (Exception $e) {
-            throw new \FourPaws\MobileApiBundle\Exception\RuntimeException('Произошла ошибка');
+            throw new ApiRuntimeException('Произошла ошибка');
         }
     }
 

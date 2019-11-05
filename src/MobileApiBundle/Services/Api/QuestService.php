@@ -14,8 +14,10 @@ use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Model\Interfaces\ImageInterface;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\Pet;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\Prize;
+use FourPaws\MobileApiBundle\Dto\Object\User;
 use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
 use FourPaws\MobileApiBundle\Exception\AccessDeinedException;
+use FourPaws\MobileApiBundle\Exception\NotFoundUserException;
 use FourPaws\UserBundle\Exception\EmptyPhoneException;
 use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Service\UserSearchInterface;
@@ -50,6 +52,16 @@ class QuestService
     protected $dataManagers;
 
     /**
+     * @var User|null
+     */
+    protected $currentUser;
+
+    /**
+     * @var array|null
+     */
+    protected $currentUserResult;
+
+    /**
      * QuestService constructor.
      * @param ImageProcessor $imageProcessor
      * @param UserService $apiUserService
@@ -60,6 +72,65 @@ class QuestService
         $this->imageProcessor = $imageProcessor;
         $this->apiUserService = $apiUserService;
         $this->appUserService = $appUserService;
+    }
+
+    /**
+     * @return bool
+     * @throws Exception
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws AccessDeinedException
+     */
+    public function needRegister(): bool
+    {
+        return ($this->getCurrentUserResult() === null);
+    }
+
+    /**
+     * @return User
+     *
+     * @throws AccessDeinedException
+     */
+    public function getCurrentUser(): User
+    {
+        if ($this->currentUser === null) {
+            try {
+                $this->currentUser = $this->apiUserService->getCurrentApiUser();
+            } catch (Exception $e) {
+            }
+
+            if ($this->currentUser === null) {
+                throw new AccessDeinedException('Авторизуйтесь для участия в квесте');
+            }
+        }
+
+        return $this->currentUser;
+    }
+
+    /**
+     * @return array|null
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws AccessDeinedException
+     * @throws Exception
+     */
+    protected function getCurrentUserResult(): ?array
+    {
+        if ($this->currentUserResult === null) {
+            $result = $this->getDataManager(self::RESULT_HL_NAME)::query()
+                ->setFilter(['=UF_USER_ID' => $this->getCurrentUser()->getId()])
+                ->setSelect(['ID'])
+                ->exec()
+                ->fetch();
+
+            if ($result !== false) {
+                $this->currentUserResult = $result;
+            }
+        }
+
+        return $this->currentUserResult;
     }
 
     /**
