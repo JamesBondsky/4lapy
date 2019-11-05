@@ -14,6 +14,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Quest\Prize;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestionTask;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestStatus;
 use FourPaws\MobileApiBundle\Dto\Request\QuestBarcodeRequest;
+use FourPaws\MobileApiBundle\Dto\Request\QuestQuestionRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestStartRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
@@ -139,41 +140,28 @@ class QuestController extends BaseController
      * @Rest\View()
      * @Security("has_role('REGISTERED_USERS')")
      *
-     * @param Request $request
+     * @param QuestQuestionRequest $questQuestionRequest
      * @return Response
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function postQuestionAction(Request $request): Response
+    public function postQuestionAction(QuestQuestionRequest $questQuestionRequest): Response
     {
+        $task = $this->apiQuestService->getCurrentTask();
+        $questStatus = $this->apiQuestService->getQuestStatus();
         $response = new QuestQuestionTaskResponse();
 
-        $questStatus = (new QuestStatus())
-            ->setNumber(4)
-            ->setTotalCount(7)
-            ->setPrevTasks([true, false, true]);
-
-        $prizes = [];
-
-        $prizes[] = (new Prize())
-            ->setId(1)
-            ->setName('Лакомство')
-            ->setImage('https://4lapy.ru/resize/240x240/upload/iblock/360/360004ada6f462b0b2eeb0c92c69a08a.jpg');
-
-        $prizes[] = (new Prize())
-            ->setId(2)
-            ->setName('Игрушка')
-            ->setImage('https://4lapy.ru/resize/240x240/upload/iblock/44b/44bb31933296cd569313f298a50250f1.jpg');
-
-        $barcodeTask = (new BarcodeTask())
-            ->setTask('Найди в магазине отдел сухого корма для собак и отсканируй штрихкод на любом сухом корме Грандин!')
-            ->setTitle('Основа правильного питания')
-            ->setImage('https://4lapy.ru/resize/240x240/upload/iblock/d69/d691aca429186f820ffb8415203b0956.jpg');
-
+        if ($questStatus->getNumber() === $questStatus->getTotalCount()) {
+            $userResult = $this->apiQuestService->getCurrentUserResult();
+            $response->setPrizes($this->apiQuestService->getPrizes([], $userResult['UF_PET']));
+        } else {
+            $response->setBarcodeTask($this->apiQuestService->getCurrentBarcodeTask());
+        }
 
         $response
-            ->setCorrect(true)
-            ->setErrorText('поясняющий текст')
-            ->setBarcodeTask($barcodeTask)
-            ->setPrizes($prizes)
+            ->setCorrect($this->apiQuestService->checkQuestionTask($questQuestionRequest))
+            ->setErrorText($task['UF_QUESTION_ERROR'])
             ->setQuestStatus($questStatus);
 
         return new Response(['task_result' => $response]);

@@ -14,11 +14,11 @@ class AnswerVariant
     protected $id = 0;
 
     /**
-     * @Serializer\SerializedName("variant")
+     * @Serializer\SerializedName("title")
      * @Serializer\Type("string")
      * @var string
      */
-    protected $variant = '';
+    protected $title = '';
 
     /**
      * @return int
@@ -41,18 +41,18 @@ class AnswerVariant
     /**
      * @return string
      */
-    public function getVariant(): string
+    public function getTitle(): string
     {
-        return $this->variant;
+        return $this->title;
     }
 
     /**
-     * @param string $variant
+     * @param string $title
      * @return AnswerVariant
      */
-    public function setVariant(string $variant): AnswerVariant
+    public function setTitle(string $title): AnswerVariant
     {
-        $this->variant = $variant;
+        $this->title = $title;
         return $this;
     }
 }

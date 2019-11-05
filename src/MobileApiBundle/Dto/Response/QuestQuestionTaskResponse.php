@@ -126,9 +126,11 @@ class QuestQuestionTaskResponse
 
     /**
      * @param QuestStatus $questStatus
+     * @return QuestQuestionTaskResponse
      */
-    public function setQuestStatus(QuestStatus $questStatus): void
+    public function setQuestStatus(QuestStatus $questStatus): QuestQuestionTaskResponse
     {
         $this->questStatus = $questStatus;
+        return $this;
     }
 }

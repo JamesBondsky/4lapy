@@ -26,6 +26,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestionTask;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestStatus;
 use FourPaws\MobileApiBundle\Dto\Object\User;
 use FourPaws\MobileApiBundle\Dto\Request\QuestBarcodeRequest;
+use FourPaws\MobileApiBundle\Dto\Request\QuestQuestionRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestStartRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
@@ -161,7 +162,7 @@ class QuestService
      * @throws AccessDeinedException
      * @throws Exception
      */
-    protected function getCurrentUserResult(): ?array
+    public function getCurrentUserResult(): ?array
     {
         if ($this->currentUserResult === null) {
             $result = $this->getDataManager(self::RESULT_HL_NAME)::query()
@@ -336,6 +337,16 @@ class QuestService
     }
 
     /**
+     * @param QuestQuestionRequest $questQuestionRequest
+     * @return bool
+     */
+    public function checkQuestionTask(QuestQuestionRequest $questQuestionRequest): bool
+    {
+
+        return false;
+    }
+
+    /**
      * @return QuestStatus
      *
      * @throws ArgumentException
@@ -408,7 +419,7 @@ class QuestService
         foreach ($task['UF_VARIANTS'] as $key => $variant) {
             $variants[] = (new AnswerVariant())
                 ->setId($key)
-                ->setVariant($variant);
+                ->setTitle($variant);
         }
 
         return (new QuestionTask())
@@ -508,7 +519,7 @@ class QuestService
 
             $result[$pet['ID']] = (new Pet())
                 ->setId($pet['ID'])
-                ->setName($pet['UF_NAME'])
+                ->setTitle($pet['UF_NAME'])
                 ->setDescription($pet['UF_DESCRIPTION'])
                 ->setImage($this->getImageFromCollection($pet['UF_IMAGE'], $imageCollection))
                 ->setPrizes($petPrizes);
@@ -519,6 +530,7 @@ class QuestService
 
     /**
      * @param array $prizeIds
+     * @param null $petTypeId
      * @return array
      *
      * @throws ArgumentException
@@ -526,19 +538,24 @@ class QuestService
      * @throws SystemException
      * @throws Exception
      */
-    public function getPrizes(array $prizeIds): array
+    public function getPrizes(array $prizeIds = [], $petTypeId = null): array
     {
-        if (!$prizeIds || empty($prizeIds)) {
-            return [];
-        }
-
         $result = [];
         $prizes = [];
         $imageIds = [];
 
         $res = $this->getDataManager(self::PRIZE_HL_NAME)::query()
-            ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE'])
-            ->exec();
+            ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE']);
+
+        if (($prizeIds && !empty($prizeIds)) && ($petTypeId === null)) {
+            $res->setFilter(['=ID' => $prizeIds]);
+        } else if ($petTypeId !== null) {
+            $res->setFilter(['=PET_ID' => $petTypeId]);
+        } else {
+            return [];
+        }
+
+        $res->exec();
 
         foreach ($res as $prize) {
             if ($prize['UF_IMAGE']) {

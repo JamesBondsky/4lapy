@@ -15,7 +15,7 @@ class Prize
     protected $id = 0;
 
     /**
-     * @Serializer\SerializedName("name")
+     * @Serializer\SerializedName("title")
      * @Serializer\Type("string")
      * @var string
      */

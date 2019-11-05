@@ -15,11 +15,11 @@ class Pet
     protected $id = 0;
 
     /**
-     * @Serializer\SerializedName("name")
+     * @Serializer\SerializedName("title")
      * @Serializer\Type("string")
      * @var string
      */
-    protected $name = '';
+    protected $title = '';
 
     /**
      * @Serializer\SerializedName("image")
@@ -63,18 +63,18 @@ class Pet
     /**
      * @return string
      */
-    public function getName(): string
+    public function getTitle(): string
     {
-        return $this->name;
+        return $this->title;
     }
 
     /**
-     * @param string $name
+     * @param string $title
      * @return Pet
      */
-    public function setName(string $name): Pet
+    public function setTitle(string $title): Pet
     {
-        $this->name = $name;
+        $this->title = $title;
         return $this;
     }
 

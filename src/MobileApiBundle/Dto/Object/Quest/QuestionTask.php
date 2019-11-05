@@ -11,7 +11,7 @@ class QuestionTask
     public const STATUS_FAIL_COMPLETE = 2;
 
     /**
-     * @Serializer\SerializedName("question")
+     * @Serializer\SerializedName("title")
      * @Serializer\Type("string")
      * @var string
      */
