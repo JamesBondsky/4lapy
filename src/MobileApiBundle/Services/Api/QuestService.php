@@ -9,14 +9,12 @@ use Bitrix\Main\FileTable;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Exception;
-use Faker\Provider\Barcode;
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Interfaces\ImageInterface;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\AnswerVariant;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\BarcodeTask;
@@ -29,10 +27,8 @@ use FourPaws\MobileApiBundle\Dto\Request\QuestBarcodeRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestQuestionRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestStartRequest;
-use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\QuestRegisterGetResponse;
 use FourPaws\MobileApiBundle\Exception\AccessDeinedException;
-use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Service\UserSearchInterface;
@@ -117,79 +113,34 @@ class QuestService
      */
     public function getQuestRegisterStatus(): QuestRegisterGetResponse
     {
-        $userResult = $this->getCurrentUserResult();
+        $userResult = $this->getUserResult();
         $result = (new QuestRegisterGetResponse())
             ->setNeedRegister(($userResult === null))
             ->setHasEmail(!empty($this->getCurrentUser()->getEmail()))
             ->setUserEmail($this->getCurrentUser()->getEmail());
 
         if (!$result->isNeedRegister()) {
-            $result->setNeedChoosePet(true);
-            $result->setPetTypes($this->getPetTypes());
-        }
+            $finishTest = true;
 
+            foreach (unserialize($userResult['UF_TASKS']) as $userTask) {
+                if ($userTask['QUESTION_RESULT'] === QuestionTask::STATUS_NOT_START) {
+                    $finishTest = false;
+                }
+            }
+
+            if ($finishTest) {
+                /** @var Pet $userPet */
+                $userPet = current($this->getPetTypes($userResult['UF_PET']));
+                $result
+                    ->setIsFinishStep(true)
+                    ->setPrizes($userPet->getPrizes());
+            } else {
+                $result->setNeedChoosePet(true);
+                $result->setPetTypes($this->getPetTypes());
+            }
+        }
 
         return $result;
-    }
-
-    /**
-     * @return User
-     *
-     * @throws AccessDeinedException
-     */
-    public function getCurrentUser(): User
-    {
-        if ($this->currentUser === null) {
-            try {
-                $this->currentUser = $this->apiUserService->getCurrentApiUser();
-            } catch (Exception $e) {
-            }
-
-            if ($this->currentUser === null) {
-                throw new AccessDeinedException('Авторизуйтесь для участия в квесте');
-            }
-        }
-
-        return $this->currentUser;
-    }
-
-    /**
-     * @return array|null
-     *
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     * @throws AccessDeinedException
-     * @throws Exception
-     */
-    public function getCurrentUserResult(): ?array
-    {
-        if ($this->currentUserResult === null) {
-            $result = $this->getDataManager(self::RESULT_HL_NAME)::query()
-                ->setFilter(['=UF_USER_ID' => $this->getCurrentUser()->getId()])
-                ->setSelect(['ID', 'UF_PET', 'UF_TASKS', 'UF_CURRENT_TASK'])
-                ->exec()
-                ->fetch();
-
-            if ($result !== false) {
-                $this->currentUserResult = $result;
-            }
-        }
-
-        return $this->currentUserResult;
-    }
-
-    /**
-     * @param $userResult
-     *
-     * @throws Exception
-     */
-    protected function updateCurrentUserResult($userResult): void
-    {
-        $updateResult = $this->getDataManager(self::RESULT_HL_NAME)::update($userResult['ID'], $userResult);
-        if ($updateResult->isSuccess()) {
-            $this->currentUserResult = $userResult;
-        }
     }
 
     /**
@@ -233,7 +184,7 @@ class QuestService
             // todo обновить пользователя и послать письмо с подтвержение почты
         }
 
-        $userResult = $this->getCurrentUserResult();
+        $userResult = $this->getUserResult();
 
         if ($userResult !== null) {
             $this->getDataManager(self::RESULT_HL_NAME)::update($userResult['ID'], [
@@ -259,7 +210,7 @@ class QuestService
      */
     public function startQuest(QuestStartRequest $questStartRequest): void
     {
-        $userResult = $this->getCurrentUserResult();
+        $userResult = $this->getUserResult();
 
         $pets = $this->getPetTypes([$questStartRequest->getPetTypeId()]);
 
@@ -267,11 +218,11 @@ class QuestService
             throw new AccessDeinedException('Неккоректный ID питомца');
         }
 
-        /** @var Pet $pet */
-        $pet = $pets[$questStartRequest->getPetTypeId()];
+        /** @var Pet $userPet */
+        $userPet = $pets[$questStartRequest->getPetTypeId()];
 
-        $userResult['UF_PET'] = $pet->getId();
-        $userResult['UF_TASKS'] = serialize($this->generateTasks($pet->getId()));
+        $userResult['UF_PET'] = $userPet->getId();
+        $userResult['UF_TASKS'] = serialize($this->generateTasks($userPet->getId()));
         $userResult['UF_CURRENT_TASK'] = 1;
 
         $this->updateCurrentUserResult($userResult);
@@ -306,27 +257,27 @@ class QuestService
             return BarcodeTask::SCAN_ERROR;
         }
 
-        $task = $this->getCurrentTask();
+        $currentTask = $this->getCurrentTask();
 
         /** @var Offer $offer */
         $offer = $offerCollection->first();
 
-        if (in_array($task['UF_CATEGORY'], $offer->getProduct()->getSectionsIdList(), false)) {
-            $userResult = $this->getCurrentUserResult();
+        if (in_array($currentTask['UF_CATEGORY'], $offer->getProduct()->getSectionsIdList(), false)) {
+            $userResult = $this->getUserResult();
 
             if ($userResult === false) {
                 throw new ApiRuntimeException('Начните проходить квест');
             }
 
-            $tasks = unserialize($userResult['UF_TASKS']);
+            $userTasks = unserialize($userResult['UF_TASKS']);
 
-            if (!isset($tasks[$userResult['UF_CURRENT_TASK']]['ID'])) {
+            if (!isset($userTasks[$userResult['UF_CURRENT_TASK']]['ID'])) {
                 throw new ApiRuntimeException('Задание не найдено');
             }
 
-            $tasks[$userResult['UF_CURRENT_TASK']]['BARCODE_COMPLETE'] = true;
+            $userTasks[$userResult['UF_CURRENT_TASK']]['BARCODE_COMPLETE'] = true;
 
-            $userResult['UF_TASKS'] = serialize($tasks);
+            $userResult['UF_TASKS'] = serialize($userTasks);
 
             $this->updateCurrentUserResult($userResult);
 
@@ -339,40 +290,154 @@ class QuestService
     /**
      * @param QuestQuestionRequest $questQuestionRequest
      * @return bool
-     */
-    public function checkQuestionTask(QuestQuestionRequest $questQuestionRequest): bool
-    {
-
-        return false;
-    }
-
-    /**
-     * @return QuestStatus
      *
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
+     * @throws Exception
      */
-    public function getQuestStatus(): QuestStatus
+    public function checkQuestionTask(QuestQuestionRequest $questQuestionRequest): bool
     {
-        $userResult = $this->getCurrentUserResult();
+        $userResult = $this->getUserResult();
 
-        $taskResult = unserialize($userResult['UF_TASKS']);
+        if ($userResult === false) {
+            throw new ApiRuntimeException('Начните проходить квест');
+        }
 
-        $prevResult = [];
+        $userTasks = unserialize($userResult['UF_TASKS']);
 
-        foreach ($taskResult as $result) {
-            if ($result['QUESTION_RESULT'] === QuestionTask::STATUS_SUCCESS_COMPLETE) {
-                $prevResult[] = false;
-            } else if ($result['QUESTION_RESULT'] === QuestionTask::STATUS_FAIL_COMPLETE) {
-                $prevResult[] = true;
+        if (!isset($userTasks[$userResult['UF_CURRENT_TASK']]['ID'])) {
+            throw new ApiRuntimeException('Задание не найдено');
+        }
+
+        if ($userTasks[$userResult['UF_CURRENT_TASK']]['BARCODE_COMPLETE'] === false) {
+            throw new ApiRuntimeException('Выполните предыдущее задание');
+        }
+
+        $currentTask = $this->getCurrentTask();
+
+        $userAnswer = null;
+
+        foreach ($currentTask['UF_VARIANTS'] as $key => $variant) {
+            if ($questQuestionRequest->getVariantId() === $key) {
+                $userAnswer = $variant;
             }
         }
 
-        return (new QuestStatus())
-            ->setNumber($userResult['UF_CURRENT_TASK'])
-            ->setTotalCount(count($taskResult))
-            ->setPrevTasks($prevResult);
+        if ($userAnswer === null) {
+            throw new ApiRuntimeException('Не найден вариант ответа');
+        }
+
+        $correctAnswer = ($userAnswer === $currentTask['UF_ANSWER']);
+
+        $userTasks[$userResult['UF_CURRENT_TASK']]['QUESTION_RESULT'] = ($correctAnswer) ? QuestionTask::STATUS_SUCCESS_COMPLETE : QuestionTask::STATUS_FAIL_COMPLETE;
+
+        $userResult['UF_TASKS'] = serialize($userTasks);
+        ++$userResult['UF_CURRENT_TASK'];
+
+        $this->updateCurrentUserResult($userResult);
+
+        return $correctAnswer;
+    }
+
+    /**
+     * @return User
+     *
+     * @throws AccessDeinedException
+     */
+    public function getCurrentUser(): User
+    {
+        if ($this->currentUser === null) {
+            try {
+                $this->currentUser = $this->apiUserService->getCurrentApiUser();
+            } catch (Exception $e) {
+            }
+
+            if ($this->currentUser === null) {
+                throw new AccessDeinedException('Авторизуйтесь для участия в квесте');
+            }
+        }
+
+        return $this->currentUser;
+    }
+
+    /**
+     * @param bool $reload
+     * @return array|null
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function getUserResult(bool $reload = false): ?array
+    {
+        if ($this->currentUserResult === null || $reload) {
+            $result = $this->getDataManager(self::RESULT_HL_NAME)::query()
+                ->setFilter(['=UF_USER_ID' => $this->getCurrentUser()->getId()])
+                ->setSelect(['ID', 'UF_PET', 'UF_TASKS', 'UF_CURRENT_TASK'])
+                ->exec()
+                ->fetch();
+
+            if ($result !== false) {
+                $this->currentUserResult = $result;
+            }
+        }
+
+        return $this->currentUserResult;
+    }
+
+    /**
+     * @param $userResult
+     *
+     * @throws Exception
+     */
+    protected function updateCurrentUserResult($userResult): void
+    {
+        $updateResult = $this->getDataManager(self::RESULT_HL_NAME)::update($userResult['ID'], $userResult);
+        if ($updateResult->isSuccess()) {
+            $this->currentUserResult = $userResult;
+        }
+    }
+
+    /**
+     * @param bool $reload
+     * @return array|false
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function getCurrentTask(bool $reload = false): array
+    {
+        if ($this->currentTask === null || $reload) {
+            $userResult = $this->getUserResult();
+
+            if ($userResult === false) {
+                throw new ApiRuntimeException('Начните проходить квест');
+            }
+
+            $userTasks = unserialize($userResult['UF_TASKS']);
+
+            if (!isset($userTasks[$userResult['UF_CURRENT_TASK']]['ID'])) {
+                throw new ApiRuntimeException('Задание не найдено');
+            }
+
+            $currentTask = $this->getDataManager(self::TASK_HL_NAME)::query()
+                ->setSelect(['ID', 'UF_TITLE', 'UF_TASK', 'UF_IMAGE', 'UF_VARIANTS', 'UF_ANSWER', 'UF_QUESTION', 'UF_CATEGORY', 'UF_CORRECT_TEXT', 'UF_BARCODE_ERROR', 'UF_QUESTION_ERROR'])
+                ->setFilter(['=ID' => $userTasks[$userResult['UF_CURRENT_TASK']]['ID']])
+                ->exec()
+                ->fetch();
+
+            if ($currentTask === false) {
+                throw new ApiRuntimeException('Задание не найдено');
+            }
+
+            $this->currentTask = $currentTask;
+        }
+
+        return $this->currentTask;
     }
 
     /**
@@ -385,12 +450,12 @@ class QuestService
      */
     public function getCurrentBarcodeTask(): BarcodeTask
     {
-        $task = $this->getCurrentTask();
+        $currentTask = $this->getCurrentTask();
 
         $image = null;
-        if ($task['UF_IMAGE']) {
+        if ($currentTask['UF_IMAGE']) {
 
-            $item = FileTable::query()->addFilter('=ID', $task['UF_IMAGE'])->addSelect('*')->exec()->fetch();
+            $item = FileTable::query()->addFilter('=ID', $currentTask['UF_IMAGE'])->addSelect('*')->exec()->fetch();
             if ($item === false) {
                 $item = null;
             } else {
@@ -399,8 +464,8 @@ class QuestService
         }
 
         return (new BarcodeTask())
-            ->setTask($task['UF_TASK'])
-            ->setTitle($task['UF_TITLE'])
+            ->setTask($currentTask['UF_TASK'])
+            ->setTitle($currentTask['UF_TITLE'])
             ->setImage($image);
     }
 
@@ -413,57 +478,47 @@ class QuestService
      */
     public function getCurrentQuestionTask(): QuestionTask
     {
-        $task = $this->getCurrentTask();
+        $currentTask = $this->getCurrentTask();
         $variants = [];
 
-        foreach ($task['UF_VARIANTS'] as $key => $variant) {
+        foreach ($currentTask['UF_VARIANTS'] as $key => $variant) {
             $variants[] = (new AnswerVariant())
                 ->setId($key)
                 ->setTitle($variant);
         }
 
         return (new QuestionTask())
-            ->setQuestion($task['UF_QUESTION'])
+            ->setQuestion($currentTask['UF_QUESTION'])
             ->setVariants($variants);
     }
 
     /**
-     * @return array|false
+     * @return QuestStatus
      *
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws Exception
      */
-    public function getCurrentTask(): array
+    public function getQuestStatus(): QuestStatus
     {
-        if ($this->currentTask === null) {
-            $userResult = $this->getCurrentUserResult();
+        $userResult = $this->getUserResult();
 
-            if ($userResult === false) {
-                throw new ApiRuntimeException('Начните проходить квест');
+        $taskResult = unserialize($userResult['UF_TASKS']);
+
+        $prevResult = [];
+
+        foreach ($taskResult as $result) {
+            if ($result['QUESTION_RESULT'] === QuestionTask::STATUS_SUCCESS_COMPLETE) {
+                $prevResult[] = true;
+            } else if ($result['QUESTION_RESULT'] === QuestionTask::STATUS_FAIL_COMPLETE) {
+                $prevResult[] = false;
             }
-
-            $tasks = unserialize($userResult['UF_TASKS']);
-
-            if (!isset($tasks[$userResult['UF_CURRENT_TASK']]['ID'])) {
-                throw new ApiRuntimeException('Задание не найдено');
-            }
-
-            $task = $this->getDataManager(self::TASK_HL_NAME)::query()
-                ->setSelect(['ID', 'UF_TITLE', 'UF_TASK', 'UF_IMAGE', 'UF_VARIANTS', 'UF_QUESTION', 'UF_CATEGORY', 'UF_CORRECT_TEXT', 'UF_BARCODE_ERROR', 'UF_QUESTION_ERROR'])
-                ->setFilter(['=ID' => $tasks[$userResult['UF_CURRENT_TASK']]['ID']])
-                ->exec()
-                ->fetch();
-
-            if ($task === false) {
-                throw new ApiRuntimeException('Задание не найдено');
-            }
-
-            $this->currentTask = $task;
         }
 
-        return $this->currentTask;
+        return (new QuestStatus())
+            ->setNumber($userResult['UF_CURRENT_TASK'])
+            ->setTotalCount(count($taskResult))
+            ->setPrevTasks($prevResult);
     }
 
     /**
@@ -530,7 +585,6 @@ class QuestService
 
     /**
      * @param array $prizeIds
-     * @param null $petTypeId
      * @return array
      *
      * @throws ArgumentException
@@ -538,24 +592,20 @@ class QuestService
      * @throws SystemException
      * @throws Exception
      */
-    public function getPrizes(array $prizeIds = [], $petTypeId = null): array
+    public function getPrizes(array $prizeIds = []): array
     {
         $result = [];
         $prizes = [];
         $imageIds = [];
 
-        $res = $this->getDataManager(self::PRIZE_HL_NAME)::query()
-            ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE']);
-
-        if (($prizeIds && !empty($prizeIds)) && ($petTypeId === null)) {
-            $res->setFilter(['=ID' => $prizeIds]);
-        } else if ($petTypeId !== null) {
-            $res->setFilter(['=PET_ID' => $petTypeId]);
-        } else {
+        if ((!$prizeIds || empty($prizeIds))) {
             return [];
         }
 
-        $res->exec();
+        $res = $this->getDataManager(self::PRIZE_HL_NAME)::query()
+            ->setFilter(['=ID' => $prizeIds])
+            ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE'])
+            ->exec();
 
         foreach ($res as $prize) {
             if ($prize['UF_IMAGE']) {

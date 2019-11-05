@@ -8,11 +8,8 @@ use Bitrix\Main\SystemException;
 use Exception;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FourPaws\MobileApiBundle\Controller\BaseController;
-use FourPaws\MobileApiBundle\Dto\Object\Quest\AnswerVariant;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\BarcodeTask;
-use FourPaws\MobileApiBundle\Dto\Object\Quest\Prize;
-use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestionTask;
-use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestStatus;
+use FourPaws\MobileApiBundle\Dto\Object\Quest\Pet;
 use FourPaws\MobileApiBundle\Dto\Request\QuestBarcodeRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestQuestionRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
@@ -21,9 +18,7 @@ use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\QuestBarcodeTaskResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestPrizeResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestQuestionTaskResponse;
-use FourPaws\MobileApiBundle\Dto\Response\QuestRegisterGetResponse;
 use FourPaws\MobileApiBundle\Dto\Response\QuestRegisterPostResponse;
-use FourPaws\MobileApiBundle\Dto\Response\QuestStartResponse;
 use FourPaws\MobileApiBundle\Exception\RuntimeException as ApiRuntimeException;
 use FourPaws\MobileApiBundle\Services\Api\QuestService;
 use Symfony\Component\HttpFoundation\Request;
@@ -119,18 +114,19 @@ class QuestController extends BaseController
      */
     public function postBarcodeAction(QuestBarcodeRequest $questBarcodeRequest): Response
     {
-        $task = $this->apiQuestService->getCurrentTask();
+        $currentTask = $this->apiQuestService->getCurrentTask();
 
         $response = (new QuestBarcodeTaskResponse())
             ->setResult($this->apiQuestService->checkBarcodeTask($questBarcodeRequest))
-            ->setCorrectText($task['UF_CORRECT_TEXT'])
-            ->setErrorText($task['UF_BARCODE_ERROR'])
-            ->setQuestStatus($this->apiQuestService->getQuestStatus());
+            ->setCorrectText($currentTask['UF_CORRECT_TEXT'])
+            ->setErrorText($currentTask['UF_BARCODE_ERROR']);
 
 
         if ($response->getResult() === BarcodeTask::SUCCESS_SCAN) {
             $response->setQuestionTask($this->apiQuestService->getCurrentQuestionTask());
         }
+
+        $response->setQuestStatus($this->apiQuestService->getQuestStatus());
 
         return new Response(['task_result' => $response]);
     }
@@ -148,21 +144,23 @@ class QuestController extends BaseController
      */
     public function postQuestionAction(QuestQuestionRequest $questQuestionRequest): Response
     {
-        $task = $this->apiQuestService->getCurrentTask();
+        $currentTask = $this->apiQuestService->getCurrentTask();
         $questStatus = $this->apiQuestService->getQuestStatus();
         $response = new QuestQuestionTaskResponse();
 
         if ($questStatus->getNumber() === $questStatus->getTotalCount()) {
-            $userResult = $this->apiQuestService->getCurrentUserResult();
-            $response->setPrizes($this->apiQuestService->getPrizes([], $userResult['UF_PET']));
+            $userResult = $this->apiQuestService->getUserResult();
+            /** @var Pet $pet */
+            $userPet = current($this->apiQuestService->getPetTypes([$userResult['UF_PET']]));
+            $response->setPrizes($userPet->getPrizes());
         } else {
             $response->setBarcodeTask($this->apiQuestService->getCurrentBarcodeTask());
         }
 
         $response
             ->setCorrect($this->apiQuestService->checkQuestionTask($questQuestionRequest))
-            ->setErrorText($task['UF_QUESTION_ERROR'])
-            ->setQuestStatus($questStatus);
+            ->setErrorText($currentTask['UF_QUESTION_ERROR'])
+            ->setQuestStatus($this->apiQuestService->getQuestStatus());
 
         return new Response(['task_result' => $response]);
     }
