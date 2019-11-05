@@ -82,7 +82,7 @@ class QuestController extends BaseController
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function postRegisterAction(QuestRegisterRequest $questRegisterRequest): Response
+    public function postRegisterAction(QuestRegisterRequest $questRegisterRequest): QuestRegisterPostResponse
     {
         $this->apiQuestService->registerUser($questRegisterRequest);
 
