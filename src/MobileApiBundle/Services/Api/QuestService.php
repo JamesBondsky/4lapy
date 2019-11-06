@@ -120,23 +120,40 @@ class QuestService
             ->setUserEmail($this->getCurrentUser()->getEmail());
 
         if (!$result->isNeedRegister()) {
-            $finishTest = true;
+            $completeAllTasks = false;
+            $needChoosePet = true;
 
-            foreach (unserialize($userResult['UF_TASKS']) as $userTask) {
-                if ($userTask['QUESTION_RESULT'] === QuestionTask::STATUS_NOT_START) {
-                    $finishTest = false;
+            if (($userResult['UF_PET'] !== null) && ($userResult['UF_TASKS'] !== null)) {
+                $finishTest = true;
+
+                foreach (unserialize($userResult['UF_TASKS']) as $userTask) {
+                    if ($userTask['QUESTION_RESULT'] === QuestionTask::STATUS_NOT_START) {
+                        $finishTest = false;
+                    }
+                }
+
+                if ($finishTest) {
+                    $completeAllTasks = true;
+                    $needChoosePet = false;
                 }
             }
 
-            if ($finishTest) {
+            if ($completeAllTasks) {
                 /** @var Pet $userPet */
                 $userPet = current($this->getPetTypes([$userResult['UF_PET']]));
+                if ($userPet !== null) {
+                    $result
+                        ->setIsFinishStep(true)
+                        ->setPrizes($userPet->getPrizes());
+                } else {
+                    $needChoosePet = true;
+                }
+            }
+
+            if ($needChoosePet) {
                 $result
-                    ->setIsFinishStep(true)
-                    ->setPrizes($userPet->getPrizes());
-            } else {
-                $result->setNeedChoosePet(true);
-                $result->setPetTypes($this->getPetTypes());
+                    ->setNeedChoosePet(true)
+                    ->setPetTypes($this->getPetTypes());
             }
         }
 
