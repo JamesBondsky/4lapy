@@ -15,7 +15,7 @@ class SapStatusSender implements LoggerAwareInterface
     /**
      * @var string $apiUrl
      */
-    private $apiUrl = 'http://95.181.195.45:8000/zset_status';
+    private $apiUrl;
     
     private $orderNumber;
     private $orderStatus;
@@ -31,6 +31,7 @@ class SapStatusSender implements LoggerAwareInterface
         
         $this->orderNumber = $orderNumber;
         $this->orderStatus = $orderStatus;
+        $this->apiUrl = getenv('SAP_URL');
         
     }
     
