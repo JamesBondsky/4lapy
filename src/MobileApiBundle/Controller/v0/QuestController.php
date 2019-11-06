@@ -119,7 +119,7 @@ class QuestController extends BaseController
         $response = (new QuestBarcodeTaskResponse())
             ->setResult($this->apiQuestService->checkBarcodeTask($questBarcodeRequest))
             ->setCorrectText($currentTask['UF_CORRECT_TEXT'])
-            ->setErrorText($currentTask['UF_BARCODE_ERROR']);
+            ->setErrorText($currentTask['UF_TASK']);
 
 
         if ($response->getResult() === BarcodeTask::SUCCESS_SCAN) {
@@ -141,6 +141,7 @@ class QuestController extends BaseController
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
+     * @throws Exception
      */
     public function postQuestionAction(QuestQuestionRequest $questQuestionRequest): Response
     {
