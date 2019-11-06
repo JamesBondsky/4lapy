@@ -51,6 +51,13 @@ class QuestRegisterGetResponse
     protected $isFinishStep = false;
 
     /**
+     * @Serializer\SerializedName("correct_answers")
+     * @Serializer\Type("int")
+     * @var int
+     */
+    protected $correctAnswers = 0;
+
+    /**
      * @Serializer\SerializedName("prizes")
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Quest\Prize>")
      * @var Prize[]
@@ -183,6 +190,24 @@ class QuestRegisterGetResponse
     public function setIsFinishStep(bool $isFinishStep): QuestRegisterGetResponse
     {
         $this->isFinishStep = $isFinishStep;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCorrectAnswers(): int
+    {
+        return $this->correctAnswers;
+    }
+
+    /**
+     * @param int $correctAnswers
+     * @return QuestRegisterGetResponse
+     */
+    public function setCorrectAnswers(int $correctAnswers = 0): QuestRegisterGetResponse
+    {
+        $this->correctAnswers = $correctAnswers;
         return $this;
     }
 

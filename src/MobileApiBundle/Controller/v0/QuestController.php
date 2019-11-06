@@ -11,6 +11,7 @@ use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\BarcodeTask;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\Pet;
 use FourPaws\MobileApiBundle\Dto\Request\QuestBarcodeRequest;
+use FourPaws\MobileApiBundle\Dto\Request\QuestPrizeRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestQuestionRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestRegisterRequest;
 use FourPaws\MobileApiBundle\Dto\Request\QuestStartRequest;
@@ -169,16 +170,17 @@ class QuestController extends BaseController
      * @Rest\View()
      * @Security("has_role('REGISTERED_USERS')")
      *
-     * @param Request $request
+     * @param QuestPrizeRequest $questPrizeRequest
      * @return QuestPrizeResponse
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function postPrizeAction(Request $request): QuestPrizeResponse
+    public function postPrizeAction(QuestPrizeRequest $questPrizeRequest): QuestPrizeResponse
     {
-        $response = new QuestPrizeResponse();
+        $this->apiQuestService->choosePrize($questPrizeRequest->getPrizeId());
 
-        $response
-            ->setPromocode('TEST_TEST');
-
-        return $response;
+        return (new QuestPrizeResponse())
+            ->setPromocode($this->apiQuestService->getUserPromocode());
     }
 }

@@ -120,33 +120,24 @@ class QuestService
             ->setUserEmail($this->getCurrentUser()->getEmail());
 
         if (!$result->isNeedRegister()) {
-            $completeAllTasks = false;
             $needChoosePet = true;
 
-            if (($userResult['UF_PET'] !== null) && ($userResult['UF_TASKS'] !== null)) {
-                $finishTest = true;
-
-                foreach (unserialize($userResult['UF_TASKS']) as $userTask) {
-                    if ($userTask['QUESTION_RESULT'] === QuestionTask::STATUS_NOT_START) {
-                        $finishTest = false;
-                    }
-                }
-
-                if ($finishTest) {
-                    $completeAllTasks = true;
-                    $needChoosePet = false;
-                }
-            }
-
-            if ($completeAllTasks) {
+            if ($this->isFinishStep($userResult)) {
                 /** @var Pet $userPet */
                 $userPet = current($this->getPetTypes([$userResult['UF_PET']]));
                 if ($userPet !== null) {
-                    $result
-                        ->setIsFinishStep(true)
-                        ->setPrizes($userPet->getPrizes());
-                } else {
-                    $needChoosePet = true;
+                    $needChoosePet = false;
+
+                    if (empty($userResult['UF_PRIZE']) || ($userResult['UF_PRIZE'] === null)) {
+                        $result
+                            ->setIsFinishStep(true)
+                            ->setPrizes($userPet->getPrizes())
+                            ->setCorrectAnswers($this->getCorrectAnswers($userResult));
+                    } else {
+                        $result
+                            ->setShowPrize(true)
+                            ->setPromocode($this->getUserPromocode());
+                    }
                 }
             }
 
@@ -358,6 +349,56 @@ class QuestService
     }
 
     /**
+     * @param $prizeId
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function choosePrize($prizeId): void
+    {
+        $userResult = $this->getUserResult();
+
+        if (!$this->isFinishStep($userResult)) {
+            throw new AccessDeinedException('Вы не прошли квест до конца');
+        }
+
+        /** @var Prize $prize */
+        $prize = current($this->getPrizes([$prizeId]));
+
+        if (!$prize) {
+            throw new ApiRuntimeException('Выбранный приз не найден');
+        }
+
+        $userResult['UF_PRIZE'] = $prize->getId();
+
+        $this->updateCurrentUserResult($userResult);
+    }
+
+    /**
+     * @return string
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getUserPromocode(): string
+    {
+        $userResult = $this->getUserResult();
+
+        if (!$this->isFinishStep($userResult)) {
+            throw new AccessDeinedException('Вы не прошли квест до конца');
+        }
+
+        if (empty($userResult['UF_PRIZE']) || ($userResult['UF_PRIZE'] === null)) {
+            throw new ApiRuntimeException('Выберите приз');
+        }
+
+        return '8595237013098';
+    }
+
+    /**
      * @return User
      *
      * @throws AccessDeinedException
@@ -392,7 +433,7 @@ class QuestService
         if ($this->currentUserResult === null || $reload) {
             $result = $this->getDataManager(self::RESULT_HL_NAME)::query()
                 ->setFilter(['=UF_USER_ID' => $this->getCurrentUser()->getId()])
-                ->setSelect(['ID', 'UF_PET', 'UF_TASKS', 'UF_CURRENT_TASK'])
+                ->setSelect(['ID', 'UF_PET', 'UF_TASKS', 'UF_CURRENT_TASK', 'UF_PRIZE'])
                 ->exec()
                 ->fetch();
 
@@ -539,8 +580,42 @@ class QuestService
     }
 
     /**
+     * @param $userResult
+     * @return bool
+     */
+    public function isFinishStep($userResult): bool
+    {
+        if (($userResult['UF_PET'] !== null) && ($userResult['UF_TASKS'] !== null)) {
+
+            foreach (unserialize($userResult['UF_TASKS']) as $userTask) {
+                if ($userTask['QUESTION_RESULT'] === QuestionTask::STATUS_NOT_START) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param $userResult
+     * @return int
+     */
+    public function getCorrectAnswers($userResult): int
+    {
+        $correctAnswers = 0;
+        foreach (unserialize($userResult['UF_TASKS']) as $userTask) {
+            if ($userTask['QUESTION_RESULT'] === QuestionTask::STATUS_SUCCESS_COMPLETE) {
+                ++$correctAnswers;
+            }
+        }
+
+        return $correctAnswers;
+    }
+
+    /**
      * @param array $petTypeId
-     * @return array
+     * @return Pet[]
      *
      * @throws ArgumentException
      * @throws ObjectPropertyException
@@ -602,7 +677,7 @@ class QuestService
 
     /**
      * @param array $prizeIds
-     * @return array
+     * @return Prize[]
      *
      * @throws ArgumentException
      * @throws ObjectPropertyException
