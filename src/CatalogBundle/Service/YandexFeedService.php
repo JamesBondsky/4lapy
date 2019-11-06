@@ -5,11 +5,12 @@ namespace FourPaws\CatalogBundle\Service;
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Iblock\ElementTable;
+use FourPaws\Helpers\Table\YandexFeedFieldsTable;
 use Bitrix\Main\ArgumentException as BitrixArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\Entity\Base;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
@@ -135,9 +136,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     /** @var array $arSalesNotesSections */
     private $arSalesNotesSections = [];
 
-    /** @var array $arSaleNoteText */
-    private $arSaleNoteText = [];
-
 
     /**
      * YandexFeedService constructor.
@@ -250,6 +248,28 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         return $this;
     }
 
+
+    /**
+     * @return Bitrix\Main\ORM\Entity
+     * @throws Main\ArgumentException
+     * @throws Main\SystemException
+     */
+    protected function getPropertyHlIblockYaFeed()
+    {
+        $entityName = 'HL_PROPERTIES_YA_FEED';
+
+        $entity = Base::compileEntity(
+            $entityName,
+            [
+                'ID' => ['data_type' => 'integer'],
+                'VALUE' => ['data_type' => 'integer']
+            ],
+            ['table_name' => 'b_hlbd_yandexfeedfields_uf_groups']
+        );
+
+        return $entity;
+    }
+
     /**
      * @param Feed $feed
      * @param Configuration $configuration
@@ -303,22 +323,30 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 )
             );
 
-
-        $container = Application::getInstance()->getContainer();
-        $filterSalesNotesDM = $container->get('bx.hlblock.yandexfeedfields');
-        $filterSalesNotes = $filterSalesNotesDM::query()->setSelect([
-            'ID',
-            'UF_SORT',
-            'UF_TEXT',
-            'UF_GROUPS',
-        ])->setOrder(['UF_SORT' => 'asc'])->exec()->fetchAll();
-
-        foreach ($filterSalesNotes as $salesNoteElement) {
-            $this->arSalesNotesSections = array_merge($this->arSalesNotesSections,$salesNoteElement["UF_GROUPS"]);
-            /* Здесь в любом случае M:1 отношение */
-            $this->arSaleNoteText = array_fill_keys(array_values($salesNoteElement["UF_GROUPS"]), $salesNoteElement["UF_TEXT"]);
+        $propertiesHlBlockEntity = $this->getPropertyHlIblockYaFeed();
+        $rsYaFeed = YandexFeedFieldsTable::getList([
+            'order' => [
+                'UF_SORT' => 'ASC'
+            ],
+            'select' => [
+                'ID',
+                'UF_TEXT',
+                'UF_SORT',
+                'GROUP_ID' => 'PROPERTIES.VALUE'
+            ],
+            'runtime' => array(
+                'PROPERTIES' => [
+                    'data_type' => $propertiesHlBlockEntity->getDataClass(),
+                    'reference' => array(
+                        '=this.ID' => 'ref.ID'
+                    ),
+                    'join_type' => 'inner'
+                ]
+            ),
+        ]);
+        while ($arSalesNotesSectionRow = $rsYaFeed->fetch()) {
+            $this->arSalesNotesSections[$arSalesNotesSectionRow["GROUP_ID"]] = $arSalesNotesSectionRow["UF_TEXT"];
         }
-        
 
         foreach ($offerCollection as $k => $offer) {
             ++$offset;
@@ -430,11 +458,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ->setVendorCode(\array_shift($offer->getBarcodes()) ?: '');
 
         /** #tr-531 */
-        if(\in_array($sectionId, $this->arSalesNotesSections)) {
-            $findedKey = \array_key_exists($sectionId,$this->arSaleNoteText);
-            if($findedKey && $this->arSaleNoteText[$sectionId]!="") {
-                $yandexOffer->setSalesNotes(\substr(\strip_tags($this->arSaleNoteText[$sectionId]), 0, 3990));
-            }
+        if($this->arSalesNotesSections[$sectionId]) {
+             $yandexOffer->setSalesNotes(\substr(\strip_tags($this->arSalesNotesSections[$sectionId]), 0, 3990));
         }
 
         $country = $offer
