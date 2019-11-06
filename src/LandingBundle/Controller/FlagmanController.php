@@ -20,6 +20,8 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Articul\Landing\Orm\LectionsTable;
+use Articul\Landing\Orm\LectionAppsTable;
+use GuzzleHttp\Client;
 
 /**
  * Class BasketController
@@ -31,12 +33,16 @@ class FlagmanController extends Controller implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
     
+    private $guzzleClient;
+    
     /**
      * FlagmanController constructor.
      *
      */
     public function __construct()
     {
+        $this->url = getenv('VET_CLINIC');
+        $this->guzzleClient = new Client();
     }
     
     /**
@@ -52,34 +58,60 @@ class FlagmanController extends Controller implements LoggerAwareInterface
     public function addAction(Request $request): JsonResponse
     {
         if (!Loader::includeModule('articul.landing')) {
-            return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заявки']]);
+            return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Модуль для сохранения заявок не подключен']]);
         }
         
         $data = json_decode($request->getContent());
+        
         try {
-        
-        } catch (\Exception $e) {}
-        //@todo код сохранения заявки в хайлоад блок
-        //@todo если он успешен то выполняем следающий код
-        $success = true;
-        
-        if ($success) {
-            $sits =  LectionsTable::query()
-                ->setSelect(['SITS' => 'UTS.FREE_SITS'])
-                ->setFilter(['=ID' => $data->eventId])
-                ->exec()
-                ->fetch()['SITS'];
-            
-            $newSits = (int) $sits - 1;
+            $successAdding = LectionAppsTable::add([
+                'UF_USER_ID' => (int) $data->userId,
+                'UF_NAME' => $data->name,
+                'UF_PHONE' => $data->phone,
+                'UF_EVENT_ID' => (int) $data->eventId,
+            ]);
 
-            //@todo исправить как только реализуют метод update
-            \CIBlockElement::SetPropertyValuesEx($data->eventId, 0, ['FREE_SITS' => $newSits]);
+            if ($successAdding) {
+                $sits = LectionsTable::query()
+                    ->setSelect(['SITS' => 'UTS.FREE_SITS'])
+                    ->setFilter(['=ID' => $data->eventId])
+                    ->exec()
+                    ->fetch()['SITS'];
+        
+                $newSits = (int)$sits - 1;
+                
+                //@todo исправить как только реализуют метод update
+                \CIBlockElement::SetPropertyValuesEx($data->eventId, 0, ['FREE_SITS' => $newSits]);
+            }
+        } catch (\Exception $e) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заявки']]);
         }
-
+        
         $response = JsonErrorResponse::createWithData('Заявка успешно сохранена',
-            ['11' => '1112'],
+            [],
             200,
             ['reload' => false]);
-         return $response;
+        
+        return $response;
+    }
+    
+    /**
+     * @Route("/getschedule/{id}", methods={"GET"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws Exception
+     *
+     * @throws RuntimeException
+     */
+    public function getSchedule(Request $request): JsonResponse
+    {
+        // $this->url .=
+        // $response = $this->guzzleClient->request('GET', $this->url, []);
+        // echo '<pre>';
+        // print_r($request->get('id'));
+        // echo '</pre>';
+        // die;
     }
 }

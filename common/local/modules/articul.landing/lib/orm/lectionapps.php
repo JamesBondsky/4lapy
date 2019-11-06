@@ -2,7 +2,7 @@
 
 namespace Articul\Landing\Orm;
 
-use Bitrix\Main;
+use zBitrix\Main;
 use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
@@ -32,9 +32,12 @@ class LectionAppsTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'UF_USER_ID' => array(
+            'ID' => array(
                 'data_type' => 'integer',
                 'primary' => true,
+            ),
+            'UF_USER_ID' => array(
+                'data_type' => 'integer',
             ),
             'UF_NAME' => array(
                 'data_type' => 'string',
@@ -43,7 +46,7 @@ class LectionAppsTable extends Main\Entity\DataManager
                 'data_type' => 'string',
             ),
             'UF_EVENT_ID' => array(
-                'data_type' => 'int',
+                'data_type' => 'integer',
             )
         );
     }
