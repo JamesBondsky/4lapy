@@ -270,7 +270,7 @@ class QuestService
         /** @var Offer $offer */
         $offer = $offerCollection->first();
 
-        if (in_array($currentTask['UF_CATEGORY'], $offer->getProduct()->getSectionsIdList(), false)) {
+        if ($this->checkProductByCategory($offer, $currentTask) && $this->checkProductByXmlId($offer, $currentTask)) {
             $userResult = $this->getUserResult();
 
             if ($userResult === false) {
@@ -293,6 +293,41 @@ class QuestService
         }
 
         return BarcodeTask::INCORRECT_PRODUCT;
+    }
+
+    /**
+     * @param Offer $offer
+     * @param $currentTask
+     * @return bool
+     * @throws SystemException
+     */
+    protected function checkProductByCategory(Offer $offer, $currentTask): bool
+    {
+        if (!isset($currentTask['UF_CATEGORY']) || empty($currentTask['UF_CATEGORY']) || ($currentTask['UF_CATEGORY'] === null)) {
+            return true;
+        }
+
+        return (in_array($currentTask['UF_CATEGORY'], $offer->getProduct()->getSectionsIdList(), false));
+    }
+
+    /**
+     * @param Offer $offer
+     * @param $currentTask
+     * @return bool
+     */
+    protected function checkProductByXmlId(Offer $offer, $currentTask): bool
+    {
+        if (!isset($currentTask['UF_PRODUCT_XML_ID']) || empty($currentTask['UF_PRODUCT_XML_ID']) || ($currentTask['UF_PRODUCT_XML_ID'] === null)) {
+            return true;
+        }
+
+        foreach ($currentTask['UF_PRODUCT_XML_ID'] as $productXmlId) {
+            if ($productXmlId === $offer->getXmlId()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -483,7 +518,7 @@ class QuestService
             }
 
             $currentTask = $this->getDataManager(self::TASK_HL_NAME)::query()
-                ->setSelect(['ID', 'UF_TITLE', 'UF_TASK', 'UF_IMAGE', 'UF_VARIANTS', 'UF_ANSWER', 'UF_QUESTION', 'UF_CATEGORY', 'UF_CORRECT_TEXT', 'UF_BARCODE_ERROR', 'UF_QUESTION_ERROR'])
+                ->setSelect(['ID', 'UF_TITLE', 'UF_TASK', 'UF_IMAGE', 'UF_VARIANTS', 'UF_ANSWER', 'UF_PRODUCT_XML_ID', 'UF_QUESTION', 'UF_CATEGORY', 'UF_CORRECT_TEXT', 'UF_BARCODE_ERROR', 'UF_QUESTION_ERROR'])
                 ->setFilter(['=ID' => $userTasks[$userResult['UF_CURRENT_TASK']]['ID']])
                 ->exec()
                 ->fetch();
