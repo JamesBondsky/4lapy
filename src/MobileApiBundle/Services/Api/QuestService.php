@@ -559,13 +559,13 @@ class QuestService
             }
 
             $taskId = $userTasks[$userResult['UF_CURRENT_TASK']]['ID'];
+
             $cacheFinder = function () use ($taskId) {
                 return $this->getDataManager(self::TASK_HL_NAME)::query()
                     ->setSelect(self::TASK_SELECT)
                     ->setFilter(['=ID' => $taskId])
                     ->exec()
                     ->fetch();
-
             };
 
             $currentTask = (new BitrixCache())
