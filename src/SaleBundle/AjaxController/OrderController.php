@@ -863,6 +863,7 @@ class OrderController extends Controller implements LoggerAwareInterface
 
         return JsonSuccessResponse::createWithData('Адрес успешно сохранен', [
             'next_delivery_text' => $nextDeliveryText,
+            'is_dostavista' => true
         ]);
     }
 
