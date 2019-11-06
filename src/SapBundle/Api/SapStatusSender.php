@@ -12,6 +12,11 @@ class SapStatusSender implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
     
+    /**
+     * @var string $apiUrl
+     */
+    private $apiUrl;
+    
     private $orderNumber;
     private $orderStatus;
     private $guzzleClient;
@@ -26,12 +31,13 @@ class SapStatusSender implements LoggerAwareInterface
         
         $this->orderNumber = $orderNumber;
         $this->orderStatus = $orderStatus;
+        $this->apiUrl = getenv('SAP_URL');
         
     }
     
     public function send()
     {
-        $response = $this->guzzleClient->request('POST', getenv('SAP_URL'), ['json' => ['WebID' => $this->orderNumber, 'StatusID' => $this->orderStatus]]);
+        $response = $this->guzzleClient->request('POST', $this->apiUrl, ['json' => ['WebID' => $this->orderNumber, 'StatusID' => $this->orderStatus]]);
         
         if ($response->getStatusCode() == 200) {
             $body = \json_decode($response->getBody());
