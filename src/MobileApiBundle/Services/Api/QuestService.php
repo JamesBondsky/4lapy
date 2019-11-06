@@ -130,7 +130,7 @@ class QuestService
 
             if ($finishTest) {
                 /** @var Pet $userPet */
-                $userPet = current($this->getPetTypes($userResult['UF_PET']));
+                $userPet = current($this->getPetTypes([$userResult['UF_PET']]));
                 $result
                     ->setIsFinishStep(true)
                     ->setPrizes($userPet->getPrizes());
