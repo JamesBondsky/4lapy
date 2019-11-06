@@ -88,40 +88,45 @@ class HLBlockLectionAppsCreate05112019171256 extends SprintMigrationBase
             ],
         ],
         [
-            'FIELD_NAME'        => 'UF_EVENT',
-            'USER_TYPE_ID'      => 'hlblock',
-            'XML_ID'            => 'UF_EVENT',
-            'SORT'              => '1000',
+            'FIELD_NAME'        => 'UF_EVENT_ID',
+            'USER_TYPE_ID'      => 'iblock_element',
+            'XML_ID'            => '',
+            'SORT'              => '100',
             'MULTIPLE'          => 'N',
             'MANDATORY'         => 'N',
             'SHOW_FILTER'       => 'N',
             'SHOW_IN_LIST'      => 'Y',
             'EDIT_IN_LIST'      => 'Y',
             'IS_SEARCHABLE'     => 'N',
-            'SETTINGS'          => [
-                'DISPLAY'       => 'LIST',
-                'LIST_HEIGHT'   => 5,
-                // 'IBLOCK_ID'    => $HLBlockId,
-                // 'HLFIELD_ID'    => $userField['ID'],
-                'DEFAULT_VALUE' => 0,
-            ],
-            'EDIT_FORM_LABEL'   => [
-                'ru' => 'Лекция',
-            ],
-            'LIST_COLUMN_LABEL' => [
-                'ru' => 'Лекция',
-            ],
-            'LIST_FILTER_LABEL' => [
-                'ru' => 'Лекция',
-            ],
-            'ERROR_MESSAGE'     => [
-                'ru' => '',
-            ],
-            'HELP_MESSAGE'      => [
-                'ru' => 'Лекция, на которую записался пользователь',
-            ],
+            'SETTINGS'          =>
+                [
+                    'DISPLAY'       => 'LIST',
+                    'LIST_HEIGHT'   => 5,
+                    'IBLOCK_ID'     => 41, //@todo don't forget to change
+                    'DEFAULT_VALUE' => '',
+                    'ACTIVE_FILTER' => 'N',
+                ],
+            'EDIT_FORM_LABEL'   =>
+                [
+                    'ru' => 'Событие',
+                ],
+            'LIST_COLUMN_LABEL' =>
+                [
+                    'ru' => 'Событие',
+                ],
+            'LIST_FILTER_LABEL' =>
+                [
+                    'ru' => 'Событие',
+                ],
+            'ERROR_MESSAGE'     =>
+                [
+                    'ru' => '',
+                ],
+            'HELP_MESSAGE'      =>
+                [
+                    'ru' => '',
+                ],
         ],
-    
     ];
     
     public function up()
@@ -134,14 +139,14 @@ class HLBlockLectionAppsCreate05112019171256 extends SprintMigrationBase
         
         if (!$hlBlockId = $hlBlockHelper->getHlblockId(static::HL_BLOCK_NAME)) {
             if ($hlBlockId = $hlBlockHelper->addHlblock($this->hlBlockData)) {
-                $this->log()->info('Добавлен HL-блок ' . static::HL_BLOCK_NAME);
+                //$this->log()->info('Добавлен HL-блок ' . static::HL_BLOCK_NAME);
             } else {
-                $this->log()->error('Ошибка при создании HL-блока ' . static::HL_BLOCK_NAME);
+                //$this->log()->error('Ошибка при создании HL-блока ' . static::HL_BLOCK_NAME);
                 
                 return false;
             }
         } else {
-            $this->log()->info('HL-блок ' . static::HL_BLOCK_NAME . ' уже существует');
+            // $this->log()->info('HL-блок ' . static::HL_BLOCK_NAME . ' уже существует');
         }
         
         $entityId = 'HLBLOCK_' . $hlBlockId;
@@ -151,13 +156,13 @@ class HLBlockLectionAppsCreate05112019171256 extends SprintMigrationBase
                 $field['FIELD_NAME'],
                 $field
             )) {
-                $this->log()->info(
-                    'Добавлено поле ' . $field['FIELD_NAME'] . ' в HL-блок ' . self::HL_BLOCK_NAME
-                );
+                // $this->log()->info(
+                //     'Добавлено поле ' . $field['FIELD_NAME'] . ' в HL-блок ' . self::HL_BLOCK_NAME
+                // );
             } else {
-                $this->log()->error(
-                    'Ошибка при добавлении поля ' . $field['FIELD_NAME'] . ' в HL-блок ' . self::HL_BLOCK_NAME
-                );
+                // $this->log()->error(
+                //     'Ошибка при добавлении поля ' . $field['FIELD_NAME'] . ' в HL-блок ' . self::HL_BLOCK_NAME
+                // );
                 
                 return false;
             }
@@ -165,18 +170,12 @@ class HLBlockLectionAppsCreate05112019171256 extends SprintMigrationBase
             if ($field['ENUMS']) {
                 $enum = new CUserFieldEnum();
                 if ($enum->SetEnumValues($fieldId, $field['ENUMS'])) {
-                    $this->log()->info('Добавлены значения для поля ' . $field['FIELD_NAME']);
+                    //$this->log()->info('Добавлены значения для поля ' . $field['FIELD_NAME']);
                 } else {
-                    $this->log()->error('Не удалось добавить значения для поля ' . $field['FIELD_NAME']);
+                    //$this->log()->error('Не удалось добавить значения для поля ' . $field['FIELD_NAME']);
                 }
             }
         }
-        
-        // Application::getConnection()->query('
-        //     ALTER TABLE `b_hlbd_forgot_basket`
-        //     ADD CONSTRAINT UNIQUE `UC_USER_ID_TYPE` (`UF_USER_ID`, `UF_TASK_TYPE`),
-        //     ADD INDEX `IX_USER_ID` (`UF_USER_ID`)'
-        // );
         
         return true;
     }
@@ -187,15 +186,15 @@ class HLBlockLectionAppsCreate05112019171256 extends SprintMigrationBase
         $hlBlockHelper = $this->getHelper()->Hlblock();
         
         if (!$hlBlockId = $hlBlockHelper->getHlblockId(static::HL_BLOCK_NAME)) {
-            $this->log()->error('HL-блок ' . static::HL_BLOCK_NAME . ' не найден');
+            // $this->log()->error('HL-блок ' . static::HL_BLOCK_NAME . ' не найден');
             
             return true;
         }
         
         if ($hlBlockHelper->deleteHlblock($hlBlockId)) {
-            $this->log()->info('HL-блок ' . static::HL_BLOCK_NAME . ' удален');
+            // $this->log()->info('HL-блок ' . static::HL_BLOCK_NAME . ' удален');
         } else {
-            $this->log()->error('Ошибка при удалении HL-блока ' . static::HL_BLOCK_NAME);
+            // $this->log()->error('Ошибка при удалении HL-блока ' . static::HL_BLOCK_NAME);
             
             return false;
         }
