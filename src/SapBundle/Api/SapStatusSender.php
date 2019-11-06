@@ -12,11 +12,6 @@ class SapStatusSender implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
     
-    /**
-     * @var string $apiUrl
-     */
-    private $apiUrl = 'http://95.181.195.45:8001/zset_status';
-    
     private $orderNumber;
     private $orderStatus;
     private $guzzleClient;
@@ -36,7 +31,7 @@ class SapStatusSender implements LoggerAwareInterface
     
     public function send()
     {
-        $response = $this->guzzleClient->request('POST', $this->apiUrl, ['json' => ['WebID' => $this->orderNumber, 'StatusID' => $this->orderStatus]]);
+        $response = $this->guzzleClient->request('POST', getenv('SAP_URL'), ['json' => ['WebID' => $this->orderNumber, 'StatusID' => $this->orderStatus]]);
         
         if ($response->getStatusCode() == 200) {
             $body = \json_decode($response->getBody());
