@@ -816,6 +816,7 @@ class OrderController extends Controller implements LoggerAwareInterface
             $storage = $this->orderStorageService->getStorage();
 
             $storage
+                ->setCityCode(DeliveryService::MOSCOW_LOCATION_CODE)
                 ->setStreet($request->get('street', ''))
                 ->setHouse($request->get('house', ''))
                 ->setBuilding($request->get('building', ''))
