@@ -253,8 +253,8 @@ class AvailabilityReportService
             $widthOffer = (string) $catalogProduct->getWidth();
             /** @var string $lengthOffer */
             $lengthOffer = (string) $catalogProduct->getLength();
-            /** @var string $groupName */
-            $groupName = (string) $section->getName();
+            /** @var string | null $groupName */
+            $groupName = (($section)?(string) $section->getName():'');
             /** @var string $sort */
             $sortVal = (int)  $product->getSort();
             /** @var string $ctm */
