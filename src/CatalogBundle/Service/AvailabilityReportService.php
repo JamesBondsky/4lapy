@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Catalog\StoreProductTable;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -20,6 +21,8 @@ use FourPaws\CatalogBundle\Dto\ProductReport\AvailabilityReport\Product;
 use FourPaws\CatalogBundle\Dto\ProductReport\ReportResult;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Exception\NoStoresAvailableException;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\StoreBundle\Service\StockService;
@@ -215,6 +218,7 @@ class AvailabilityReportService
         /** @var Offer $offer */
         foreach ($offers as $offer) {
             $product = $offer->getProduct();
+            $catalogProduct = $offer->getCatalogProduct();
 
             $categoryNames = [];
             if ($section = $product->getSection()) {
@@ -229,37 +233,32 @@ class AvailabilityReportService
 
             /** @var int $amountDigit */
             $amountDigit = 0;
-            $storesCheck = $offer->getAvailableStores();
+            $amountTpz = 0;
 
-            if(count(array_values($storesCheck))>0){
-                $shops = $shopInfoService->getShopsByOffer($offer);
+            $rsStoreProduct = StoreProductTable::getList(array(
+                'filter' => array('=PRODUCT_ID'=>$offer->getId(),'STORE.ACTIVE'=>'Y'),
+                'select' => array('AMOUNT','STORE_ID','STORE_TITLE' => 'STORE.TITLE'),
+            ));
 
-                $storesAmount = $shopInfoService->shopListToArray(
-                    $shopInfoService->getShopList(
-                        $shops,
-                        $shopInfoService->getLocationByRequest($request),
-                        [],
-                        $offer
-                    )
-                );
-
-                $amountDigit = array_sum(array_column($storesAmount["items"], 'amount_digit'));
+            while($arStoreProduct=$rsStoreProduct->fetch())
+            {
+                $amountDigit += $arStoreProduct["AMOUNT"];
             }
 
             /** @var int $weightOffer */
-            $weightOffer = $offer->getCatalogProduct()->getWeight();
+            $weightOffer = (string) $catalogProduct->getWeight();
             /** @var string $heightOffer */
-            $heightOffer = $offer->getCatalogProduct()->getHeight();
+            $heightOffer = (string) $catalogProduct->getHeight();
             /** @var string $widthOffer */
-            $widthOffer = $offer->getCatalogProduct()->getWidth();
+            $widthOffer = (string) $catalogProduct->getWidth();
             /** @var string $lengthOffer */
-            $lengthOffer = $offer->getCatalogProduct()->getLength();
+            $lengthOffer = (string) $catalogProduct->getLength();
             /** @var string $groupName */
-            $groupName = $product->getSection()->getName();
+            $groupName = (string) $section->getName();
             /** @var string $sort */
-            $sortVal = $product->getSort();
+            $sortVal = (int)  $product->getSort();
             /** @var string $ctm */
-            $ctmVal = $product->getCtm();
+            $ctmVal = (string) $product->getCtm();
 
             /* stocks supplier */
             $storesTPZ = $storeService->getSupplierStores();
