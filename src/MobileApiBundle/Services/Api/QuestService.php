@@ -47,6 +47,7 @@ class QuestService
     protected const PRIZE_HL_NAME = 'QuestPrize';
     protected const RESULT_HL_NAME = 'QuestResult';
     protected const TASK_HL_NAME = 'QuestTask';
+    protected const PROMOCODE_HL_NAME = 'QuestPromocode';
 
     protected const TASK_SELECT = ['ID', 'UF_TITLE', 'UF_TASK', 'UF_IMAGE', 'UF_VARIANTS', 'UF_ANSWER', 'UF_PRODUCT_XML_ID', 'UF_QUESTION', 'UF_CATEGORY', 'UF_CORRECT_TEXT', 'UF_BARCODE_ERROR', 'UF_QUESTION_ERROR'];
 
@@ -413,6 +414,7 @@ class QuestService
             throw new ApiRuntimeException('Выбранный приз не найден');
         }
 
+        $userResult['UF_PROMOCODE'] = $this->getNewPromocode($prize->getId());
         $userResult['UF_PRIZE'] = $prize->getId();
 
         $this->updateCurrentUserResult($userResult);
@@ -437,7 +439,39 @@ class QuestService
             throw new ApiRuntimeException('Выберите приз');
         }
 
-        return '8595237013098';
+        if (empty($userResult['UF_PROMOCODE']) || ($userResult['UF_PROMOCODE'] === null)) {
+            throw new ApiRuntimeException('Промокод не найден');
+        }
+
+        return $userResult['UF_PROMOCODE'];
+    }
+
+    /**
+     * @param $prizeId
+     * @return string
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function getNewPromocode($prizeId): string
+    {
+        $res = $this->getDataManager(self::PROMOCODE_HL_NAME)::query()
+            ->setFilter(['UF_ACTIVE' => 1, 'UF_PRIZE' => $prizeId])
+            ->setSelect(['ID', 'UF_PROMOCODE'])
+            ->exec();
+
+        if ($arPromocode = $res->fetch()) {
+            $updateResult = $this->getDataManager(self::RESULT_HL_NAME)::update($arPromocode['ID'], ['UF_ACTIVE' => 0]);
+            if ($updateResult->isSuccess()) {
+                return $arPromocode['UF_PROMOCODE'];
+            }
+
+            throw new ApiRuntimeException('При присваивании промокода произошла ошибка');
+        }
+
+        throw new ApiRuntimeException('Промокоды кончились');
     }
 
     /**
@@ -475,7 +509,7 @@ class QuestService
         if ($this->currentUserResult === null || $reload) {
             $result = $this->getDataManager(self::RESULT_HL_NAME)::query()
                 ->setFilter(['=UF_USER_ID' => $this->getCurrentUser()->getId()])
-                ->setSelect(['ID', 'UF_PET', 'UF_TASKS', 'UF_CURRENT_TASK', 'UF_PRIZE'])
+                ->setSelect(['ID', 'UF_PET', 'UF_TASKS', 'UF_CURRENT_TASK', 'UF_PRIZE', 'UF_PROMOCODE'])
                 ->exec()
                 ->fetch();
 
@@ -760,7 +794,7 @@ class QuestService
 
             $res = $this->getDataManager(self::PRIZE_HL_NAME)::query()
                 ->setFilter(['=ID' => $prizeIds])
-                ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE'])
+                ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE', 'UF_PRODUCT_ID'])
                 ->exec();
 
             foreach ($res as $prize) {
