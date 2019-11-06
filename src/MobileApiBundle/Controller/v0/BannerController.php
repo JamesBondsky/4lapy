@@ -14,6 +14,7 @@ use FourPaws\MobileApiBundle\Dto\Response\BannerListResponse;
 use FourPaws\MobileApiBundle\Services\Api\BannerService as ApiBannerService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use Bitrix\Main\Application;
+use FourPaws\MobileApiBundle\Services\Api\UserService;
 
 class BannerController extends BaseController
 {
@@ -22,12 +23,21 @@ class BannerController extends BaseController
      */
     private $apiBannerService;
 
+    /**
+     * @var UserService
+     */
+    protected $apiUserService;
+
     private $cacheTime = 3600;
     private $cachePath = '/api/banners';
 
-    public function __construct(ApiBannerService $apiBannerService)
+    public function __construct(
+        ApiBannerService $apiBannerService,
+        UserService $apiUserService
+    )
     {
         $this->apiBannerService = $apiBannerService;
+        $this->apiUserService = $apiUserService;
     }
 
     /**
@@ -61,6 +71,27 @@ class BannerController extends BaseController
         } else {
             $apiResponse = $cache->getVars();
         }
+
+        /* для неавторизованных пользователей убираем баннер с квестом */
+        $bannerList = $apiResponse->getBannerList();
+        foreach ($bannerList as $key => $banner) {
+            if ($banner->getType() === 'quest') {
+                $deleteBanner = false;
+                try {
+                    if ($this->apiUserService->getCurrentApiUser() === null) {
+                        $deleteBanner = true;
+                    }
+                } catch (\Exception $e) {
+                    $deleteBanner = true;
+                }
+
+                if ($deleteBanner) {
+                    unset($bannerList[$key]);
+                }
+            }
+        }
+
+        $apiResponse->setBannerList($bannerList);
 
         return $apiResponse;
     }
