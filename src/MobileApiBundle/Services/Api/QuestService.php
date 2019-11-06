@@ -3,6 +3,7 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\FileTable;
@@ -34,15 +35,20 @@ use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use FourPaws\MobileApiBundle\Exception\RuntimeException as ApiRuntimeException;
 use Symfony\Component\HttpFoundation\Request;
+use WebArch\BitrixCache\BitrixCache;
 
 class QuestService
 {
+    use LazyLoggerAwareTrait;
+
     protected const QUEST_CODE = 'QUEST';
 
     protected const PET_HL_NAME = 'QuestPet';
     protected const PRIZE_HL_NAME = 'QuestPrize';
     protected const RESULT_HL_NAME = 'QuestResult';
     protected const TASK_HL_NAME = 'QuestTask';
+
+    protected const TASK_SELECT = ['ID', 'UF_TITLE', 'UF_TASK', 'UF_IMAGE', 'UF_VARIANTS', 'UF_ANSWER', 'UF_PRODUCT_XML_ID', 'UF_QUESTION', 'UF_CATEGORY', 'UF_CORRECT_TEXT', 'UF_BARCODE_ERROR', 'UF_QUESTION_ERROR'];
 
     /**
      * @var ApiProductService
@@ -110,6 +116,7 @@ class QuestService
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
+     * @throws Exception
      */
     public function getQuestRegisterStatus(): QuestRegisterGetResponse
     {
@@ -517,11 +524,21 @@ class QuestService
                 throw new ApiRuntimeException('Задание не найдено');
             }
 
-            $currentTask = $this->getDataManager(self::TASK_HL_NAME)::query()
-                ->setSelect(['ID', 'UF_TITLE', 'UF_TASK', 'UF_IMAGE', 'UF_VARIANTS', 'UF_ANSWER', 'UF_PRODUCT_XML_ID', 'UF_QUESTION', 'UF_CATEGORY', 'UF_CORRECT_TEXT', 'UF_BARCODE_ERROR', 'UF_QUESTION_ERROR'])
-                ->setFilter(['=ID' => $userTasks[$userResult['UF_CURRENT_TASK']]['ID']])
-                ->exec()
-                ->fetch();
+            $taskId = $userTasks[$userResult['UF_CURRENT_TASK']]['ID'];
+            $cacheFinder = function () use ($taskId) {
+                return $this->getDataManager(self::TASK_HL_NAME)::query()
+                    ->setSelect(self::TASK_SELECT)
+                    ->setFilter(['=ID' => $taskId])
+                    ->exec()
+                    ->fetch();
+
+            };
+
+            $currentTask = (new BitrixCache())
+                ->withTag('quest_task')
+                ->withTime(360000)
+                ->withId(__METHOD__ . serialize(['taskId' => $taskId]))
+                ->resultOf($cacheFinder);
 
             if ($currentTask === false) {
                 throw new ApiRuntimeException('Задание не найдено');
@@ -579,6 +596,8 @@ class QuestService
                 ->setId($key)
                 ->setTitle($variant);
         }
+
+        shuffle($variants);
 
         return (new QuestionTask())
             ->setQuestion($currentTask['UF_QUESTION'])
@@ -652,106 +671,130 @@ class QuestService
      * @param array $petTypeId
      * @return Pet[]
      *
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      * @throws Exception
      */
     public function getPetTypes(array $petTypeId = []): array
     {
-        $result = [];
-        $pets = [];
-        $imageIds = [];
-        $prizeIds = [];
+        $cacheFinder = function () use ($petTypeId) {
+            $result = [];
+            $pets = [];
+            $imageIds = [];
+            $prizeIds = [];
 
-        $res = $this->getDataManager(self::PET_HL_NAME)::query()
-            ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE', 'UF_DESCRIPTION', 'UF_PRIZES']);
+            $res = $this->getDataManager(self::PET_HL_NAME)::query()
+                ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE', 'UF_DESCRIPTION', 'UF_PRIZES']);
 
-        if ($petTypeId && !empty($petTypeId)) {
-            $res->setFilter(['ID' => $petTypeId]);
-        }
-
-        $res->exec();
-
-        foreach ($res->fetchAll() as $pet) {
-            $pets[$pet['ID']] = $pet;
-
-            if ($pet['UF_IMAGE']) {
-                $imageIds[] = $pet['UF_IMAGE'];
+            if ($petTypeId && !empty($petTypeId)) {
+                $res->setFilter(['ID' => $petTypeId]);
             }
 
-            if ($pet['UF_PRIZES']) {
+            $res->exec();
+
+            foreach ($res->fetchAll() as $pet) {
+                $pets[$pet['ID']] = $pet;
+
+                if ($pet['UF_IMAGE']) {
+                    $imageIds[] = $pet['UF_IMAGE§'];
+                }
+
+                if ($pet['UF_PRIZES']) {
+                    foreach ($pet['UF_PRIZES'] as $prizeId) {
+                        $prizeIds[] = $prizeId;
+                    }
+                }
+            }
+
+            $imageCollection = ImageCollection::createFromIds($imageIds);
+
+            $prizes = $this->getPrizes($prizeIds);
+
+            foreach ($pets as $pet) {
+                $petPrizes = [];
                 foreach ($pet['UF_PRIZES'] as $prizeId) {
-                    $prizeIds[] = $prizeId;
+                    if (isset($prizes[$prizeId])) {
+                        $petPrizes[] = $prizes[$prizeId];
+                    }
                 }
-            }
-        }
 
-        $imageCollection = ImageCollection::createFromIds($imageIds);
-
-        $prizes = $this->getPrizes($prizeIds);
-
-        foreach ($pets as $pet) {
-            $petPrizes = [];
-            foreach ($pet['UF_PRIZES'] as $prizeId) {
-                if (isset($prizes[$prizeId])) {
-                    $petPrizes[] = $prizes[$prizeId];
-                }
+                $result[$pet['ID']] = (new Pet())
+                    ->setId($pet['ID'])
+                    ->setTitle($pet['UF_NAME'])
+                    ->setDescription($pet['UF_DESCRIPTION'])
+                    ->setImage($this->getImageFromCollection($pet['UF_IMAGE'], $imageCollection))
+                    ->setPrizes($petPrizes);
             }
 
-            $result[$pet['ID']] = (new Pet())
-                ->setId($pet['ID'])
-                ->setTitle($pet['UF_NAME'])
-                ->setDescription($pet['UF_DESCRIPTION'])
-                ->setImage($this->getImageFromCollection($pet['UF_IMAGE'], $imageCollection))
-                ->setPrizes($petPrizes);
-        }
+            return $result;
+        };
 
-        return $result;
+        try {
+            return (new BitrixCache())
+                ->withTag('quest_pets')
+                ->withTime(360000)
+                ->withId(__METHOD__ . serialize(['petTypeIds' => $petTypeId]))
+                ->resultOf($cacheFinder);
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to get pets for quest: %s', $e->getMessage()), [
+                'pet type ids' => var_export($petTypeId, true),
+            ]);
+            return [];
+        }
     }
 
     /**
      * @param array $prizeIds
      * @return Prize[]
      *
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      * @throws Exception
      */
     public function getPrizes(array $prizeIds = []): array
     {
-        $result = [];
-        $prizes = [];
-        $imageIds = [];
+        $cacheFinder = function () use ($prizeIds) {
+            $result = [];
+            $prizes = [];
+            $imageIds = [];
 
-        if ((!$prizeIds || empty($prizeIds))) {
-            return [];
-        }
-
-        $res = $this->getDataManager(self::PRIZE_HL_NAME)::query()
-            ->setFilter(['=ID' => $prizeIds])
-            ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE'])
-            ->exec();
-
-        foreach ($res as $prize) {
-            if ($prize['UF_IMAGE']) {
-                $imageIds[] = $prize['UF_IMAGE'];
+            if ((!$prizeIds || empty($prizeIds))) {
+                return [];
             }
 
-            $prizes[$prize['ID']] = $prize;
+            $res = $this->getDataManager(self::PRIZE_HL_NAME)::query()
+                ->setFilter(['=ID' => $prizeIds])
+                ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE'])
+                ->exec();
+
+            foreach ($res as $prize) {
+                if ($prize['UF_IMAGE']) {
+                    $imageIds[] = $prize['UF_IMAGE'];
+                }
+
+                $prizes[$prize['ID']] = $prize;
+            }
+
+            $imageCollection = ImageCollection::createFromIds($imageIds);
+
+            foreach ($prizes as $prize) {
+                $result[$prize['ID']] = (new Prize())
+                    ->setId($prize['ID'])
+                    ->setName($prize['UF_NAME'])
+                    ->setImage($this->getImageFromCollection($prize['UF_IMAGE'], $imageCollection));
+            }
+
+            return $result;
+        };
+
+        try {
+            return (new BitrixCache())
+                ->withTag('quest_prizes')
+                ->withTime(360000)
+                ->withId(__METHOD__ . serialize(['prizeIds' => $prizeIds]))
+                ->resultOf($cacheFinder);
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to get pri for quest: %s', $e->getMessage()), [
+                'prizes ids' => var_export($prizeIds, true),
+            ]);
+            return [];
         }
-
-        $imageCollection = ImageCollection::createFromIds($imageIds);
-
-        foreach ($prizes as $prize) {
-            $result[$prize['ID']] = (new Prize())
-                ->setId($prize['ID'])
-                ->setName($prize['UF_NAME'])
-                ->setImage($this->getImageFromCollection($prize['UF_IMAGE'], $imageCollection));
-        }
-
-        return $result;
     }
 
     /**
@@ -762,33 +805,41 @@ class QuestService
      */
     protected function getImageFromCollection($imageId, $imageCollection): ?ImageInterface
     {
-        return $this->imageProcessor->findImage($imageId, $imageCollection);
+        return $this->imageProcessor->findImage($imageId, $imageCollection) ?: null;
     }
 
     /**
      * @param $petTypeId
      * @return array
      *
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      * @throws Exception
      */
     protected function generateTasks($petTypeId): array
     {
-        $res = $this->getDataManager(self::TASK_HL_NAME)::query()
-            ->setFilter(['=UF_PET' => $petTypeId])
-            ->setSelect(['ID'])
-            ->exec();
+        $cacheFinder = function () use ($petTypeId) {
+            $res = $this->getDataManager(self::TASK_HL_NAME)::query()
+                ->setFilter(['=UF_PET' => $petTypeId])
+                ->setSelect(['ID'])
+                ->exec();
 
-        $tasks = [];
-        foreach ($res as $task) {
-            $tasks[] = [
-                'ID' => $task['ID'],
-                'BARCODE_COMPLETE' => false,
-                'QUESTION_RESULT' => QuestionTask::STATUS_NOT_START
-            ];
-        }
+            $tasks = [];
+            foreach ($res as $task) {
+                $tasks[] = [
+                    'ID' => $task['ID'],
+                    'BARCODE_COMPLETE' => false,
+                    'QUESTION_RESULT' => QuestionTask::STATUS_NOT_START
+                ];
+            }
+
+            return $tasks;
+        };
+
+        $tasks = (new BitrixCache())
+            ->withTag('quest_pet_tasks')
+            ->withTime(360000)
+            ->withId(__METHOD__ . serialize(['pet type id' => $petTypeId]))
+            ->resultOf($cacheFinder);
+
 
         shuffle($tasks);
         $number = 1;

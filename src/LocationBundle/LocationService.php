@@ -647,7 +647,6 @@ class LocationService
             return (new BitrixCache())
                 ->withTag('location_finder')
                 ->withTime(360000)
-                ->withClearCache(true)
                 ->withId(__METHOD__ . serialize(['queryParams' => $queryParams, 'limit' => $limit]))
                 ->resultOf($cacheFinder);
         } catch (\Exception $e) {

@@ -78,7 +78,9 @@ class Prize
      */
     public function setImage(string $image): Prize
     {
-        $this->image = (string) new FullHrefDecorator($image);
+        if ($image !== null) {
+            $this->image = (string)new FullHrefDecorator($image);
+        }
         return $this;
     }
 }

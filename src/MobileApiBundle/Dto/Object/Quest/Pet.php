@@ -79,20 +79,22 @@ class Pet
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getImage(): string
+    public function getImage(): ?string
     {
         return $this->image;
     }
 
     /**
-     * @param string $image
+     * @param string|null $image
      * @return Pet
      */
-    public function setImage(string $image): Pet
+    public function setImage(?string $image): Pet
     {
-        $this->image = (string) new FullHrefDecorator($image);
+        if ($image !== null) {
+            $this->image = (string)new FullHrefDecorator($image);
+        }
         return $this;
     }
 
