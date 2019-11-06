@@ -133,7 +133,7 @@ class QuestService
             if ($this->isFinishStep($userResult)) {
                 /** @var Pet $userPet */
                 $userPet = current($this->getPetTypes([$userResult['UF_PET']]));
-                if ($userPet !== null) {
+                if ($userPet && ($userPet !== null)) {
                     $needChoosePet = false;
 
                     if (empty($userResult['UF_PRIZE']) || ($userResult['UF_PRIZE'] === null)) {
