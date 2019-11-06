@@ -463,7 +463,7 @@ class QuestService
             ->exec();
 
         if ($arPromocode = $res->fetch()) {
-            $updateResult = $this->getDataManager(self::RESULT_HL_NAME)::update($arPromocode['ID'], ['UF_ACTIVE' => 0]);
+            $updateResult = $this->getDataManager(self::PROMOCODE_HL_NAME)::update($arPromocode['ID'], ['UF_ACTIVE' => 0]);
             if ($updateResult->isSuccess()) {
                 return $arPromocode['UF_PROMOCODE'];
             }
@@ -728,7 +728,7 @@ class QuestService
                 $pets[$pet['ID']] = $pet;
 
                 if ($pet['UF_IMAGE']) {
-                    $imageIds[] = $pet['UF_IMAGE§'];
+                    $imageIds[] = $pet['UF_IMAGE'];
                 }
 
                 if ($pet['UF_PRIZES']) {
@@ -794,7 +794,7 @@ class QuestService
 
             $res = $this->getDataManager(self::PRIZE_HL_NAME)::query()
                 ->setFilter(['=ID' => $prizeIds])
-                ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE', 'UF_PRODUCT_ID'])
+                ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE', 'UF_PRODUCT_XML_ID'])
                 ->exec();
 
             foreach ($res as $prize) {
@@ -811,7 +811,8 @@ class QuestService
                 $result[$prize['ID']] = (new Prize())
                     ->setId($prize['ID'])
                     ->setName($prize['UF_NAME'])
-                    ->setImage($this->getImageFromCollection($prize['UF_IMAGE'], $imageCollection));
+                    ->setImage($this->getImageFromCollection($prize['UF_IMAGE'], $imageCollection))
+                    ->setXmlId($prize['UF_PRODUCT_XML_ID']);
             }
 
             return $result;

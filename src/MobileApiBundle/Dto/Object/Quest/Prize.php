@@ -22,6 +22,13 @@ class Prize
     protected $name = '';
 
     /**
+     * @Serializer\SerializedName("xml_id")
+     * @Serializer\Type("string")
+     * @var string
+     */
+    protected $xmlId = '';
+
+    /**
      * @Serializer\SerializedName("image")
      * @Serializer\Type("string")
      * @var string
@@ -61,6 +68,24 @@ class Prize
     public function setName(string $name): Prize
     {
         $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getXmlId(): ?string
+    {
+        return $this->xmlId;
+    }
+
+    /**
+     * @param string $xmlId
+     * @return Prize
+     */
+    public function setXmlId(?string $xmlId): Prize
+    {
+        $this->xmlId = $xmlId;
         return $this;
     }
 
