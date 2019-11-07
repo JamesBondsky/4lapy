@@ -89,16 +89,20 @@ class QuestController extends BaseController
      * @Security("has_role('REGISTERED_USERS')")
      *
      * @param QuestStartRequest $questStartRequest
-     * @return QuestStartResponse
+     * @return Response
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function postStartAction(QuestStartRequest $questStartRequest): QuestStartResponse
+    public function postStartAction(QuestStartRequest $questStartRequest): Response
     {
         $this->apiQuestService->startQuest($questStartRequest);
 
-        return (new QuestStartResponse())->setBarcodeTask($this->apiQuestService->getCurrentBarcodeTask());
+        $response = (new QuestStartResponse())
+            ->setBarcodeTask($this->apiQuestService->getCurrentBarcodeTask())
+            ->setQuestStatus($this->apiQuestService->getQuestStatus());
+
+        return new Response(['start_result' => $response]);
     }
 
     /**
