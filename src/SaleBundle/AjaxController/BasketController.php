@@ -889,7 +889,7 @@ class BasketController extends Controller implements LoggerAwareInterface
     /**
      * @return PersonalOffersService|object
      */
-    protected function getPersonalOffersService()
+    public function getPersonalOffersService()
     {
         if ($this->personalOffersService)
         {
