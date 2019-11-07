@@ -5,6 +5,7 @@ namespace FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\BarcodeTask;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\Prize;
 use FourPaws\MobileApiBundle\Dto\Object\Quest\QuestStatus;
+use FourPaws\MobileApiBundle\Dto\Request\QuestQuestionRequest;
 use JMS\Serializer\Annotation as Serializer;
 
 class QuestQuestionTaskResponse
@@ -22,6 +23,13 @@ class QuestQuestionTaskResponse
      * @var string
      */
     protected $errorText = '';
+
+    /**
+     * @Serializer\SerializedName("prize_text")
+     * @Serializer\Type("string")
+     * @var string
+     */
+    protected $prizeText = '';
 
     /**
      * @Serializer\SerializedName("task_barcode")
@@ -77,6 +85,24 @@ class QuestQuestionTaskResponse
     public function setErrorText(string $errorText): QuestQuestionTaskResponse
     {
         $this->errorText = $errorText;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPrizeText(): string
+    {
+        return $this->prizeText;
+    }
+
+    /**
+     * @param string $prizeText
+     * @return QuestQuestionTaskResponse
+     */
+    public function setPrizeText(string $prizeText): QuestQuestionTaskResponse
+    {
+        $this->prizeText = $prizeText;
         return $this;
     }
 

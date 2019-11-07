@@ -58,6 +58,13 @@ class QuestRegisterGetResponse
     protected $correctAnswers = 0;
 
     /**
+     * @Serializer\SerializedName("prize_text")
+     * @Serializer\Type("string")
+     * @var string
+     */
+    protected $prizeText = '';
+
+    /**
      * @Serializer\SerializedName("prizes")
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Quest\Prize>")
      * @var Prize[]
@@ -208,6 +215,24 @@ class QuestRegisterGetResponse
     public function setCorrectAnswers(int $correctAnswers = 0): QuestRegisterGetResponse
     {
         $this->correctAnswers = $correctAnswers;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPrizeText(): string
+    {
+        return $this->prizeText;
+    }
+
+    /**
+     * @param string $prizeText
+     * @return QuestRegisterGetResponse
+     */
+    public function setPrizeText(string $prizeText): QuestRegisterGetResponse
+    {
+        $this->prizeText = $prizeText;
         return $this;
     }
 

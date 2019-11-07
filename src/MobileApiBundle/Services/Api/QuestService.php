@@ -43,6 +43,9 @@ class QuestService
 
     protected const QUEST_CODE = 'QUEST';
 
+    public const MIN_CORRECT_ANSWERS = 4;
+    public const MIN_CORRECT_ANSWERS_TEXT = 'Вы всегда можете проконсультироваться с продавцом перед покупкой.';
+
     protected const PET_HL_NAME = 'QuestPet';
     protected const PRIZE_HL_NAME = 'QuestPrize';
     protected const RESULT_HL_NAME = 'QuestResult';
@@ -141,6 +144,10 @@ class QuestService
                             ->setIsFinishStep(true)
                             ->setPrizes($userPet->getPrizes())
                             ->setCorrectAnswers($this->getCorrectAnswers($userResult));
+
+                        if ($this->getCorrectAnswers($userResult) < self::MIN_CORRECT_ANSWERS) {
+                            $result->setPrizeText(self::MIN_CORRECT_ANSWERS_TEXT);
+                        }
                     } else {
                         $result
                             ->setShowPrize(true)
