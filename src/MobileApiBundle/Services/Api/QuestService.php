@@ -49,7 +49,7 @@ class QuestService
     protected const TASK_HL_NAME = 'QuestTask';
     protected const PROMOCODE_HL_NAME = 'QuestPromocode';
 
-    protected const TASK_SELECT = ['ID', 'UF_TITLE', 'UF_TASK', 'UF_IMAGE', 'UF_VARIANTS', 'UF_ANSWER', 'UF_PRODUCT_XML_ID', 'UF_QUESTION', 'UF_CATEGORY', 'UF_CORRECT_TEXT', 'UF_BARCODE_ERROR', 'UF_QUESTION_ERROR'];
+    protected const TASK_SELECT = ['ID', 'UF_TITLE', 'UF_TASK', 'UF_IMAGE', 'UF_VARIANTS', 'UF_ANSWER', 'UF_PRODUCT_XML_ID', 'UF_QUESTION', 'UF_CATEGORY', 'UF_CORRECT_TEXT', 'UF_QUESTION_ERROR'];
 
     /**
      * @var ApiProductService
