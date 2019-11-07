@@ -151,7 +151,7 @@ class BasketController extends Controller implements LoggerAwareInterface
         $quantity = (int)$request->get('quantity', 1);
 
         try {
-            $showAddressPopup = $this->basketService->needShowAddressPopup();
+            $showAddressPopup = $this->basketService->needShowAddressPopup(null, true);
 
             $basketItem = $this->basketService->addOfferToBasket($offerId, $quantity, [], true, null, true);
             // @todo костыль - иначе в миникорзине не будет картинки нового товара

@@ -1785,17 +1785,14 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param Request|null $request
+     * @param bool $withDelivery
      * @return bool
      */
-    public function needShowAddressPopup(Request $request = null): bool
+    public function needShowAddressPopup(Request $request = null, $withDelivery = false): bool
     {
         /** @var LocationService $locationService */
         $locationService = App::getInstance()->getContainer()->get('location.service');
         if ($locationService->getCurrentLocation() !== LocationService::LOCATION_CODE_MOSCOW) {
-            return false;
-        }
-
-        if (!$this->getBasket()->isEmpty()) {
             return false;
         }
 
@@ -1809,16 +1806,18 @@ class BasketService implements LoggerAwareInterface
             return false;
         }
 
-        /** @var DeliveryService $deliveryService */
-        $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
-        try {
-            foreach ($deliveryService->getByBasket($this->getBasket()) as $delivery) {
-                if ($deliveryService->isDelivery($delivery) || $deliveryService->isDostavistaDelivery($delivery)) {
-                    return true;
+        if ($withDelivery) {
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
+            try {
+                foreach ($deliveryService->getByBasket($this->getBasket()) as $delivery) {
+                    if ($deliveryService->isDelivery($delivery) || $deliveryService->isDostavistaDelivery($delivery)) {
+                        return true;
+                    }
                 }
+            } catch (\Exception $e) {
+                return false;
             }
-        } catch (\Exception $e) {
-            return false;
         }
 
         return false;
