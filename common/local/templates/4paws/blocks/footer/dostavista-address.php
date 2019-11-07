@@ -21,7 +21,7 @@ try {
         <script>
             window.dadataConstraintsLocations = <?= $locationService->getDadataJsonFromLocationArray($selectedCity) ?>;
         </script>
-        <section class="b-popup-wrapper__wrapper-modal js-popup-section" data-popup="dostavista-address">
+        <section class="b-popup-wrapper__wrapper-modal b-popup-wrapper__wrapper-modal--dostavista-address js-popup-section" data-popup="dostavista-address">
             <div class="b-dostavista-address js-popup-alert-title success">
                 <div class="b-dostavista-address__top">
                     <div class="b-dostavista-address__title">
