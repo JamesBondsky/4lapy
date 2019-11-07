@@ -67,6 +67,7 @@ class OfferQuery extends IblockElementQuery
             'VOLUME_REFERENCE',
             'VOLUME',
             'CLOTHING_SIZE',
+            'STM',
             'IMG',
             'BARCODE',
             'KIND_OF_PACKING',

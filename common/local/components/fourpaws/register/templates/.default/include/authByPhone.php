@@ -11,7 +11,7 @@ use FourPaws\KioskBundle\Service\KioskService;
     </div>
     <form class="b-registration__form js-form-validation js-registration-form"
           id="reg-step2-form"
-          data-url="/ajax/user/auth/login-r/"
+          data-url="/ajax/user/auth/login-o/"
           method="post">
         <?= bitrix_sessid_post() ?>
         <input type="hidden" name="action" value="login">
