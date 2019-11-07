@@ -10,6 +10,8 @@ use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
+global $USER;
+
 $APPLICATION->SetPageProperty('title', 'Интернет-зоомагазин Четыре Лапы – продажа и доставка зоотоваров по Москве, Московской области и всей России');
 $APPLICATION->SetPageProperty('description', '');
 $APPLICATION->SetPageProperty('keywords', '');
@@ -358,5 +360,25 @@ if (!KioskService::isKioskMode()) {
 }
 
 echo '</div>';
+
+
+if ($USER->isAdmin()) {
+	echo '<pre>';
+	echo 'SERVER REQUEST_URI<br>';
+	print_r($_SERVER['REQUEST_URI']);
+	echo '</pre><br>';
+	echo '<pre>';
+	echo 'SESSION KIOSK_CARD<br>';
+	print_r($_SESSION['KIOSK_CARD']);
+	echo '</pre><br>';
+	echo '<pre>';
+	echo 'REQUEST kiosk<br>';
+	print_r($_REQUEST['kiosk']);
+	echo '</pre><br>';
+	echo '<pre>';
+	echo 'REQUEST store<br>';
+	print_r($_REQUEST['store']);
+	echo '</pre><br>';
+}
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';
