@@ -5,7 +5,9 @@ namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Exception;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
@@ -31,11 +33,61 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
     protected const TASK_HL_NAME = 'Квест: задания';
     protected const PROMOCODE_HL_NAME = 'Квест: промокоды';
 
+    protected $catPrizeData = [
+        [
+            'UF_NAME' => 'Лакомство',
+            'UF_PRODUCT_XML_ID' => '1018143'
+        ],
+        [
+            'UF_NAME' => 'Игрушка',
+            'UF_PRODUCT_XML_ID' => '1006981'
+        ],
+    ];
+
+    protected $dogPrizeData = [
+        [
+            'UF_NAME' => 'Лакомство',
+            'UF_PRODUCT_XML_ID' => '1009108'
+        ],
+        [
+            'UF_NAME' => 'Игрушка',
+            'UF_PRODUCT_XML_ID' => '1009939']
+        ,
+    ];
+
+    protected $catData = [
+        'UF_NAME' => 'Кошка',
+        'UF_DESCRIPTION' => '1. Пройди квест и стань самым лучшим хозяином для своей кошки\n\n
+            2. Найди 7 товаров в магазине.\n
+            Отсканирую штрихкод\n
+            Узнай любопытный факт\n
+            Получи подарок!\n\n
+            3. Время прохождения: 5 минут\n\n
+            Приз за прохождение: Лакомство или игрушка для кошек'
+    ];
+
+    protected $dogData = [
+        'UF_NAME' => 'Собака',
+        'UF_DESCRIPTION' => '1. Пройди квест и стань самым лучшим хозяином для своей собаки\n\n
+            2. Найди 7 товаров в магазине.\n
+            Отсканирую штрихкод\n
+            Узнай любопытный факт\n
+            Получи подарок!\n\n
+            3. Время прохождения: 5 минут\n\n
+            Приз за прохождение: Лакомство или игрушка для собак'
+    ];
+
     protected $prizeHlBlockId;
     protected $prizeHLBlockFieldID;
 
+    protected $catPrizes = [];
+    protected $dogPrizes = [];
+
     protected $petHLBlockId;
     protected $petHLBlockFieldID;
+
+    protected $catId;
+    protected $dogId;
 
     protected $promocodeHlBlockId;
 
@@ -46,18 +98,19 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
     /**
      * @return bool|void
      * @throws IblockNotFoundException
+     * @throws Exception
      */
     public function up()
     {
         $this->addPrizeHLBlock();
-
         $this->addPetHLBlock();
-
         $this->addPromocodeHLBlock();
-
         $this->addTaskHlBlock();
-
         $this->addUserResultHLBlock();
+
+        $this->fillPrizes();
+        $this->fillPets();
+        $this->fillTasks();
     }
 
     public function down()
@@ -247,8 +300,8 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
             'ERROR_MESSAGE' => ['ru' => 'Описание'],
             'HELP_MESSAGE' => ['ru' => 'Описание'],
         ]);
-        $helper->UserTypeEntity()->addUserTypeEntityIfNotExists($entityId, 'UF_PRIZES', [
-            'FIELD_NAME' => 'UF_PRIZES',
+        $helper->UserTypeEntity()->addUserTypeEntityIfNotExists($entityId, 'UF_PRIZE', [
+            'FIELD_NAME' => 'UF_PRIZE',
             'USER_TYPE_ID' => 'hlblock',
             'XML_ID' => 'UF_PRIZES',
             'SORT' => '100',
@@ -405,7 +458,7 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
             'XML_ID' => 'UF_TITLE',
             'SORT' => '100',
             'MULTIPLE' => 'N',
-            'MANDATORY' => 'Y',
+            'MANDATORY' => 'N',
             'SHOW_FILTER' => 'N',
             'SHOW_IN_LIST' => 'Y',
             'EDIT_IN_LIST' => 'Y',
@@ -430,7 +483,7 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
             'XML_ID' => 'UF_TASK',
             'SORT' => '100',
             'MULTIPLE' => 'N',
-            'MANDATORY' => 'Y',
+            'MANDATORY' => 'N',
             'SHOW_FILTER' => 'N',
             'SHOW_IN_LIST' => 'Y',
             'EDIT_IN_LIST' => 'Y',
@@ -455,7 +508,7 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
             'XML_ID' => 'UF_IMAGE',
             'SORT' => '100',
             'MULTIPLE' => 'N',
-            'MANDATORY' => 'Y',
+            'MANDATORY' => 'N',
             'SHOW_FILTER' => 'N',
             'SHOW_IN_LIST' => 'Y',
             'EDIT_IN_LIST' => 'Y',
@@ -529,7 +582,7 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
             'XML_ID' => 'UF_QUESTION',
             'SORT' => '100',
             'MULTIPLE' => 'N',
-            'MANDATORY' => 'Y',
+            'MANDATORY' => 'N',
             'SHOW_FILTER' => 'N',
             'SHOW_IN_LIST' => 'Y',
             'EDIT_IN_LIST' => 'Y',
@@ -554,7 +607,7 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
             'XML_ID' => 'UF_VARIANTS',
             'SORT' => '100',
             'MULTIPLE' => 'Y',
-            'MANDATORY' => 'Y',
+            'MANDATORY' => 'N',
             'SHOW_FILTER' => 'N',
             'SHOW_IN_LIST' => 'Y',
             'EDIT_IN_LIST' => 'Y',
@@ -579,7 +632,7 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
             'XML_ID' => 'UF_ANSWER',
             'SORT' => '100',
             'MULTIPLE' => 'N',
-            'MANDATORY' => 'Y',
+            'MANDATORY' => 'N',
             'SHOW_FILTER' => 'N',
             'SHOW_IN_LIST' => 'Y',
             'EDIT_IN_LIST' => 'Y',
@@ -807,5 +860,197 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
             'ERROR_MESSAGE' => ['ru' => 'Промокод'],
             'HELP_MESSAGE' => ['ru' => 'Промокод'],
         ]);
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function fillPrizes(): void
+    {
+        $dataManager = HLBlockFactory::createTableObject(self::PRIZE_HL_TYPE);
+
+        foreach ($this->catPrizeData as $data) {
+            $result = $dataManager::add($data);
+
+            if ($result->isSuccess()) {
+                $this->catPrizes[] = $result->getId();
+                $this->fillPromocode($result->getId(), $data['UF_PRODUCT_XML_ID']);
+            }
+        }
+
+        foreach ($this->dogPrizeData as $data) {
+            $result = $dataManager::add($data);
+
+            if ($result->isSuccess()) {
+                $this->dogPrizes[] = $result->getId();
+                $this->fillPromocode($result->getId(), $data['UF_PRODUCT_XML_ID']);
+            }
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function fillPets(): void
+    {
+        $dataManager = HLBlockFactory::createTableObject(self::PET_HL_TYPE);
+
+        $data = $this->catData;
+        $data['UF_PRIZE'] = $this->catPrizes;
+
+        $result = $dataManager::add($data);
+
+        if ($result->isSuccess()) {
+            $this->catId = $result->getId();
+        }
+
+        $data = $this->dogData;
+        $data['UF_PRIZE'] = $this->dogPrizes;
+
+        $result = $dataManager::add($data);
+
+        if ($result->isSuccess()) {
+            $this->dogId = $result->getId();
+        }
+    }
+
+    /**
+     * @param $prizeId
+     * @param $productXmlId
+     * @throws Exception
+     */
+    protected function fillPromocode($prizeId, $productXmlId): void
+    {
+        $dataManager = HLBlockFactory::createTableObject(self::PROMOCODE_HL_TYPE);
+
+        $fileDir = __DIR__ . "/../migration_sources/quest_promocode/$productXmlId.csv";
+
+        $row = 0;
+        $promocodeData = [];
+
+        if (($handle = fopen($fileDir, 'rb')) !== false) {
+            while ((($data = fgetcsv($handle, 1000, ';')) !== false)) {
+                $row++;
+                if ($row === 1) {
+                    continue;
+                }
+
+                $promocodeData[] = $data[0];
+            }
+            fclose($handle);
+        }
+
+        foreach ($promocodeData as $data) {
+            $dataManager::add([
+                'UF_PRIZE' => $prizeId,
+                'UF_PROMOCODE' => $data,
+                'UF_ACTIVE' => 1
+            ]);
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function fillTasks(): void
+    {
+        $dataManager = HLBlockFactory::createTableObject(self::TASK_TASK_HL_TYPE);
+
+        foreach ($this->importTasks() as $task) {
+            $dataManager::add($task);
+        }
+    }
+
+    /**
+     * @return array
+     * @throws IblockNotFoundException
+     */
+    protected function importTasks(): array
+    {
+        $fileDir = __DIR__ . '/../migration_sources/quest_questions.csv';
+
+        $row = 0;
+        $catRows = range(2, 8);
+        $dogRows = range(11, 17);
+
+        $iterator = 1;
+
+        $tasks = [];
+
+        if (($handle = fopen($fileDir, 'rb')) !== false) {
+            while ((($data = fgetcsv($handle, 1000, ';')) !== false) && ($row < 27)) {
+                $row++;
+                if (!in_array($row, $catRows, true) && !in_array($row, $dogRows, true)) {
+                    continue;
+                }
+
+                $taskData = [
+                    'UF_TITLE' => $data[1],
+                    'UF_TASK' => 'Найди в магазине отдел сухого корма для осбак и отсканируй штрихкод на люом сухом корме Грандин!', //todo hardcode
+                    'UF_CORRECT_TEXT' => $data[2],
+                    'UF_QUESTION' => $data[4],
+                    'UF_VARIANTS' => [$data[5], $data[6], $data[7]],
+                    'UF_ANSWER' => $data[5],
+                    'UF_QUESTION_ERROR' => $data[8],
+                ];
+
+                if (in_array($row, $catRows, true)) {
+                    $taskData['UF_PET'] = $this->catId;
+                }
+
+                if (in_array($row, $dogRows, true)) {
+                    $taskData['UF_PET'] = $this->dogId;
+                }
+
+                $tasks[$iterator] = $taskData;
+                $iterator++;
+            }
+            fclose($handle);
+        }
+
+        $fileDir = __DIR__ . '/../migration_sources/quest_products.csv';
+
+        $row = 0;
+        $catRows = range(2, 8);
+        $dogRows = range(11, 17);
+
+        $iterator = 1;
+
+        if (($handle = fopen($fileDir, 'rb')) !== false) {
+            while ((($data = fgetcsv($handle, 1000, ';')) !== false) && ($row < 27)) {
+                $row++;
+                if (!in_array($row, $catRows, true) && !in_array($row, $dogRows, true)) {
+                    continue;
+                }
+
+                if (preg_match('/https:\/\/4lapy\.ru\/catalog\/([a-zA-Z_\-]+)\/(([a-zA-Z_\-]+)\/)?(([a-zA-Z_\-]+)\/)?/', $data[9], $find)) {
+                    $sectionCode = end($find);
+
+                    $section = \CIBlockSection::GetList(false, [
+                            'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+                            '=CODE' => $sectionCode,
+                        ]
+                    )->Fetch();
+
+                    if ($section) {
+                        $tasks[$iterator]['UF_CATEGORY'] = $section['ID'];
+                    }
+                } else {
+                    $productXmlIds = [];
+                    foreach (explode("\n", $data[9]) as $xmlId) {
+                        if (!empty($xmlId)) {
+                            $productXmlIds[] = $xmlId;
+                        }
+                    }
+                    $tasks[$iterator]['UF_PRODUCT_XML_ID'] = $productXmlIds;
+                }
+
+                $iterator++;
+
+            }
+            fclose($handle);
+        }
+
+        return $tasks;
     }
 }

@@ -716,7 +716,7 @@ class QuestService
             $prizeIds = [];
 
             $res = $this->getDataManager(self::PET_HL_NAME)::query()
-                ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE', 'UF_DESCRIPTION', 'UF_PRIZES']);
+                ->setSelect(['ID', 'UF_NAME', 'UF_IMAGE', 'UF_DESCRIPTION', 'UF_PRIZE']);
 
             if ($petTypeId && !empty($petTypeId)) {
                 $res->setFilter(['ID' => $petTypeId]);
@@ -731,8 +731,8 @@ class QuestService
                     $imageIds[] = $pet['UF_IMAGE'];
                 }
 
-                if ($pet['UF_PRIZES']) {
-                    foreach ($pet['UF_PRIZES'] as $prizeId) {
+                if ($pet['UF_PRIZE']) {
+                    foreach ($pet['UF_PRIZE'] as $prizeId) {
                         $prizeIds[] = $prizeId;
                     }
                 }
@@ -744,7 +744,7 @@ class QuestService
 
             foreach ($pets as $pet) {
                 $petPrizes = [];
-                foreach ($pet['UF_PRIZES'] as $prizeId) {
+                foreach ($pet['UF_PRIZE'] as $prizeId) {
                     if (isset($prizes[$prizeId])) {
                         $petPrizes[] = $prizes[$prizeId];
                     }
@@ -840,6 +840,10 @@ class QuestService
      */
     protected function getImageFromCollection($imageId, $imageCollection): ?ImageInterface
     {
+        if (!$imageId || ($imageId === null)) {
+            return null;
+        }
+
         return $this->imageProcessor->findImage($imageId, $imageCollection) ?: null;
     }
 

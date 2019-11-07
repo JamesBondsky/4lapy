@@ -101,7 +101,7 @@ class Prize
      * @param string $image
      * @return Prize
      */
-    public function setImage(string $image): Prize
+    public function setImage(?string $image): Prize
     {
         if ($image !== null) {
             $this->image = (string)new FullHrefDecorator($image);

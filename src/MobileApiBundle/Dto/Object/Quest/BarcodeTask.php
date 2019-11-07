@@ -82,7 +82,9 @@ class BarcodeTask
      */
     public function setImage(?string $image): BarcodeTask
     {
-        $this->image = (string) new FullHrefDecorator($image);
+        if ($image !== null) {
+            $this->image = (string)new FullHrefDecorator($image);
+        }
         return $this;
     }
 }
