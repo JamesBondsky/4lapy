@@ -102,7 +102,7 @@ class QuestController extends BaseController
             ->setBarcodeTask($this->apiQuestService->getCurrentBarcodeTask())
             ->setQuestStatus($this->apiQuestService->getQuestStatus());
 
-        return new Response(['start_result' => $response]);
+        return new Response(['task_result' => $response]);
     }
 
     /**
