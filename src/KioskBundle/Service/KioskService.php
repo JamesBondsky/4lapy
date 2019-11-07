@@ -45,13 +45,13 @@ class KioskService
     {
         return self::$menu;
     }
-    
+
     /**
      * @return string
      */
     public static function getOrderShop()
     {
-        return 'R238';
+        return $_SESSION['kiosk_store'] ?? self::DEFAULT_STORE;
     }
 
     /**
