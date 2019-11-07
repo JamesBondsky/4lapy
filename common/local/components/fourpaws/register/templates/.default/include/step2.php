@@ -32,6 +32,13 @@ if (!$userData) {
         <input type="hidden" name="action" value="register">
         <input type="hidden" name="PERSONAL_PHONE" value="<?= $phone ?>">
         <input type="hidden" name="backurl" value="<?=$backUrl?>">
+        <?
+        if ($userData) {
+            ?>
+            <input type="hidden" name="ex_id" value="<?= $userData['ex_id'] ?>">
+            <?
+        }
+        ?>
         <div class="b-input-line b-input-line--user-data js-hidden-valid-fields js-small-input-two">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-surname">Фамилия</label>

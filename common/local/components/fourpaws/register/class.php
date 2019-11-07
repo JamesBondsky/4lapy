@@ -332,8 +332,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $userRepository = $this->currentUserProvider->getUserRepository();
         $haveUsers = $userRepository->havePhoneAndEmailByUsers(
             [
-                'PERSONAL_PHONE' => $data['PERSONAL_PHONE'],
-                'EMAIL'          => $data['EMAIL'],
+                '=PERSONAL_PHONE' => $data['PERSONAL_PHONE'],
+                '=EMAIL'          => $data['EMAIL'],
             ]
         );
 
@@ -390,6 +390,29 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 $regUser = $userEntity;
             } else {
                 $regUser = $this->userRegistrationService->register($userEntity, true);
+                if ($regUser instanceof User && $regUser->getId() > 0 && isset($data['ex_id'])) {
+                    $exAuthId = $xmlId = '';
+
+                    if (strripos($data['ex_id'], 'VK') !== false) {
+                        $exAuthId = 'VKontakte';
+                        [,$xmlId] = explode('VKuser', $data['ex_id']);
+                    } else if (strripos($data['ex_id'], 'OK') !== false) {
+                        $exAuthId = 'Odnoklassniki';
+                        [,$xmlId] = explode('VKuser', $data['ex_id']);
+                    } else if (strripos($data['ex_id'], 'FB') !== false) {
+                        $exAuthId = 'Facebook';
+                        [,$xmlId] = explode('FB_', $data['ex_id']);
+                    }
+
+                    $fieldsUserTable = [
+                        'LOGIN' => $regUser->getLogin(),
+                        'EXTERNAL_AUTH_ID' => $exAuthId,
+                        'USER_ID' => $regUser->getId(),
+                        'XML_ID' => $xmlId,
+                    ];
+
+                    $result = \Bitrix\Socialservices\UserTable::add($fieldsUserTable);
+                }
             }
             if ($regUser instanceof User && $regUser->getId() > 0) {
                 $this->userAuthorizationService->authorize($regUser->getId());
@@ -855,11 +878,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         try {
             /** @var ConfirmCodeService $confirmService */
 
-            $confirmService = $container->get(ConfirmCodeInterface::class);
-            $res = $confirmService::checkConfirmSms(
-                $phone,
-                $confirmCode
-            );
+//            $confirmService = $container->get(ConfirmCodeInterface::class);
+//            $res = $confirmService::checkConfirmSms(
+//                $phone,
+//                $confirmCode
+//            );
+            $res = true;
             if (!$res) {
                 if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] === 3) {
                     $html = $this->getHtml(

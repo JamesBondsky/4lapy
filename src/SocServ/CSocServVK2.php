@@ -60,8 +60,8 @@ class CSocServVK2 extends \CSocServVKontakte {
         }
         else
         {
-            //$redirect_uri = CSocServUtil::GetCurUrl('auth_service_id='.self::ID);
-            $redirect_uri = \CHTTP::URN2URI($APPLICATION->GetCurPage()) . '?auth_service_id=' . self::ID;
+            //$redirect_uri = CSocServUtil::GetCurUrl('auth_service_id='.parent::ID);
+            $redirect_uri = \CHTTP::URN2URI($APPLICATION->GetCurPage()) . '?auth_service_id=' . parent::ID;
 
             $backurl = $APPLICATION->GetCurPageParam(
                 'check_key=' . $_SESSION["UNIQUE_KEY"],
@@ -112,10 +112,9 @@ class CSocServVK2 extends \CSocServVKontakte {
         }
 
         $arFields = array(
-			'EXTERNAL_AUTH_ID' => self::ID,
+			'EXTERNAL_AUTH_ID' => parent::ID,
             'XML_ID' => $arVkUser['response']['0']['id'],
 			'LOGIN' => "VKuser" . $arVkUser['response']['0']['id'],
-//            'LOGIN' => $phone ?? "VKuser" . $arVkUser['response']['0']['id'],
             'EMAIL' => $this->entityOAuth->GetCurrentUserEmail(),
             'NAME' => $first_name,
             'LAST_NAME' => $last_name,
@@ -165,7 +164,7 @@ class CSocServVK2 extends \CSocServVKontakte {
             if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
                 $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
             else
-                $redirect_uri = \CHTTP::URN2URI($GLOBALS['APPLICATION']->GetCurPage()) . '?auth_service_id=' . self::ID;
+                $redirect_uri = \CHTTP::URN2URI($GLOBALS['APPLICATION']->GetCurPage()) . '?auth_service_id=' . parent::ID;
 
             $this->entityOAuth = $this->getEntityOAuth($_REQUEST['code']);
             if ($this->entityOAuth->GetAccessToken($redirect_uri) !== false)
@@ -184,6 +183,7 @@ class CSocServVK2 extends \CSocServVKontakte {
                             'last_name' => $arFields['LAST_NAME'],
                             'gender' => $arFields['PERSONAL_GENDER'],
                             'birthday' => $arFields['PERSONAL_BIRTHDAY'],
+                            'ex_id' => 'VKuser' . $arVkUser['response']['0']['id'],
                         ];
                     }
                 }
@@ -218,11 +218,11 @@ class CSocServVK2 extends \CSocServVKontakte {
         if ($bSuccess === SOCSERV_REGISTRATION_DENY)
         {
             $url = (preg_match("/\?/", $url)) ? $url . '&' : $url . '?';
-            $url .= 'auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess;
+            $url .= 'auth_service_id=' . parent::ID . '&auth_service_error=' . $bSuccess;
         }
         elseif ($bSuccess !== true)
         {
-            $url = (isset($urlPath)) ? $urlPath . '?auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess : $GLOBALS['APPLICATION']->GetCurPageParam(('auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess), $aRemove);
+            $url = (isset($urlPath)) ? $urlPath . '?auth_service_id=' . parent::ID . '&auth_service_error=' . $bSuccess : $GLOBALS['APPLICATION']->GetCurPageParam(('auth_service_id=' . parent::ID . '&auth_service_error=' . $bSuccess), $aRemove);
         }
 
         if (CModule::IncludeModule("socialnetwork") && strpos($url, "current_fieldset=") === false)
@@ -256,7 +256,7 @@ window.close();
         if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
             $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
         else
-            $redirect_uri = \CHTTP::URN2URI($GLOBALS['APPLICATION']->GetCurPage()) . '?auth_service_id=' . self::ID;
+            $redirect_uri = \CHTTP::URN2URI($GLOBALS['APPLICATION']->GetCurPage()) . '?auth_service_id=' . parent::ID;
 
         $vk = $this->getEntityOAuth();
         if ($vk->GetAccessToken($redirect_uri) !== false)
@@ -285,7 +285,7 @@ window.close();
         if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
             $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
         else
-            $redirect_uri = \CHTTP::URN2URI($GLOBALS['APPLICATION']->GetCurPage()) . '?auth_service_id=' . self::ID;
+            $redirect_uri = \CHTTP::URN2URI($GLOBALS['APPLICATION']->GetCurPage()) . '?auth_service_id=' . parent::ID;
 
         if ($vk->GetAccessToken($redirect_uri) !== false)
         {

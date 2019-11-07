@@ -52,8 +52,8 @@ class CSocServOK2 extends \CSocServOdnoklassniki
                     }
 
                     $arFields = array(
-						'EXTERNAL_AUTH_ID' => self::ID,
-                        'XML_ID' => "OK".$uid,
+						'EXTERNAL_AUTH_ID' => parent::ID,
+                        'XML_ID' => $uid,
                         'LOGIN' => "OKuser".$uid,
                         'NAME'=> $first_name,
                         'LAST_NAME'=> $last_name,
@@ -85,6 +85,7 @@ class CSocServOK2 extends \CSocServOdnoklassniki
                             'last_name' => $arFields['LAST_NAME'],
                             'gender' => $arFields['PERSONAL_GENDER'],
                             'birthday' => $arFields['PERSONAL_BIRTHDAY'],
+                            'ex_id' => "OKuser".$uid
                         ];
                     }
                 }
@@ -134,13 +135,13 @@ class CSocServOK2 extends \CSocServOdnoklassniki
         if($bSuccess === SOCSERV_REGISTRATION_DENY)
         {
             $url = (preg_match("/\?/", $url)) ? $url.'&' : $url.'?';
-            $url .= 'auth_service_id='.self::ID.'&auth_service_error='.SOCSERV_REGISTRATION_DENY;
+            $url .= 'auth_service_id='.parent::ID.'&auth_service_error='.SOCSERV_REGISTRATION_DENY;
         }
         elseif($bSuccess !== true)
         {
             $url = (isset($parseUrl))
-                ? $urlPath.'?auth_service_id='.self::ID.'&auth_service_error='.$bSuccess
-                : $APPLICATION->GetCurPageParam(('auth_service_id='.self::ID.'&auth_service_error='.$bSuccess), $aRemove);
+                ? $urlPath.'?auth_service_id='.parent::ID.'&auth_service_error='.$bSuccess
+                : $APPLICATION->GetCurPageParam(('auth_service_id='.parent::ID.'&auth_service_error='.$bSuccess), $aRemove);
         }
 
         if(\CModule::IncludeModule("socialnetwork") && strpos($url, "current_fieldset=") === false)

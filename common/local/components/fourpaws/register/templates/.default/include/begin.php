@@ -18,6 +18,7 @@ $regParam = [
     'last_name' => $request->get('last_name'),
     'gender' => $request->get('gender'),
     'birthday' => $request->get('birthday'),
+    'ex_id' => $request->get('ex_id'),
 ];
 ?>
 <div class="b-registration__content b-registration__content--moiety">
