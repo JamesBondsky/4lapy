@@ -495,7 +495,7 @@ class LocationService
                 /** сразу в селект не добалять позиции с join - получать их позже - для скорости
                  * поиск по коду и только по названию без родителя будет быстрее */
                 if (!isset($locationQueryFilter['TYPE_ID'])) {
-                    $locationQueryFilter['=TYPE_ID'] = [5, 6];
+                    $locationQueryFilter['!=TYPE_ID'] = 9;
                 }
                 $query = LocationTable::query()->setOrder($locationQueryOrder)->setFilter($locationQueryFilter)->setSelect($locationQuerySelect);
             } else {
