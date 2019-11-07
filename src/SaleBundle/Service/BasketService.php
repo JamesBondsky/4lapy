@@ -1818,6 +1818,8 @@ class BasketService implements LoggerAwareInterface
             } catch (\Exception $e) {
                 return false;
             }
+        } else {
+            return true;
         }
 
         return false;
