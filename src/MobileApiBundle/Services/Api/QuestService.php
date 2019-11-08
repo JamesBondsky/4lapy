@@ -41,7 +41,7 @@ class QuestService
 {
     use LazyLoggerAwareTrait;
 
-    protected const QUEST_CODE = 'QUEST';
+    protected const QUEST_CODE = 'ЧЕТЫРЕ ЛАПЫ';
 
     public const MIN_CORRECT_ANSWERS = 4;
     public const MIN_CORRECT_ANSWERS_TEXT = 'Вы всегда можете проконсультироваться с продавцом перед покупкой.';
@@ -199,7 +199,7 @@ class QuestService
             $user->setEmail($email);
         }
 
-        if ($questRegisterRequest->getCode() !== self::QUEST_CODE) {
+        if (ToUpper($questRegisterRequest->getCode()) !== self::QUEST_CODE) {
             throw new AccessDeinedException('Введите корректный код');
         }
 
