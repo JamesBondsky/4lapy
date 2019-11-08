@@ -573,8 +573,7 @@ class KkmService implements LoggerAwareInterface
             if (count($errorsOffers) > 0) {
                 $rc = false;
             }
-
-            $rc = false; //временно
+            
             $deliveryRules = [
                 'rc'      => $rc,
                 'courier' => [

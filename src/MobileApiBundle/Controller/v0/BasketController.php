@@ -6,10 +6,12 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Iblock\ElementTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
+use Bitrix\Sale\Internals\DiscountCouponTable;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -36,6 +38,7 @@ use FourPaws\MobileApiBundle\Services\Api\CityService;
 use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
 use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService as ApiUserDeliveryAddressService;
 use FourPaws\MobileApiBundle\Traits\MobileApiLoggerAwareTrait;
+use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
 use FourPaws\SaleBundle\Dto\OrderSplit\Basket\BasketSplitItem;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
@@ -51,6 +54,8 @@ use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
+use FourPaws\SaleBundle\AjaxController\BasketController as AjaxBasket;
+use Bitrix\Main\Type\DateTime;
 
 /**
  * Class BasketController
@@ -108,7 +113,7 @@ class BasketController extends BaseController
         $this->appDeliveryService            = $appDeliveryService;
         $this->orderStorageService           = $orderStorageService;
         $this->apiUserDeliveryAddressService = $apiUserDeliveryAddressService;
-        $this->appUserService        = $appUserService;
+        $this->appUserService                = $appUserService;
         $this->setLogger(LoggerFactory::create('BasketController', 'mobileApi'));
     }
     
@@ -156,7 +161,7 @@ class BasketController extends BaseController
             $personalOffers = Application::getInstance()->getContainer()->get(PersonalOffersService::class);
             $coupons        = $personalOffers->getActiveUserCoupons($storage->getUserId())['coupons'];
         }
-
+        
         if ($coupons) {
             $orderCalculate->setHasCoupons(true);
         }
@@ -176,11 +181,16 @@ class BasketController extends BaseController
                 }
             }
         }
-
+        
         if ($promoCode) {
             $orderCalculate->setPromoCodeResult($promoCode);
         }
-
+        
+        if ($promoCode && $orderCalculate->getPromoCodeResult()) {
+            $orderCalculate->setCoupon((new Coupon())->setPromocode($promoCode)
+                ->setActionType(Coupon::DISABLE));
+        }
+        
         return (new UserCartResponse())
             ->setCartCalc($orderCalculate)
             ->setCartParam($orderParameter);
@@ -263,15 +273,15 @@ class BasketController extends BaseController
      */
     public function getUserCartDeliveryAction(): Response
     {
-        $storage = $this->orderStorageService->getStorage();
+        $storage   = $this->orderStorageService->getStorage();
         $promoCode = $storage->getPromoCode();
-
+        
         if ($promoCode) {
-            $couponStorage       = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
+            $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
             $couponStorage->clear();
             $couponStorage->save($promoCode);
         }
-
+        
         return new Response(
             $this->apiOrderService->getDeliveryDetails()
         );
@@ -288,15 +298,15 @@ class BasketController extends BaseController
     public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest): UserCartCalcResponse
     {
         //@todo отрефакторить дублирование
-        $storage = $this->orderStorageService->getStorage();
+        $storage   = $this->orderStorageService->getStorage();
         $promoCode = $storage->getPromoCode();
-
+        
         if ($promoCode) {
             $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
             $couponStorage->clear();
             $couponStorage->save($promoCode);
         }
-
+        
         $this->mobileApiLog()->info('Request: POST postUserCartCalcAction: ' . print_r($userCartCalcRequest, true));
         if ($userCartCalcRequest->getDeliveryType() === 'courier') {
             $basketProducts = $this->apiOrderService->getBasketWithCurrentDelivery();
@@ -468,8 +478,14 @@ class BasketController extends BaseController
      */
     public function getUserCouponsAction(): UserCouponsResponse
     {
+        $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
+        
+        $storage = $this->orderStorageService->getStorage();
+        
+        $promoCode = $couponStorage->getApplicableCoupon() ?: $storage->getPromoCode();
+        
         $couponService = Application::getInstance()->getContainer()->get('coupon.service');
-        $result        = $couponService->getUserCouponsAction();
+        $result        = $couponService->getUserCouponsAction($promoCode, true);
         
         return (new UserCouponsResponse())->setUserCoupons($result);
     }
@@ -484,47 +500,75 @@ class BasketController extends BaseController
      */
     public function putUserCartCouponAction(Request $request): UserCouponsResponse
     {
-        $userPromoCodes = [];
-
+        $result         = [];
+        
         $promoCode = $request->get('promoCode');
-        $use = $request->get('use');
-
+        $use       = $request->get('use');
+        
         $storage = $this->orderStorageService->getStorage();
-
-        $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
+        
+        $couponStorage       = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
         $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
-
         $couponService = Application::getInstance()->getContainer()->get('coupon.service');
-        $userCoupons = $couponService->getUserCouponsAction();
-
-        foreach ($userCoupons as $userCoupon) {
-            $userPromoCodes[] = $userCoupon['promocode'];
-        }
-
-        if (in_array($promoCode, $userPromoCodes)) {
         switch ($use) {
             case true:
-                $this->manzana->setPromocode($promoCode);
-                $this->manzana->calculate();
-
-                $storage->setPromoCode($promoCode);
-                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
-                $fUserId = $this->appUserService->getCurrentFUserId() ?: 0;
-                $this->appBasketService->getBasket(true, $fUserId);
-                $couponStorage->clear();
-                $couponStorage->save($promoCode);
+                try {
+                    $ajaxBasket          = Application::getInstance()->getContainer()->get(AjaxBasket::class);
+                    $personalOfferService = $ajaxBasket->getPersonalOffersService();
+                    $personalOfferService->checkCoupon($promoCode);
+                    
+                    $bitrixCoupon = DiscountCouponTable::query()
+                        ->setFilter([
+                            'COUPON' => $promoCode,
+                        ])
+                        ->setSelect([
+                            'ACTIVE',
+                            'ACTIVE_FROM',
+                            'ACTIVE_TO',
+                        ])
+                        ->setLimit(1)
+                        ->exec()
+                        ->fetch();
+                    if ($bitrixCoupon
+                        && (
+                            $bitrixCoupon['ACTIVE'] === BitrixUtils::BX_BOOL_FALSE
+                            || ($bitrixCoupon['ACTIVE_FROM'] && $bitrixCoupon['ACTIVE_FROM'] > new DateTime())
+                            || ($bitrixCoupon['ACTIVE_TO'] && $bitrixCoupon['ACTIVE_TO'] < new DateTime())
+                        )) {
+                        throw new CouponIsNotAvailableForUseException(__FUNCTION__ . '. Купон ' . $promoCode . ' неактивен');
+                    }
+                    
+                    $this->manzana->setPromocode($promoCode);
+                    $this->manzana->calculate();
+    
+                    $storage->setPromoCode($promoCode);
+                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+                    $fUserId = $this->appUserService->getCurrentFUserId() ?: 0;
+                    $this->appBasketService->getBasket(true, $fUserId);
+                    $couponStorage->clear();
+                    $couponStorage->save($promoCode);
+                } catch (ManzanaPromocodeUnavailableException $e) {
+                    $result        = $couponService->getUserCouponsAction();
+                    return (new UserCouponsResponse())->setUserCoupons($result);
+                } catch (Exception $e) {
+                    $this->mobileApiLog()->error(
+                        \sprintf(
+                            'Promo code apply exception: %s',
+                            $e->getMessage()
+                        )
+                    );
+                }
                 break;
             case false:
                 $couponStorage->delete($promoCode);
+                $couponStorage->clear();
                 $storage->setPromoCode('');
                 $orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
                 break;
         }
-        }
-
-        $couponService = Application::getInstance()->getContainer()->get('coupon.service');
-        $result = $couponService->getUserCouponsAction();
-
+        
+        $result        = $couponService->getUserCouponsAction($promoCode, $use);
+        
         return (new UserCouponsResponse())->setUserCoupons($result);
     }
 }
