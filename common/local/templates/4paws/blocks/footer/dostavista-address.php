@@ -21,7 +21,7 @@ try {
         <script>
             window.dadataConstraintsLocations = <?= $locationService->getDadataJsonFromLocationArray($selectedCity) ?>;
         </script>
-        <section class="b-popup-wrapper__wrapper-modal js-popup-section" data-popup="dostavista-address">
+        <section class="b-popup-wrapper__wrapper-modal b-popup-wrapper__wrapper-modal--dostavista-address js-popup-section" data-popup="dostavista-address">
             <div class="b-dostavista-address js-popup-alert-title success">
                 <div class="b-dostavista-address__top">
                     <div class="b-dostavista-address__title">
@@ -34,7 +34,7 @@ try {
                     <form class="b-form-dostavista-address js-form-new-address js-hidden-valid-fields active js-dostavista-address-form">
                         <input type="hidden" class="js-city" data-city="Москва">
                         <input type="hidden" class="js-region" data-city="Москва">
-                        <div class="b-form-dostavista-address__title">Уточнение адреса</div>
+                        <div class="b-form-dostavista-address__title">На какой адрес планируете оформить доставку?</div>
                         <div class="b-input-line b-input-line--street js-order-address-street">
                             <div class="b-input-line__label-wrapper">
                                 <label class="b-input-line__label" for="order-address-street">
@@ -127,7 +127,7 @@ try {
                             <div class="item js-dostavista-date-result">Будет доступен после ввода адреса</div>
                         </div>
                         <button class="b-button b-button--social b-button--next b-button--next-disable js-dostavista-success-button">
-                            Выбрать адрес
+                            Запомнить адрес
                         </button>
                     </div>
                     <div class="b-dostavista-address__primary">Вы&nbsp;можете изменить дату и&nbsp;время доставки при оформлении заказа в&nbsp;корзине</div>
