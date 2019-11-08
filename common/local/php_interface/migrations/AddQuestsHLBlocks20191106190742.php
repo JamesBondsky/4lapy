@@ -970,8 +970,8 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
         $fileDir = __DIR__ . '/../migration_sources/quest_questions.csv';
 
         $row = 0;
-        $catRows = range(2, 8);
-        $dogRows = range(11, 17);
+        $catRows = range(1, 7);
+        $dogRows = range(9, 15);
 
         $iterator = 1;
 
@@ -985,21 +985,21 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
                 }
 
                 $taskData = [
-                    'UF_TITLE' => $data[1],
-                    'UF_TASK' => 'Найди в магазине отдел сухого корма для осбак и отсканируй штрихкод на люом сухом корме Грандин!', //todo hardcode
-                    'UF_CORRECT_TEXT' => $data[2],
-                    'UF_QUESTION' => $data[4],
-                    'UF_VARIANTS' => [$data[5], $data[6], $data[7]],
-                    'UF_ANSWER' => $data[5],
-                    'UF_QUESTION_ERROR' => $data[8],
+                    'UF_TITLE' => $data[0],
+                    'UF_TASK' => $data[9],
+                    'UF_CORRECT_TEXT' => $data[1],
+                    'UF_QUESTION' => $data[3],
+                    'UF_VARIANTS' => [$data[4], $data[5], $data[6]],
+                    'UF_ANSWER' => $data[4],
+                    'UF_QUESTION_ERROR' => $data[7],
                 ];
 
                 if (in_array($row, $catRows, true)) {
-                    $taskData['UF_PET'] = $this->catId;
+                    $taskData['UF_PET'] = 1;
                 }
 
                 if (in_array($row, $dogRows, true)) {
-                    $taskData['UF_PET'] = $this->dogId;
+                    $taskData['UF_PET'] = 2;
                 }
 
                 $tasks[$iterator] = $taskData;
@@ -1011,8 +1011,8 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
         $fileDir = __DIR__ . '/../migration_sources/quest_products.csv';
 
         $row = 0;
-        $catRows = range(2, 8);
-        $dogRows = range(11, 17);
+        $catRows = range(1, 7);
+        $dogRows = range(9, 15);
 
         $iterator = 1;
 
@@ -1023,7 +1023,7 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
                     continue;
                 }
 
-                if (preg_match('/https:\/\/4lapy\.ru\/catalog\/([a-zA-Z_\-]+)\/(([a-zA-Z_\-]+)\/)?(([a-zA-Z_\-]+)\/)?/', $data[9], $find)) {
+                if (preg_match('/https:\/\/4lapy\.ru\/catalog\/([a-zA-Z_\-]+)\/(([a-zA-Z_\-]+)\/)?(([a-zA-Z_\-]+)\/)?/', $data[0], $find)) {
                     $sectionCode = end($find);
 
                     $section = \CIBlockSection::GetList(false, [
@@ -1037,7 +1037,7 @@ class AddQuestsHLBlocks20191106190742 extends SprintMigrationBase
                     }
                 } else {
                     $productXmlIds = [];
-                    foreach (explode("\n", $data[9]) as $xmlId) {
+                    foreach (explode(' ', $data[0]) as $xmlId) {
                         if (!empty($xmlId)) {
                             $productXmlIds[] = $xmlId;
                         }
