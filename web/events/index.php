@@ -24,19 +24,19 @@ use FourPaws\Decorators\SvgDecorator;
     <section class="nav-flagship-store">
         <div class="b-container">
             <div class="nav-flagship-store__list">
-                <div class="nav-flagship-store__item">
+                <div class="nav-flagship-store__item" data-nav-flagship-store="grooming">
                     <div class="nav-flagship-store__icon">
                         <?= new SvgDecorator('icon-flagship-grooming', 61, 61) ?>
                     </div>
                     <div class="nav-flagship-store__title">Груминг</div>
                 </div>
-                <div class="nav-flagship-store__item">
+                <div class="nav-flagship-store__item" data-nav-flagship-store="lectures">
                     <div class="nav-flagship-store__icon">
                         <?= new SvgDecorator('icon-flagship-lectures', 61, 61) ?>
                     </div>
                     <div class="nav-flagship-store__title">Лекции</div>
                 </div>
-                <div class="nav-flagship-store__item">
+                <div class="nav-flagship-store__item" data-nav-flagship-store="walking">
                     <div class="nav-flagship-store__icon">
                         <?= new SvgDecorator('icon-flagship-walking', 61, 61) ?>
                     </div>
@@ -46,20 +46,20 @@ use FourPaws\Decorators\SvgDecorator;
         </div>
     </section>
 
-    <section class="service-flagship-store">
+    <section class="service-flagship-store" data-item-service-flagship-store="grooming">
         <div class="b-container">
             <div class="service-flagship-store__header service-flagship-store__header_grooming">
                 <div class="service-flagship-store__inner-header">
                     <div class="service-flagship-store__title">Груминг</div>
-                    <div class="service-flagship-store__btn"></div>
+                    <div class="service-flagship-store__btn active" data-toggle-service-flagship-store="true"></div>
                 </div>
             </div>
-            <div class="service-flagship-store__content">
+            <div class="service-flagship-store__content" data-content-service-flagship-store="true" style="display: block">
                 <div class="service-flagship-store__descr">
                     Груминг&nbsp;&mdash; это уход за&nbsp;внешностью животного, его кожей и&nbsp;шерстью, когтями и&nbsp;ушами.
                     Первоначально этот термин означал совокупность гигиенических процедур по&nbsp;уходу за&nbsp;домашними питомцами.
                 </div>
-                <form class="form-signup-grooming-flagship">
+                <form class="form-signup-grooming-flagship js-form-validation">
                     <div class="form-signup-grooming-flagship__content">
                         <div class="b-input-line">
                             <div class="b-input-line__label-wrapper">
@@ -101,18 +101,19 @@ use FourPaws\Decorators\SvgDecorator;
                             </div>
                         </div>
 
-                        <div class="b-input-line">
+                        <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-breed">
                             <div class="b-input-line__label-wrapper">
-                                <span class="b-input-line__label">Порода</span>
+                                <label class="b-input-line__label" for="breed-pet">Порода</label>
                             </div>
-                            <div class="b-input">
-                                <input class="js-no-valid" name="UF_BREED_ID" value="" type="hidden">
-                                <div class="b-select b-select--select2">
-                                    <select class="b-select__block" id="breed-pet">
+                            <div class="b-input b-input--registration-form">
+                                <input class="js-id-breed-pet-form-add-pet js-no-valid" name="UF_BREED_ID" value="" type="hidden">
+                                <div class="b-select b-select--select2" data-wrap-breed-pet-form-add-pet="true" data-id="breed-pet" data-name="UF_BREED">
+                                    <select class="b-select__block" id="breed-pet" name="UF_BREED">
                                         <option value="" disabled="disabled" selected="selected">Выберите породу</option>
                                     </select>
                                 </div>
-                                <div class="b-error"><span class="js-message"></span></div>
+                                <div class="b-error"><span class="js-message"></span>
+                                </div>
                             </div>
                         </div>
 
@@ -128,22 +129,22 @@ use FourPaws\Decorators\SvgDecorator;
                             </div>
                         </div>
 
-                        <button class="b-button">Записаться</button>
+                        <div class="b-button js-open-popup" data-popup-id="grooming-flagship-store">Записаться</div>
                     </div>
                 </form>
             </div>
         </div>
     </section>
 
-    <section class="service-flagship-store">
+    <section class="service-flagship-store" data-item-service-flagship-store="lectures">
         <div class="b-container">
             <div class="service-flagship-store__header service-flagship-store__header_lectures">
                 <div class="service-flagship-store__inner-header">
                     <div class="service-flagship-store__title">Лекции</div>
-                    <div class="service-flagship-store__btn"></div>
+                    <div class="service-flagship-store__btn" data-toggle-service-flagship-store="true"></div>
                 </div>
             </div>
-            <div class="service-flagship-store__content">
+            <div class="service-flagship-store__content" data-content-service-flagship-store="true">
                 <div class="service-flagship-store__descr">
                     Cтартовал курс тематических лекций, посвящённых здоровью кошек и&nbsp;собак. Вам расскажут, как правильно ухаживать
                     за&nbsp;четвероногими любимцами, купать, кормить и&nbsp;лечить их, как путешествовать с&nbsp;животными.
@@ -155,19 +156,21 @@ use FourPaws\Decorators\SvgDecorator;
                             <div class="item__img" style="background-image: url('/events/img/lectures1.jpg')"></div>
                             <div class="item__content">
                                 <div class="item__info">
-                                    <div class="item__count disabled">50 из 50 мест заняты</div>
+                                    <div class="item__count disabled" data-label-lectures-flagship-store="true">50 из 50 мест заняты</div>
                                     <div class="item__title">Мастер-классы – встречи друзей!</div>
                                 </div>
-                                <div class="item__col-date">
-                                    <div class="item__subtitle">Дата</div>
-                                    <div class="item__text">11 июля 2017, суббота</div>
-                                </div>
-                                <div class="item__col-time">
-                                    <div class="item__subtitle">Время</div>
-                                    <div class="item__text">10:20</div>
+                                <div class="item__datetime">
+                                    <div class="item__col-date">
+                                        <div class="item__subtitle">Дата</div>
+                                        <div class="item__text">11 июля 2017, суббота</div>
+                                    </div>
+                                    <div class="item__col-time">
+                                        <div class="item__subtitle">Время</div>
+                                        <div class="item__text">10:20</div>
+                                    </div>
                                 </div>
                                 <div class="item__btn">
-                                    <div class="b-button disabled">Запись окончена</div>
+                                    <div class="b-button disabled" data-id-lectures-flagship-store="1">Запись окончена</div>
                                 </div>
                             </div>
                         </div>
@@ -176,19 +179,21 @@ use FourPaws\Decorators\SvgDecorator;
                             <div class="item__img" style="background-image: url('/events/img/lectures2.jpg')"></div>
                             <div class="item__content">
                                 <div class="item__info">
-                                    <div class="item__count">10 из 50 свободных мест</div>
+                                    <div class="item__count" data-label-lectures-flagship-store="true">10 из 50 свободных мест</div>
                                     <div class="item__title">Как мыть вашего пса?</div>
                                 </div>
-                                <div class="item__col-date">
-                                    <div class="item__subtitle">Дата</div>
-                                    <div class="item__text">11 июля 2017, суббота</div>
-                                </div>
-                                <div class="item__col-time">
-                                    <div class="item__subtitle">Время</div>
-                                    <div class="item__text">15:30</div>
+                                <div class="item__datetime">
+                                    <div class="item__col-date">
+                                        <div class="item__subtitle">Дата</div>
+                                        <div class="item__text">11 июля 2017, суббота</div>
+                                    </div>
+                                    <div class="item__col-time">
+                                        <div class="item__subtitle">Время</div>
+                                        <div class="item__text">15:30</div>
+                                    </div>
                                 </div>
                                 <div class="item__btn">
-                                    <div class="b-button disabled selected">Вы записаны</div>
+                                    <div class="b-button disabled selected" data-id-lectures-flagship-store="2">Вы записаны</div>
                                 </div>
                             </div>
                         </div>
@@ -197,19 +202,21 @@ use FourPaws\Decorators\SvgDecorator;
                             <div class="item__img" style="background-image: url('/events/img/lectures3.jpg')"></div>
                             <div class="item__content">
                                 <div class="item__info">
-                                    <div class="item__count">10 из 50 свободных мест</div>
+                                    <div class="item__count" data-label-lectures-flagship-store="true">10 из 50 свободных мест</div>
                                     <div class="item__title">Мастер-классы – встречи друзей!</div>
                                 </div>
-                                <div class="item__col-date">
-                                    <div class="item__subtitle">Дата</div>
-                                    <div class="item__text">11 июля 2017, суббота</div>
-                                </div>
-                                <div class="item__col-time">
-                                    <div class="item__subtitle">Время</div>
-                                    <div class="item__text">18:30</div>
+                                <div class="item__datetime">
+                                    <div class="item__col-date">
+                                        <div class="item__subtitle">Дата</div>
+                                        <div class="item__text">11 июля 2017, суббота</div>
+                                    </div>
+                                    <div class="item__col-time">
+                                        <div class="item__subtitle">Время</div>
+                                        <div class="item__text">18:30</div>
+                                    </div>
                                 </div>
                                 <div class="item__btn">
-                                    <div class="b-button">Записаться</div>
+                                    <div class="b-button" data-id-lectures-flagship-store="3">Записаться</div>
                                 </div>
                             </div>
                         </div>
@@ -219,15 +226,15 @@ use FourPaws\Decorators\SvgDecorator;
         </div>
     </section>
 
-    <section class="service-flagship-store">
+    <section class="service-flagship-store service-flagship-store_walking" data-item-service-flagship-store="walking">
         <div class="b-container">
             <div class="service-flagship-store__header service-flagship-store__header_walking">
                 <div class="service-flagship-store__inner-header">
                     <div class="service-flagship-store__title"><nobr>Выгул-тренировка</nobr><br/> собак</div>
-                    <div class="service-flagship-store__btn"></div>
+                    <div class="service-flagship-store__btn" data-toggle-service-flagship-store="true"></div>
                 </div>
             </div>
-            <div class="service-flagship-store__content">
+            <div class="service-flagship-store__content" data-content-service-flagship-store="true">
                 <div class="steps-walking-flagship-store">
                     <div class="steps-walking-flagship-store__title">Как проходит тренировка?</div>
                     <div class="steps-walking-flagship-store__list">
@@ -256,7 +263,7 @@ use FourPaws\Decorators\SvgDecorator;
                     <div class="timetable-walking-flagship-store__title">Расписание</div>
 
                     <div class="timetable-walking-flagship-store__list">
-                        <div class="item">
+                        <div class="item" data-group-interval-walking-flagship="true">
                             <div class="item__date">11 июля 2017, суббота</div>
 
                             <div class="item__interval item__interval_mobile">
@@ -265,13 +272,13 @@ use FourPaws\Decorators\SvgDecorator;
                                         <span class="b-input-line__label">Интервал</span>
                                     </div>
                                     <div class="b-select">
-                                        <select class="b-select__block">
+                                        <select class="b-select__block" disabled>
                                             <option value="" disabled="disabled" selected="selected">выберите</option>
-                                            <option value="1" data-id-interval-walking-flagship="">10:00 — 12:00</option>
-                                            <option value="2" data-id-interval-walking-flagship="">12:00 — 14:00</option>
-                                            <option value="3" data-id-interval-walking-flagship="">14:00 — 16:00</option>
-                                            <option value="4" data-id-interval-walking-flagship="">16:00 — 18:00</option>
-                                            <option value="5" data-id-interval-walking-flagship="">18:00 — 20:00</option>
+                                            <option value="1" data-id-interval-walking-flagship="1">10:00 — 12:00</option>
+                                            <option value="2" data-id-interval-walking-flagship="2">12:00 — 14:00</option>
+                                            <option value="3" data-id-interval-walking-flagship="3">14:00 — 16:00</option>
+                                            <option value="4" data-id-interval-walking-flagship="4">16:00 — 18:00</option>
+                                            <option value="5" data-id-interval-walking-flagship="5">18:00 — 20:00</option>
                                         </select>
                                         <div class="b-error"><span class="js-message"></span></div>
                                     </div>
@@ -279,17 +286,17 @@ use FourPaws\Decorators\SvgDecorator;
                             </div>
 
                             <div class="item__interval">
-                                <div class="item__btn-interval disabled" data-id-interval-walking-flagship="">10:00 — 12:00</div>
-                                <div class="item__btn-interval disabled" data-id-interval-walking-flagship="">12:00 — 14:00</div>
-                                <div class="item__btn-interval disabled" data-id-interval-walking-flagship="">14:00 — 16:00</div>
-                                <div class="item__btn-interval disabled" data-id-interval-walking-flagship="">16:00 — 18:00</div>
-                                <div class="item__btn-interval disabled" data-id-interval-walking-flagship="">18:00 — 20:00</div>
+                                <div class="item__btn-interval disabled" data-id-interval-walking-flagship="1">10:00 — 12:00</div>
+                                <div class="item__btn-interval disabled" data-id-interval-walking-flagship="2">12:00 — 14:00</div>
+                                <div class="item__btn-interval disabled" data-id-interval-walking-flagship="3">14:00 — 16:00</div>
+                                <div class="item__btn-interval disabled" data-id-interval-walking-flagship="4">16:00 — 18:00</div>
+                                <div class="item__btn-interval disabled" data-id-interval-walking-flagship="5">18:00 — 20:00</div>
                             </div>
 
-                            <div class="b-button disabled" disabled>Запись окончена</div>
+                            <div class="b-button disabled" disabled data-select-interval-walking-flagship="true">Запись окончена</div>
                         </div>
 
-                        <div class="item">
+                        <div class="item" data-group-interval-walking-flagship="true">
                             <div class="item__date">12 июля 2017, воскресенье</div>
 
                             <div class="item__interval item__interval_mobile">
@@ -298,13 +305,13 @@ use FourPaws\Decorators\SvgDecorator;
                                         <span class="b-input-line__label">Интервал</span>
                                     </div>
                                     <div class="b-select">
-                                        <select class="b-select__block">
+                                        <select class="b-select__block" disabled>
                                             <option value="" disabled="disabled" selected="selected">выберите</option>
-                                            <option value="1" data-id-interval-walking-flagship="">10:00 — 12:00</option>
-                                            <option value="2" data-id-interval-walking-flagship="">12:00 — 14:00</option>
-                                            <option value="3" data-id-interval-walking-flagship="">14:00 — 16:00</option>
-                                            <option value="4" data-id-interval-walking-flagship="">16:00 — 18:00</option>
-                                            <option value="5" data-id-interval-walking-flagship="">18:00 — 20:00</option>
+                                            <option value="1" data-id-interval-walking-flagship="6">10:00 — 12:00</option>
+                                            <option value="2" data-id-interval-walking-flagship="7">12:00 — 14:00</option>
+                                            <option value="3" data-id-interval-walking-flagship="8">14:00 — 16:00</option>
+                                            <option value="4" data-id-interval-walking-flagship="9">16:00 — 18:00</option>
+                                            <option value="5" data-id-interval-walking-flagship="10">18:00 — 20:00</option>
                                         </select>
                                         <div class="b-error"><span class="js-message"></span></div>
                                     </div>
@@ -312,17 +319,17 @@ use FourPaws\Decorators\SvgDecorator;
                             </div>
 
                             <div class="item__interval">
-                                <div class="item__btn-interval" data-id-interval-walking-flagship="">10:00 — 12:00</div>
-                                <div class="item__btn-interval active" data-id-interval-walking-flagship="">12:00 — 14:00</div>
-                                <div class="item__btn-interval disabled" data-id-interval-walking-flagship="">14:00 — 16:00</div>
-                                <div class="item__btn-interval" data-id-interval-walking-flagship="">16:00 — 18:00</div>
-                                <div class="item__btn-interval" data-id-interval-walking-flagship="">18:00 — 20:00</div>
+                                <div class="item__btn-interval" data-id-interval-walking-flagship="6">10:00 — 12:00</div>
+                                <div class="item__btn-interval active" data-id-interval-walking-flagship="7">12:00 — 14:00</div>
+                                <div class="item__btn-interval disabled" data-id-interval-walking-flagship="8">14:00 — 16:00</div>
+                                <div class="item__btn-interval" data-id-interval-walking-flagship="9">16:00 — 18:00</div>
+                                <div class="item__btn-interval" data-id-interval-walking-flagship="10">18:00 — 20:00</div>
                             </div>
 
-                            <div class="b-button disabled selected" disabled>Вы записаны</div>
+                            <div class="b-button disabled selected" disabled data-select-interval-walking-flagship="true">Вы записаны</div>
                         </div>
 
-                        <div class="item">
+                        <div class="item" data-group-interval-walking-flagship="true">
                             <div class="item__date">13 июля 2017, понедельник</div>
 
                             <div class="item__interval item__interval_mobile">
@@ -333,11 +340,11 @@ use FourPaws\Decorators\SvgDecorator;
                                     <div class="b-select">
                                         <select class="b-select__block">
                                             <option value="" disabled="disabled" selected="selected">выберите</option>
-                                            <option value="1" data-id-interval-walking-flagship="">10:00 — 12:00</option>
-                                            <option value="2" data-id-interval-walking-flagship="">12:00 — 14:00</option>
-                                            <option value="3" data-id-interval-walking-flagship="">14:00 — 16:00</option>
-                                            <option value="4" data-id-interval-walking-flagship="">16:00 — 18:00</option>
-                                            <option value="5" data-id-interval-walking-flagship="">18:00 — 20:00</option>
+                                            <option value="1" data-id-interval-walking-flagship="11">10:00 — 12:00</option>
+                                            <option value="2" data-id-interval-walking-flagship="12">12:00 — 14:00</option>
+                                            <option value="3" data-id-interval-walking-flagship="13">14:00 — 16:00</option>
+                                            <option value="4" data-id-interval-walking-flagship="14">16:00 — 18:00</option>
+                                            <option value="5" data-id-interval-walking-flagship="15">18:00 — 20:00</option>
                                         </select>
                                         <div class="b-error"><span class="js-message"></span></div>
                                     </div>
@@ -345,17 +352,17 @@ use FourPaws\Decorators\SvgDecorator;
                             </div>
 
                             <div class="item__interval">
-                                <div class="item__btn-interval" data-id-interval-walking-flagship="">10:00 — 12:00</div>
-                                <div class="item__btn-interval" data-id-interval-walking-flagship="">12:00 — 14:00</div>
-                                <div class="item__btn-interval" data-id-interval-walking-flagship="">14:00 — 16:00</div>
-                                <div class="item__btn-interval" data-id-interval-walking-flagship="">16:00 — 18:00</div>
-                                <div class="item__btn-interval" data-id-interval-walking-flagship="">18:00 — 20:00</div>
+                                <div class="item__btn-interval" data-id-interval-walking-flagship="11">10:00 — 12:00</div>
+                                <div class="item__btn-interval" data-id-interval-walking-flagship="12">12:00 — 14:00</div>
+                                <div class="item__btn-interval" data-id-interval-walking-flagship="13">14:00 — 16:00</div>
+                                <div class="item__btn-interval" data-id-interval-walking-flagship="14">16:00 — 18:00</div>
+                                <div class="item__btn-interval" data-id-interval-walking-flagship="15">18:00 — 20:00</div>
                             </div>
 
-                            <div class="b-button">Выберите интервал</div>
+                            <div class="b-button" data-select-interval-walking-flagship="true">Выберите интервал</div>
                         </div>
 
-                        <div class="item">
+                        <div class="item" data-group-interval-walking-flagship="true">
                             <div class="item__date">14 июля 2017, вторник</div>
 
                             <div class="item__interval item__interval_mobile">
@@ -366,11 +373,11 @@ use FourPaws\Decorators\SvgDecorator;
                                     <div class="b-select">
                                         <select class="b-select__block">
                                             <option value="" disabled="disabled" selected="selected">выберите</option>
-                                            <option value="1" data-id-interval-walking-flagship="">10:00 — 12:00</option>
-                                            <option value="2" data-id-interval-walking-flagship="">12:00 — 14:00</option>
-                                            <option value="3" data-id-interval-walking-flagship="">14:00 — 16:00</option>
-                                            <option value="4" data-id-interval-walking-flagship="">16:00 — 18:00</option>
-                                            <option value="5" data-id-interval-walking-flagship="">18:00 — 20:00</option>
+                                            <option value="1" data-id-interval-walking-flagship="16">10:00 — 12:00</option>
+                                            <option value="2" data-id-interval-walking-flagship="17">12:00 — 14:00</option>
+                                            <option value="3" data-id-interval-walking-flagship="18">14:00 — 16:00</option>
+                                            <option value="4" data-id-interval-walking-flagship="19">16:00 — 18:00</option>
+                                            <option value="5" data-id-interval-walking-flagship="20">18:00 — 20:00</option>
                                         </select>
                                         <div class="b-error"><span class="js-message"></span></div>
                                     </div>
@@ -378,14 +385,14 @@ use FourPaws\Decorators\SvgDecorator;
                             </div>
 
                             <div class="item__interval">
-                                <div class="item__btn-interval" data-id-interval-walking-flagship="">10:00 — 12:00</div>
-                                <div class="item__btn-interval" data-id-interval-walking-flagship="">12:00 — 14:00</div>
-                                <div class="item__btn-interval" data-id-interval-walking-flagship="">14:00 — 16:00</div>
-                                <div class="item__btn-interval" data-id-interval-walking-flagship="">16:00 — 18:00</div>
-                                <div class="item__btn-interval" data-id-interval-walking-flagship="">18:00 — 20:00</div>
+                                <div class="item__btn-interval" data-id-interval-walking-flagship="16">10:00 — 12:00</div>
+                                <div class="item__btn-interval" data-id-interval-walking-flagship="17">12:00 — 14:00</div>
+                                <div class="item__btn-interval" data-id-interval-walking-flagship="18">14:00 — 16:00</div>
+                                <div class="item__btn-interval" data-id-interval-walking-flagship="19">16:00 — 18:00</div>
+                                <div class="item__btn-interval" data-id-interval-walking-flagship="20">18:00 — 20:00</div>
                             </div>
 
-                            <div class="b-button">Выберите интервал</div>
+                            <div class="b-button" data-select-interval-walking-flagship="true">Выберите интервал</div>
                         </div>
                     </div>
                 </div>
