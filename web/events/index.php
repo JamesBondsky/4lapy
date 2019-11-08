@@ -17,14 +17,14 @@ $APPLICATION->SetTitle("Сервисы флагманского магазина
         ],
         false
     );
-    
+
     $APPLICATION->IncludeComponent(
         'articul:flagman.events',
         'grooming',
         ['EVENT_NAME' => 'grooming'],
         false
     );
-    
+
     // $APPLICATION->IncludeComponent(
     //     'articul:flagman.lection',
     //     '',
