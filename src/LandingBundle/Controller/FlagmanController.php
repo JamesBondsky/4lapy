@@ -131,21 +131,21 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         $body = $response->getBody();
         
         $requestResult = json_decode($body->getContents(), true);
-        
-        if ($requestResult[$data->day]) {
-            $actionTime = $requestResult[$data->day]['exec'];
+
+        if ($requestResult[$data->dayId]) {
+            $actionTime = $requestResult[$data->dayId]['exec'];
             
             $hours   = $actionTime / 60;
             $minutes = $actionTime % 60;
             
             $actionTimeForPrint = (int)$hours . ':' . $minutes;
             
-            foreach ($requestResult[$data->day]['times'] as $timeKey => $time) {
+            foreach ($requestResult[$data->dayId]['times'] as $timeKey => $time) {
                 if ($time['status'] == 'Y') {
                     $endTimestamp = strtotime($timeKey) + strtotime($actionTimeForPrint) - strtotime("00:00:00");
                     $endTime      = date('H:i', $endTimestamp);
-                    
-                    $result[] = $timeKey . ' - ' . $endTime;
+
+                    $result[$time['id']] = $timeKey . ' - ' . $endTime;
                 }
             }
             
