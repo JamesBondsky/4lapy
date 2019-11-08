@@ -147,6 +147,7 @@ class UserService
             '9281448800',
             'm.balezin@articul.ru',
             '9281448800',
+            '9167750000',
         ];
 
         try {
