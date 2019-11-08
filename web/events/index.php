@@ -216,7 +216,7 @@ use FourPaws\Decorators\SvgDecorator;
                                     </div>
                                 </div>
                                 <div class="item__btn">
-                                    <div class="b-button" data-id-lectures-flagship-store="3">Записаться</div>
+                                    <div class="b-button js-open-popup" data-popup-id="lectures-flagship-store" data-id-lectures-flagship-store="3">Записаться</div>
                                 </div>
                             </div>
                         </div>
@@ -359,7 +359,7 @@ use FourPaws\Decorators\SvgDecorator;
                                 <div class="item__btn-interval" data-id-interval-walking-flagship="15">18:00 — 20:00</div>
                             </div>
 
-                            <div class="b-button" data-select-interval-walking-flagship="true">Выберите интервал</div>
+                            <div class="b-button js-open-popup" data-popup-id="walking-flagship-store" data-select-interval-walking-flagship="true">Выберите интервал</div>
                         </div>
 
                         <div class="item" data-group-interval-walking-flagship="true">
@@ -392,7 +392,7 @@ use FourPaws\Decorators\SvgDecorator;
                                 <div class="item__btn-interval" data-id-interval-walking-flagship="20">18:00 — 20:00</div>
                             </div>
 
-                            <div class="b-button" data-select-interval-walking-flagship="true">Выберите интервал</div>
+                            <div class="b-button js-open-popup" data-popup-id="walking-flagship-store" data-select-interval-walking-flagship="true">Выберите интервал</div>
                         </div>
                     </div>
                 </div>

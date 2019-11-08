@@ -4,7 +4,7 @@
         <div class="popup-service-flagship-store__title">Запись на лекцию</div>
 
         <form class="popup-service-flagship-store__form js-form-validation">
-            <input type="hidden" name="id" value="">
+            <input type="hidden" name="eventId" value="" data-id-lectures-flagship-store-popup="true">
 
             <div class="b-input-line">
                 <div class="b-input-line__label-wrapper">
