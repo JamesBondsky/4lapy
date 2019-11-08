@@ -116,6 +116,9 @@ class FlagmanController extends Controller implements LoggerAwareInterface
      */
     public function getSchedule(Request $request, $id): JsonResponse
     {
+        $result = [];
+        $data   = json_decode($request->getContent());
+        
         $this->url .= 'get-schedule/' . $id . '/';
         
         $response = $this->guzzleClient->request('GET', $this->url, [
@@ -127,11 +130,42 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         
         $body = $response->getBody();
         
-        return new JsonResponse($body->getContents());
+        $requestResult = json_decode($body->getContents(), true);
+        
+        if ($requestResult[$data->day]) {
+            $actionTime = $requestResult[$data->day]['exec'];
+            
+            $hours   = $actionTime / 60;
+            $minutes = $actionTime % 60;
+            
+            $actionTimeForPrint = (int)$hours . ':' . $minutes;
+            
+            foreach ($requestResult[$data->day]['times'] as $timeKey => $time) {
+                if ($time['status'] == 'Y') {
+                    $endTimestamp = strtotime($timeKey) + strtotime($actionTimeForPrint) - strtotime("00:00:00");
+                    $endTime      = date('H:i', $endTimestamp);
+                    
+                    $result[] = $timeKey . ' - ' . $endTime;
+                }
+            }
+            
+            return new JsonResponse([
+                'success' => 1,
+                'data'    => $result,
+                'errors'  => [],
+            ]);
+        }
+        
+        return new JsonResponse([
+            'success' => 0,
+            'errors'  => ['message' => 'Такого дня нет =('],
+        ]);
+        
+        return new JsonResponse();
     }
     
     /**
-     * @Route("/bookthetime/{id}", methods={"GET"})
+     * @Route("/bookthetime/{id}", methods={"POST"})
      *
      * @param Request $request
      * @param string  $id
@@ -144,7 +178,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
     public function bookTheTime(Request $request, $id): JsonResponse
     {
         $data = json_decode($request->getContent());
-
+        
         $this->url .= 'book-the-time/' . $id . '/';
         
         $response = $this->guzzleClient->request('POST', $this->url, [
@@ -152,12 +186,12 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'Content-Type'  => 'application/json',
                 'Authorization' => 'Bearer ' . $this->token,
             ],
-            'json' => [
-                "name" => $data->name,
-                "phone" => $data->phone,
-                "id" => $data->id,
+            'json'    => [
+                "name"    => $data->name,
+                "phone"   => $data->phone,
+                "id"      => $data->id,
                 "comment" => $data->comment,
-            ]
+            ],
         ]);
         
         $body = $response->getBody();
