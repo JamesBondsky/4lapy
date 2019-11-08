@@ -34,7 +34,7 @@ class FlagmanTraining extends \CBitrixComponent
     
     public function onPrepareComponentParams($arParams)
     {
-        $this->url          = getenv('VET_CLINIC') . $this->path . $this->arParams['EVENT_NAME'] . '/';
+        $this->url          = getenv('VET_CLINIC') . $this->path . $arParams['EVENT_NAME'] . '/';
         $this->guzzleClient = new Client();
         
         return parent::onPrepareComponentParams($arParams);
