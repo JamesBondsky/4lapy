@@ -78,7 +78,7 @@
                                 </div>
                             </div>
                             <div class="item__btn">
-                                <div class="b-button" data-id-lectures-flagship-store="3">Записаться</div>
+                                <div class="b-button js-open-popup" data-popup-id="lectures-flagship-store" data-id-lectures-flagship-store="3">Записаться</div>
                             </div>
                         </div>
                     </div>

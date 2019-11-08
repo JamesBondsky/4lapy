@@ -71,7 +71,7 @@
                             <?php if ($day['end'] == 'Y') : ?>
                                 <div class="b-button disabled" disabled data-select-interval-walking-flagship="true">Запись окончена</div>
                             <?php else : ?>
-                                <div class="b-button js-open-popup" data-popup-id="walking-flagship-store" data-select-interval-walking-flagship="true">Выберите интервал
+                                <div class="b-button js-open-popup disabled" disabled data-popup-id="walking-flagship-store" data-select-interval-walking-flagship="true">Выберите интервал
                                 </div>
                             <?php endif; ?>
                             

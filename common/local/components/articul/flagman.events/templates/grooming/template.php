@@ -18,7 +18,7 @@
                             <span class="b-input-line__label">Дата</span>
                         </div>
                         <div class="b-select">
-                            <select class="b-select__block">
+                            <select class="b-select__block" data-date-grooming-flagship="true">
                                 <option value="" disabled="disabled" selected="selected">выберите</option>
                                 <?php foreach ($arResult['SCHEDULE'] as $key => $day) : ?>
                                     <?php if ($day['end'] != 'Y') : ?>
