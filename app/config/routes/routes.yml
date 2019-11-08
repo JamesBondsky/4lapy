@@ -29,6 +29,10 @@ app.kkm:
     resource: "@FourPawsKkmBundle/Controller/"
     type: annotation
 
+app.landing:
+    resource: "@FourPawsLandingBundle/Controller"
+    type: annotation
+
 app.order_subscribe:
     resource: "@FourPawsPersonalBundle/Controller/"
     type: annotation

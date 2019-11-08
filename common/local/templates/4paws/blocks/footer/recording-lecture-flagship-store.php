@@ -3,7 +3,7 @@
     <div class="popup-service-flagship-store__content">
         <div class="popup-service-flagship-store__title">Запись на лекцию</div>
 
-        <form class="popup-service-flagship-store__form js-form-validation">
+        <form class="popup-service-flagship-store__form js-form-validation" data-url="http://4lapy.local.articul.ru/flagman/add/">
             <input type="hidden" name="eventId" value="" data-id-lectures-flagship-store-popup="true">
 
             <div class="b-input-line">
@@ -40,7 +40,7 @@
             </div>
 
             <div class="popup-service-flagship-store__btn">
-                <button class="b-button">Записаться</button>
+                <button class="b-button" data-submit-lectures-flagship-store-popup="true">Записаться</button>
             </div>
         </form>
     </div>

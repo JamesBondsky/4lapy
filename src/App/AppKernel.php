@@ -17,6 +17,7 @@ use FourPaws\EcommerceBundle\EcommerceBundle;
 use FourPaws\FoodSelectionBundle\FourPawsFoodSelectionBundle;
 use FourPaws\FormBundle\FourPawsFormBundle;
 use FourPaws\KkmBundle\FourPawsKkmBundle;
+use FourPaws\LandingBundle\FourPawsLandingBundle;
 use FourPaws\KioskBundle\FourPawsKioskBundle;
 use FourPaws\LocationBundle\FourPawsLocationBundle;
 use FourPaws\ManzanaApiBundle\FourPawsManzanaApiBundle;
@@ -113,6 +114,7 @@ class AppKernel extends Kernel
             new EcommerceBundle(),
             new FourPawsKkmBundle(),
             new FourPawsManzanaApiBundle(),
+            new FourPawsLandingBundle(),
         ];
 
         if (\in_array($this->getEnvironment(), [
