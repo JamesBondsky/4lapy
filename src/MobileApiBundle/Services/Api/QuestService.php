@@ -151,7 +151,8 @@ class QuestService
                     } else {
                         $result
                             ->setShowPrize(true)
-                            ->setPromocode($this->getUserPromocode());
+                            ->setPromocode($this->getUserPromocode())
+                            ->setUserPrize($this->getUserPrize());
                     }
                 }
             }
@@ -457,6 +458,31 @@ class QuestService
         }
 
         return $userResult['UF_PROMOCODE'];
+    }
+
+    /**
+     * @return Prize|null
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function getUserPrize(): ?Prize
+    {
+        $userResult = $this->getUserResult();
+
+        if ($userResult['UF_PRIZE'] === null) {
+            return null;
+        }
+
+        /** @var Prize $userPrize */
+        $userPrize = current($this->getPrizes([$userResult['UF_PRIZE']]));
+
+        if (!$userPrize) {
+            return null;
+        }
+
+        return $userPrize;
     }
 
     /**

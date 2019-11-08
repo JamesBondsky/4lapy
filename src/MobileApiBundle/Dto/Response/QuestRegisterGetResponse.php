@@ -79,6 +79,13 @@ class QuestRegisterGetResponse
     protected $showPrize = false;
 
     /**
+     * @Serializer\SerializedName("user_prize")
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Quest\Prize")
+     * @var Prize
+     */
+    protected $userPrize;
+
+    /**
      * @Serializer\SerializedName("promocode")
      * @Serializer\Type("string")
      * @var string
@@ -269,6 +276,24 @@ class QuestRegisterGetResponse
     public function setShowPrize(bool $showPrize): QuestRegisterGetResponse
     {
         $this->showPrize = $showPrize;
+        return $this;
+    }
+
+    /**
+     * @return Prize
+     */
+    public function getUserPrize(): Prize
+    {
+        return $this->userPrize;
+    }
+
+    /**
+     * @param Prize $userPrize
+     * @return QuestRegisterGetResponse
+     */
+    public function setUserPrize(Prize $userPrize): QuestRegisterGetResponse
+    {
+        $this->userPrize = $userPrize;
         return $this;
     }
 

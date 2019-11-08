@@ -180,16 +180,19 @@ class QuestController extends BaseController
      * @Security("has_role('REGISTERED_USERS')")
      *
      * @param QuestPrizeRequest $questPrizeRequest
-     * @return QuestPrizeResponse
+     * @return Response
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function postPrizeAction(QuestPrizeRequest $questPrizeRequest): QuestPrizeResponse
+    public function postPrizeAction(QuestPrizeRequest $questPrizeRequest): Response
     {
         $this->apiQuestService->choosePrize($questPrizeRequest->getPrizeId());
 
-        return (new QuestPrizeResponse())
-            ->setPromocode($this->apiQuestService->getUserPromocode());
+        $response = (new QuestPrizeResponse())
+            ->setPromocode($this->apiQuestService->getUserPromocode())
+            ->setUserPrize($this->apiQuestService->getUserPrize());
+
+        return new Response(['prize_data' => $response]);
     }
 }
