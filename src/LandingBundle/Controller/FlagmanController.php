@@ -34,6 +34,8 @@ class FlagmanController extends Controller implements LoggerAwareInterface
     use LazyLoggerAwareTrait;
     
     private $guzzleClient;
+    private $token = 'dsvbgdfFBn5434tyhFfd544gdfbDS4ggdsDSDtf';
+    private $url;
     
     /**
      * FlagmanController constructor.
@@ -41,7 +43,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
      */
     public function __construct()
     {
-        $this->url = getenv('VET_CLINIC');
+        $this->url          = getenv('VET_CLINIC');
         $this->guzzleClient = new Client();
     }
     
@@ -65,32 +67,38 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         
         try {
             $successAdding = LectionAppsTable::add([
-                'UF_USER_ID' => (int) $data->userId,
-                'UF_NAME' => $data->name,
-                'UF_PHONE' => $data->phone,
-                'UF_EVENT_ID' => (int) $data->eventId,
+                //'UF_USER_ID' => (int) $data->userId,
+                'UF_NAME'     => $data->name,
+                'UF_PHONE'    => $data->phone,
+                'UF_EVENT_ID' => (int)$data->eventId,
             ]);
-
+            
             if ($successAdding) {
                 $sits = LectionsTable::query()
                     ->setSelect(['SITS' => 'UTS.FREE_SITS'])
                     ->setFilter(['=ID' => $data->eventId])
                     ->exec()
                     ->fetch()['SITS'];
-        
+                
                 $newSits = (int)$sits - 1;
                 
                 //@todo исправить как только реализуют метод update
                 \CIBlockElement::SetPropertyValuesEx($data->eventId, 0, ['FREE_SITS' => $newSits]);
             }
         } catch (\Exception $e) {
-            return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заявки']]);
+            return new JsonResponse([
+                'success' => 0,
+                'app'     => 'Ошибка при сохранении заявки',
+                'errors'  => ['message' => $e->getMessage()],
+            ]);
+            
         }
         
-        $response = JsonErrorResponse::createWithData('Заявка успешно сохранена',
-            [],
-            200,
-            ['reload' => false]);
+        $response = new JsonResponse([
+            'success' => 1,
+            'app'     => 'Заявка успешно сохранена',
+            'errors'  => [],
+        ]);
         
         return $response;
     }
@@ -99,19 +107,61 @@ class FlagmanController extends Controller implements LoggerAwareInterface
      * @Route("/getschedule/{id}", methods={"GET"})
      *
      * @param Request $request
+     * @param string  $id
      *
      * @return JsonResponse
      * @throws Exception
      *
      * @throws RuntimeException
      */
-    public function getSchedule(Request $request): JsonResponse
+    public function getSchedule(Request $request, $id): JsonResponse
     {
-        // $this->url .=
-        // $response = $this->guzzleClient->request('GET', $this->url, []);
-        // echo '<pre>';
-        // print_r($request->get('id'));
-        // echo '</pre>';
-        // die;
+        $this->url .= 'get-schedule/' . $id . '/';
+        
+        $response = $this->guzzleClient->request('GET', $this->url, [
+            'headers' => [
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $this->token,
+            ],
+        ]);
+        
+        $body = $response->getBody();
+        
+        return new JsonResponse($body->getContents());
+    }
+    
+    /**
+     * @Route("/bookthetime/{id}", methods={"GET"})
+     *
+     * @param Request $request
+     * @param string  $id
+     *
+     * @return JsonResponse
+     * @throws Exception
+     *
+     * @throws RuntimeException
+     */
+    public function bookTheTime(Request $request, $id): JsonResponse
+    {
+        $data = json_decode($request->getContent());
+
+        $this->url .= 'book-the-time/' . $id . '/';
+        
+        $response = $this->guzzleClient->request('POST', $this->url, [
+            'headers' => [
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $this->token,
+            ],
+            'json' => [
+                "name" => $data->name,
+                "phone" => $data->phone,
+                "id" => $data->id,
+                "comment" => $data->comment,
+            ]
+        ]);
+        
+        $body = $response->getBody();
+        
+        return new JsonResponse($body->getContents());
     }
 }

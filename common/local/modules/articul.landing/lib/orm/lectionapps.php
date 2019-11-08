@@ -2,7 +2,7 @@
 
 namespace Articul\Landing\Orm;
 
-use zBitrix\Main;
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
