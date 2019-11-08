@@ -115,6 +115,26 @@ class QuestService
     }
 
     /**
+     * todo delete
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function resetQuest(): void
+    {
+        $dataManager = $this->getDataManager(self::RESULT_HL_NAME);
+
+        $res = $dataManager::query()
+            ->setSelect(['ID'])
+            ->exec();
+
+        while ($result = $res->fetch()) {
+            $dataManager::delete($result['ID']);
+        }
+    }
+
+    /**
      * @return QuestRegisterGetResponse
      *
      * @throws ArgumentException

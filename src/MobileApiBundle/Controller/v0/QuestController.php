@@ -46,6 +46,23 @@ class QuestController extends BaseController
     }
 
     /**
+     * todo delete
+     * @Rest\Get("/quest_reset/")
+     *
+     * @param Request $request
+     * @return Response
+     *
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getResetQuestAction(Request $request): Response
+    {
+        $this->apiQuestService->resetQuest();
+        die;
+    }
+
+    /**
      * @Rest\Get(path="/quest_register/")
      * @Rest\View()
      *
