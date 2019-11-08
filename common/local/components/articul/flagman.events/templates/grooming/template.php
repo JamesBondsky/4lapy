@@ -20,16 +20,11 @@
                         <div class="b-select">
                             <select class="b-select__block">
                                 <option value="" disabled="disabled" selected="selected">выберите</option>
-                                <option value="0" data-date-option="Четверг, 2019-11-07">Четверг, 07.11.2019</option>
-                                <option value="1" data-date-option="Пятница, 2019-11-08">Пятница, 08.11.2019</option>
-                                <option value="2" data-date-option="Суббота, 2019-11-09">Суббота, 09.11.2019</option>
-                                <option value="3" data-date-option="Воскресенье, 2019-11-10">Воскресенье, 10.11.2019</option>
-                                <option value="4" data-date-option="Понедельник, 2019-11-11">Понедельник, 11.11.2019</option>
-                                <option value="5" data-date-option="Вторник, 2019-11-12">Вторник, 12.11.2019</option>
-                                <option value="6" data-date-option="Среда, 2019-11-13">Среда, 13.11.2019</option>
-                                <option value="7" data-date-option="Четверг, 2019-11-14">Четверг, 14.11.2019</option>
-                                <option value="8" data-date-option="Пятница, 2019-11-15">Пятница, 15.11.2019</option>
-                                <option value="9" data-date-option="Суббота, 2019-11-16">Суббота, 16.11.2019</option>
+                                <?php foreach ($arResult['SCHEDULE'] as $key => $day) : ?>
+                                    <?php if ($day['end'] != 'Y') : ?>
+                                        <option value="<?=$key?>" data-url="" data-date-option="<?=$day['day']?>"><?=$day['day']?></option>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
                             </select>
                             <div class="b-error"><span class="js-message"></span></div>
                         </div>
@@ -40,7 +35,7 @@
                             <span class="b-input-line__label">Время</span>
                         </div>
                         <div class="b-select">
-                            <select class="b-select__block">
+                            <select class="b-select__block" disabled>
                                 <option value="" disabled="disabled" selected="selected">выберите</option>
                                 <option value="1">10:00 - 14:00</option>
                                 <option value="2">14:00 - 18:00</option>
