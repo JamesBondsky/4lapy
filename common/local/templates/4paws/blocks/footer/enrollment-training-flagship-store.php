@@ -3,8 +3,8 @@
     <div class="popup-service-flagship-store__content">
         <div class="popup-service-flagship-store__title">Запись на тренировку</div>
 
-        <form class="popup-service-flagship-store__form js-form-validation">
-            <input type="hidden" name="id" value="">
+        <form class="popup-service-flagship-store__form js-form-validation" data-url="/flagman/bookthetime/training" method="post">
+            <input type="hidden" name="id" value="" data-id-walking-flagship-store-popup="true">
 
             <div class="b-input-line">
                 <div class="b-input-line__label-wrapper">
@@ -14,7 +14,7 @@
                     <input class="b-input__input-field b-input__input-field--registration-form js-small-input"
                            type="text"
                            id="data-first-name"
-                           name="NAME"
+                           name="name"
                            value=""
                            data-text="1"
                            placeholder="" />
@@ -40,7 +40,7 @@
             </div>
 
             <div class="popup-service-flagship-store__btn">
-                <button class="b-button">Записаться</button>
+                <button class="b-button" data-submit-walking-flagship-store-popup="true">Записаться</button>
             </div>
         </form>
     </div>

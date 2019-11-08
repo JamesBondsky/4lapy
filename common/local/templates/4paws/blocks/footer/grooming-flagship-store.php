@@ -3,7 +3,7 @@
     <div class="popup-service-flagship-store__content">
         <div class="popup-service-flagship-store__title">Запись на груминг</div>
 
-        <form class="popup-service-flagship-store__form js-form-validation">
+        <form class="popup-service-flagship-store__form js-form-validation" method="post">
             <input type="hidden" name="id" value="">
             <input type="hidden" name="breed" value="">
             <input type="hidden" name="service" value="">
@@ -16,7 +16,7 @@
                     <input class="b-input__input-field b-input__input-field--registration-form js-small-input"
                            type="text"
                            id="data-first-name"
-                           name="NAME"
+                           name="name"
                            value=""
                            data-text="1"
                            placeholder="" />

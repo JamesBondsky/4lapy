@@ -3,7 +3,7 @@
     <div class="popup-service-flagship-store__content">
         <div class="popup-service-flagship-store__title">Запись на лекцию</div>
 
-        <form class="popup-service-flagship-store__form js-form-validation" data-url="/flagman/add/">
+        <form class="popup-service-flagship-store__form js-form-validation" data-url="/flagman/add/" method="post">
             <input type="hidden" name="eventId" value="" data-id-lectures-flagship-store-popup="true">
 
             <div class="b-input-line">
@@ -14,7 +14,7 @@
                     <input class="b-input__input-field b-input__input-field--registration-form js-small-input"
                            type="text"
                            id="data-first-name"
-                           name="NAME"
+                           name="name"
                            value=""
                            data-text="1"
                            placeholder="" />
