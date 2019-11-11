@@ -68,22 +68,22 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         try {
             $successAdding = LectionAppsTable::add([
                 //'UF_USER_ID' => (int) $data->userId,
-                'UF_NAME'     => $request->query->get('name'),
-                'UF_PHONE'    => $request->query->get('phone'),
-                'UF_EVENT_ID' => (int)$request->query->get('eventId'),
+                'UF_NAME'     => $request->get('name'),
+                'UF_PHONE'    => $request->get('phone'),
+                'UF_EVENT_ID' => (int)$request->get('eventId')
             ]);
             
             if ($successAdding) {
                 $sits = LectionsTable::query()
                     ->setSelect(['SITS' => 'UTS.FREE_SITS'])
-                    ->setFilter(['=ID' => (int)$request->query->get('eventId')])
+                    ->setFilter(['=ID' => (int)$request->get('eventId')])
                     ->exec()
                     ->fetch()['SITS'];
                 
                 $newSits = (int)$sits - 1;
                 
                 //@todo исправить как только реализуют метод update
-                \CIBlockElement::SetPropertyValuesEx($request->query->get('eventId'), 0, ['FREE_SITS' => $newSits]);
+                \CIBlockElement::SetPropertyValuesEx($request->get('eventId'), 0, ['FREE_SITS' => $newSits]);
             }
         } catch (\Exception $e) {
             return new JsonResponse([
@@ -187,10 +187,10 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'Authorization' => 'Bearer ' . $this->token,
             ],
             'json'    => [
-                "name"    => $_POST['name'], //$request->query->get('name'),
-                "phone"   => $_POST['phone'], //$request->query->get('phone'),
-                "id"      => $_POST['id'], //$request->query->get('id'),
-                "comment" => $_POST['animal'] . ' ' . $_POST['breed'] . ' ' . $_POST['service'], //$request->query->get('animal') . $request->query->get('breed') . $request->query->get('service'),
+                "name"    => $request->get('name'),
+                "phone"   => $request->get('name'),
+                "id"      => $request->get('name'),
+                "comment" => $request->get('animal') . ' ' . $request->get('breed') . ' ' . $request->get('service'),
             ],
         ]);
         
