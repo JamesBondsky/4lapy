@@ -16,7 +16,8 @@
                 <div class="lectures-flagship-store__list">
                     <?php foreach ($arResult['ITEMS'] as $item) : ?>
                         <div class="item">
-                            <div class="item__img" style="background-image: url('<?=$item['PREVIEW_PICTURE']?>')"></div>
+
+                            <div class="item__img" style="background-image: url('<?= ($item['PREVIEW_PICTURE']) ? ($item['PREVIEW_PICTURE']): "/static/build/images/inhtml/no_image_flagship.jpg" ?>')"></div>
                             <div class="item__content">
                                 <div class="item__info">
                                     <?php if ($item['AVAILABLE'] == 'Y') : ?>
@@ -38,7 +39,7 @@
                                 </div>
                                 <div class="item__btn">
                                     <?php if ($item['AVAILABLE'] == 'Y') : ?>
-                                        <div class="b-button js-open-popup" data-popup-id="lectures-flagship-store" data-id-lectures-flagship-store="3" data-eventId="<?=$item['ID']?>">Записаться</div>
+                                        <div class="b-button" data-popup-id="lectures-flagship-store" data-id-lectures-flagship-store="3" data-eventId="<?=$item['ID']?>">Записаться</div>
                                     <?php else: ?>
                                         <div class="b-button disabled" data-id-lectures-flagship-store="1">Запись окончена</div>
                                     <?php endif; ?>

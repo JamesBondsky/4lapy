@@ -40,7 +40,7 @@
             </div>
 
             <div class="popup-service-flagship-store__btn">
-                <button class="b-button" data-submit-lectures-flagship-store-popup="true">Записаться</button>
+                <button type="submit" class="b-button" data-submit-lectures-flagship-store-popup="true">Записаться</button>
             </div>
         </form>
     </div>
