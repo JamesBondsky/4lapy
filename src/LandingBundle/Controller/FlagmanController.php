@@ -187,10 +187,10 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'Authorization' => 'Bearer ' . $this->token,
             ],
             'json'    => [
-                "name"    => $request->query->get('name'),
-                "phone"   => $request->query->get('phone'),
-                "id"      => $request->query->get('id'),
-                "comment" => $request->query->get('animal') . $request->query->get('breed') . $request->query->get('service'),
+                "name"    => $_POST['name'], //$request->query->get('name'),
+                "phone"   => $_POST['phone'], //$request->query->get('phone'),
+                "id"      => $_POST['id'], //$request->query->get('id'),
+                "comment" => $_POST['animal'] . ' ' . $_POST['breed'] . ' ' . $_POST['service'], //$request->query->get('animal') . $request->query->get('breed') . $request->query->get('service'),
             ],
         ]);
         
