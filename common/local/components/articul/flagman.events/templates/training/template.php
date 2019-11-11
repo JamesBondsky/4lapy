@@ -48,7 +48,7 @@
                                         <span class="b-input-line__label">Интервал</span>
                                     </div>
                                     <div class="b-select">
-                                        <select class="b-select__block" <?php if ($day['end'] == 'Y') : ?>disabled<?php endif; ?>>
+                                        <select class="b-select__block" data-select-id-interval-walking-flagship="true" <?php if ($day['end'] == 'Y') : ?>disabled<?php endif; ?>>
                                             <option value="" <?php if ($day['end'] == 'Y') : ?>disabled="disabled"<?php endif; ?> selected="selected">выберите</option>
                                             <?php foreach ($day['times'] as $time) : ?>
                                                 <?php if ($time['status'] != 'N') : ?>
