@@ -5,6 +5,7 @@ namespace FourPaws\KioskBundle\Controller;
 
 
 use DateTime;
+use Exception;
 use FourPaws\AppBundle\Callback\CallbackService;
 use FourPaws\StoreBundle\Service\StoreService;
 use phpDocumentor\Reflection\DocBlock\Tags\Throws;
@@ -40,14 +41,22 @@ class CallCenterController extends Controller
         $status = 200;
 
         try {
-            $this->checkSign($sign, $rCode);
+            $secretKey = getenv('KIOSK_SECRET_KEY');
 
-            $store = $this->getPhone($rCode);
-            $this->sendData($store->getPhone());
-        } catch (\Exception $exception) {
+            $rightSign = $this->generateSign($secretKey, $rCode);
+            $this->checkSign($sign, $rightSign);
+
+            $phone = $this->getPhone($rCode);
+            $additionalPhone = $this->getAdditionalPhone($phone);
+            $this->sendData($additionalPhone);
+        } catch (Exception $exception) {
             $answer['success'] = false;
-            $answer['errors'] = $exception->getMessage();
-            $status = $exception->getCode();
+            $status = $exception->getCode() == 0  ? 400 : $status;
+
+            $answer['errors'][] = [
+                'code' => $status,
+                'error' => $exception->getMessage(),
+            ];
         }
         return $this->json($answer, $status);
     }
@@ -55,28 +64,16 @@ class CallCenterController extends Controller
     /**
      * Проверка sign
      * @param $sign
-     * @param mixed ...$params
+     * @param $rightSign
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
-    private function checkSign($sign, ...$params)
+    private function checkSign($sign, $rightSign)
     {
-        $secretKey = getenv('KIOSK_SECRET_KEY');
-
-        $strParam = '';
-
-        foreach ($params as $paramItem) {
-            $strParam .= $paramItem;
-        }
-
-        $strParam .= $secretKey;
-
-        $strParam = md5($strParam);
-
-        $checkSign = $strParam === $sign;
+        $checkSign = $rightSign === $sign;
 
         if (!$checkSign) {
-            throw new \Exception('Invalid sign', 401);
+            throw new Exception('Invalid sign', 401);
         }
 
         return $checkSign;
@@ -85,8 +82,10 @@ class CallCenterController extends Controller
     /**
      * Получение номера телефона
      * @param $rCode
-     * @return \FourPaws\StoreBundle\Entity\Store
+     * @return string
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws Exception
+     * @throws Exception
      */
     private function getPhone($rCode)
     {
@@ -96,10 +95,15 @@ class CallCenterController extends Controller
         $res = $storeService->getStoreByXmlId($rCode);
 
         if (!$res) {
-            new \Exception('Not found phone', 400);
+            throw new Exception('Not found store', 400);
         }
 
-        return $res;
+        $phone = $res->getPhone();
+        if (!$phone) {
+            throw new Exception('Not found phone', 400);
+        }
+
+        return $phone;
     }
 
     /**
@@ -112,11 +116,44 @@ class CallCenterController extends Controller
         /** @var CallbackService $callbackService */
         $callbackService = $this->get('callback.service');
 
-        [, $dopPhone] = explode('доб. ', $phone);
-
         $callbackService->send(
-            $dopPhone,
+            $phone,
             (new DateTime())->format('Y-m-d H:i:s')
         );
+    }
+
+    /**
+     * Получение дополнительного номера телефона из основного
+     * @param $phone
+     * @return mixed
+     * @throws Exception
+     */
+    private function getAdditionalPhone($phone)
+    {
+        [, $additionalPhone] = explode('доб.', $phone);
+        $additionalPhone = trim($additionalPhone);
+
+        if (!$additionalPhone) {
+            throw new Exception('Not found dop phone');
+        }
+
+        return $additionalPhone;
+    }
+
+    /**
+     * Генерирует sign исходя из переданных параметров
+     * @param $secretKey
+     * @param mixed ...$params
+     * @return string
+     */
+    private function generateSign($secretKey, ...$params)
+    {
+        $strParam = implode('', $params);
+
+        $strParam .= $secretKey;
+
+        $strParam = md5($strParam);
+
+        return $strParam;
     }
 }
