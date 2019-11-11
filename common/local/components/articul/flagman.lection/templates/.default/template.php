@@ -14,74 +14,39 @@
 
             <div class="lectures-flagship-store">
                 <div class="lectures-flagship-store__list">
-                    <div class="item">
-                        <div class="item__img" style="background-image: url('/events/img/lectures1.jpg')"></div>
-                        <div class="item__content">
-                            <div class="item__info">
-                                <div class="item__count disabled" data-label-lectures-flagship-store="true">50 из 50 мест заняты</div>
-                                <div class="item__title">Мастер-классы – встречи друзей!</div>
-                            </div>
-                            <div class="item__datetime">
-                                <div class="item__col-date">
-                                    <div class="item__subtitle">Дата</div>
-                                    <div class="item__text">11 июля 2017, суббота</div>
+                    <?php foreach ($arResult['ITEMS'] as $item) : ?>
+                        <div class="item">
+                            <div class="item__img" style="background-image: url('<?=$item['PREVIEW_PICTURE']?>')"></div>
+                            <div class="item__content">
+                                <div class="item__info">
+                                    <?php if ($item['AVAILABLE'] == 'Y') : ?>
+                                        <div class="item__count" data-label-lectures-flagship-store="true"><?=$item['FREE_SITS']?> из <?=$item['SITS']?> свободных мест</div>
+                                    <?php else: ?>
+                                        <div class="item__count disabled" data-label-lectures-flagship-store="true"><?=$item['SITS']?> из <?=$item['SITS']?> мест заняты</div>
+                                    <?php endif; ?>
+                                    <div class="item__title"><?=$item['NAME']?></div>
                                 </div>
-                                <div class="item__col-time">
-                                    <div class="item__subtitle">Время</div>
-                                    <div class="item__text">10:20</div>
+                                <div class="item__datetime">
+                                    <div class="item__col-date">
+                                        <div class="item__subtitle">Дата</div>
+                                        <div class="item__text"><?=$item['DATE']?></div>
+                                    </div>
+                                    <div class="item__col-time">
+                                        <div class="item__subtitle">Время</div>
+                                        <div class="item__text"><?=$item['TIME']?></div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="item__btn">
-                                <div class="b-button disabled" data-id-lectures-flagship-store="1">Запись окончена</div>
+                                <div class="item__btn">
+                                    <?php if ($item['AVAILABLE'] == 'Y') : ?>
+                                        <div class="b-button js-open-popup" data-popup-id="lectures-flagship-store" data-id-lectures-flagship-store="3" data-eventId="<?=$item['ID']?>">Записаться</div>
+                                    <?php else: ?>
+                                        <div class="b-button disabled" data-id-lectures-flagship-store="1">Запись окончена</div>
+                                    <?php endif; ?>
+                                    
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="item">
-                        <div class="item__img" style="background-image: url('/events/img/lectures2.jpg')"></div>
-                        <div class="item__content">
-                            <div class="item__info">
-                                <div class="item__count" data-label-lectures-flagship-store="true">10 из 50 свободных мест</div>
-                                <div class="item__title">Как мыть вашего пса?</div>
-                            </div>
-                            <div class="item__datetime">
-                                <div class="item__col-date">
-                                    <div class="item__subtitle">Дата</div>
-                                    <div class="item__text">11 июля 2017, суббота</div>
-                                </div>
-                                <div class="item__col-time">
-                                    <div class="item__subtitle">Время</div>
-                                    <div class="item__text">15:30</div>
-                                </div>
-                            </div>
-                            <div class="item__btn">
-                                <div class="b-button disabled selected" data-id-lectures-flagship-store="2">Вы записаны</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="item">
-                        <div class="item__img" style="background-image: url('/events/img/lectures3.jpg')"></div>
-                        <div class="item__content">
-                            <div class="item__info">
-                                <div class="item__count" data-label-lectures-flagship-store="true">10 из 50 свободных мест</div>
-                                <div class="item__title">Мастер-классы – встречи друзей!</div>
-                            </div>
-                            <div class="item__datetime">
-                                <div class="item__col-date">
-                                    <div class="item__subtitle">Дата</div>
-                                    <div class="item__text">11 июля 2017, суббота</div>
-                                </div>
-                                <div class="item__col-time">
-                                    <div class="item__subtitle">Время</div>
-                                    <div class="item__text">18:30</div>
-                                </div>
-                            </div>
-                            <div class="item__btn">
-                                <div class="b-button js-open-popup" data-popup-id="lectures-flagship-store" data-id-lectures-flagship-store="3">Записаться</div>
-                            </div>
-                        </div>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
         </div>

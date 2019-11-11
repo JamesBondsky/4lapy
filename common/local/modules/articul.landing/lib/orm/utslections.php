@@ -57,6 +57,11 @@ class UtsLectionsTable extends Main\Entity\DataManager
                 'data_type' => 'string',
                 'title' => Loc::getMessage('ELEMENT_PROP_S3_ENTITY_PROPERTY_238_FIELD'),
                 'column_name' => 'PROPERTY_238',
+            ),
+            'SITS' => array(
+                'data_type' => 'string',
+                'title' => Loc::getMessage('ELEMENT_PROP_S3_ENTITY_PROPERTY_239_FIELD'),
+                'column_name' => 'PROPERTY_239',
             )
         );
     }

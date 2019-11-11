@@ -135,6 +135,32 @@ class LectionsIblockCreate05112019164727 extends \Adv\Bitrixtools\Migration\Spri
             'HINT' => '',
         ];
     
+        $props[] = [
+            'NAME' => 'Всего мест',
+            'ACTIVE' => 'Y',
+            'SORT' => '500',
+            'CODE' => 'SITS',
+            'DEFAULT_VALUE' => '',
+            'PROPERTY_TYPE' => 'S',
+            'ROW_COUNT' => '1',
+            'COL_COUNT' => '30',
+            'LIST_TYPE' => 'L',
+            'MULTIPLE' => 'N',
+            'XML_ID' => '',
+            'FILE_TYPE' => '',
+            'MULTIPLE_CNT' => '5',
+            'TMP_ID' => null,
+            'LINK_IBLOCK_ID' => '0',
+            'WITH_DESCRIPTION' => 'N',
+            'SEARCHABLE' => 'N',
+            'FILTRABLE' => 'N',
+            'IS_REQUIRED' => 'N',
+            'VERSION' => '1',
+            'USER_TYPE' => null,
+            'USER_TYPE_SETTINGS' => null,
+            'HINT' => '',
+        ];
+    
         foreach ($props as $prop) {
             $helper->Iblock()->addPropertyIfNotExists($iblockId, $prop);
         }
