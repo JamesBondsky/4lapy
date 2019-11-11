@@ -178,7 +178,8 @@ class CallCenterController extends Controller
 
         $this->log()->info('params', [
             '$rCode' => $rCode,
-            '$sign' => $sign
+            '$sign' => $sign,
+            'request' => $_REQUEST
         ]);
 
         $rCode = trim($rCode);
