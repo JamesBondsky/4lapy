@@ -91,11 +91,6 @@ class QuestService
     protected $currentUserResult;
 
     /**
-     * @var array|null
-     */
-    protected $currentTask;
-
-    /**
      * QuestService constructor.
      * @param ProductService $apiProductService
      * @param ImageProcessor $imageProcessor
@@ -592,7 +587,6 @@ class QuestService
     }
 
     /**
-     * @param bool $reload
      * @return array|false
      *
      * @throws ArgumentException
@@ -600,45 +594,41 @@ class QuestService
      * @throws SystemException
      * @throws Exception
      */
-    public function getCurrentTask(bool $reload = false): array
+    public function getCurrentTask(): array
     {
-        if ($this->currentTask === null || $reload) {
-            $userResult = $this->getUserResult();
+        $userResult = $this->getUserResult();
 
-            if ($userResult === false) {
-                throw new ApiRuntimeException('Начните проходить квест');
-            }
-
-            $userTasks = unserialize($userResult['UF_TASKS']);
-
-            if (!isset($userTasks[$userResult['UF_CURRENT_TASK']]['ID'])) {
-                throw new ApiRuntimeException('Задание не найдено');
-            }
-
-            $taskId = $userTasks[$userResult['UF_CURRENT_TASK']]['ID'];
-
-            $cacheFinder = function () use ($taskId) {
-                return $this->getDataManager(self::TASK_HL_NAME)::query()
-                    ->setSelect(self::TASK_SELECT)
-                    ->setFilter(['=ID' => $taskId])
-                    ->exec()
-                    ->fetch();
-            };
-
-            $currentTask = (new BitrixCache())
-                ->withTag('quest_task')
-                ->withTime(360000)
-                ->withId(__METHOD__ . serialize(['taskId' => $taskId]))
-                ->resultOf($cacheFinder);
-
-            if ($currentTask === false) {
-                throw new ApiRuntimeException('Задание не найдено');
-            }
-
-            $this->currentTask = $currentTask;
+        if ($userResult === false) {
+            throw new ApiRuntimeException('Начните проходить квест');
         }
 
-        return $this->currentTask;
+        $userTasks = unserialize($userResult['UF_TASKS']);
+
+        if (!isset($userTasks[$userResult['UF_CURRENT_TASK']]['ID'])) {
+            throw new ApiRuntimeException('Задание не найдено');
+        }
+
+        $taskId = $userTasks[$userResult['UF_CURRENT_TASK']]['ID'];
+
+        $cacheFinder = function () use ($taskId) {
+            return $this->getDataManager(self::TASK_HL_NAME)::query()
+                ->setSelect(self::TASK_SELECT)
+                ->setFilter(['=ID' => $taskId])
+                ->exec()
+                ->fetch();
+        };
+
+        $currentTask = (new BitrixCache())
+            ->withTag('quest_task')
+            ->withTime(360000)
+            ->withId(__METHOD__ . serialize(['taskId' => $taskId]))
+            ->resultOf($cacheFinder);
+
+        if ($currentTask === false) {
+            throw new ApiRuntimeException('Задание не найдено');
+        }
+
+        return $currentTask;
     }
 
     /**

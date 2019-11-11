@@ -166,6 +166,7 @@ class QuestController extends BaseController
      */
     public function postQuestionAction(QuestQuestionRequest $questQuestionRequest): Response
     {
+        $needBarcodeTask = false;
         $currentTask = $this->apiQuestService->getCurrentTask();
         $questStatus = $this->apiQuestService->getQuestStatus();
         $response = new QuestQuestionTaskResponse();
@@ -179,13 +180,17 @@ class QuestController extends BaseController
                 ->setCorrectTet($this->apiQuestService->getCorrectText($userResult))
                 ->setPrizeText($this->apiQuestService->getPrizeText($userResult));
         } else {
-            $response->setBarcodeTask($this->apiQuestService->getCurrentBarcodeTask());
+            $needBarcodeTask = true;
         }
 
         $response
             ->setCorrect($this->apiQuestService->checkQuestionTask($questQuestionRequest))
             ->setErrorText($currentTask['UF_QUESTION_ERROR'])
             ->setQuestStatus($this->apiQuestService->getQuestStatus());
+
+        if ($needBarcodeTask) {
+            $response->setBarcodeTask($this->apiQuestService->getCurrentBarcodeTask());
+        }
 
         return new Response(['task_result' => $response]);
     }
