@@ -129,24 +129,12 @@ class CallCenterController extends Controller
         $url = getenv('KIOSK_CALLBACK_URI');
         $api = getenv('KIOSK_CALLBACK_API');
 
-        //number=XXXX&apikey=
         $params = [
             'number' => $phone,
             'apikey' => $api,
         ];
 
         $guzzleClient->get($url . '?' . http_build_query($params));
-
-//        (string)$resultBody->getBody();
-//
-//
-//        /** @var CallbackService $callbackService */
-//        $callbackService = $this->get('callback.service');
-//
-//        $callbackService->send(
-//            $phone,
-//            (new DateTime())->format('Y-m-d H:i:s')
-//        );
     }
 
     /**
@@ -193,12 +181,6 @@ class CallCenterController extends Controller
     {
         $rCode = $request->get('r_code');
         $sign = $request->get('sign');
-
-        $this->log()->info('params', [
-            '$rCode' => $rCode,
-            '$sign' => $sign,
-            'request' => $_REQUEST
-        ]);
 
         $rCode = trim($rCode);
         $sign = trim($sign);
