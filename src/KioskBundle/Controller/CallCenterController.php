@@ -7,6 +7,7 @@ namespace FourPaws\KioskBundle\Controller;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use DateTime;
 use Exception;
+use FourPaws\App\Application as App;
 use FourPaws\AppBundle\Callback\CallbackService;
 use FourPaws\StoreBundle\Service\StoreService;
 use phpDocumentor\Reflection\DocBlock\Tags\Throws;
@@ -122,13 +123,30 @@ class CallCenterController extends Controller
      */
     private function sendData($phone)
     {
-        /** @var CallbackService $callbackService */
-        $callbackService = $this->get('callback.service');
+        /** @var \GuzzleHttp\Client $guzzleClient */
+        $guzzleClient = App::getInstance()->getContainer()->get('manzana.guzzle');
 
-        $callbackService->send(
-            $phone,
-            (new DateTime())->format('Y-m-d H:i:s')
-        );
+        $url = getenv('KIOSK_CALLBACK_URI');
+        $api = getenv('KIOSK_CALLBACK_API');
+
+        //number=XXXX&apikey=
+        $params = [
+            'number' => $phone,
+            'apikey' => $api,
+        ];
+
+        $guzzleClient->get($url . '?' . http_build_query($params));
+
+//        (string)$resultBody->getBody();
+//
+//
+//        /** @var CallbackService $callbackService */
+//        $callbackService = $this->get('callback.service');
+//
+//        $callbackService->send(
+//            $phone,
+//            (new DateTime())->format('Y-m-d H:i:s')
+//        );
     }
 
     /**
