@@ -63,27 +63,27 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Модуль для сохранения заявок не подключен']]);
         }
         
-        $data = json_decode($request->getContent());
+        // $data = json_decode($request->getContent());
         
         try {
             $successAdding = LectionAppsTable::add([
                 //'UF_USER_ID' => (int) $data->userId,
-                'UF_NAME'     => $data->name,
-                'UF_PHONE'    => $data->phone,
-                'UF_EVENT_ID' => (int)$data->eventId,
+                'UF_NAME'     => $request->query->get('name'),
+                'UF_PHONE'    => $request->query->get('phone'),
+                'UF_EVENT_ID' => (int)$request->query->get('eventId'),
             ]);
             
             if ($successAdding) {
                 $sits = LectionsTable::query()
                     ->setSelect(['SITS' => 'UTS.FREE_SITS'])
-                    ->setFilter(['=ID' => $data->eventId])
+                    ->setFilter(['=ID' => (int)$request->query->get('eventId')])
                     ->exec()
                     ->fetch()['SITS'];
                 
                 $newSits = (int)$sits - 1;
                 
                 //@todo исправить как только реализуют метод update
-                \CIBlockElement::SetPropertyValuesEx($data->eventId, 0, ['FREE_SITS' => $newSits]);
+                \CIBlockElement::SetPropertyValuesEx($request->query->get('eventId'), 0, ['FREE_SITS' => $newSits]);
             }
         } catch (\Exception $e) {
             return new JsonResponse([
@@ -117,7 +117,6 @@ class FlagmanController extends Controller implements LoggerAwareInterface
     public function getSchedule(Request $request, $action, $id): JsonResponse
     {
         $result = [];
-        $data   = json_decode($request->getContent());
         
         $this->url .= 'get-schedule/' . $action . '/';
         
@@ -177,8 +176,9 @@ class FlagmanController extends Controller implements LoggerAwareInterface
      */
     public function bookTheTime(Request $request, $id): JsonResponse
     {
-        $data = json_decode($request->getContent());
         
+        // $data = json_decode($request->getContent());
+
         $this->url .= 'book-the-time/' . $id . '/';
         
         $response = $this->guzzleClient->request('POST', $this->url, [
@@ -187,10 +187,10 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'Authorization' => 'Bearer ' . $this->token,
             ],
             'json'    => [
-                "name"    => $data->name,
-                "phone"   => $data->phone,
-                "id"      => $data->id,
-                "comment" => $data->comment,
+                "name"    => $request->query->get('name'),
+                "phone"   => $request->query->get('phone'),
+                "id"      => $request->query->get('id'),
+                "comment" => $request->query->get('animal') . $request->query->get('breed') . $request->query->get('service'),
             ],
         ]);
         
