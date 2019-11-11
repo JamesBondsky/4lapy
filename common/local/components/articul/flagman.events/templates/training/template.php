@@ -3,8 +3,7 @@
         <div class="service-flagship-store__header service-flagship-store__header_walking">
             <div class="service-flagship-store__inner-header">
                 <div class="service-flagship-store__title">
-                    <nobr>Выгул-тренировка</nobr>
-                    <br/> собак
+                    <nobr>Тренировочный клуб</nobr>
                 </div>
                 <div class="service-flagship-store__btn" data-toggle-service-flagship-store="true"></div>
             </div>

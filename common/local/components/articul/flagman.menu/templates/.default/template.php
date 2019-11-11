@@ -40,7 +40,7 @@ use FourPaws\Decorators\SvgDecorator;
                     <div class="nav-flagship-store__icon">
                         <?=new SvgDecorator('icon-flagship-walking', 61, 61)?>
                     </div>
-                    <div class="nav-flagship-store__title">Выгул-тренировка</div>
+                    <div class="nav-flagship-store__title">Тренировочный клуб</div>
                 </div>
             <?php endif; ?>
         </div>
