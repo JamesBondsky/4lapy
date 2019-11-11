@@ -25,6 +25,13 @@ class QuestQuestionTaskResponse
     protected $errorText = '';
 
     /**
+     * @Serializer\SerializedName("correct_text")
+     * @Serializer\Type("string")
+     * @var string
+     */
+    protected $correctTet = '';
+
+    /**
      * @Serializer\SerializedName("prize_text")
      * @Serializer\Type("string")
      * @var string
@@ -85,6 +92,24 @@ class QuestQuestionTaskResponse
     public function setErrorText(string $errorText): QuestQuestionTaskResponse
     {
         $this->errorText = $errorText;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCorrectTet(): string
+    {
+        return $this->correctTet;
+    }
+
+    /**
+     * @param string $correctTet
+     * @return QuestQuestionTaskResponse
+     */
+    public function setCorrectTet(string $correctTet): QuestQuestionTaskResponse
+    {
+        $this->correctTet = $correctTet;
         return $this;
     }
 

@@ -51,11 +51,11 @@ class QuestRegisterGetResponse
     protected $isFinishStep = false;
 
     /**
-     * @Serializer\SerializedName("correct_answers")
-     * @Serializer\Type("int")
-     * @var int
+     * @Serializer\SerializedName("correct_text")
+     * @Serializer\Type("string")
+     * @var string
      */
-    protected $correctAnswers = 0;
+    protected $correctText = '';
 
     /**
      * @Serializer\SerializedName("prize_text")
@@ -208,20 +208,20 @@ class QuestRegisterGetResponse
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getCorrectAnswers(): int
+    public function getCorrectText(): string
     {
-        return $this->correctAnswers;
+        return $this->correctText;
     }
 
     /**
-     * @param int $correctAnswers
+     * @param string $correctText
      * @return QuestRegisterGetResponse
      */
-    public function setCorrectAnswers(int $correctAnswers = 0): QuestRegisterGetResponse
+    public function setCorrectText(string $correctText): QuestRegisterGetResponse
     {
-        $this->correctAnswers = $correctAnswers;
+        $this->correctText = $correctText;
         return $this;
     }
 

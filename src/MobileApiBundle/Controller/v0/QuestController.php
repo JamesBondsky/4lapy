@@ -174,11 +174,10 @@ class QuestController extends BaseController
             $userResult = $this->apiQuestService->getUserResult();
             /** @var Pet $pet */
             $userPet = current($this->apiQuestService->getPetTypes([$userResult['UF_PET']]));
-            $response->setPrizes($userPet->getPrizes());
-
-            if ($this->apiQuestService->getCorrectAnswers($userResult) < QuestService::MIN_CORRECT_ANSWERS) {
-                $response->setPrizeText(QuestService::MIN_CORRECT_ANSWERS_TEXT);
-            }
+            $response
+                ->setPrizes($userPet->getPrizes())
+                ->setCorrectTet($this->apiQuestService->getCorrectText($userResult))
+                ->setPrizeText($this->apiQuestService->getPrizeText($userResult));
         } else {
             $response->setBarcodeTask($this->apiQuestService->getCurrentBarcodeTask());
         }

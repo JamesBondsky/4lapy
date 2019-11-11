@@ -44,7 +44,8 @@ class QuestService
     protected const QUEST_CODE = 'ЧЕТЫРЕ ЛАПЫ';
 
     public const MIN_CORRECT_ANSWERS = 4;
-    public const MIN_CORRECT_ANSWERS_TEXT = 'Вы всегда можете проконсультироваться с продавцом перед покупкой.';
+    public const MIN_CORRECT_ANSWERS_TEXT = "Вы всегда можете проконсультироваться с продавцом перед покупкой.\n";
+    public const CORRECT_ANSWERS = 'Вы ответили правильно на %d из из %d!';
 
     protected const PET_HL_NAME = 'QuestPet';
     protected const PRIZE_HL_NAME = 'QuestPrize';
@@ -163,11 +164,8 @@ class QuestService
                         $result
                             ->setIsFinishStep(true)
                             ->setPrizes($userPet->getPrizes())
-                            ->setCorrectAnswers($this->getCorrectAnswers($userResult));
-
-                        if ($this->getCorrectAnswers($userResult) < self::MIN_CORRECT_ANSWERS) {
-                            $result->setPrizeText(self::MIN_CORRECT_ANSWERS_TEXT);
-                        }
+                            ->setCorrectText($this->getCorrectText($userResult))
+                            ->setPrizeText($this->getPrizeText($userResult));
                     } else {
                         $result
                             ->setShowPrize(true)
@@ -761,6 +759,15 @@ class QuestService
     }
 
     /**
+     * @param $userResult
+     * @return int
+     */
+    public function getTotalTaskCount($userResult): int
+    {
+        return count(unserialize($userResult['UF_TASKS']));
+    }
+
+    /**
      * @param array $petTypeId
      * @return Pet[]
      *
@@ -826,7 +833,7 @@ class QuestService
                 ->withTime(360000)
                 ->withId(__METHOD__ . serialize(['petTypeIds' => $petTypeId]))
                 ->resultOf($cacheFinder);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->log()->error(sprintf('failed to get pets for quest: %s', $e->getMessage()), [
                 'pet type ids' => var_export($petTypeId, true),
             ]);
@@ -883,7 +890,7 @@ class QuestService
                 ->withTime(360000)
                 ->withId(__METHOD__ . serialize(['prizeIds' => $prizeIds]))
                 ->resultOf($cacheFinder);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->log()->error(sprintf('failed to get pri for quest: %s', $e->getMessage()), [
                 'prizes ids' => var_export($prizeIds, true),
             ]);
@@ -965,5 +972,22 @@ class QuestService
         }
 
         return $this->dataManagers[$entityName];
+    }
+
+    /**
+     * @param $userResult
+     * @return string
+     */
+    public function getCorrectText($userResult): string
+    {
+        return sprintf(self::CORRECT_ANSWERS, $this->getCorrectAnswers($userResult), $this->getTotalTaskCount($userResult));
+    }
+
+    public function getPrizeText($userResult): string
+    {
+        $prizeText = ($this->getCorrectAnswers($userResult) < self::MIN_CORRECT_ANSWERS) ? self::MIN_CORRECT_ANSWERS_TEXT : '';
+        $prizeText .= 'Выберите Ваш заслуженный подарок';
+
+        return $prizeText;
     }
 }
