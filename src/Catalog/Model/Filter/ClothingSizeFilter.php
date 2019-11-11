@@ -70,6 +70,8 @@ class ClothingSizeFilter extends ReferenceFilterNested
     {
         $variantCollection = parent::doGetAllVariants();
 
+        return $variantCollection;
+
         $request = Request::createFromGlobals();
 
         $checkedValues = $this->getCheckedValues($request);
