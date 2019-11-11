@@ -30,7 +30,7 @@ class BannerController extends BaseController
     }
 
     /**
-     * @Rest\Get("/ baner_list/")
+     * @Rest\Get("/baner_list/")
      * @Rest\View()
      *
      * @param BannersRequest $bannersRequest
