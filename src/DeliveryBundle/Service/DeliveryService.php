@@ -55,6 +55,7 @@ use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use phpDocumentor\Reflection\Types\Static_;
 use Psr\Log\LoggerAwareInterface;
 use WebArch\BitrixCache\BitrixCache;
 use FourPaws\App\Application;
@@ -72,6 +73,7 @@ class DeliveryService implements LoggerAwareInterface
     public const DELIVERY_DOSTAVISTA_CODE = 'dostavista';
     public const DOBROLAP_DELIVERY_CODE = 'dobrolap_delivery';
     public const INNER_PICKUP_CODE = '4lapy_pickup';
+    public const EXPRESS_DELIVERY = '4lapy_express';
     public const DPD_DELIVERY_GROUP_CODE = 'ipolh_dpd';
     public const DPD_DELIVERY_CODE = self::DPD_DELIVERY_GROUP_CODE . ':COURIER';
     public const DPD_PICKUP_CODE = self::DPD_DELIVERY_GROUP_CODE . ':PICKUP';
@@ -158,6 +160,11 @@ class DeliveryService implements LoggerAwareInterface
     public const DELIVERY_CODES = [
         DeliveryService::INNER_DELIVERY_CODE,
         DeliveryService::DPD_DELIVERY_CODE,
+    ];
+
+    public const EXPRESS_DELIVERY_CODES = [
+        DeliveryService::DELIVERY_DOSTAVISTA_CODE,
+        DeliveryService::EXPRESS_DELIVERY,
     ];
 
     /** @var array */
@@ -454,6 +461,7 @@ class DeliveryService implements LoggerAwareInterface
             $result = (new BitrixCache())
                 ->withId(__METHOD__ . $locationCode)
                 ->withTag('location:groups')
+                ->withClearCache(true)
                 ->resultOf($getDeliveries);
             $deliveries = $result['result'];
         } catch (\Exception $e) {
@@ -891,6 +899,15 @@ class DeliveryService implements LoggerAwareInterface
     public function isDeliveryCode($deliveryCode): bool
     {
         return $deliveryCode && \in_array($deliveryCode, static::DELIVERY_CODES, true);
+    }
+
+    /**
+     * @param $deliveryCode
+     * @return bool
+     */
+    public function isExpressDelivery($deliveryCode): bool
+    {
+        return $deliveryCode && \in_array($deliveryCode, static::EXPRESS_DELIVERY_CODES, true);
     }
 
     /**
