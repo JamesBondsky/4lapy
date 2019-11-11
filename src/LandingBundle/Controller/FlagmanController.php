@@ -188,8 +188,8 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             ],
             'json'    => [
                 "name"    => $request->get('name'),
-                "phone"   => $request->get('name'),
-                "id"      => $request->get('name'),
+                "phone"   => $request->get('phone'),
+                "id"      => $request->get('id'),
                 "comment" => $request->get('animal') . ' ' . $request->get('breed') . ' ' . $request->get('service'),
             ],
         ]);
