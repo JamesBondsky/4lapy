@@ -83,7 +83,7 @@ class FlagmanTraining extends \CBitrixComponent
     
     private function modifyTime()
     {
-        $actionTime = array_shift($this->arResult['SCHEDULE'])['exec'];
+        $actionTime = current($this->arResult['SCHEDULE'])['exec'];
         
         $hours = $actionTime / 60;
         $minutes = $actionTime % 60;
