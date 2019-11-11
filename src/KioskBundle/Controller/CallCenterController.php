@@ -4,11 +4,14 @@
 namespace FourPaws\KioskBundle\Controller;
 
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use DateTime;
 use Exception;
 use FourPaws\AppBundle\Callback\CallbackService;
 use FourPaws\StoreBundle\Service\StoreService;
 use phpDocumentor\Reflection\DocBlock\Tags\Throws;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -23,6 +26,13 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class CallCenterController extends Controller
 {
+    use LoggerAwareTrait;
+
+    public function __construct()
+    {
+        $this->setLogger(LoggerFactory::create('callCenter', 'callCenter'));
+    }
+
     /**
      * @param Request $request
      * @return \Symfony\Component\HttpFoundation\JsonResponse
@@ -31,8 +41,7 @@ class CallCenterController extends Controller
      */
     public function add(Request $request)
     {
-        $rCode = $request->get('r_code');
-        $sign = $request->get('sign');
+        [$rCode, $sign] = $this->getParams($request);
 
         $answer = [
             'success' => true,
@@ -155,5 +164,34 @@ class CallCenterController extends Controller
         $strParam = md5($strParam);
 
         return $strParam;
+    }
+
+    /**
+     * Получение и обработка параметров
+     * @param Request $request
+     * @return array
+     */
+    private function getParams(Request $request)
+    {
+        $rCode = $request->get('r_code');
+        $sign = $request->get('sign');
+
+        $this->log()->info('params', [
+            '$rCode' => $rCode,
+            '$sign' => $sign
+        ]);
+
+        $rCode = trim($rCode);
+        $sign = trim($sign);
+
+        return [$rCode, $sign];
+    }
+
+    /**
+     * @return LoggerInterface
+     */
+    private function log() : LoggerInterface
+    {
+        return $this->logger;
     }
 }
