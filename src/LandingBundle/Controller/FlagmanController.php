@@ -68,9 +68,9 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         try {
             $successAdding = LectionAppsTable::add([
                 //'UF_USER_ID' => (int) $data->userId,
-                'UF_NAME'     => $request->get('name'),
-                'UF_PHONE'    => $request->get('phone'),
-                'UF_EVENT_ID' => (int)$request->get('eventId')
+                'UF_NAME'     => $_POST['name'], //$request->get('name'),
+                'UF_PHONE'    => $_POST['phone'], //$request->get('phone'),
+                'UF_EVENT_ID' => (int)$_POST['eventId'], //$request->get('eventId')
             ]);
             
             if ($successAdding) {
@@ -187,10 +187,10 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'Authorization' => 'Bearer ' . $this->token,
             ],
             'json'    => [
-                "name"    => $request->get('name'),
-                "phone"   => $request->get('phone'),
-                "id"      => $request->get('id'),
-                "comment" => $request->get('animal') . ' ' . $request->get('breed') . ' ' . $request->get('service'),
+                "name"    => $_POST['name'],//$request->get('name'),
+                "phone"   => $_POST['phone'],//$request->get('phone'),
+                "id"      => $_POST['id'],//$request->get('id'),
+                "comment" => $_POST['animal'] . $_POST['breed'] . $_POST['service'],//$request->get('animal') . ' ' . $request->get('breed') . ' ' . $request->get('service'),
             ],
         ]);
         
