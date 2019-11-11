@@ -12,7 +12,7 @@
         <div class="service-flagship-store__content" data-content-service-flagship-store="true">
 
             <div class="service-flagship-store__descr">
-                Запись на мастер класс по послушанию питомца. Вы сможете задать вопросы по правильному воспитанию вашей собаки опытному кинологу, а так же, разучить несколько команд.
+                Запись на&nbsp;мастер класс по&nbsp;послушанию питомца. Вы&nbsp;сможете задать вопросы по&nbsp;правильному воспитанию вашей собаки опытному кинологу, а&nbsp;так&nbsp;же, разучить несколько команд.
             </div>
             <a class="link-walking-flagship-store" href="/events/Правила_тренировочного_клуба.pdf" target="_blank">Правила тренировочного клуба</a>
 
