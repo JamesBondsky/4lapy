@@ -5,13 +5,16 @@
                 <div class="service-flagship-store__title">
                     <nobr>Тренировочный клуб</nobr>
                 </div>
-                <div class="service-flagship-store__btn" data-toggle-service-flagship-store="true"></div>
+                <?/*<div class="service-flagship-store__btn" data-toggle-service-flagship-store="true"></div>*/?>
             </div>
         </div>
-        <div class="service-flagship-store__content" data-content-service-flagship-store="true">
+        <div class="service-flagship-store__content" data-content-service-flagship-store="true" style="display: block !important;"><? // стиль прямо здесь, т.к. фиксы делаем в ночное время и их нужно катить на прод. Иначе пришлось бы пересобирать статику ?>
 
             <div class="service-flagship-store__descr">
-                Запись на&nbsp;мастер класс по&nbsp;послушанию питомца. Вы&nbsp;сможете задать вопросы по&nbsp;правильному воспитанию вашей собаки опытному кинологу, а&nbsp;так&nbsp;же, разучить несколько команд.
+	            В тренировочном клубе вы можете пройти мастер-класс вместе со своей собакой и получить базовые знания о послушании, а также разучить элементарные команды.
+	            <br>Групповые занятия будут проходить 16 ноября под руководством профессионального кинолога.
+	            <br>Запись по телефону <a href="tel:84951364163">+7(495)136-41-63</a>
+                <?//Запись на&nbsp;мастер класс по&nbsp;послушанию питомца. Вы&nbsp;сможете задать вопросы по&nbsp;правильному воспитанию вашей собаки опытному кинологу, а&nbsp;так&nbsp;же, разучить несколько команд.?>
             </div>
             <a class="link-walking-flagship-store" href="/events/Правила_тренировочного_клуба.pdf" target="_blank">Правила тренировочного клуба</a>
 
@@ -38,7 +41,7 @@
                     </div>
                 </div>
             </div>*/?>
-
+	        <?/*?>
             <div class="timetable-walking-flagship-store">
                 <div class="timetable-walking-flagship-store__title">Расписание</div>
 
@@ -84,6 +87,7 @@
                     <?php endforeach; ?>
                 </div>
             </div>
+			<?*/?>
         </div>
     </div>
 </section>
