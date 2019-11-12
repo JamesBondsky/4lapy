@@ -426,10 +426,17 @@ class LandingController extends Controller
 
         } catch (JsonResponseException $e) {
             $logger = LoggerFactory::create('expertSender');
+            $message = $e->getMessage();
+            if (!$message) {
+                $jsonContent = json_decode($e->getJsonResponse()->getContent(), true);
+                if ($jsonContent) {
+                    $message = $jsonContent['message'];
+                }
+            }
             $logger->error(sprintf(
                 'Ошибка добавления заявки LP Уютно жить: %s exception: %s, user_id: %s',
                 __METHOD__,
-                $e->getMessage(),
+                $message,
                 $userFields['ID']
             ));
 
