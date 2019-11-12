@@ -272,9 +272,9 @@ class PetController extends Controller
      */
     public function getBreeds(Request $request): JsonResponse
     {
-        if (!$this->userAuthorization->isAuthorized()) {
-            return $this->ajaxMess->getNeedAuthError();
-        }
+//        if (!$this->userAuthorization->isAuthorized()) {
+//            return $this->ajaxMess->getNeedAuthError();
+//        }
         $typeId = (int)$request->get('id');
         if ($typeId < 1) {
             $this->ajaxMess->getNotIdError(' для получения списка');
