@@ -134,7 +134,7 @@ class CallCenterController extends Controller
             'apikey' => $api,
         ];
 
-        $guzzleClient->get($url . '?' . http_build_query($params));
+//        $guzzleClient->get($url . '?' . http_build_query($params));
     }
 
     /**
