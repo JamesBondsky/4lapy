@@ -6,12 +6,12 @@ use FourPaws\Decorators\SvgDecorator;
 
 <section class="banner-flagship-store">
     <div class="b-container">
-        <div class="banner-flagship-store__title">Сервисы<br/> флагманского магазина</div>
+        <div class="banner-flagship-store__title">Запись на услуги</div>
         <div class="banner-flagship-store__subtitle">
                 <span class="b-icon">
                     <?=new SvgDecorator('icon-delivery-header', 24, 24)?>
                 </span>
-            <span>ул. Вавилова, 3, ТРК Гагаринский</span>
+            <span>Адрес: г. Москва, пр-кт Вернадского, д. 6, ТЦ «Капитолий», -1 этаж</span>
         </div>
     </div>
 </section>
