@@ -23,6 +23,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use Bitrix\Main\Error;
 use Bitrix\Sale\Basket;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 
 Loc::loadMessages(__FILE__);
 
@@ -126,11 +127,13 @@ class ExpressDeliveryHandler extends DeliveryHandlerBase
     /**
      * @param Shipment|null $shipment
      * @return CalculationResult
-     * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentOutOfRangeException
      * @throws LoaderException
      * @throws ObjectNotFoundException
+     * @throws SystemException
+     * @throws NotFoundException
+     * @throws ApplicationCreateException
      */
     protected function calculateConcrete(Shipment $shipment = null): CalculationResult
     {
@@ -168,7 +171,8 @@ class ExpressDeliveryHandler extends DeliveryHandlerBase
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
         $data = [];
-        if ($this->config['MAIN']['PRICE']) {
+
+        if (isset($this->config['MAIN']['PRICE'])) {
             $result->setDeliveryPrice($this->config['MAIN']['PRICE']);
 
             if (!empty($this->config['MAIN']['FREE_PRICE_FROM'])) {
@@ -190,13 +194,13 @@ class ExpressDeliveryHandler extends DeliveryHandlerBase
         $availableStores = self::getAvailableStores($this->code, $deliveryZone, $deliveryLocation);
 
         if ($availableStores->isEmpty()) {
-//            $result->addError(new Error('Не найдено доступных складов'));
-//
-//            return $result;
+            $result->addError(new Error('Не найдено доступных складов'));
+
+            return $result;
         }
 
         //проверка остатков всех офферов, чтобы они были в хотя бы в одном магазине
-        $stockResult = $this->getStocksForAllAvailableOffers($basket, $offers, $availableStores);
+        $stockResult = $this->getStocksForAllAvailableOffers($basket, $offers, $availableStores, false);
 
         if ($stockResult->getOrderable()->isEmpty()) {
             $result->addError(new Error('Отсутствуют товары в наличии'));
@@ -213,7 +217,7 @@ class ExpressDeliveryHandler extends DeliveryHandlerBase
                 'TEXT_EXPRESS_DELIVERY_TIME' => COption::GetOptionString('articul.dostavista.delivery', 'text_express_delivery_time', 'Текст с временем доставки для кнопки Экспресс-доставки')
             ]
         );
-dump($result);die;
+
         return $result;
     }
 

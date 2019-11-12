@@ -902,10 +902,19 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
-     * @param $deliveryCode
+     * @param string|null $deliveryCode
      * @return bool
      */
-    public function isExpressDelivery($deliveryCode): bool
+    public function isDostavistaDeliveryCode($deliveryCode): bool
+    {
+        return $deliveryCode === static::DELIVERY_DOSTAVISTA_CODE;
+    }
+
+    /**
+     * @param string|null $deliveryCode
+     * @return bool
+     */
+    public function isExpressDeliveryCode($deliveryCode): bool
     {
         return $deliveryCode && \in_array($deliveryCode, static::EXPRESS_DELIVERY_CODES, true);
     }
@@ -914,18 +923,9 @@ class DeliveryService implements LoggerAwareInterface
      * @param string|null $deliveryCode
      * @return bool
      */
-    public function isDostavistaDeliveryCode($deliveryCode): bool
-    {
-        return $deliveryCode == static::DELIVERY_DOSTAVISTA_CODE;
-    }
-
-    /**
-     * @param string|null $deliveryCode
-     * @return bool
-     */
     public function isDobrolapDeliveryCode($deliveryCode): bool
     {
-        return $deliveryCode == static::DOBROLAP_DELIVERY_CODE;
+        return $deliveryCode === static::DOBROLAP_DELIVERY_CODE;
     }
 
     /**
@@ -946,6 +946,15 @@ class DeliveryService implements LoggerAwareInterface
     public function isDostavistaDelivery(CalculationResultInterface $calculationResult): bool
     {
         return $this->isDostavistaDeliveryCode($calculationResult->getDeliveryCode());
+    }
+
+    /**
+     * @param CalculationResultInterface $calculationResult
+     * @return bool
+     */
+    public function isExpressDelivery(CalculationResultInterface $calculationResult): bool
+    {
+        return $this->isExpressDeliveryCode($calculationResult->getDeliveryCode());
     }
 
     /**
