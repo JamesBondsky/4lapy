@@ -87,6 +87,10 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         include __DIR__ . '/dobrolap-popup.php';
     }
 
+    include __DIR__ . '/grooming-flagship-store.php';
+    include __DIR__ . '/recording-lecture-flagship-store.php';
+    include __DIR__ . '/enrollment-training-flagship-store.php';
+
     include __DIR__ . '/promo-subscribe.php';
 
     include __DIR__ . '/gifts_popup.php';
