@@ -1,9 +1,9 @@
 <?php
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
-$APPLICATION->SetPageProperty('title', 'Сервисы флагманского магазина');
+$APPLICATION->SetPageProperty('title', 'Запись на услуги');
 $APPLICATION->SetPageProperty('description', '');
-$APPLICATION->SetTitle("Сервисы флагманского магазина");
+$APPLICATION->SetTitle('Запись на услуги');
 ?>
 <div class="flagship-store-page">
     <?php
