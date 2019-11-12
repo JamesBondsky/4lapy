@@ -44,7 +44,7 @@ class QuestService
     protected const QUEST_CODE = 'ЧЕТЫРЕ ЛАПЫ';
 
     public const MIN_CORRECT_ANSWERS = 4;
-    public const MIN_CORRECT_ANSWERS_TEXT = "Вы всегда можете проконсультироваться с продавцом перед покупкой.\n";
+    public const MIN_CORRECT_ANSWERS_TEXT = "Вы всегда можете проконсультироваться с продавцом перед покупкой.\n\n";
     public const CORRECT_ANSWERS = 'Вы ответили правильно на %d из из %d!';
 
     protected const PET_HL_NAME = 'QuestPet';
