@@ -565,7 +565,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends CustomerRegistration
      */
     protected function createUserByFormFields()
     {
-        \FourPaws\UserBundle\EventController\Event::disableEvents();
+        \FourPaws\UserBundle\EventController\Event::$isManzanaEventsDisable = false;
         $user = $this->userByFormFields();
 
         $user->setActive('Y');
@@ -574,7 +574,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends CustomerRegistration
 
         $result = $this->createUser($user);
 
-        \FourPaws\UserBundle\EventController\Event::enableEvents();
+        \FourPaws\UserBundle\EventController\Event::$isManzanaEventsDisable = true;
 
         return $result;
     }
