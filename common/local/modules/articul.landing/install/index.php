@@ -25,7 +25,7 @@ Class articul_landing extends \CModule
         include(dirname(__FILE__) . "/version.php");
         
         $this->MODULE_NAME = "Articul.Landing";
-        $this->MODULE_DESCRIPTION = "Модуль с компонентами тестового задания";
+        $this->MODULE_DESCRIPTION = "Модуль для флагманского магазина";
         $this->MODULE_ID = 'articul.landing';
         $this->MODULE_VERSION = $arModuleVersion["VERSION"];
         $this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];

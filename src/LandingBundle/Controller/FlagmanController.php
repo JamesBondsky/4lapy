@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace FourPaws\LandingBundle\Controller;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Articul\Landing\Orm\TrainingAppsTable;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Loader;
 use Exception;
@@ -20,11 +21,13 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Articul\Landing\Orm\LectionsTable;
+use Articul\Landing\Orm\TrainingsTable;
 use Articul\Landing\Orm\LectionAppsTable;
 use GuzzleHttp\Client;
+use FourPaws\LandingBundle\Service\FlagmanService;
 
 /**
- * Class BasketController
+ * Class FlagmanController
  *
  * @package FourPaws\SaleBundle\Controller
  * @Route("/flagman")
@@ -130,7 +133,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         $body = $response->getBody();
         
         $requestResult = json_decode($body->getContents(), true);
-
+        
         if ($requestResult[$id]) {
             $actionTime = $requestResult[$id]['exec'];
             
@@ -143,7 +146,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 if ($time['status'] == 'Y') {
                     $endTimestamp = strtotime($timeKey) + strtotime($actionTimeForPrint) - strtotime("00:00:00");
                     $endTime      = date('H:i', $endTimestamp);
-
+                    
                     $result[$time['id']] = $timeKey . ' - ' . $endTime;
                 }
             }
@@ -178,7 +181,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
     {
         
         // $data = json_decode($request->getContent());
-
+        
         $this->url .= 'book-the-time/' . $id . '/';
         
         $response = $this->guzzleClient->request('POST', $this->url, [
@@ -197,5 +200,102 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         $body = $response->getBody();
         
         return new JsonResponse($body->getContents());
+    }
+    
+    /**
+     * @Route("/getlocalschedule/{id}/", methods={"GET"})
+     *
+     * @param Request $request
+     * @param string  $id
+     *
+     * @return JsonResponse
+     * @throws Exception
+     *
+     * @throws RuntimeException
+     */
+    public function getLocalSchedule(Request $request, $id): JsonResponse
+    {
+        $result = [];
+        
+        $flagmanService = new FlagmanService();
+        $elements = $flagmanService->getElementsBySectionId($id);
+        
+        foreach ($elements as $key => $element) {
+            if ($element['FREE_SITS'] <= 0) {
+                unset($elements[$key]);
+                continue;
+            }
+            
+            $result[$element['ID']] = $element['NAME'];
+        }
+        
+        if ($result) {
+            return new JsonResponse([
+                'success' => 1,
+                'data'    => $result,
+                'errors'  => [],
+            ]);
+        }
+        
+        return new JsonResponse([
+            'success' => 0,
+            'errors'  => ['message' => 'Такого дня нет =('],
+        ]);
+    }
+    
+    /**
+     * @Route("/bookthetimelocal/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws Exception
+     *
+     * @throws RuntimeException
+     */
+    public function bookTheTimeLocal(Request $request): JsonResponse
+    {
+        // $flagmanService = new FlagmanService();
+        // $bookingResult = $flagmanService->bookTheTime($id);
+    
+        if (!Loader::includeModule('articul.landing')) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Модуль для сохранения заявок не подключен']]);
+        }
+    
+        try {
+            $successAdding = TrainingAppsTable::add([
+                'UF_NAME'     => $_POST['name'], //$request->get('name'),
+                'UF_PHONE'    => $_POST['phone'], //$request->get('phone'),
+                'UF_EVENT_ID' => (int)$_POST['eventId'], //$request->get('eventId')
+            ]);
+        
+            if ($successAdding) {
+                $sits = TrainingsTable::query()
+                    ->setSelect(['SITS' => 'UTS.FREE_SITS'])
+                    ->setFilter(['=ID' => (int)$_POST['eventId']])
+                    ->exec()
+                    ->fetch()['SITS'];
+            
+                $newSits = (int)$sits - 1;
+            
+                //@todo исправить как только реализуют метод update
+                \CIBlockElement::SetPropertyValuesEx($_POST['eventId'], 0, ['FREE_SITS' => $newSits]);
+            }
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => 0,
+                'app'     => 'Ошибка при сохранении заявки',
+                'errors'  => ['message' => $e->getMessage()],
+            ]);
+        
+        }
+    
+        $response = new JsonResponse([
+            'success' => 1,
+            'app'     => 'Заявка успешно сохранена',
+            'errors'  => [],
+        ]);
+    
+        return $response;
     }
 }

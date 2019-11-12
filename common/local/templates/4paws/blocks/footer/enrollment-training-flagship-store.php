@@ -3,7 +3,7 @@
     <div class="popup-service-flagship-store__content">
         <div class="popup-service-flagship-store__title">Запись на тренировку</div>
 
-        <form class="popup-service-flagship-store__form js-form-validation" data-url="/flagman/bookthetime/training" method="post">
+        <form class="popup-service-flagship-store__form js-form-validation" data-url="/flagman/bookthetimelocal/" method="post">
             <input type="hidden" name="id" value="" data-id-training-flagship-store-popup="true">
 
             <div class="b-input-line">

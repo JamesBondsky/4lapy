@@ -21,10 +21,8 @@
                         <div class="b-select">
                             <select class="b-select__block" data-date-training-flagship="true">
                                 <option value="" disabled="disabled" selected="selected">выберите</option>
-                                <?php foreach ($arResult['SCHEDULE'] as $key => $day) : ?>
-                                    <?php if ($day['end'] != 'Y') : ?>
-                                        <option value="<?=$key?>" data-url="/flagman/getschedule/training/<?=$key?>" data-date-option="<?=$day['day']?>"><?=$day['day']?></option>
-                                    <?php endif; ?>
+                                <?php foreach ($arResult['SECTIONS'] as $section) : ?>
+                                        <option value="<?=$section['ID']?>" data-url="/flagman/getlocalschedule/<?=$section['ID']?>/" data-date-option="<?=$section['NAME']?>"><?=$section['NAME']?></option>
                                 <?php endforeach; ?>
                             </select>
                             <div class="b-error"><span class="js-message"></span></div>
