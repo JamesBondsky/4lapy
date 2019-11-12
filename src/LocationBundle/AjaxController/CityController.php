@@ -111,7 +111,7 @@ class CityController extends Controller
         $exact = $limit === 1;
         $filter = [($exact ? '=' : '?') . 'NAME.NAME_UPPER' => ToUpper($query)];
 
-        $locations = $this->locationService->findLocationNew($filter, $limit, true, true, true);
+        $locations = $this->locationService->findLocationNew($filter, $limit, true, true);
 
         $result = $this->apiCityService->convertInDadataFormat($locations);
 
