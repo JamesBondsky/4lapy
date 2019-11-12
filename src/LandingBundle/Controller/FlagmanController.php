@@ -104,7 +104,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
     }
     
     /**
-     * @Route("/getschedule/{action}/{id}", methods={"GET"})
+     * @Route("/getschedule/{action}/{id}/", methods={"GET"})
      *
      * @param Request $request
      * @param string  $id
@@ -164,7 +164,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
     }
     
     /**
-     * @Route("/bookthetime/{id}", methods={"POST"})
+     * @Route("/bookthetime/{id}/", methods={"POST"})
      *
      * @param Request $request
      * @param string  $id
