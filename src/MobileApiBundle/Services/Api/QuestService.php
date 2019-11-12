@@ -45,7 +45,7 @@ class QuestService
 
     public const MIN_CORRECT_ANSWERS = 4;
     public const MIN_CORRECT_ANSWERS_TEXT = "Вы всегда можете проконсультироваться с продавцом перед покупкой.\n\n";
-    public const CORRECT_ANSWERS = 'Вы ответили правильно на %d из из %d!';
+    public const CORRECT_ANSWERS = 'Вы ответили правильно на %d из %d!';
 
     protected const PET_HL_NAME = 'QuestPet';
     protected const PRIZE_HL_NAME = 'QuestPrize';
