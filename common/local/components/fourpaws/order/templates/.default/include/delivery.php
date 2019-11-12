@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array $arResult
  * @var OrderStorage $storage
  * @var DeliveryResultInterface $delivery
+ * @var DeliveryResultInterface $selectedDelivery
  * @var FourPawsOrderComponent $component
  */
 
@@ -240,15 +241,16 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                 <? } ?>
             </div>
             <div class="b-choice-recovery b-choice-recovery--order-step b-choice-recovery--delivery-type-time">
-                <input data-set-delivery-type="<?= $deliveryDostavista->getDeliveryId() ?>"
-                       class="b-choice-recovery__input"
-                       id="order-express-courier-delivery"
-                       type="radio"
-                       name="typeTimeDeliveryId"
-                       data-delivery="<?= $deliveryDostavista->getPrice() ?>"
-                       data-full="<?= $delivery->getStockResult()->getOrderable()->getPrice() ?>"
-                       data-type-time-delivery="express"
-                       data-check="js-list-orders-cont">
+                <input  <?= ($deliveryService->isDostavistaDelivery($selectedDelivery)) ? 'checked="checked" ' : '' ?>
+                        data-set-delivery-type="<?= $deliveryDostavista->getDeliveryId() ?>"
+                        class="b-choice-recovery__input"
+                        id="order-express-courier-delivery"
+                        type="radio"
+                        name="typeTimeDeliveryId"
+                        data-delivery="<?= $deliveryDostavista->getPrice() ?>"
+                        data-full="<?= $delivery->getStockResult()->getOrderable()->getPrice() ?>"
+                        data-type-time-delivery="express"
+                        data-check="js-list-orders-cont">
                 <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step" for="order-express-courier-delivery">
                 <span class="b-choice-recovery__main-text">
                     <span class="b-choice-recovery__main-text">Экспресс</span>
@@ -260,7 +262,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                     В&nbsp;течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
                 </span>
                 </label>
-                <input checked="checked"
+                <input <?= ($deliveryService->isDelivery($selectedDelivery)) ? 'checked="checked" ' : '' ?>
                        class="b-choice-recovery__input"
                        data-set-delivery-type="<?= $delivery->getDeliveryId() ?>"
                        id="order-default-courier-delivery"

@@ -152,10 +152,10 @@ class OrderController extends Controller implements LoggerAwareInterface
     /**
      * @Route("/store-search/", methods={"GET"})
      *
-     * @throws SystemException
+     * @return JsonResponse
      * @throws \Exception
      * @throws ApplicationCreateException
-     * @return JsonResponse
+     * @throws SystemException
      */
     public function storeSearchAction(): JsonResponse
     {
@@ -169,7 +169,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         );
         array_walk($shopInfo['items'], [$this->storeShopInfoService, 'locationTypeSortDecorate']);
         usort($shopInfo['items'], [$this->storeShopInfoService, 'shopCompareByLocationType']);
-        if (KioskService::isKioskMode()){
+        if (KioskService::isKioskMode()) {
             usort($shopInfo['items'], [$this->storeShopInfoService, 'shopCompareByKiosk']);
         }
         array_walk($shopInfo['items'], [$this->storeShopInfoService, 'locationTypeSortUndecorate']);
@@ -201,10 +201,10 @@ class OrderController extends Controller implements LoggerAwareInterface
     /**
      * @Route("/store-search-by-items/", methods={"POST"})
      *
-     * @throws SystemException
+     * @return JsonResponse
      * @throws \Exception
      * @throws ApplicationCreateException
-     * @return JsonResponse
+     * @throws SystemException
      */
     public function storeSearchByItemsAction(Request $request): JsonResponse
     {
@@ -215,12 +215,12 @@ class OrderController extends Controller implements LoggerAwareInterface
         $storage = $this->orderStorageService->getStorage();
         $items = $request->get('items');
 
-        if(empty($items)){
+        if (empty($items)) {
             return JsonSuccessResponse::create('Не переданы товары для создания службы доставки');
         }
 
         // данные с 2 шага оформления заказа помешают расчётам
-        if($storage->getDeliveryId() > 0){
+        if ($storage->getDeliveryId() > 0) {
             $this->orderStorageService->clearStorage($storage);
             $storage = $this->orderStorageService->getStorage();
         }
@@ -228,7 +228,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         // получение самовывоза из набора товаров
         $basket = $basketService->createBasketFromItems($items);
         $deliveries = $deliveryService->getByBasket($basket, '', [DeliveryService::INNER_PICKUP_CODE]);
-        if(empty($deliveries)){
+        if (empty($deliveries)) {
             return JsonSuccessResponse::create('Нет доступных магазинов для самовывоза');
         }
         $pickup = current($deliveries);
@@ -249,6 +249,7 @@ class OrderController extends Controller implements LoggerAwareInterface
      *
      * @param Request $request
      *
+     * @return JsonResponse
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
@@ -259,7 +260,6 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @throws SystemException
      * @throws UserMessageException
      * @throws \Exception
-     * @return JsonResponse
      */
     public function storeInfoAction(Request $request): JsonResponse
     {
@@ -384,10 +384,8 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param Request $request
      *
      * @return JsonResponse
-     * @throws ArgumentException
      * @throws OrderStorageSaveException
-     * @throws SystemException
-     * @throws ObjectPropertyException
+     * @throws ApplicationCreateException
      */
     public function validateBonusCardAction(Request $request): JsonResponse
     {
@@ -414,10 +412,11 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @Route("/validate/auth", methods={"POST"})
      * @param Request $request
      *
+     * @return JsonResponse
+     * @return JsonResponse
      * @throws SystemException
-     * @return JsonResponse
-     * @return JsonResponse
-     * @throws OrderStorageSaveException
+     * @throws OrderStorageSaveException*
+     * @throws ApplicationCreateException
      */
     public function validateAuthAction(Request $request): JsonResponse
     {
@@ -448,7 +447,7 @@ class OrderController extends Controller implements LoggerAwareInterface
     /**
      * @Route("/validate/delivery", methods={"POST"})
      *
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
      * @return JsonResponse
      * @throws ApplicationCreateException
@@ -798,6 +797,93 @@ class OrderController extends Controller implements LoggerAwareInterface
                 'delivery_dates'     => $deliveryDates
             ]
         );
+    }
+
+    /**
+     * @Route("/set-address/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     *
+     * @throws ApplicationCreateException
+     */
+    public function setAddressAction(Request $request): JsonResponse
+    {
+        $step = OrderStorageEnum::NOVALIDATE_STEP;
+        try {
+            $storage = $this->orderStorageService->getStorage();
+
+            $storage
+                ->setCityCode(DeliveryService::MOSCOW_LOCATION_CODE)
+                ->setStreet($request->get('street', ''))
+                ->setHouse($request->get('house', ''))
+                ->setBuilding($request->get('building', ''))
+                ->setPorch($request->get('porch', ''))
+                ->setFloor($request->get('floor', ''))
+                ->setApartment($request->get('apartment', ''));
+
+            $updateStorage = (bool)$request->get('updateStorage', false);
+
+            $deliveries = $this->orderStorageService->getDeliveries($storage);
+            $delivery = null;
+            $deliveryDostavista = null;
+            $pickup = null;
+
+            foreach ($deliveries as $availableDelivery) {
+                if ($this->deliveryService->isDelivery($availableDelivery)) {
+                    $delivery = $availableDelivery;
+                }
+
+                if ($this->deliveryService->isDostavistaDelivery($availableDelivery)) {
+                    $deliveryDostavista = $availableDelivery;
+                }
+
+                if ($this->deliveryService->isPickup($availableDelivery)) {
+                    $pickup = $availableDelivery;
+                }
+            }
+
+            $selectedDelivery = null;
+            if ($deliveryDostavista) {
+                $selectedDelivery = $deliveryDostavista;
+            } else if ($delivery) {
+                $selectedDelivery = $delivery;
+            } else if ($pickup) {
+                $updateStorage = false;
+                $selectedDelivery = $pickup;
+            }
+
+            if ($selectedDelivery) {
+                $storage->setDeliveryId($selectedDelivery->getDeliveryId());
+                if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
+                    $resultText = str_replace(['[time]', '[date]'], [round($selectedDelivery->getPeriodTo() / 60), ($selectedDelivery->getPrice() > 0) ? 'за ' . $selectedDelivery->getPrice() . ' ₽' : 'бесплатно'], $selectedDelivery->getData()['TEXT_EXPRESS_DELIVERY_TIME']);
+                } else if ($this->deliveryService->isDelivery($selectedDelivery)) {
+                    /** @var DeliveryResultInterface $nextDelivery */
+                    $nextDelivery = current($this->deliveryService->getNextDeliveries($selectedDelivery, 1));
+                    $resultText = sprintf('Заказ будет доставлен - %s', DeliveryTimeHelper::showTime($nextDelivery));
+                } else {
+                    $shopInfo = $this->shopInfoService->toArray($this->shopInfoService->getShopInfo($storage, $pickup));
+                    $resultText = sprintf('Забрать самовывозом из %s %s', count($shopInfo), (count($shopInfo) === 1) ? 'магазина' : 'магазинов');
+                }
+            } else {
+                $updateStorage = false;
+                $resultText = 'Для данного адреса нет доступных доставок';
+            }
+
+            if ($updateStorage) {
+                $this->orderStorageService->updateStorage($storage, $step);
+            }
+
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('%s при сохранении адреса в orderStorage произошла ошибка: %s', __METHOD__, $e->getMessage()));
+            return JsonErrorResponse::create('При добавлении адреса произошла ошибка');
+        }
+
+        return JsonSuccessResponse::createWithData('Адрес успешно сохранен', [
+            'next_delivery_text' => $resultText,
+            'is_dostavista' => (bool)$deliveryDostavista
+        ]);
     }
 
     /**

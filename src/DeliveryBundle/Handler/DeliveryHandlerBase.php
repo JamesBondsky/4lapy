@@ -10,7 +10,6 @@ use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\Services\Base;
@@ -322,7 +321,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             $amount = $stockResult->getAmount();
             $stocks = $offer->getAllStocks();
 
-            if ($offer->isIgnoreStocks()) {
+            if($offer->isIgnoreStocks()){
                 $stockResultCollection->add($stockResult);
                 continue;
             }
