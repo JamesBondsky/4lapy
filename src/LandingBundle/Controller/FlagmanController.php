@@ -152,8 +152,6 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             'success' => 0,
             'errors'  => ['message' => 'Такого дня нет =('],
         ]);
-        
-        return new JsonResponse();
     }
     
     /**
