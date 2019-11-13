@@ -26,6 +26,8 @@ use FourPaws\StoreBundle\Entity\Store;
 $delivery = $arResult['DELIVERY'];
 /** @var CalculationResultInterface $deliveryDostavista */
 $deliveryDostavista = $arResult['DELIVERY_DOSTAVISTA'];
+/** @var CalculationResultInterface $expressDelivery */
+$expressDelivery = $arResult['EXPRESS_DELIVERY'];
 /** @var CalculationResultInterface $deliveryDobrolap */
 $deliveryDobrolap = $arResult['DELIVERY_DOBROLAP'];
 /** @var PickupResultInterface $pickup */
@@ -117,7 +119,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
 
                         <div class="b-choice-recovery b-choice-recovery--order-step">
                             <?php if ($delivery) {
-                                $selectedDel = ($selectedDelivery->getDeliveryCode() === DeliveryService::DELIVERY_DOSTAVISTA_CODE || $selectedDelivery->getDeliveryCode() === DeliveryService::INNER_DELIVERY_CODE) ? $delivery : $selectedDelivery; ?>
+                                $selectedDel = (in_array($selectedDelivery->getDeliveryCode(), [DeliveryService::DELIVERY_DOSTAVISTA_CODE, DeliveryService::INNER_DELIVERY_CODE, DeliveryService::EXPRESS_DELIVERY], true)) ? $delivery : $selectedDelivery; ?>
                                 <input <?= $deliveryService->isDelivery($selectedDel) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-telephone js-delivery"
                                         data-set-delivery-type="<?= $delivery->getDeliveryId() ?>"
