@@ -152,7 +152,7 @@ class Pet extends BaseEntity
      *
      * @return Pet
      */
-    public function setName(string $name) : Pet
+    public function setName(?string $name = '') : Pet
     {
         $this->name = $name;
 

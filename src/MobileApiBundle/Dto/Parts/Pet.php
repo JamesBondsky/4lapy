@@ -25,7 +25,7 @@ trait Pet
      * @Serializer\SerializedName("name")
      * @var string
      */
-    protected $name;
+    protected $name = '';
 
     /**
      * @Serializer\Type("int")
@@ -116,7 +116,7 @@ trait Pet
      * @param string $name
      * @return $this
      */
-    public function setName(string $name)
+    public function setName(?string $name = '')
     {
         $this->name = $name;
         return $this;
