@@ -235,17 +235,26 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
 
 
         <?php if ($deliveryDostavista || $expressDelivery) { ?>
-            <div class="b-delivery-type-time__info js-info-express-detail">
-                <div class="b-delivery-type-time__info-title  <?php if ($deliveryDostavista->getData()['TEXT_EXPRESS_DETAIL']) { ?>b-delivery-type-time__info-title--detail<?php } ?>">
-                    <?= str_replace(['[time]', '[price]'], [round($deliveryDostavista->getPeriodTo() / 60), ($deliveryDostavista->getPrice() > 0) ? 'за ' . $deliveryDostavista->getPrice() . ' ₽' : 'бесплатно'], $deliveryDostavista->getData()['TEXT_EXPRESS_DELIVERY']); ?>
-                </div>
-                <?php if ($deliveryDostavista->getData()['TEXT_EXPRESS_DETAIL']) { ?>
-                    <div class="b-delivery-type-time__info-detail js-content-info-express-detail">
-                        <?= $deliveryDostavista->getData()['TEXT_EXPRESS_DETAIL']; ?>
+            <?php if ($deliveryDostavista) { ?>
+                <div class="b-delivery-type-time__info js-info-express-detail" data-message-express-delivery="express">
+                    <div class="b-delivery-type-time__info-title  <?php if ($deliveryDostavista->getData()['TEXT_EXPRESS_DETAIL']) { ?>b-delivery-type-time__info-title--detail<?php } ?>">
+                        <?= str_replace(['[time]', '[price]'], [round($deliveryDostavista->getPeriodTo() / 60), ($deliveryDostavista->getPrice() > 0) ? 'за ' . $deliveryDostavista->getPrice() . ' ₽' : 'бесплатно'], $deliveryDostavista->getData()['TEXT_EXPRESS_DELIVERY']); ?>
                     </div>
-                    <div class="b-delivery-type-time__info-toggle js-btn-toggle-info-express-detail"></div>
-                <?php } ?>
+
+                    <?php if ($deliveryDostavista->getData()['TEXT_EXPRESS_DETAIL']) { ?>
+                        <div class="b-delivery-type-time__info-detail js-content-info-express-detail">
+                            <?= $deliveryDostavista->getData()['TEXT_EXPRESS_DETAIL']; ?>
+                        </div>
+                        <div class="b-delivery-type-time__info-toggle js-btn-toggle-info-express-detail"></div>
+                    <?php } ?>
+                </div>
+            <?php } ?>
+            <div class="b-delivery-type-time__info js-info-express-detail" data-message-express-delivery="reserve" style="display: none;">
+                <div class="b-delivery-type-time__info-title">
+                    Вам доступна Экспресс-доставка в течение <span data-minutes-reserve-express-delivery="true"></span> минут за 397 ₽
+                </div>
             </div>
+
             <div class="b-choice-recovery b-choice-recovery--order-step b-choice-recovery--delivery-type-time">
                 <?php if ($deliveryDostavista) { ?>
                     <input <?= ($deliveryService->isDostavistaDelivery($selectedDelivery)) ? 'checked="checked" ' : '' ?>
@@ -257,8 +266,11 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                             data-delivery="<?= $deliveryDostavista->getPrice() ?>"
                             data-full="<?= $delivery->getStockResult()->getOrderable()->getPrice() ?>"
                             data-type-time-delivery="express"
+                            data-type-time-express-delivery="express"
                             data-check="js-list-orders-cont">
-                    <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step" for="order-express-courier-delivery">
+                    <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
+                           data-tab-express-courier-delivery="express"
+                           for="order-express-courier-delivery">
                         <span class="b-choice-recovery__main-text">
                             <span class="b-choice-recovery__main-text">Экспресс</span>
                         </span>
@@ -275,22 +287,26 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                     <input <?= ($deliveryService->isExpressDelivery($selectedDelivery)) ? 'checked="checked" ' : '' ?>
                             data-set-delivery-type="<?= $expressDelivery->getDeliveryId() ?>"
                             class="b-choice-recovery__input"
-                            id="order-express-courier-delivery"
+                            id="order-express-reserve-courier-delivery"
                             type="radio"
                             name="typeTimeDeliveryId"
                             data-delivery="<?= $expressDelivery->getPrice() ?>"
                             data-full="<?= $expressDelivery->getStockResult()->getOrderable()->getPrice() ?>"
                             data-type-time-delivery="express"
+                            data-type-time-express-delivery="reserve"
                             data-check="js-list-orders-cont">
-                    <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step" for="order-express-courier-delivery">
+                    <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
+                           data-tab-express-courier-delivery="reserve"
+                           for="order-express-reserve-courier-delivery"
+                           style="display: none;">
                         <span class="b-choice-recovery__main-text">
                             <span class="b-choice-recovery__main-text">Экспресс</span>
                         </span>
                         <span class="b-choice-recovery__addition-text">
-                            В&nbsp;течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
+                            В&nbsp;течение <span data-minutes-reserve-express-delivery="true"></span>&nbsp;минут, <?/*= $deliveryDostavista->getPrice() */?>&nbsp;₽
                         </span>
                         <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                            В&nbsp;течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
+                            В&nbsp;течение <span data-minutes-reserve-express-delivery="true"></span>&nbsp;минут, <?/*= $deliveryDostavista->getPrice() */?>&nbsp;₽
                         </span>
                     </label>
                 <?php } ?>
@@ -306,7 +322,9 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                        data-full="<?= $delivery->getStockResult()->getOrderable()->getPrice() ?>"
                        data-type-time-delivery="default"
                        data-check="js-list-orders-static">
-                <label class="b-choice-recovery__label b-choice-recovery__label--right b-choice-recovery__label--order-step" for="order-default-courier-delivery">
+                <label class="b-choice-recovery__label b-choice-recovery__label--right b-choice-recovery__label--order-step"
+                       for="order-default-courier-delivery"
+                       data-tab-courier-delivery="default">
                     <span class="b-choice-recovery__main-text">Обычная</span>
                     <span class="b-choice-recovery__addition-text js-cur-pickup">
                     <?= /** @noinspection PhpUnhandledExceptionInspection */
