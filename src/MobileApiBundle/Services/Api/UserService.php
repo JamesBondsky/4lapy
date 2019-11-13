@@ -7,16 +7,19 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Exception;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\UserGroup as UserGroupEnum;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
-use FourPaws\Helpers\PhoneHelper;
 use FourPaws\MobileApiBundle\Dto\Object\City;
 use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
 use FourPaws\MobileApiBundle\Dto\Object\User;
@@ -25,6 +28,7 @@ use FourPaws\MobileApiBundle\Dto\Response\PostUserInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserLoginResponse;
 use FourPaws\MobileApiBundle\Exception\EmailAlreadyUsed;
 use FourPaws\MobileApiBundle\Exception\InvalidCredentialException;
+use FourPaws\MobileApiBundle\Exception\NotFoundUserException;
 use FourPaws\MobileApiBundle\Exception\PhoneAlreadyUsed;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Exception\TokenNotFoundException;
@@ -32,6 +36,7 @@ use FourPaws\MobileApiBundle\Security\ApiToken;
 use FourPaws\MobileApiBundle\Services\Session\SessionHandler;
 use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\UserBundle\Entity\User as AppUser;
+use FourPaws\UserBundle\Exception\EmptyPhoneException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\NotFoundException;
@@ -111,13 +116,13 @@ class UserService
     /**
      * @param LoginRequest $loginRequest
      * @return UserLoginResponse
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \Bitrix\Main\Db\SqlQueryException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ApplicationCreateException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
+     * @throws EmptyPhoneException
      * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
      * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      */
@@ -250,11 +255,11 @@ class UserService
      * @param User $user
      *
      * @return PostUserInfoResponse
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     * @throws EmptyPhoneException
      */
     public function update(User $user): PostUserInfoResponse
     {
@@ -335,9 +340,9 @@ class UserService
      * @param string $login
      *
      * @return bool
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function doesExist(string $login): bool
     {
@@ -350,11 +355,12 @@ class UserService
     /**
      * Берем данные о пользователе из переданного токена
      * @return User
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     * @throws EmptyPhoneException
+     * @throws NotFoundUserException
      */
     public function getCurrentApiUser(): User
     {
@@ -368,6 +374,10 @@ class UserService
             throw new SessionUnavailableException();
         }
         $user = $this->userRepository->find($session->getUserId());
+
+        if ($user === null) {
+            throw new NotFoundUserException('Пользоваель не найден');
+        }
 
         $apiUser = new User();
         $apiUser
@@ -401,8 +411,8 @@ class UserService
     /**
      * @param AppUser $user
      * @return ClientCard|null
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
+     * @throws ApplicationCreateException
+     * @throws EmptyPhoneException
      */
     protected function getCard(AppUser $user)
     {
@@ -444,8 +454,8 @@ class UserService
      * @see UserGroupEnum::NO_ORDERS_FROM_MOBILE_APP
      *
      * Вызывается в методе app_launch
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws SystemException
      * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
      */
     public function actualizeUserGroupsForApp()
@@ -468,13 +478,13 @@ class UserService
 
     /**
      * @return PersonalBonus
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ApplicationCreateException
      * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
-     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
+     * @throws EmptyPhoneException
      */
     public function getPersonalBonus()
     {
