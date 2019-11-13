@@ -283,16 +283,14 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             }
         } catch (\Exception $e) {
             return new JsonResponse([
-                'success' => 0,
-                'app'     => 'Ошибка при сохранении заявки',
+                'success' => 'N',
                 'errors'  => ['message' => $e->getMessage()],
             ]);
         
         }
     
         $response = new JsonResponse([
-            'success' => 1,
-            'app'     => 'Заявка успешно сохранена',
+            'success' => 'Y',
             'errors'  => [],
         ]);
     

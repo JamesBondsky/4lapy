@@ -23,7 +23,7 @@
                                     <option value="" disabled="disabled" selected="selected">выберите</option>
                                     <?php foreach ($arResult['SCHEDULE'] as $key => $day) : ?>
                                         <?php if ($day['end'] != 'Y') : ?>
-                                            <option value="<?=$key?>" data-url="/flagman/getschedule/grooming/<?=$key?>" data-date-option="<?=$day['day']?>"><?=$day['day']?></option>
+                                            <option value="<?=$key?>" data-url="/flagman/getschedule/grooming/<?=$key?>/" data-date-option="<?=$day['day']?>"><?=$day['day']?></option>
                                         <?php endif; ?>
                                     <?php endforeach; ?>
                                 </select>
