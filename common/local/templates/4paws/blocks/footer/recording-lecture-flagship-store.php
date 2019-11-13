@@ -1,3 +1,10 @@
+<?php
+global $USER;
+
+if ($USER->IsAuthorized()) {
+    $user = \CUser::GetList(($by="personal_country"), ($order="desc"), ['ID' => $USER->GetID()])->Fetch();
+}
+?>
 <section class="popup-service-flagship-store js-popup-section" data-popup="lectures-flagship-store">
     <a class="popup-service-flagship-store__close js-close-popup" href="javascript:void(0);" title="Закрыть"></a>
     <div class="popup-service-flagship-store__content">
@@ -15,7 +22,7 @@
                            type="text"
                            id="data-first-name"
                            name="name"
-                           value=""
+                           value="<?=($user['NAME']) ? $user['NAME'] : ''?>"
                            data-text="1"
                            placeholder="" />
                     <div class="b-error"><span class="js-message"></span>
@@ -32,7 +39,7 @@
                            type="tel"
                            id="edit-phone"
                            name="phone"
-                           value=""
+                           value="<?=($user['PERSONAL_PHONE']) ? $user['PERSONAL_PHONE'] : ''?>"
                            placeholder="" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
