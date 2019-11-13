@@ -3,7 +3,7 @@
 namespace Sprint\Migration;
 
 
-class LectionsIblockCreate05112019164727 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
+class LectionsIblockCreate20191105164727 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
 {
     protected $description = 'Создание инфоблоков для лендинга Фоагманского магазина (лекции)';
     

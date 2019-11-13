@@ -1,10 +1,12 @@
-<section class="popup-service-flagship-store js-popup-section" data-popup="walking-flagship-store">
+<section class="popup-service-flagship-store js-popup-section" data-popup="training-flagship-store">
     <a class="popup-service-flagship-store__close js-close-popup" href="javascript:void(0);" title="Закрыть"></a>
     <div class="popup-service-flagship-store__content">
         <div class="popup-service-flagship-store__title">Запись на тренировку</div>
 
-        <form class="popup-service-flagship-store__form js-form-validation" data-url="/flagman/bookthetime/training" method="post">
-            <input type="hidden" name="id" value="" data-id-walking-flagship-store-popup="true">
+        <form class="popup-service-flagship-store__form js-form-validation" data-url="/flagman/bookthetimelocal/" method="post">
+            <input type="hidden" name="id" value="" data-id-training-flagship-store-popup="true">
+            <input type="hidden" name="date" value="" data-date-training-flagship-store-popup="true">
+            <input type="hidden" name="time" value="" data-time-training-flagship-store-popup="true">
 
             <div class="b-input-line">
                 <div class="b-input-line__label-wrapper">
@@ -40,7 +42,7 @@
             </div>
 
             <div class="popup-service-flagship-store__btn">
-                <button type="submit" class="b-button" data-submit-walking-flagship-store-popup="true">Записаться</button>
+                <button type="submit" class="b-button" data-submit-training-flagship-store-popup="true">Записаться</button>
             </div>
         </form>
     </div>
