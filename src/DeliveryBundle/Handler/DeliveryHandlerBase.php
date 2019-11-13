@@ -469,7 +469,10 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             case DeliveryService::EXPRESS_DELIVERY:
                 /* для экспресс доставки доступен только ТЦ Капитолий R298 */
                 if ($locationCode === DeliveryService::MOSCOW_LOCATION_CODE) {
-                    $result->add($storeService->getStoreByXmlId(StoreService::EXPRESS_STORE_XML_ID));
+                    try {
+                        $result->add($storeService->getStoreByXmlId(StoreService::EXPRESS_STORE_XML_ID));
+                    } catch (NotFoundException $e) {
+                    }
                 }
                 break;
             case DeliveryService::DOBROLAP_DELIVERY_CODE:
