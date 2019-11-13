@@ -127,6 +127,27 @@ class HLBlockTrainingAppsCreate20191112171256 extends SprintMigrationBase
                     'ru' => '',
                 ],
         ],
+        [
+            'FIELD_NAME'        => 'UF_EMAIL',
+            'USER_TYPE_ID'      => 'string',
+            'XML_ID'            => 'UF_EMAIL',
+            'SORT'              => 20,
+            'MULTIPLE'          => 'N',
+            'MANDATORY'         => 'N',
+            'SHOW_FILTER'       => 'Y',
+            'SHOW_IN_LIST'      => 'Y',
+            'EDIT_IN_LIST'      => 'Y',
+            'IS_SEARCHABLE'     => 'N',
+            'EDIT_FORM_LABEL'   => [
+                'ru' => 'Email',
+            ],
+            'LIST_COLUMN_LABEL' => [
+                'ru' => 'Email',
+            ],
+            'LIST_FILTER_LABEL' => [
+                'ru' => 'Email',
+            ],
+        ],
     ];
     
     public function up()

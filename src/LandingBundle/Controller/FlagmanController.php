@@ -71,9 +71,10 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         try {
             $successAdding = LectionAppsTable::add([
                 //'UF_USER_ID' => (int) $data->userId,
-                'UF_NAME'     => $_POST['name'], //$request->get('name'),
-                'UF_PHONE'    => $_POST['phone'], //$request->get('phone'),
-                'UF_EVENT_ID' => (int)$_POST['eventId'], //$request->get('eventId')
+                'UF_NAME'     => $request->get('name'),
+                'UF_PHONE'    => $request->get('phone'),
+                'UF_EVENT_ID' => (int)$request->get('eventId'),
+                'UF_EMAIL'    => $request->get('email')
             ]);
 
             if ($successAdding) {
@@ -178,10 +179,11 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'Authorization' => 'Bearer ' . $this->token,
             ],
             'json'    => [
-                "name"    => $_POST['name'],//$request->get('name'),
-                "phone"   => $_POST['phone'],//$request->get('phone'),
-                "id"      => $_POST['id'],//$request->get('id'),
-                "comment" => $_POST['animal'] . $_POST['breed'] . $_POST['service'],//$request->get('animal') . ' ' . $request->get('breed') . ' ' . $request->get('service'),
+                "name"    => $request->get('name'),
+                "phone"   => $request->get('phone'),
+                "id"      => $request->get('id'),
+                "comment" => $request->get('animal') . ' ' . $request->get('breed') . ' ' . $request->get('service'),
+                "email"   => $request->get('email'),
             ],
         ]);
 
@@ -252,27 +254,29 @@ class FlagmanController extends Controller implements LoggerAwareInterface
 
         try {
             $successAdding = TrainingAppsTable::add([
-                'UF_NAME'     => $_POST['name'], //$request->get('name'),
-                'UF_PHONE'    => $_POST['phone'], //$request->get('phone'),
-                'UF_EVENT_ID' => (int)$_POST['id'], //$request->get('eventId')
+                'UF_NAME'     => $request->get('name'),
+                'UF_PHONE'    => $request->get('phone'),
+                'UF_EVENT_ID' => (int)$request->get('eventId'),
+                'UF_EMAIL'    => $request->get('email'),
             ]);
 
             if ($successAdding) {
                 $sits = TrainingsTable::query()
                     ->setSelect(['SITS' => 'UTS.FREE_SITS'])
-                    ->setFilter(['=ID' => (int)$_POST['id']])
+                    ->setFilter(['=ID' => (int)$request->get('id')])
                     ->exec()
                     ->fetch()['SITS'];
 
                 $newSits = (int)$sits - 1;
 
                 //@todo исправить как только реализуют метод update
-                \CIBlockElement::SetPropertyValuesEx($_POST['eventId'], 0, ['FREE_SITS' => $newSits]);
+                \CIBlockElement::SetPropertyValuesEx($request->get('eventId'), 0, ['FREE_SITS' => $newSits]);
                 \CEvent::Send('TRAINING_SERVICE', 's1', [
-                    'NAME'  => $_POST['name'],
-                    'PHONE' => $_POST['phone'],
-                    // 'DATE'  => '',
-                    // 'TIME'  => $sits['NAME'],
+                    'NAME'  => $request->get('name'),
+                    'PHONE' => $request->get('phone'),
+                    'DATE'  => $request->get('date'),
+                    'TIME'  => $request->get('time'),
+                    'EMAIL' => $request->get('email'),
                 ]);
             }
         } catch (\Exception $e) {

@@ -3,7 +3,6 @@
         <div class="service-flagship-store__header service-flagship-store__header_grooming">
             <div class="service-flagship-store__inner-header">
                 <div class="service-flagship-store__title">Груминг</div>
-                <div class="service-flagship-store__btn active" data-toggle-service-flagship-store="true"></div>
             </div>
         </div>
         <div class="service-flagship-store__content" data-content-service-flagship-store="true" style="display: block">
@@ -49,7 +48,7 @@
                             <label class="b-input-line__label"  for="type-pet">Вид животного</label>
                         </div>
                         <div class="b-select">
-                            <select class="b-select__block js-pet-view" id="type-pet" name="UF_TYPE">
+                            <select class="b-select__block js-pet-view" data-animal-grooming-flagship="true" id="type-pet" name="UF_TYPE">
                                 <option value="" disabled="disabled" selected="selected">Выберите вид</option>
                                 <option value="13" data-code="koshki">Кошки</option>
                                 <option value="14" data-code="sobaki">Собаки</option>

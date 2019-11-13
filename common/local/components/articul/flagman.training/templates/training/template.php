@@ -3,7 +3,6 @@
         <div class="service-flagship-store__header service-flagship-store__header_training">
             <div class="service-flagship-store__inner-header">
                 <div class="service-flagship-store__title">Тренировочный клуб</div>
-                <div class="service-flagship-store__btn active" data-toggle-service-flagship-store="true"></div>
             </div>
         </div>
         <div class="service-flagship-store__content" data-content-service-flagship-store="true" style="display: block">
