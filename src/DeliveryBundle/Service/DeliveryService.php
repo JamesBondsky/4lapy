@@ -152,6 +152,14 @@ class DeliveryService implements LoggerAwareInterface
      */
     public const ZONE_MOSCOW_DISTRICT_CODE_PATTERN = 'ZONE_MOSCOW_DISTRICT_';
 
+    public const ZONE_EXPRESS_DELIVERY_45 = 'ZONE_EXPRESS_DELIVERY_45';
+    public const ZONE_EXPRESS_DELIVERY_90 = 'ZONE_EXPRESS_DELIVERY_90';
+
+    public const ZONE_EXPRESS_DELIVERY = [
+        DeliveryService::ZONE_EXPRESS_DELIVERY_45,
+        DeliveryService::ZONE_EXPRESS_DELIVERY_90,
+    ];
+
     public const PICKUP_CODES = [
         DeliveryService::INNER_PICKUP_CODE,
         DeliveryService::DPD_PICKUP_CODE,

@@ -1433,6 +1433,7 @@ class LocationService
      * @param string $address
      * @return DadataLocation
      * @throws DaDataExecuteException
+     * @throws ApplicationCreateException
      */
     public function getDadataLocationOkato(string $address): string
     {
