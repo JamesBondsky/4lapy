@@ -98,6 +98,7 @@ class PetService
             $result[$type['ID']] = [
                 'id' => $type['ID'],
                 'title' => $type['UF_NAME'],
+                'name_require' => (($type['UF_CODE'] === 'koshki') || ($type['UF_CODE'] === 'sobaki')),
                 'gender' => $genders,
                 'breeds' => []
             ];
@@ -151,12 +152,15 @@ class PetService
         $currentUser = $this->userBundleService->getCurrentUser();
 
         $petEntity = (new \FourPaws\PersonalBundle\Entity\Pet())
-            ->setName($addUserPetRequest->getName())
             ->setType($addUserPetRequest->getCategoryId())
             ->setUserId($currentUser->getId())
             ->setBreed($addUserPetRequest->getBreedOther())
             ->setBreedId($addUserPetRequest->getBreedId())
            ;
+
+        if ($petName = $addUserPetRequest->getName()) {
+            $petEntity->setName($petName);
+        }
 
         if ($birthday = $addUserPetRequest->getBirthday()) {
             $petEntity->setBirthday((new Date($birthday->format('d.m.Y'))));
@@ -172,6 +176,9 @@ class PetService
 
         $this->petRepository->setEntity($petEntity);
         $this->petRepository->create();
+
+        $this->prevIdAdd = $petEntity->getId();
+
         return $this->getUserPetAll();
     }
 
@@ -283,15 +290,12 @@ class PetService
      */
     public function map($pet)
     {
-        $birthdayStmp = $pet->getBirthday()->getTimestamp();
-        $birthday = (new \DateTime())->setTimestamp($birthdayStmp);
         $result = (new Pet())
             ->setId($pet->getId())
             ->setName($pet->getName())
             ->setCategoryId($pet->getType())
             ->setBreedId($pet->getBreedId())
             ->setBreedOther($pet->getBreed())
-            ->setBirthday($birthday)
             ->setBirthdayString($pet->getAgeString())
             ->setPhoto(
                 (new PetPhoto())
@@ -299,7 +303,14 @@ class PetService
                     ->setPreview($pet->getImgPath())
                     ->setSrc($pet->getResizePopupImgPath())
             )
-        ;
+            ->setIsAddNow(isset($this->prevIdAdd) ? ($this->prevIdAdd == $pet->getId()) : false);
+
+        if ($pet->getBirthday()) {
+            $birthdayStmp = $pet->getBirthday()->getTimestamp();
+            $birthday = (new \DateTime())->setTimestamp($birthdayStmp);
+            $result->setBirthday($birthday);
+        }
+
         if ($genderCode = $pet->getGender()) {
             $result->setGender(
                 (new PetGender())

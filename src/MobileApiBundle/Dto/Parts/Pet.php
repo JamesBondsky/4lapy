@@ -23,10 +23,9 @@ trait Pet
     /**
      * @Serializer\Type("string")
      * @Serializer\SerializedName("name")
-     * @Assert\NotBlank()
      * @var string
      */
-    protected $name;
+    protected $name = '';
 
     /**
      * @Serializer\Type("int")
@@ -81,6 +80,13 @@ trait Pet
     protected $photo;
 
     /**
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("is_add_now")
+     * @var bool
+     */
+    protected $isAddNow = false;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -99,9 +105,9 @@ trait Pet
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getName(): string
+    public function getName(): ?string
     {
         return $this->name;
     }
@@ -110,7 +116,7 @@ trait Pet
      * @param string $name
      * @return $this
      */
-    public function setName(string $name)
+    public function setName(?string $name = '')
     {
         $this->name = $name;
         return $this;
@@ -155,7 +161,7 @@ trait Pet
     /**
      * @return string
      */
-    public function getBreedOther(): string
+    public function getBreedOther(): ?string
     {
         return $this->breedOther;
     }
@@ -173,7 +179,7 @@ trait Pet
     /**
      * @return PetGender
      */
-    public function getGender(): PetGender
+    public function getGender(): ?PetGender
     {
         return $this->gender;
     }
@@ -191,7 +197,7 @@ trait Pet
     /**
      * @return \DateTime
      */
-    public function getBirthday(): \DateTime
+    public function getBirthday(): ?\DateTime
     {
         return $this->birthday;
     }
@@ -209,7 +215,7 @@ trait Pet
     /**
      * @return string
      */
-    public function getBirthdayString(): string
+    public function getBirthdayString(): ?string
     {
         return $this->birthdayString;
     }
@@ -227,7 +233,7 @@ trait Pet
     /**
      * @return PetPhoto
      */
-    public function getPhoto(): PetPhoto
+    public function getPhoto(): ?PetPhoto
     {
         return $this->photo;
     }
@@ -240,5 +246,16 @@ trait Pet
     {
         $this->photo = $photo;
         return $this;
+    }
+
+    public function setIsAddNow(bool $flag)
+    {
+        $this->isAddNow = $flag;
+        return $this;
+    }
+
+    public function getIsAddNow()
+    {
+        return $this->isAddNow;
     }
 }

@@ -335,6 +335,16 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $this->populateOrderDtoProducts($orderDto, $order);
         $this->populateOrderDtoCouponNumber($orderDto, $order);
 
+        if (!$orderDto->getClientPhone()) {
+            $this->log()->info('not found phone sap', [
+                'order_phone' => $this->getPropertyValueByCode($order, 'PHONE'),
+                'object_phone' => $orderDto->getClientPhone(),
+                'order_id' => $order->getId(),
+                'xml' => $this->serializer->serialize($orderDto, 'xml')
+            ]);
+        }
+
+
         $xml = $this->serializer->serialize($orderDto, 'xml');
 
         return new SourceMessage($this->getMessageId($order), OrderDtoOut::class, $xml);
@@ -1371,12 +1381,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $regularityFastDeliv = $scheduleResultService->getRegularityEnumByXmlId(ScheduleResultService::FAST_DELIV);
         return $regularityName == $regularityFastDeliv->getValue();
     }
-    
+
     public function sendOrderStatus($orderNumber, $status)
     {
         $sapStatusSender = new SapStatusSender($orderNumber, $status);
         $result = $sapStatusSender->send();
-        
+
         return $result;
     }
 }

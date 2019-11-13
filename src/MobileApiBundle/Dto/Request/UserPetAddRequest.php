@@ -6,7 +6,6 @@ use FourPaws\MobileApiBundle\Dto\Parts\Pet;
 use FourPaws\MobileApiBundle\Dto\Request\Types\PostRequest;
 use FourPaws\MobileApiBundle\Dto\Request\Types\SimpleUnserializeRequest;
 use JMS\Serializer\Annotation as Serializer;
-use Symfony\Component\Validator\Constraints as Assert;
 
 class UserPetAddRequest implements SimpleUnserializeRequest, PostRequest
 {
@@ -15,7 +14,6 @@ class UserPetAddRequest implements SimpleUnserializeRequest, PostRequest
     /**
      * @Serializer\Type("string")
      * @Serializer\SerializedName("gender")
-     * @Assert\NotBlank()
      * @var string
      */
     protected $gender;
@@ -23,7 +21,7 @@ class UserPetAddRequest implements SimpleUnserializeRequest, PostRequest
     /**
      * @return string
      */
-    public function getGender(): string
+    public function getGender(): ?string
     {
         return $this->gender;
     }

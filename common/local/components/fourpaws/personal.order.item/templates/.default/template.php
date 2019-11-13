@@ -19,6 +19,8 @@ use FourPaws\SaleBundle\Service\OrderService;
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
+global $USER;
 /**
  * @global CMain                                  $APPLICATION
  * @var array                                     $arParams
@@ -282,7 +284,7 @@ if ($orderSubscribe) {
                             </a>
                             <?php $isFirstButton = false; ?>
                         <?php } ?>
-                        <?php if ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) { ?>
+                        <?php if ($USER->IsAdmin() && ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED'])) { ?>
                             <div class="b-link b-link__button
                     <?= ($arResult['CAN_CANCEL']) ? 'js-cancel-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?><?= ($arResult['CANCELED']) ? 'b-link__canceled' : '' ?>" data-order-id="<?= $order->getId() ?>">
                         <span class="b-link__text js-link-text">
@@ -364,7 +366,7 @@ if ($orderSubscribe) {
                     </a>
                     <?php $isFirstButton = false; ?>
                 <?php } ?>
-                <?php if ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) { ?>
+                <?php if ($USER->IsAdmin() && ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED'])) { ?>
                     <div class="b-link b-link__button
                     <?= ($arResult['CAN_CANCEL']) ? 'js-cancel-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?><?= ($arResult['CANCELED']) ? 'b-link__canceled' : '' ?>" data-order-id="<?= $order->getId() ?>">
                         <span class="b-link__text js-link-text">
