@@ -5,6 +5,8 @@
 
         <form class="popup-service-flagship-store__form js-form-validation" data-url="/flagman/bookthetimelocal/" method="post">
             <input type="hidden" name="id" value="" data-id-training-flagship-store-popup="true">
+            <input type="hidden" name="date" value="" data-date-training-flagship-store-popup="true">
+            <input type="hidden" name="time" value="" data-time-training-flagship-store-popup="true">
 
             <div class="b-input-line">
                 <div class="b-input-line__label-wrapper">
