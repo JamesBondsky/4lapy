@@ -732,6 +732,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 return SapOrder::DELIVERY_TYPE_CONTRACTOR . '_' . SapOrder::DELIVERY_TYPE_CONTRACTOR_PICKUP;
                 break;
             case DeliveryService::DELIVERY_DOSTAVISTA_CODE:
+            case DeliveryService::EXPRESS_DELIVERY_CODE:
                 return SapOrder::DELIVERY_TYPE_DOSTAVISTA;
                 break;
             case DeliveryService::DOBROLAP_DELIVERY_CODE:

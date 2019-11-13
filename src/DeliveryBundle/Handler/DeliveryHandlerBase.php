@@ -8,8 +8,12 @@ namespace FourPaws\DeliveryBundle\Handler;
 
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\Services\Base;
@@ -76,10 +80,9 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      *
      * @param $initParams
      *
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws ArgumentNullException
+     * @throws ArgumentTypeException
      * @throws SystemException
-     * @throws ApplicationCreateException
      */
     public function __construct($initParams)
     {
@@ -96,7 +99,9 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     /**
      * @param Shipment $shipment
      * @return bool
+     *
      * @throws ObjectNotFoundException
+     * @throws ArgumentOutOfRangeException
      */
     public function isCompatible(Shipment $shipment)
     {
@@ -111,6 +116,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @param Basket $basket
      *
      * @return null|ArrayCollection
+     * @throws ArgumentNullException
      */
     public static function getOffers(Basket $basket): ?ArrayCollection
     {
@@ -152,6 +158,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @return StockResultCollection
      * @throws NotFoundException
      * @throws ApplicationCreateException
+     * @throws ArgumentNullException
      */
     public static function getStocks(
         Basket $basket,
@@ -192,6 +199,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @param bool $forDostavista
      * @return StockResultCollection
      * @throws ApplicationCreateException
+     * @throws ArgumentNullException
      */
     public function getStocksForAllAvailableOffers(
         Basket $basket,
@@ -265,6 +273,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @param Basket $basket
      *
      * @return PriceForAmountCollection[]
+     * @throws ArgumentNullException
      */
     public static function getBasketPrices(Basket $basket): array
     {
@@ -378,7 +387,6 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @return StoreCollection
      * @throws ArgumentException
      * @throws SystemException
-     * @throws NotFoundException
      */
     public static function getAvailableStores(
         string $deliveryCode,
@@ -466,13 +474,11 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                         break;
                 }
                 break;
-            case DeliveryService::EXPRESS_DELIVERY:
+            case DeliveryService::EXPRESS_DELIVERY_CODE:
                 /* для экспресс доставки доступен только ТЦ Капитолий R298 */
-                if ($locationCode === DeliveryService::MOSCOW_LOCATION_CODE) {
-                    try {
-                        $result->add($storeService->getStoreByXmlId(StoreService::EXPRESS_STORE_XML_ID));
-                    } catch (NotFoundException $e) {
-                    }
+                try {
+                    $result->add($storeService->getStoreByXmlId(StoreService::EXPRESS_STORE_XML_ID));
+                } catch (NotFoundException $e) {
                 }
                 break;
             case DeliveryService::DOBROLAP_DELIVERY_CODE:

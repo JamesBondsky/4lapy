@@ -39,10 +39,12 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\ExpressDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\DeliveryBundle\Exception\DeliveryInitializeException;
+use FourPaws\DeliveryBundle\Exception\LocationNotFoundException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Exception\UnknownDeliveryException;
@@ -55,7 +57,6 @@ use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
-use phpDocumentor\Reflection\Types\Static_;
 use Psr\Log\LoggerAwareInterface;
 use WebArch\BitrixCache\BitrixCache;
 use FourPaws\App\Application;
@@ -73,7 +74,7 @@ class DeliveryService implements LoggerAwareInterface
     public const DELIVERY_DOSTAVISTA_CODE = 'dostavista';
     public const DOBROLAP_DELIVERY_CODE = 'dobrolap_delivery';
     public const INNER_PICKUP_CODE = '4lapy_pickup';
-    public const EXPRESS_DELIVERY = '4lapy_express';
+    public const EXPRESS_DELIVERY_CODE = '4lapy_express';
     public const DPD_DELIVERY_GROUP_CODE = 'ipolh_dpd';
     public const DPD_DELIVERY_CODE = self::DPD_DELIVERY_GROUP_CODE . ':COURIER';
     public const DPD_PICKUP_CODE = self::DPD_DELIVERY_GROUP_CODE . ':PICKUP';
@@ -168,11 +169,6 @@ class DeliveryService implements LoggerAwareInterface
     public const DELIVERY_CODES = [
         DeliveryService::INNER_DELIVERY_CODE,
         DeliveryService::DPD_DELIVERY_CODE,
-    ];
-
-    public const EXPRESS_DELIVERY_CODES = [
-        DeliveryService::DELIVERY_DOSTAVISTA_CODE,
-        DeliveryService::EXPRESS_DELIVERY,
     ];
 
     /** @var array */
@@ -924,7 +920,7 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function isExpressDeliveryCode($deliveryCode): bool
     {
-        return $deliveryCode && \in_array($deliveryCode, static::EXPRESS_DELIVERY_CODES, true);
+        return $deliveryCode === static::EXPRESS_DELIVERY_CODE;
     }
 
     /**
@@ -1049,6 +1045,16 @@ class DeliveryService implements LoggerAwareInterface
     public function isDpdDelivery(CalculationResultInterface $calculationResult): bool
     {
         return $this->isDpdDeliveryCode($calculationResult->getDeliveryCode());
+    }
+
+    /**
+     * @param CalculationResultInterface $calculationResult
+     *
+     * @return bool
+     */
+    public function isDeliverable(CalculationResultInterface $calculationResult): bool
+    {
+        return $this->isDostavistaDelivery($calculationResult) || $this->isDelivery($calculationResult) || $this->isExpressDelivery($calculationResult);
     }
 
     /**
@@ -1501,5 +1507,40 @@ class DeliveryService implements LoggerAwareInterface
             self::ZONE_IVANOVO,
             self::ZONE_IVANOVO_REGION
         ];
+    }
+
+    /**
+     * @param ExpressDeliveryResult $selectedDelivery
+     * @param $locationCode
+     * @return int
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws LocationNotFoundException
+     */
+    public function getExpressDeliveryInterval(ExpressDeliveryResult $selectedDelivery, $locationCode): int
+    {
+        $locationGroups = $this->locationService->findLocationGroupsByCode($locationCode);
+
+        if (empty($locationGroups)) {
+            throw new LocationNotFoundException('Не найдены группы местоположения');
+        }
+
+        $deliveryInterval = 0;
+
+        foreach ($locationGroups as $group) {
+            switch ($group) {
+                case self::ZONE_EXPRESS_DELIVERY_45:
+                    $deliveryInterval = (int)$selectedDelivery->getData()['PERIOD_FROM'];
+                    break;
+                case self::ZONE_EXPRESS_DELIVERY_90:
+                    $deliveryInterval = (int)$selectedDelivery->getData()['PERIOD_TO'];
+                    break;
+                default:
+                    throw new LocationNotFoundException('Неверный район для экспресс доставки');
+            }
+        }
+
+        return $deliveryInterval;
     }
 }

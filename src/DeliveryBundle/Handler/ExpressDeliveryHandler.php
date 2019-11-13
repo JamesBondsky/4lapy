@@ -40,7 +40,6 @@ class ExpressDeliveryHandler extends DeliveryHandlerBase
      * @throws SystemException
      * @throws ArgumentNullException
      * @throws ArgumentTypeException
-     * @throws ApplicationCreateException
      */
     public function __construct(array $initParams)
     {
@@ -60,8 +59,6 @@ class ExpressDeliveryHandler extends DeliveryHandlerBase
             $this->config['MAIN']['PERIOD']['TO'] = '0';
             $this->config['MAIN']['PERIOD']['TYPE'] = 'D';
         }
-
-
     }
 
     /**
@@ -209,12 +206,8 @@ class ExpressDeliveryHandler extends DeliveryHandlerBase
         $result->setData(
             [
                 'STOCK_RESULT' => $stockResult,
-                'FREE_PRICE_FROM' => (int)$this->config['MAIN']['FREE_PRICE_FROM'],
-                'DELIVERY_START_TIME' => COption::GetOptionString('articul.dostavista.delivery', 'delivery_start_time', '00:00'),
-                'DELIVERY_END_TIME' => COption::GetOptionString('articul.dostavista.delivery', 'delivery_end_time', '23:59'),
-                'TEXT_EXPRESS_DELIVERY' => COption::GetOptionString('articul.dostavista.delivery', 'text_express_delivery', 'Текст с информацией, что пользователю доступна Экспресс-доставка'),
-                'TEXT_EXPRESS_DETAIL' => COption::GetOptionString('articul.dostavista.delivery', 'text_express_detail', 'Детальная информация'),
-                'TEXT_EXPRESS_DELIVERY_TIME' => COption::GetOptionString('articul.dostavista.delivery', 'text_express_delivery_time', 'Текст с временем доставки для кнопки Экспресс-доставки')
+                'PERIOD_FROM' => $this->config['MAIN']['PERIOD']['FROM'],
+                'PERIOD_TO' => $this->config['MAIN']['PERIOD']['TO'],
             ]
         );
 

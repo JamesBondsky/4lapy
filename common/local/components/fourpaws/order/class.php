@@ -32,6 +32,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DobrolapDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Exception\LocationNotFoundException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
@@ -356,6 +357,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
             LocalRedirect('/cart');
 
             return;
+        } catch (LocationNotFoundException $e) {
+            /* ошибка от экспресс доставки 4 лап */
+            $storage->setDeliveryId(0);
+            $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+            LocalRedirect('/cart');
         }
 
         $user = null;
@@ -425,6 +431,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $deliveries       = $this->orderStorageService->getDeliveries($storage);
 
         $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
+
         if ($this->currentStep === OrderStorageEnum::DELIVERY_STEP) {
             $this->getPickupData($deliveries, $storage);
 
