@@ -7,7 +7,7 @@ use Bitrix\Main\Application;
 use Sprint\Migration\Helpers\HlblockHelper;
 use CUserFieldEnum;
 
-class HLBlockLectionAppsCreate05112019171256 extends SprintMigrationBase
+class HLBlockLectionAppsCreate20191105171256 extends SprintMigrationBase
 {
     protected $description = 'Создание таблицы для хранения заявок на лекции';
     

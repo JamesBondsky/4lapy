@@ -33,9 +33,9 @@ $APPLICATION->SetTitle('Запись на услуги');
     // );
 
     $APPLICATION->IncludeComponent(
-        'articul:flagman.events',
+        'articul:flagman.training',
         'training',
-        ['EVENT_NAME' => 'training'],
+        [],
         false
     );
     ?>

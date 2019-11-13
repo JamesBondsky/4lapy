@@ -23,7 +23,7 @@
                                     <option value="" disabled="disabled" selected="selected">выберите</option>
                                     <?php foreach ($arResult['SCHEDULE'] as $key => $day) : ?>
                                         <?php if ($day['end'] != 'Y') : ?>
-                                            <option value="<?=$key?>" data-url="/flagman/getschedule/grooming/<?=$key?>" data-date-option="<?=$day['day']?>"><?=$day['day']?></option>
+                                            <option value="<?=$key?>" data-url="/flagman/getschedule/grooming/<?=$key?>/" data-date-option="<?=$day['day']?>"><?=$day['day']?></option>
                                         <?php endif; ?>
                                     <?php endforeach; ?>
                                 </select>
@@ -81,9 +81,6 @@
                         <div class="b-select">
                             <select class="b-select__block" data-service-grooming-flagship="true">
                                 <option value="" disabled="disabled" selected="selected">выберите</option>
-                                <option value="0">Мытье и сушка</option>
-                                <option value="1">Мытье и сушка2</option>
-                                <option value="2">Мытье и сушка3</option>
                             </select>
                             <div class="b-error"><span class="js-message"></span></div>
                         </div>
@@ -97,3 +94,10 @@
         </div>
     </div>
 </section>
+
+<script>
+    window.typeServiceGrooming = {
+        'dog': ['Стрижка от 1800р.', 'Мытьё и сушка от 1100р.', 'Стрижка когтей - 350р.', 'Обработка ушей - 350р.', 'Обработка лап (стрижка между пальцами) - 350р.', 'Чистка паранальных желез - 300р.', 'Выбривание узоров на шерсти (1 простой узор) - 500р.'],
+        'cat': ['Вычесывание - 1000р.', 'Стрижка от 2300р.', 'Стрижка когтей - 350р.', 'Обработка ушей - 350р.', 'Обработка лап - 350р.', 'Выбривание узоров на шерсти (1 простой узор) - 500р.', 'Антицарапки - 500р.', 'Окантовка лап - 600р.']
+    }
+</script>

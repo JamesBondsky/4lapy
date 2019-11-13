@@ -3,7 +3,7 @@
 namespace Sprint\Migration;
 
 
-class AddFlagmanServicesIblock05112019162747 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
+class AddFlagmanServicesIblock20191105162747 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
 {
     protected $description = 'Создание инфоблоков для лендинга Флагманского магазина (список сервисов)';
     
