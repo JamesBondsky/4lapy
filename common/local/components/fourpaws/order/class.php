@@ -423,6 +423,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $payments = null;
 
         $deliveries       = $this->orderStorageService->getDeliveries($storage);
+
         $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         if ($this->currentStep === OrderStorageEnum::DELIVERY_STEP) {
             $this->getPickupData($deliveries, $storage);
@@ -437,17 +438,20 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $delivery = null;
             $pickup   = null;
             $deliveryDostavista = null;
+            $expressDelivery = null;
             $deliveryDobrolap = null;
             foreach ($deliveries as $calculationResult) {
                 if ($this->deliveryService->isPickup($calculationResult)) {
                     $pickup = $calculationResult;
                 } elseif (!$delivery && $this->deliveryService->isDelivery($calculationResult)) {
                     $delivery = $calculationResult;
-                } elseif($this->deliveryService->isDostavistaDelivery($calculationResult)){
+                } elseif ($this->deliveryService->isDostavistaDelivery($calculationResult)) {
                     $deliveryDostavista = $calculationResult;
-                } elseif($this->deliveryService->isDobrolapDelivery($calculationResult)){
+                } elseif ($this->deliveryService->isDobrolapDelivery($calculationResult)) {
                     $deliveryDobrolap = $calculationResult;
                     $this->getDobrolapData($deliveries, $storage, $selectedCity);
+                } elseif ($this->deliveryService->isExpressDelivery($calculationResult)) {
+                    $expressDelivery = $calculationResult;
                 }
             }
 
@@ -467,16 +471,14 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 }
             }
 
-            $this->arResult['PICKUP']               = $pickup;
-            $this->arResult['DELIVERY']             = $delivery;
-            if (isset($deliveryDostavista)) {
-                $this->arResult['DELIVERY_DOSTAVISTA'] = $deliveryDostavista;
-            }
-            if (isset($deliveryDobrolap)) {
-                $this->arResult['DELIVERY_DOBROLAP'] = $deliveryDobrolap;
-            }
-            $this->arResult['ADDRESSES']            = $addresses;
-            $this->arResult['SELECTED_DELIVERY']    = $selectedDelivery;
+            $this->arResult['PICKUP'] = $pickup;
+            $this->arResult['DELIVERY'] = $delivery;
+            $this->arResult['DELIVERY_DOSTAVISTA'] = $deliveryDostavista;
+            $this->arResult['EXPRESS_DELIVERY'] = $expressDelivery;
+            $this->arResult['DELIVERY_DOBROLAP'] = $deliveryDobrolap;
+
+            $this->arResult['ADDRESSES'] = $addresses;
+            $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
         } elseif ($this->currentStep === OrderStorageEnum::PAYMENT_STEP) {
             $this->getPickupData($deliveries, $storage);
 

@@ -9,6 +9,7 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Dadata\Response\Address as AddressResponse;
 use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\Adapter\Model\Input\DadataLocation;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Dadata\DadataClient;
 use FourPaws\External\Exception\DaDataExecuteException;
 use GuzzleHttp\Client;
@@ -60,8 +61,9 @@ class DaDataService
     /**
      * @param string $address
      *
-     * @throws DaDataExecuteException
      * @return DadataLocation
+     * @throws ApplicationCreateException
+     * @throws DaDataExecuteException
      */
     public function splitAddress(string $address): DadataLocation
     {
