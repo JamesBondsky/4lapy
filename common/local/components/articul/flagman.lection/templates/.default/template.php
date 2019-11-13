@@ -3,7 +3,6 @@
         <div class="service-flagship-store__header service-flagship-store__header_lectures">
             <div class="service-flagship-store__inner-header">
                 <div class="service-flagship-store__title">Лекции</div>
-                <div class="service-flagship-store__btn" data-toggle-service-flagship-store="true"></div>
             </div>
         </div>
         <div class="service-flagship-store__content" data-content-service-flagship-store="true">

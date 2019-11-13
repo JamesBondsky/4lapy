@@ -74,6 +74,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'UF_NAME'     => $request->get('name'),
                 'UF_PHONE'    => $request->get('phone'),
                 'UF_EVENT_ID' => (int)$request->get('eventId'),
+                'UF_EMAIL'    => $request->get('email')
             ]);
 
             if ($successAdding) {
@@ -182,6 +183,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 "phone"   => $request->get('phone'),
                 "id"      => $request->get('id'),
                 "comment" => $request->get('animal') . ' ' . $request->get('breed') . ' ' . $request->get('service'),
+                "email"   => $request->get('email'),
             ],
         ]);
 
@@ -255,6 +257,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'UF_NAME'     => $request->get('name'),
                 'UF_PHONE'    => $request->get('phone'),
                 'UF_EVENT_ID' => (int)$request->get('eventId'),
+                'UF_EMAIL'    => $request->get('email'),
             ]);
 
             if ($successAdding) {
@@ -271,8 +274,9 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 \CEvent::Send('TRAINING_SERVICE', 's1', [
                     'NAME'  => $request->get('name'),
                     'PHONE' => $request->get('phone'),
-                    // 'DATE'  => '',
-                    // 'TIME'  => $sits['NAME'],
+                    'DATE'  => $request->get('date'),
+                    'TIME'  => $request->get('time'),
+                    'EMAIL' => $request->get('email'),
                 ]);
             }
         } catch (\Exception $e) {

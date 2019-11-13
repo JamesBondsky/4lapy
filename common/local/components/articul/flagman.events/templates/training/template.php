@@ -5,7 +5,6 @@
                 <div class="service-flagship-store__title">
                     <nobr>Тренировочный клуб</nobr>
                 </div>
-                <?/*<div class="service-flagship-store__btn" data-toggle-service-flagship-store="true"></div>*/?>
             </div>
         </div>
         <div class="service-flagship-store__content" data-content-service-flagship-store="true" style="display: block !important;"><? // стиль прямо здесь, т.к. фиксы делаем в ночное время и их нужно катить на прод. Иначе пришлось бы пересобирать статику ?>
