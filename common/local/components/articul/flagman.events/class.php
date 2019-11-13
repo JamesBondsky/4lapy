@@ -5,7 +5,7 @@ use GuzzleHttp\Client;
 /**
  * Class FlagmanTraining
  */
-class FlagmanTraining extends \CBitrixComponent
+class FlagmanEvents extends \CBitrixComponent
 {
     /**
      * @var \GuzzleHttp\Client

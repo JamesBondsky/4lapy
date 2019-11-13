@@ -6,7 +6,7 @@ use Bitrix\Iblock\SectionTable;
 /**
  * Class FlagmanTraining
  */
-class FlagmanTraining1 extends \CBitrixComponent
+class FlagmanTraining extends \CBitrixComponent
 {
     /**
      * @return mixed|void
