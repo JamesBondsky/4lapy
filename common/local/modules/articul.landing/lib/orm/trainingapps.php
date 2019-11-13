@@ -47,6 +47,9 @@ class TrainingAppsTable extends Main\Entity\DataManager
             ),
             'UF_EVENT_ID' => array(
                 'data_type' => 'integer',
+            ),
+            'UF_EMAIL' => array(
+                'data_type' => 'string',
             )
         );
     }
