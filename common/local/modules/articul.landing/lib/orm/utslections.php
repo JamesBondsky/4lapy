@@ -4,6 +4,7 @@ namespace Articul\Landing\Orm;
 
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+
 Loc::loadMessages(__FILE__);
 
 /**
@@ -17,7 +18,6 @@ Loc::loadMessages(__FILE__);
  *
  * @package Bitrix\Iblock
  **/
-
 class UtsLectionsTable extends Main\Entity\DataManager
 {
     /**
@@ -27,7 +27,9 @@ class UtsLectionsTable extends Main\Entity\DataManager
      */
     public static function getTableName()
     {
-        return 'b_iblock_element_prop_s41';
+        $id = \CIBlock::GetList([], ['CODE' => 'flagman_lections'])->Fetch()['ID'];
+        
+        return 'b_iblock_element_prop_s' . $id;
     }
     
     /**
@@ -37,32 +39,32 @@ class UtsLectionsTable extends Main\Entity\DataManager
      */
     public static function getMap()
     {
-        return array(
-            'IBLOCK_ELEMENT_ID' => array(
+        return [
+            'IBLOCK_ELEMENT_ID' => [
                 'data_type' => 'integer',
-                'primary' => true,
-                'title' => Loc::getMessage('ELEMENT_PROP_S21_ENTITY_IBLOCK_ELEMENT_ID_FIELD'),
-            ),
-            'EVENT_DATE' => array(
-                'data_type' => 'string',
-                'title' => Loc::getMessage('ELEMENT_PROP_S3_ENTITY_PROPERTY_236_FIELD'),
+                'primary'   => true,
+                'title'     => Loc::getMessage('ELEMENT_PROP_S21_ENTITY_IBLOCK_ELEMENT_ID_FIELD'),
+            ],
+            'EVENT_DATE'        => [
+                'data_type'   => 'string',
+                'title'       => Loc::getMessage('ELEMENT_PROP_S3_ENTITY_PROPERTY_236_FIELD'),
                 'column_name' => 'PROPERTY_236',
-            ),
-            'EVENT_TIME' => array(
-                'data_type' => 'string',
-                'title' => Loc::getMessage('ELEMENT_PROP_S3_ENTITY_PROPERTY_237_FIELD'),
+            ],
+            'EVENT_TIME'        => [
+                'data_type'   => 'string',
+                'title'       => Loc::getMessage('ELEMENT_PROP_S3_ENTITY_PROPERTY_237_FIELD'),
                 'column_name' => 'PROPERTY_237',
-            ),
-            'FREE_SITS' => array(
-                'data_type' => 'string',
-                'title' => Loc::getMessage('ELEMENT_PROP_S3_ENTITY_PROPERTY_238_FIELD'),
+            ],
+            'FREE_SITS'         => [
+                'data_type'   => 'string',
+                'title'       => Loc::getMessage('ELEMENT_PROP_S3_ENTITY_PROPERTY_238_FIELD'),
                 'column_name' => 'PROPERTY_238',
-            ),
-            'SITS' => array(
-                'data_type' => 'string',
-                'title' => Loc::getMessage('ELEMENT_PROP_S3_ENTITY_PROPERTY_239_FIELD'),
+            ],
+            'SITS'              => [
+                'data_type'   => 'string',
+                'title'       => Loc::getMessage('ELEMENT_PROP_S3_ENTITY_PROPERTY_239_FIELD'),
                 'column_name' => 'PROPERTY_239',
-            )
-        );
+            ],
+        ];
     }
 }
