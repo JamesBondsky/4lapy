@@ -70,7 +70,7 @@ class DeliveryController extends Controller
         $deliveryTime = null;
 
         try {
-            $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $this->locationService->getDadataLocationOkato($address));
+            $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $this->locationService->getDadataLocationOkato($address,  false));
 
             if (!empty($locations)) {
                 $location = current($locations);
