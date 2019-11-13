@@ -80,6 +80,13 @@ trait Pet
     protected $photo;
 
     /**
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("is_add_now")
+     * @var bool
+     */
+    protected $isAddNow = false;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -239,5 +246,16 @@ trait Pet
     {
         $this->photo = $photo;
         return $this;
+    }
+
+    public function setIsAddNow(bool $flag)
+    {
+        $this->isAddNow = $flag;
+        return $this;
+    }
+
+    public function getIsAddNow()
+    {
+        return $this->isAddNow;
     }
 }

@@ -176,6 +176,9 @@ class PetService
 
         $this->petRepository->setEntity($petEntity);
         $this->petRepository->create();
+
+        $this->prevIdAdd = $petEntity->getId();
+
         return $this->getUserPetAll();
     }
 
@@ -299,7 +302,8 @@ class PetService
                     ->setId($pet->getPhoto())
                     ->setPreview($pet->getImgPath())
                     ->setSrc($pet->getResizePopupImgPath())
-            );
+            )
+            ->setIsAddNow(isset($this->prevIdAdd) ? ($this->prevIdAdd == $pet->getId()) : false);
 
         if ($pet->getBirthday()) {
             $birthdayStmp = $pet->getBirthday()->getTimestamp();
