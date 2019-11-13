@@ -27,7 +27,9 @@ class UtsTrainingsTable extends Main\Entity\DataManager
      */
     public static function getTableName()
     {
-        return 'b_iblock_element_prop_s44';
+        $id = \CIBlock::GetList([], ['CODE' => 'flagman_training'])->Fetch()['ID'];
+
+        return 'b_iblock_element_prop_s' . $id;
     }
     
     /**

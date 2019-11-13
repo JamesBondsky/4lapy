@@ -135,19 +135,9 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         $requestResult = json_decode($body->getContents(), true);
         
         if ($requestResult[$id]) {
-            $actionTime = $requestResult[$id]['exec'];
-            
-            $hours   = $actionTime / 60;
-            $minutes = $actionTime % 60;
-            
-            $actionTimeForPrint = (int)$hours . ':' . $minutes;
-            
             foreach ($requestResult[$id]['times'] as $timeKey => $time) {
                 if ($time['status'] == 'Y') {
-                    $endTimestamp = strtotime($timeKey) + strtotime($actionTimeForPrint) - strtotime("00:00:00");
-                    $endTime      = date('H:i', $endTimestamp);
-                    
-                    $result[$time['id']] = $timeKey . ' - ' . $endTime;
+                    $result[$time['id']] = $timeKey;
                 }
             }
             
@@ -218,7 +208,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         $result = [];
         
         $flagmanService = new FlagmanService();
-        $elements = $flagmanService->getElementsBySectionId($id);
+        $elements       = $flagmanService->getElementsBySectionId($id);
         
         foreach ($elements as $key => $element) {
             if ($element['FREE_SITS'] <= 0) {
@@ -257,45 +247,49 @@ class FlagmanController extends Controller implements LoggerAwareInterface
     {
         // $flagmanService = new FlagmanService();
         // $bookingResult = $flagmanService->bookTheTime($id);
-    
+        //@todo сори за жирный контроллер
         if (!Loader::includeModule('articul.landing')) {
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Модуль для сохранения заявок не подключен']]);
         }
-    
+        
         try {
             $successAdding = TrainingAppsTable::add([
                 'UF_NAME'     => $_POST['name'], //$request->get('name'),
                 'UF_PHONE'    => $_POST['phone'], //$request->get('phone'),
-                'UF_EVENT_ID' => (int)$_POST['eventId'], //$request->get('eventId')
+                'UF_EVENT_ID' => (int)$_POST['id'], //$request->get('eventId')
             ]);
-        
+            
             if ($successAdding) {
                 $sits = TrainingsTable::query()
                     ->setSelect(['SITS' => 'UTS.FREE_SITS'])
-                    ->setFilter(['=ID' => (int)$_POST['eventId']])
+                    ->setFilter(['=ID' => (int)$_POST['id']])
                     ->exec()
                     ->fetch()['SITS'];
-            
+                
                 $newSits = (int)$sits - 1;
-            
+
                 //@todo исправить как только реализуют метод update
                 \CIBlockElement::SetPropertyValuesEx($_POST['eventId'], 0, ['FREE_SITS' => $newSits]);
+                \CEvent::Send('TRAINING_SERVICE', 's1', [
+                    'NAME'  => $_POST['name'],
+                    'PHONE' => $_POST['phone'],
+                    // 'DATE'  => '',
+                    // 'TIME'  => $sits['NAME'],
+                ]);
             }
         } catch (\Exception $e) {
             return new JsonResponse([
-                'success' => 0,
-                'app'     => 'Ошибка при сохранении заявки',
+                'success' => 'N',
                 'errors'  => ['message' => $e->getMessage()],
             ]);
-        
+            
         }
-    
+        
         $response = new JsonResponse([
-            'success' => 1,
-            'app'     => 'Заявка успешно сохранена',
+            'success' => 'Y',
             'errors'  => [],
         ]);
-    
+        
         return $response;
     }
 }
