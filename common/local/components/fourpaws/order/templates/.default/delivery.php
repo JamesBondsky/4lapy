@@ -119,7 +119,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
 
                         <div class="b-choice-recovery b-choice-recovery--order-step">
                             <?php if ($delivery) {
-                                $selectedDel = (in_array($selectedDelivery->getDeliveryCode(), [DeliveryService::DELIVERY_DOSTAVISTA_CODE, DeliveryService::INNER_DELIVERY_CODE, DeliveryService::EXPRESS_DELIVERY], true)) ? $delivery : $selectedDelivery; ?>
+                                $selectedDel = (in_array($selectedDelivery->getDeliveryCode(), [DeliveryService::DELIVERY_DOSTAVISTA_CODE, DeliveryService::INNER_DELIVERY_CODE, DeliveryService::EXPRESS_DELIVERY_CODE], true)) ? $delivery : $selectedDelivery; ?>
                                 <input <?= $deliveryService->isDelivery($selectedDel) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-telephone js-delivery"
                                         data-set-delivery-type="<?= $delivery->getDeliveryId() ?>"

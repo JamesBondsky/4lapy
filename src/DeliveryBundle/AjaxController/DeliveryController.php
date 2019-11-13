@@ -5,13 +5,11 @@ namespace FourPaws\DeliveryBundle\AjaxController;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use Bitrix\Sale\Location\GroupLocationTable;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\External\DaDataService;
 use FourPaws\External\Exception\DaDataExecuteException;
 use FourPaws\LocationBundle\LocationService;
 use http\Exception\RuntimeException;
@@ -26,22 +24,15 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 class DeliveryController extends Controller
 {
     /**
-     * @var DaDataService
-     */
-    protected $dadataService;
-
-    /**
      * @var LocationService
      */
     protected $locationService;
 
     /**
-     * @param DaDataService $dadataService
      * @param LocationService $locationService
      */
-    public function __construct(DaDataService $dadataService, LocationService $locationService)
+    public function __construct(LocationService $locationService)
     {
-        $this->dadataService = $dadataService;
         $this->locationService = $locationService;
     }
 
@@ -72,18 +63,11 @@ class DeliveryController extends Controller
             if (!empty($locations)) {
                 $location = current($locations);
 
-                $groupRes = GroupLocationTable::query()
-                    ->setFilter(['=LOCATION_ID' => $location['ID']])
-                    ->setLimit(10)
-                    ->setSelect(['GROUP.CODE'])
-                    ->setCacheTtl(360000)
-                    ->exec();
-
-                while ($group = $groupRes->fetch()) {
-                    if (in_array($group['SALE_LOCATION_GROUP_LOCATION_GROUP_CODE'], DeliveryService::ZONE_EXPRESS_DELIVERY, true)) {
+                foreach ($this->locationService->findLocationGroupsById($location['ID']) as $groupCode) {
+                    if (in_array($groupCode, DeliveryService::ZONE_EXPRESS_DELIVERY, true)) {
                         $expressAvailable = true;
 
-                        switch ($group['SALE_LOCATION_GROUP_LOCATION_GROUP_CODE']) {
+                        switch ($groupCode) {
                             case DeliveryService::ZONE_EXPRESS_DELIVERY_45:
                                 $deliveryTime = '45';
                                 break;

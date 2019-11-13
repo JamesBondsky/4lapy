@@ -69,7 +69,7 @@ class CalculationResultFactory
             case DeliveryService::DOBROLAP_DELIVERY_CODE:
                 $result = new DobrolapDeliveryResult();
                 break;
-            case DeliveryService::EXPRESS_DELIVERY:
+            case DeliveryService::EXPRESS_DELIVERY_CODE:
                 $result = new ExpressDeliveryResult();
                 break;
             default:
