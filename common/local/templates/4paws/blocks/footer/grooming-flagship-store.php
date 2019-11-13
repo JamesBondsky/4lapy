@@ -3,7 +3,7 @@
     <div class="popup-service-flagship-store__content">
         <div class="popup-service-flagship-store__title">Запись на груминг</div>
 
-        <form class="popup-service-flagship-store__form js-form-validation" method="post" data-url="/flagman/bookthetime/grooming">
+        <form class="popup-service-flagship-store__form js-form-validation" method="post" data-url="/flagman/bookthetime/grooming/">
             <input type="hidden" name="id" value="" data-id-grooming-flagship-store-popup="">
             <input type="hidden" name="breed" value="" data-breed-grooming-flagship-store-popup="">
             <input type="hidden" name="service" value="" data-service-grooming-flagship-store-popup="">
