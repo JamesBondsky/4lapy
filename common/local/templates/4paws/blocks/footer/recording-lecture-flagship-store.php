@@ -24,7 +24,7 @@ if ($USER->IsAuthorized()) {
                            name="name"
                            value="<?=($user['NAME']) ? $user['NAME'] : ''?>"
                            data-text="1"
-                           data-name-service-flagship-store-popup="true"
+                           data-name-service-flagship-store-popup="<?=($user['NAME']) ? $user['NAME'] : ''?>"
                            placeholder="" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -41,7 +41,7 @@ if ($USER->IsAuthorized()) {
                            id="edit-phone"
                            name="phone"
                            value="<?=($user['PERSONAL_PHONE']) ? $user['PERSONAL_PHONE'] : ''?>"
-                           data-phone-service-flagship-store-popup="true"
+                           data-phone-service-flagship-store-popup="<?=($user['PERSONAL_PHONE']) ? $user['PERSONAL_PHONE'] : ''?>"
                            placeholder="" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -58,7 +58,7 @@ if ($USER->IsAuthorized()) {
                            id="data-email"
                            name="email"
                            value="<?=($user['EMAIL']) ? $user['EMAIL'] : ''?>"
-                           data-email-service-flagship-store-popup="true"
+                           data-email-service-flagship-store-popup="<?=($user['EMAIL']) ? $user['EMAIL'] : ''?>"
                            placeholder="" />
                     <div class="b-error"><span class="js-message"></span></div>
                 </div>
