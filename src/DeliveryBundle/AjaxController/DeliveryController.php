@@ -57,15 +57,12 @@ class DeliveryController extends Controller
      */
     public function getAction(Request $request): JsonResponse
     {
-        $city = $request->get('city', '');
-        $street = $request->get('street', '');
-        $house = $request->get('house', '');
+        $address = $request->get('address', '');
 
-        if (empty($city) || empty($street) || empty($house)) {
-            return JsonErrorResponse::createWithData('Require fields is empty');
+        if (empty($address)) {
+            return JsonErrorResponse::createWithData('Address is empty');
         }
 
-        $address = sprintf('%s, %s, %s', $city, $street, $house);
         $expressAvailable = false;
         $deliveryTime = null;
 
