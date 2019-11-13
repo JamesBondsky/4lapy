@@ -152,7 +152,7 @@ class Pet extends BaseEntity
      *
      * @return Pet
      */
-    public function setName(string $name) : Pet
+    public function setName(?string $name = '') : Pet
     {
         $this->name = $name;
 
@@ -465,7 +465,10 @@ class Pet extends BaseEntity
      */
     protected function setStringGender(int $gender)
     {
-        $userFieldEnum      = new \CUserFieldEnum();
+        if (!(bool)$gender) {
+            return;
+        }
+        $userFieldEnum = new \CUserFieldEnum();
         $item = $userFieldEnum->GetList([], ['ID' => $gender])->Fetch();
         $this->stringGender = $item['VALUE'];
         $this->setCodeGender($item['XML_ID']);
@@ -499,7 +502,7 @@ class Pet extends BaseEntity
      */
     public function getCodeGender(): string
     {
-        if(empty($this->codeGender)){
+        if (empty($this->codeGender)) {
             $this->setStringGender($this->getGender());
         }
         return $this->codeGender;

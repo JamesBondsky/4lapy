@@ -35,11 +35,11 @@ use FourPaws\LandingBundle\Service\FlagmanService;
 class FlagmanController extends Controller implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
-    
+
     private $guzzleClient;
     private $token = 'dsvbgdfFBn5434tyhFfd544gdfbDS4ggdsDSDtf';
     private $url;
-    
+
     /**
      * FlagmanController constructor.
      *
@@ -49,7 +49,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         $this->url          = getenv('VET_CLINIC');
         $this->guzzleClient = new Client();
     }
-    
+
     /**
      * @Route("/add/", methods={"POST"})
      *
@@ -65,27 +65,27 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         if (!Loader::includeModule('articul.landing')) {
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Модуль для сохранения заявок не подключен']]);
         }
-        
+
         // $data = json_decode($request->getContent());
-        
+
         try {
             $successAdding = LectionAppsTable::add([
                 //'UF_USER_ID' => (int) $data->userId,
-                'UF_NAME'     => $_POST['name'], //$request->get('name'),
-                'UF_PHONE'    => $_POST['phone'], //$request->get('phone'),
-                'UF_EVENT_ID' => (int)$_POST['eventId'], //$request->get('eventId')
-                'UF_EMAIL'    => $_POST['email'], //$request->get('email')
+                'UF_NAME'     => $request->get('name'),
+                'UF_PHONE'    => $request->get('phone'),
+                'UF_EVENT_ID' => (int)$request->get('eventId'),
+                'UF_EMAIL'    => $request->get('email')
             ]);
-            
+
             if ($successAdding) {
                 $sits = LectionsTable::query()
                     ->setSelect(['SITS' => 'UTS.FREE_SITS'])
                     ->setFilter(['=ID' => (int)$request->get('eventId')])
                     ->exec()
                     ->fetch()['SITS'];
-                
+
                 $newSits = (int)$sits - 1;
-                
+
                 //@todo исправить как только реализуют метод update
                 \CIBlockElement::SetPropertyValuesEx($request->get('eventId'), 0, ['FREE_SITS' => $newSits]);
             }
@@ -95,18 +95,18 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'app'     => 'Ошибка при сохранении заявки',
                 'errors'  => ['message' => $e->getMessage()],
             ]);
-            
+
         }
-        
+
         $response = new JsonResponse([
             'success' => 1,
             'app'     => 'Заявка успешно сохранена',
             'errors'  => [],
         ]);
-        
+
         return $response;
     }
-    
+
     /**
      * @Route("/getschedule/{action}/{id}/", methods={"GET"})
      *
@@ -121,40 +121,40 @@ class FlagmanController extends Controller implements LoggerAwareInterface
     public function getSchedule(Request $request, $action, $id): JsonResponse
     {
         $result = [];
-        
+
         $this->url .= 'get-schedule/' . $action . '/';
-        
+
         $response = $this->guzzleClient->request('GET', $this->url, [
             'headers' => [
                 'Content-Type'  => 'application/json',
                 'Authorization' => 'Bearer ' . $this->token,
             ],
         ]);
-        
+
         $body = $response->getBody();
-        
+
         $requestResult = json_decode($body->getContents(), true);
-        
+
         if ($requestResult[$id]) {
             foreach ($requestResult[$id]['times'] as $timeKey => $time) {
                 if ($time['status'] == 'Y') {
                     $result[$time['id']] = $timeKey;
                 }
             }
-            
+
             return new JsonResponse([
                 'success' => 1,
                 'data'    => $result,
                 'errors'  => [],
             ]);
         }
-        
+
         return new JsonResponse([
             'success' => 0,
             'errors'  => ['message' => 'Такого дня нет =('],
         ]);
     }
-    
+
     /**
      * @Route("/bookthetime/{id}/", methods={"POST"})
      *
@@ -168,30 +168,30 @@ class FlagmanController extends Controller implements LoggerAwareInterface
      */
     public function bookTheTime(Request $request, $id): JsonResponse
     {
-        
+
         // $data = json_decode($request->getContent());
-        
+
         $this->url .= 'book-the-time/' . $id . '/';
-        
+
         $response = $this->guzzleClient->request('POST', $this->url, [
             'headers' => [
                 'Content-Type'  => 'application/json',
                 'Authorization' => 'Bearer ' . $this->token,
             ],
             'json'    => [
-                "name"    => $_POST['name'],//$request->get('name'),
-                "phone"   => $_POST['phone'],//$request->get('phone'),
-                "id"      => $_POST['id'],//$request->get('id'),
-                "comment" => $_POST['animal'] . $_POST['breed'] . $_POST['service'],//$request->get('animal') . ' ' . $request->get('breed') . ' ' . $request->get('service'),
-                "email" => $_POST['email']
+                "name"    => $request->get('name'),
+                "phone"   => $request->get('phone'),
+                "id"      => $request->get('id'),
+                "comment" => $request->get('animal') . ' ' . $request->get('breed') . ' ' . $request->get('service'),
+                "email"   => $request->get('email'),
             ],
         ]);
-        
+
         $body = $response->getBody();
-        
+
         return new JsonResponse($body->getContents());
     }
-    
+
     /**
      * @Route("/getlocalschedule/{id}/", methods={"GET"})
      *
@@ -206,19 +206,19 @@ class FlagmanController extends Controller implements LoggerAwareInterface
     public function getLocalSchedule(Request $request, $id): JsonResponse
     {
         $result = [];
-        
+
         $flagmanService = new FlagmanService();
         $elements       = $flagmanService->getElementsBySectionId($id);
-        
+
         foreach ($elements as $key => $element) {
             if ($element['FREE_SITS'] <= 0) {
                 unset($elements[$key]);
                 continue;
             }
-            
+
             $result[$element['ID']] = $element['NAME'];
         }
-        
+
         if ($result) {
             return new JsonResponse([
                 'success' => 1,
@@ -226,13 +226,13 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'errors'  => [],
             ]);
         }
-        
+
         return new JsonResponse([
             'success' => 0,
             'errors'  => ['message' => 'Такого дня нет =('],
         ]);
     }
-    
+
     /**
      * @Route("/bookthetimelocal/", methods={"POST"})
      *
@@ -251,32 +251,32 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         if (!Loader::includeModule('articul.landing')) {
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Модуль для сохранения заявок не подключен']]);
         }
-        
+
         try {
             $successAdding = TrainingAppsTable::add([
-                'UF_NAME'     => $_POST['name'], //$request->get('name'),
-                'UF_PHONE'    => $_POST['phone'], //$request->get('phone'),
-                'UF_EVENT_ID' => (int)$_POST['id'], //$request->get('eventId')
-                'UF_EMAIL'    => $_POST['email'], //$request->get('eventId')
+                'UF_NAME'     => $request->get('name'),
+                'UF_PHONE'    => $request->get('phone'),
+                'UF_EVENT_ID' => (int)$request->get('eventId'),
+                'UF_EMAIL'    => $request->get('email'),
             ]);
-            
+
             if ($successAdding) {
                 $sits = TrainingsTable::query()
                     ->setSelect(['SITS' => 'UTS.FREE_SITS'])
-                    ->setFilter(['=ID' => (int)$_POST['id']])
+                    ->setFilter(['=ID' => (int)$request->get('id')])
                     ->exec()
                     ->fetch()['SITS'];
-                
+
                 $newSits = (int)$sits - 1;
-                
+
                 //@todo исправить как только реализуют метод update
-                \CIBlockElement::SetPropertyValuesEx($_POST['eventId'], 0, ['FREE_SITS' => $newSits]);
+                \CIBlockElement::SetPropertyValuesEx($request->get('eventId'), 0, ['FREE_SITS' => $newSits]);
                 \CEvent::Send('TRAINING_SERVICE', 's1', [
-                    'NAME'  => $_POST['name'],
-                    'PHONE' => $_POST['phone'],
-                    'DATE'  => $_POST['date'],
-                    'TIME'  => $_POST['time'],
-                    'EMAIL' => $_POST['email'],
+                    'NAME'  => $request->get('name'),
+                    'PHONE' => $request->get('phone'),
+                    'DATE'  => $request->get('date'),
+                    'TIME'  => $request->get('time'),
+                    'EMAIL' => $request->get('email'),
                 ]);
             }
         } catch (\Exception $e) {
@@ -284,14 +284,14 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'success' => 'N',
                 'errors'  => ['message' => $e->getMessage()],
             ]);
-            
+
         }
-        
+
         $response = new JsonResponse([
             'success' => 'Y',
             'errors'  => [],
         ]);
-        
+
         return $response;
     }
 }
