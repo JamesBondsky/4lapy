@@ -79,14 +79,14 @@ https://api.esv2.com - валидный адрес
 ## Смена типа оплаты для неоплаченных заказов с оплатой онлайн
 
 ```
-- ./bin/symfony_console f:o:p:c
+- ./bin/symfony_console fourpaws:order:paysystem:change
 ```
 
 ## Получение из Manzana заказов для пользователей, активных за последнее время
 
 ```
-- ./bin/symfony_console f:s:o:m:i # за 1 месяц
-- ./bin/symfony_console f:s:o:m:i --period="2 month" --mq=1 # period - за произвольный период; user - ID пользователя, для которого выгрузить (период при этом не учитывается); mq - использовать сервер очередей для импорта
+- ./bin/symfony_console fourpaws:sale:order:manzana:import # за 1 месяц
+- ./bin/symfony_console fourpaws:sale:order:manzana:import --period="2 month" --mq=1 # period - за произвольный период; user - ID пользователя, для которого выгрузить (период при этом не учитывается); mq - использовать сервер очередей для импорта
 ```
 
 ## Деактивация завершившихся акций

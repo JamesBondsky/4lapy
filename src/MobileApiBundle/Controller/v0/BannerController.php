@@ -7,7 +7,6 @@
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
-use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\BannersRequest;
 use FourPaws\MobileApiBundle\Dto\Response\BannerListResponse;
