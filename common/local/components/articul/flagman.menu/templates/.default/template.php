@@ -36,7 +36,7 @@ use FourPaws\Decorators\SvgDecorator;
                 </div>
             <?php endif; ?>*/?>
             <?php if ($arParams['SHOW_TRAINING'] == 'Y') : ?>
-                <div class="nav-flagship-store__item" data-nav-flagship-store="walking">
+                <div class="nav-flagship-store__item" data-nav-flagship-store="training">
                     <div class="nav-flagship-store__icon">
                         <?=new SvgDecorator('icon-flagship-walking', 61, 61)?>
                     </div>
