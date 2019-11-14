@@ -7,6 +7,7 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -90,13 +91,16 @@ use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService as AppOrderSubscribeService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use JMS\Serializer\Serializer;
 
 
-class OrderService
+class OrderService implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     /** @var ApiBasketService */
     private $apiBasketService;
 
@@ -796,7 +800,7 @@ class OrderService
     public function getDeliveryVariants()
     {
         $basketProducts = $this->apiBasketService->getBasketProducts(true);
-        
+
         $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
         $delivery   = null;
         $pickup     = null;
@@ -885,7 +889,7 @@ class OrderService
     public function getDeliveryDetails(): array
     {
         $basketProducts = $this->apiBasketService->getBasketProducts(true);
-        
+
         /** @var DeliveryVariant $courierDelivery */
         /** @var DeliveryVariant $pickupDelivery */
         [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery] = $this->getDeliveryVariants();
@@ -1257,6 +1261,30 @@ class OrderService
         }
 
         $storage->setFromApp(true)->setFromAppDevice($platform);
+
+        /* Если на шаге выбора доставки не выбирали адрес из подсказок, то пробуем определить его тут для проставления района Москвы */
+        if ($storage->getCityCode() === \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
+            $city = (!empty($storage->getCity())) ? $storage->getCity() : 'Москва';
+            $strAddress = sprintf('%s, %s, %s', $city, $storage->getStreet(), $storage->getHouse());
+
+            $this->log()->info(sprintf('Попытка определить район москвы для данных %s', $strAddress));
+            try {
+                $okato = $this->locationService->getDadataLocationOkato($strAddress);
+                $this->log()->info(sprintf('Okato - %s', $okato));
+                $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+
+                if (count($locations)) {
+                    $location = current($locations);
+                    $storage->setCity($location['NAME']);
+                    $storage->setCityCode($location['CODE']);
+                    $storage->setMoscowDistrictCode($location['CODE']);
+                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+                }
+            } catch (\Exception $e) {
+                $this->log()->info(sprintf('Произошла ошибка при установке местоположения - %s', $e->getMessage()));
+            }
+        }
+
         try {
             $order = $this->appOrderService->createOrder($storage);
         } catch (OrderCreateException $e) {

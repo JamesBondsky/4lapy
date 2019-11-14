@@ -463,7 +463,7 @@ class LocationService
      * @param int $limit
      * @param bool $needPath
      * @param bool $findByParent искать в названиях родительских местоположений
-     * @param bool $excludeMoscowDistricts
+     * @param bool $excludeMoscowDistrictsNew
      *
      * @return array
      */
@@ -472,10 +472,12 @@ class LocationService
         int $limit = 0,
         bool $needPath = true,
         bool $findByParent = false,
-        bool $excludeMoscowDistricts = false
+        bool $excludeMoscowDistrictsNew = false
     ): array
     {
-        $cacheFinder = function () use ($excludeMoscowDistricts, $queryParams, $limit, $needPath, $findByParent) {
+        $excludeMoscowDistricts = false;
+
+        $cacheFinder = function () use ($excludeMoscowDistricts, $queryParams, $limit, $needPath, $findByParent, $excludeMoscowDistrictsNew) {
             /* для поиска по родительским местоположениям $needPath должен быть true и $queryParams являться массивом, чтобы из него можно было вытащить строку поиска */
             if (($findByParent && !$needPath) || ($queryParams instanceof Query)) {
                 $findByParent = false;
@@ -497,6 +499,9 @@ class LocationService
             if (!($queryParams instanceof Query)) {
                 /** сразу в селект не добалять позиции с join - получать их позже - для скорости
                  * поиск по коду и только по названию без родителя будет быстрее */
+                if (!isset($locationQueryFilter['TYPE_ID']) && $excludeMoscowDistrictsNew) {
+                    $locationQueryFilter['!=TYPE_ID'] = 9;
+                }
                 $query = LocationTable::query()->setOrder($locationQueryOrder)->setFilter($locationQueryFilter)->setSelect($locationQuerySelect);
             } else {
                 $query = $queryParams;
