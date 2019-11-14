@@ -1431,12 +1431,11 @@ class LocationService
 
     /**
      * @param string $address
-     * @param bool $withTrim
      * @return DadataLocation
      * @throws ApplicationCreateException
      * @throws DaDataExecuteException
      */
-    public function getDadataLocationOkato(string $address, $withTrim = true): string
+    public function getDadataLocationOkato(string $address): string
     {
         $dadataLocation = $this->daDataService->splitAddress($address);
         if (!$dadataLocation->getOkato()) {
@@ -1444,7 +1443,7 @@ class LocationService
         }
 
         $okato = $dadataLocation->getOkato();
-        return ($withTrim) ? substr($okato, 0, 8) : $okato;
+        return substr($okato, 0, 8);
     }
 
     /**
