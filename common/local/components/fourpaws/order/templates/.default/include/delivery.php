@@ -228,12 +228,6 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
     </div>
 
     <div class="b-delivery-type-time" data-container-delivery-type-time="true">
-
-
-
-
-
-
         <?php if ($deliveryDostavista || $expressDelivery) { ?>
             <?php if ($deliveryDostavista) { ?>
                 <div class="b-delivery-type-time__info js-info-express-detail" data-message-express-delivery="express">
@@ -339,24 +333,6 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                 </label>
             </div>
         <?php } ?>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         <ul class="b-radio-tab">
             <?php if ($deliveryDostavista) { ?>
