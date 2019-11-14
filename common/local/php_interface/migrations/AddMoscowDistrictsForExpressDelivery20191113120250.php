@@ -52,22 +52,22 @@ class AddMoscowDistrictsForExpressDelivery20191113120250 extends SprintMigration
             'CODE' => 'ZONE_EXPRESS_DELIVERY_90',
             'ITEMS' => [
                 [
-                    'CODE' => '45268581000',
+                    'CODE' => '45268581',
                     'NAME_RU' => 'Район Проспект Вернадского',
                     'SHORT_NAME_RU' => 'р-н Проспект Вернадского'
                 ],
                 [
-                    'CODE' => '45293578000',
+                    'CODE' => '45293578',
                     'NAME_RU' => 'Район Обручевский',
                     'SHORT_NAME_RU' => 'р-н Обручевский',
                 ],
                 [
-                    'CODE' => '45293558000',
+                    'CODE' => '45293558',
                     'NAME_RU' => 'Район Гагаринский',
                     'SHORT_NAME_RU' => 'р-н Гагаринский'
                 ],
                 [
-                    'CODE' => '45293554000',
+                    'CODE' => '45293554',
                     'NAME_RU' => 'Район Академический',
                     'SHORT_NAME_RU' => 'р-н Академический',
                 ],
