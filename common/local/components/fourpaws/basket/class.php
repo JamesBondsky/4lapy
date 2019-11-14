@@ -433,10 +433,10 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
         $haveOrder = $basket->getOrder() instanceof Order;
         $deliveries = $this->getDeliveryService()->getByBasket($basket);
 
-        $availableDostavista = false;
+        $availableExpress = false;
         foreach ($deliveries as $delivery) {
-            if ($this->getDeliveryService()->isDostavistaDelivery($delivery)) {
-                $availableDostavista = true;
+            if ($this->getDeliveryService()->isDostavistaDelivery($delivery) || $this->getDeliveryService()->isExpressDelivery($delivery)) {
+                $availableExpress = true;
             }
         }
 
@@ -473,7 +473,7 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
                 $notAllowedItems->add($basketItem);
             } else if (
                 $this->arResult['HAS_DELIVERY']
-                && !$availableDostavista
+                && !$availableExpress
                 && ($basketItem->getPrice() > 0 || $basketItem->getBasePrice() > 0)
                 && (
                     (null === $delivery) ||

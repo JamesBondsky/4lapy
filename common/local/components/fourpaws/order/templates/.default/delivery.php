@@ -113,6 +113,8 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                    echo $deliveryDostavista->getDeliveryId();
                                } else if ($deliveryDobrolap) {
                                    echo $deliveryDobrolap->getDeliveryId();
+                               } else if ($expressDelivery) {
+                                   echo $expressDelivery->getDeliveryId();
                                } ?>"
                                class="js-no-valid">
                         <input type="hidden" name="deliveryCoords" value="">
@@ -148,9 +150,65 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>, <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
                                     </span>
                                 </label>
-                            <?php }
+                            <?php } ?>
 
-                            if ($pickup) {
+                            <?php if (!$delivery && $deliveryDostavista ) { ?>
+                                <input <?= $deliveryService->isDostavistaDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
+                                        class="b-choice-recovery__input js-recovery-dostavista js-delivery"
+                                        data-set-delivery-type="<?= $deliveryDostavista->getDeliveryId() ?>"
+                                        data-is-dostavista="1"
+                                        id="order-delivery-address"
+                                        type="radio"
+                                        name="deliveryId"
+                                        data-text="Экспресс доставка"
+                                        value="<?= $deliveryDostavista->getDeliveryId() ?>"
+                                        data-delivery="<?= $deliveryDostavista->getPrice() ?>"
+                                        data-full="<?= $deliveryDostavista->getStockResult()->getOrderable()->getPrice() ?>"
+                                        data-check="js-list-orders-static"/>
+                                <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step" for="order-delivery-address">
+                                    <span class="b-choice-recovery__main-text">
+                                        <span class="b-choice-recovery__main-text">
+                                            Экспресс доставка
+                                        </span>
+                                    </span>
+                                    <span class="b-choice-recovery__addition-text js-cur-pickup">
+                                        В&nbsp;течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
+                                    </span>
+                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-cur-pickup-mobile">
+                                        В&nbsp;течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
+                                    </span>
+                                </label>
+                            <?php } ?>
+
+                            <?php if (!$delivery && $expressDelivery ) { ?>
+                                <input <?= $deliveryService->isExpressDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
+                                        class="b-choice-recovery__input js-recovery-dostavista js-delivery"
+                                        data-set-delivery-type="<?= $expressDelivery->getDeliveryId() ?>"
+                                        data-is-dostavista="1"
+                                        id="order-delivery-address"
+                                        type="radio"
+                                        name="deliveryId"
+                                        data-text="Экспресс доставка"
+                                        value="<?= $expressDelivery->getDeliveryId() ?>"
+                                        data-delivery="<?= $expressDelivery->getPrice() ?>"
+                                        data-full="<?= $expressDelivery->getStockResult()->getOrderable()->getPrice() ?>"
+                                        data-check="js-list-orders-static"/>
+                                <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step" for="order-delivery-address">
+                                    <span class="b-choice-recovery__main-text">
+                                        <span class="b-choice-recovery__main-text">
+                                            Экспресс доставка
+                                        </span>
+                                    </span>
+                                    <span class="b-choice-recovery__addition-text js-cur-pickup">
+                                        В&nbsp;течение 90&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
+                                    </span>
+                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-cur-pickup-mobile">
+                                        В&nbsp;течение 90&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
+                                    </span>
+                                </label>
+                            <?php } ?>
+
+                            <?php if ($pickup) {
                                 $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
                                 if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
                                     $price = $available->getPrice();
@@ -178,34 +236,6 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-my-pickup js-pickup-tab">
                                         <?= /** @noinspection PhpUnhandledExceptionInspection */
                                         DeliveryTimeHelper::showTime($pickup, ['SHORT' => true, 'SHOW_TIME' => !$deliveryService->isDpdPickup($pickup)]) ?>, <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
-                                    </span>
-                                </label>
-                            <?php } ?>
-
-                            <?php if (!$delivery && $deliveryDostavista) { ?>
-                                <input <?= $deliveryService->isDostavistaDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
-                                        class="b-choice-recovery__input js-recovery-dostavista js-delivery"
-                                        data-set-delivery-type="<?= $deliveryDostavista->getDeliveryId() ?>"
-                                        data-is-dostavista="1"
-                                        id="order-delivery-address"
-                                        type="radio"
-                                        name="deliveryId"
-                                        data-text="Экспресс доставка"
-                                        value="<?= $deliveryDostavista->getDeliveryId() ?>"
-                                        data-delivery="<?= $deliveryDostavista->getPrice() ?>"
-                                        data-full="<?= $deliveryDostavista->getStockResult()->getOrderable()->getPrice() ?>"
-                                        data-check="js-list-orders-static"/>
-                                <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step" for="order-delivery-address">
-                                    <span class="b-choice-recovery__main-text">
-                                        <span class="b-choice-recovery__main-text">
-                                            Экспресс доставка
-                                        </span>
-                                    </span>
-                                    <span class="b-choice-recovery__addition-text js-cur-pickup">
-                                        В&nbsp;течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
-                                    </span>
-                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-cur-pickup-mobile">
-                                        В&nbsp;течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
                                     </span>
                                 </label>
                             <?php } ?>
@@ -259,11 +289,15 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                     <?php include 'include/pickup.php' ?>
                                 </li>
                             <?php } ?>
-                            <?php if (!$delivery && $deliveryDostavista) {
-                                $isHidden = $selectedDelivery->getDeliveryId() !== $deliveryDostavista->getDeliveryId();
+                            <?php if (!$delivery && ($deliveryDostavista || $expressDelivery)) {
+                                if ($deliveryDostavista) {
+                                    $isHidden = $selectedDelivery->getDeliveryId() !== $deliveryDostavista->getDeliveryId();
+                                } else {
+                                    $isHidden = $selectedDelivery->getDeliveryId() !== $expressDelivery->getDeliveryId();
+                                }
                                 ?>
                                 <li class="b-radio-tab__tab js-dostavista-recovery" <?= $isHidden ? 'style="display:none"' : '' ?>>
-                                    <?php include 'include/dostavista.php' ?>
+                                    <?php include 'include/express.php' ?>
                                 </li>
                             <?php } ?>
                             <?php if ($deliveryDobrolap) {

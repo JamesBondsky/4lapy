@@ -26,7 +26,7 @@ class ExpressDelivery4Lapy20191113161811 extends SprintMigrationBase
         'NAME' => '',
         'ACTIVE' => 'Y',
         'DESCRIPTION' => '',
-        'SORT' => 100,
+        'SORT' => 2000,
         'LOGOTIP' => null,
         'CONFIG' => null,
         'CLASS_NAME' => null,
