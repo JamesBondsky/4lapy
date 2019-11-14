@@ -2,7 +2,7 @@
     <div class="b-container">
         <div class="service-flagship-store__header service-flagship-store__header_lectures">
             <div class="service-flagship-store__inner-header">
-                <div class="service-flagship-store__title">Лекции</div>
+                <div class="service-flagship-store__header-title">Лекции</div>
             </div>
         </div>
         <div class="service-flagship-store__content" data-content-service-flagship-store="true">

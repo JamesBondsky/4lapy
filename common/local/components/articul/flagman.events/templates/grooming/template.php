@@ -2,10 +2,13 @@
     <div class="b-container">
         <div class="service-flagship-store__header service-flagship-store__header_grooming">
             <div class="service-flagship-store__inner-header">
-                <div class="service-flagship-store__title">Груминг</div>
+                <div class="service-flagship-store__header-title">Груминг</div>
             </div>
         </div>
         <div class="service-flagship-store__content" data-content-service-flagship-store="true" style="display: block">
+            <div class="service-flagship-store__title">
+                Груминг - это забота о внешнем виде питомца
+            </div>
             <div class="service-flagship-store__descr">
                 Груминг&nbsp;&mdash; это уход за&nbsp;внешностью животного, его кожей и&nbsp;шерстью, когтями и&nbsp;ушами.
                 Первоначально этот термин означал совокупность гигиенических процедур по&nbsp;уходу за&nbsp;домашними питомцами.

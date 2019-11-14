@@ -2,10 +2,13 @@
     <div class="b-container">
         <div class="service-flagship-store__header service-flagship-store__header_training">
             <div class="service-flagship-store__inner-header">
-                <div class="service-flagship-store__title">Тренировочный клуб</div>
+                <div class="service-flagship-store__header-title">Тренировочный клуб</div>
             </div>
         </div>
         <div class="service-flagship-store__content" data-content-service-flagship-store="true" style="display: block">
+            <div class="service-flagship-store__title">
+                В тренировочном клубе вы можете пройти мастер-класс вместе со своей собакой
+            </div>
             <div class="service-flagship-store__descr">
                 Запись на&nbsp;мастер класс по&nbsp;послушанию питомца. Вы&nbsp;сможете задать вопросы по&nbsp;правильному воспитанию вашей собаки опытному кинологу, а&nbsp;так&nbsp;же, разучить несколько команд.
             </div>
