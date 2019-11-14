@@ -518,6 +518,14 @@ class MainTemplate extends TemplateAbstract
     {
         return $this->isPartitionPage('/dobrolap/');
     }
+    
+    /**
+     * @return bool
+     */
+    public function isFlagman(): bool
+    {
+        return $this->isPartitionPage('/events/');
+    }
 
     public function isStampsPage() :bool
     {
