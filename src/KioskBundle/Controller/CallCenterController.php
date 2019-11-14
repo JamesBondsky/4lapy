@@ -19,6 +19,7 @@ use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Component\HttpFoundation\Request;
+use WebArch\BitrixCache\BitrixCache;
 
 /**
  * Class CallCenterController
@@ -56,6 +57,8 @@ class CallCenterController extends Controller
 
             $rightSign = $this->generateSign($secretKey, $rCode);
             $this->checkSign($sign, $rightSign);
+
+            $this->setDelay($rCode);
 
             $phone = $this->getPhone($rCode);
             $additionalPhone = $this->getAdditionalPhone($phone);
@@ -207,5 +210,28 @@ class CallCenterController extends Controller
     private function log() : LoggerInterface
     {
         return $this->logger;
+    }
+
+    /**
+     * проверка на задержку
+     * @param $rCode
+     * @throws Exception
+     */
+    private function setDelay($rCode)
+    {
+        $time = getenv('KIOSK_CALLBACK_DELAY');
+        $dataFunc = function () {
+            return time();
+        };
+
+        $currentTime = time();
+
+        $time = (new BitrixCache())->withId(__METHOD__ . $rCode . 'callcenter')->withTime($time)->resultOf($dataFunc);
+
+        $diffTime = $currentTime - $time['result'];
+
+        if ($diffTime <= 10 && $diffTime > 0) {
+            throw new Exception('Delay', 400);
+        }
     }
 }
