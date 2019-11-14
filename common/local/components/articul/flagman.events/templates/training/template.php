@@ -2,7 +2,7 @@
     <div class="b-container">
         <div class="service-flagship-store__header service-flagship-store__header_walking">
             <div class="service-flagship-store__inner-header">
-                <div class="service-flagship-store__title">
+                <div class="service-flagship-store__header-title">
                     <nobr>Тренировочный клуб</nobr>
                 </div>
             </div>
