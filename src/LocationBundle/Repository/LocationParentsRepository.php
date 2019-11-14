@@ -8,12 +8,12 @@ class LocationParentsRepository
 {
     /**
      * @param int $id
-     * @return array
+     * @return array|bool
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    public static function getById(int $id): array
+    public static function getById(int $id)
     {
         $dbLocation = LocationParentsTable::query()
             ->setFilter(['=ID' => $id])
@@ -26,7 +26,7 @@ class LocationParentsRepository
             ->fetch();
 
         if (!$dbLocation) {
-            return [];
+            return false;
         }
 
         return json_decode($dbLocation['PARENTS'], true);
