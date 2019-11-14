@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
@@ -41,6 +42,8 @@ use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\LocationBundle\Query\CityQuery;
+use FourPaws\LocationBundle\Repository\LocationParentsRepository;
+use FourPaws\LocationBundle\Repository\Table\LocationParentsTable;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -460,7 +463,7 @@ class LocationService
      * @param int $limit
      * @param bool $needPath
      * @param bool $findByParent искать в названиях родительских местоположений
-     * @param bool $excludeMoscowDistricts
+     * @param bool $excludeMoscowDistrictsNew
      *
      * @return array
      */
@@ -469,10 +472,12 @@ class LocationService
         int $limit = 0,
         bool $needPath = true,
         bool $findByParent = false,
-        bool $excludeMoscowDistricts = false
+        bool $excludeMoscowDistrictsNew = false
     ): array
     {
-        $cacheFinder = function () use ($excludeMoscowDistricts, $queryParams, $limit, $needPath, $findByParent) {
+        $excludeMoscowDistricts = false;
+
+        $cacheFinder = function () use ($excludeMoscowDistricts, $queryParams, $limit, $needPath, $findByParent, $excludeMoscowDistrictsNew) {
             /* для поиска по родительским местоположениям $needPath должен быть true и $queryParams являться массивом, чтобы из него можно было вытащить строку поиска */
             if (($findByParent && !$needPath) || ($queryParams instanceof Query)) {
                 $findByParent = false;
@@ -494,6 +499,9 @@ class LocationService
             if (!($queryParams instanceof Query)) {
                 /** сразу в селект не добалять позиции с join - получать их позже - для скорости
                  * поиск по коду и только по названию без родителя будет быстрее */
+                if (!isset($locationQueryFilter['TYPE_ID']) && $excludeMoscowDistrictsNew) {
+                    $locationQueryFilter['!=TYPE_ID'] = 9;
+                }
                 $query = LocationTable::query()->setOrder($locationQueryOrder)->setFilter($locationQueryFilter)->setSelect($locationQuerySelect);
             } else {
                 $query = $queryParams;
@@ -563,23 +571,37 @@ class LocationService
 
                 /** очень долгий запрос на получение родителей */
                 if ($needPath && !$excludeLocation) {
-                    /** @var Result $parentRes */
-                    $parentRes = LocationTable::query()
-                        ->where('DEPTH_LEVEL', '<', $item['DEPTH_LEVEL'])
-                        ->where('LEFT_MARGIN', '<', $item['LEFT_MARGIN'])
-                        ->where('RIGHT_MARGIN', '>', $item['RIGHT_MARGIN'])
-                        ->setSelect([
-                            'ID',
-                            'CODE',
-                            'DISPLAY' => 'NAME.NAME',
-                            '_TYPE_ID' => 'TYPE.ID',
-                            '_TYPE_CODE' => 'TYPE.CODE',
-                            '_TYPE_NAME' => 'TYPE.NAME.NAME',
-                        ])
-                        ->setOrder(['_TYPE_ID' => 'ASC'])
-                        ->exec();
+                    $parents = LocationParentsRepository::getById($item['ID']);
 
-                    while ($parentItem = $parentRes->fetch()) {
+                    if (!$parents) {
+                        // временное логирование для проверки работы функционала после релиза.
+                        // Можно убрать позднее (количество этих записей должно свестись к минимуму, если функционал работает правильно)
+                        $tempLogger = LoggerFactory::create('LocationParents', 'bsalelocation');
+                        $tempLogger->info('В таблице 4lapy_locations_parents создается новая запись, item id: ' . $item['ID']);
+
+                        $parents = LocationTable::query()
+                            ->where('DEPTH_LEVEL', '<', $item['DEPTH_LEVEL'])
+                            ->where('LEFT_MARGIN', '<', $item['LEFT_MARGIN'])
+                            ->where('RIGHT_MARGIN', '>', $item['RIGHT_MARGIN'])
+                            ->setSelect([
+                                'ID',
+                                'CODE',
+                                'DISPLAY' => 'NAME.NAME',
+                                '_TYPE_ID' => 'TYPE.ID',
+                                '_TYPE_CODE' => 'TYPE.CODE',
+                                '_TYPE_NAME' => 'TYPE.NAME.NAME',
+                            ])
+                            ->setOrder(['_TYPE_ID' => 'ASC'])
+                            ->exec()
+                            ->fetchAll();
+
+                        LocationParentsTable::add([
+                            'ID' => $item['ID'],
+                            'PARENTS' => json_encode($parents),
+                        ]);
+                    }
+
+                    foreach ($parents as $parentItem) {
                         $parentItem['NAME'] = $parentItem['DISPLAY'];
                         unset($parentItem['DISPLAY']);
                         $parentItem['TYPE'] = $this->stringArrayToArray($parentItem, 'TYPE');

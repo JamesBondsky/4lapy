@@ -242,7 +242,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     public function transformOrderToMessage(Order $order): SourceMessage
     {
         $orderDto = new OrderDtoOut();
-
+        $orderShop = '';
+        
         $this->getPropertyCollection($order);
 
         try {
@@ -279,7 +280,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     break;
             }
         }
-        if(KioskService::isKioskMode()){
+        if(KioskService::isKioskMode()) {
             $orderSource = OrderDtoOut::ORDER_SOURCE_KIOSK;
         }
 
@@ -294,7 +295,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         if ($deliveryTypeCode == DeliveryService::INNER_DELIVERY_CODE || $deliveryTypeCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
             $this->populateOrderDtoUserCoords($orderDto, $order);
         }
-
+        
         $orderDto
             ->setId($order->getField('ACCOUNT_NUMBER'))
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()
