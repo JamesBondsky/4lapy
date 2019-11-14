@@ -574,7 +574,7 @@ class LocationService
                 if ($needPath && !$excludeLocation) {
                     $parents = LocationParentsRepository::getById($item['ID']);
 
-                    if (!$parents) {
+                    if ($parents === false) {
                         // временное логирование для проверки работы функционала после релиза.
                         // Можно убрать позднее (количество этих записей должно свестись к минимуму, если функционал работает правильно)
                         $tempLogger = LoggerFactory::create('LocationParents', 'bsalelocation');
@@ -604,7 +604,7 @@ class LocationService
                         } catch (SqlQueryException $e) {
                             // Если упала ошибка о наличии такого PRIMARY в таблице - это ок, значит, возникла ситуация гонок
                             // и достаточно отдать результат запроса
-                            $this->log()->info(LocationParents . '. item: ' . $item['ID'] . ' Exception code: ' . $e->getCode() . '. Exception: ' . $e->getMessage());
+                            $this->log()->info('LocationParents. item: ' . $item['ID'] . ' Exception code: ' . $e->getCode() . '. Exception: ' . $e->getMessage());
                         }
                     }
 
