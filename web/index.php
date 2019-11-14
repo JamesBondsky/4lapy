@@ -10,6 +10,8 @@ use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
+global $USER;
+
 $APPLICATION->SetPageProperty('title', 'Интернет-зоомагазин Четыре Лапы – продажа и доставка зоотоваров по Москве, Московской области и всей России');
 $APPLICATION->SetPageProperty('description', '');
 $APPLICATION->SetPageProperty('keywords', '');
