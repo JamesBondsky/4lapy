@@ -156,22 +156,22 @@ class FlagmanController extends Controller implements LoggerAwareInterface
     }
 
     /**
-     * @Route("/bookthetime/{id}/", methods={"POST"})
+     * @Route("/bookthetime/{idType}/", methods={"POST"})
      *
      * @param Request $request
-     * @param string  $id
+     * @param string  $idType
      *
      * @return JsonResponse
      * @throws Exception
      *
      * @throws RuntimeException
      */
-    public function bookTheTime(Request $request, $id): JsonResponse
+    public function bookTheTime(Request $request, $idType): JsonResponse
     {
 
         // $data = json_decode($request->getContent());
 
-        $this->url .= 'book-the-time/' . $id . '/';
+        $this->url .= 'book-the-time/' . $idType . '/';
 
         $response = $this->guzzleClient->request('POST', $this->url, [
             'headers' => [
