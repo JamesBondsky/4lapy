@@ -12,6 +12,7 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ObjectPropertyException;
@@ -595,10 +596,16 @@ class LocationService
                             ->exec()
                             ->fetchAll();
 
-                        LocationParentsTable::add([
-                            'ID' => $item['ID'],
-                            'PARENTS' => json_encode($parents),
-                        ]);
+                        try {
+                            LocationParentsTable::add([
+                                'ID' => $item['ID'],
+                                'PARENTS' => json_encode($parents),
+                            ]);
+                        } catch (SqlQueryException $e) {
+                            // Если упала ошибка о наличии такого PRIMARY в таблице - это ок, значит, возникла ситуация гонок
+                            // и достаточно отдать результат запроса
+                            $this->log()->info(LocationParents . '. item: ' . $item['ID'] . ' Exception code: ' . $e->getCode() . '. Exception: ' . $e->getMessage());
+                        }
                     }
 
                     foreach ($parents as $parentItem) {
