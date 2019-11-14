@@ -245,7 +245,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
             <?php } ?>
             <div class="b-delivery-type-time__info js-info-express-detail" data-message-express-delivery="reserve" style="display: none;">
                 <div class="b-delivery-type-time__info-title">
-                    Вам доступна Экспресс-доставка в течение <span data-minutes-reserve-express-delivery="true"></span> минут за 397 ₽
+                    Вам доступна Экспресс-доставка в течение <span data-minutes-reserve-express-delivery="true"></span> минут за <?= $expressDelivery->getPrice() ?> ₽
                 </div>
             </div>
 
@@ -297,10 +297,10 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                             <span class="b-choice-recovery__main-text">Экспресс</span>
                         </span>
                         <span class="b-choice-recovery__addition-text">
-                            В&nbsp;течение <span data-minutes-reserve-express-delivery="true"></span>&nbsp;минут, <?/*= $deliveryDostavista->getPrice() */?>&nbsp;₽
+                            В&nbsp;течение <span data-minutes-reserve-express-delivery="true"></span>&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
                         </span>
                         <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                            В&nbsp;течение <span data-minutes-reserve-express-delivery="true"></span>&nbsp;минут, <?/*= $deliveryDostavista->getPrice() */?>&nbsp;₽
+                            В&nbsp;течение <span data-minutes-reserve-express-delivery="true"></span>&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
                         </span>
                     </label>
                 <?php } ?>
