@@ -24,7 +24,7 @@ use FourPaws\UserBundle\Enum\UserLocationEnum;
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()
     ->getContext());
-$markup = PawsApplication::markup(); 
+$markup = PawsApplication::markup();
 
 /**
  * @var $sViewportCookie - Значение куки отвечающе за переключение вьпорта с мобильного на десктоп.
@@ -37,6 +37,10 @@ if(KioskService::isKioskMode()) {
 
     if($USER->IsAuthorized()) {
         $bodyClass .= ' authorized';
+    }
+
+    if (isset($_REQUEST['store'])) {
+        $_SESSION['kiosk_store'] = $_REQUEST['store'];
     }
 }
 
