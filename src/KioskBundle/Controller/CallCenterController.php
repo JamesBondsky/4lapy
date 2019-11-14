@@ -10,6 +10,7 @@ use Exception;
 use FourPaws\App\Application as App;
 use FourPaws\AppBundle\Callback\CallbackService;
 use FourPaws\StoreBundle\Service\StoreService;
+use GuzzleHttp\Exception\ClientException;
 use phpDocumentor\Reflection\DocBlock\Tags\Throws;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -60,6 +61,7 @@ class CallCenterController extends Controller
             $additionalPhone = $this->getAdditionalPhone($phone);
             $this->sendData($additionalPhone);
         } catch (Exception $exception) {
+            $this->log()->error($exception->getMessage(), $exception);
             $answer['success'] = false;
             $status = ($exception->getCode() == 0 ? 400 : $exception->getCode());
 
@@ -133,8 +135,15 @@ class CallCenterController extends Controller
             'number' => $phone,
             'apikey' => $api,
         ];
+        try {
+            $guzzleClient->get($url . '?' . http_build_query($params));
+        } catch (ClientException $e) {
+            $response = $e->getResponse();
 
-        $guzzleClient->get($url . '?' . http_build_query($params));
+            if ((string)$response->getBody() != '200') {
+                throw new Exception('Don\'t send request CallCenter', 400);
+            }
+        }
     }
 
     /**
