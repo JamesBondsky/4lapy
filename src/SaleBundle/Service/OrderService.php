@@ -604,7 +604,7 @@ class OrderService implements LoggerAwareInterface
                             $deliveryDate->format('i')
                         );
                     } elseif ($this->deliveryService->isExpressDelivery($selectedDelivery)) {
-                        $deliveryTo = (new DateTime())->modify(sprintf('+%s minutes', $this->deliveryService->getExpressDeliveryInterval($selectedDelivery, $storage->getCityCode())));
+                        $deliveryTo = (new DateTime())->modify(sprintf('+%s minutes', $this->deliveryService->getExpressDeliveryInterval($storage->getCityCode(), $selectedDelivery)));
                         $value = sprintf(
                             '%s:%s-%s:%s',
                             $deliveryDate->format('H'),
@@ -1676,8 +1676,9 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @throws NotFoundException
      * @return OfferCollection
+     * @throws ArgumentNullException
+     * @throws NotFoundException
      */
     public function getOrderProducts(Order $order): OfferCollection
     {
@@ -1705,7 +1706,6 @@ class OrderService implements LoggerAwareInterface
      * @param Order $order
      *
      * @throws ArgumentNullException
-     * @throws NotImplementedException
      * @throws NotFoundException
      * @return Order
      */
