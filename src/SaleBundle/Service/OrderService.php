@@ -604,7 +604,7 @@ class OrderService implements LoggerAwareInterface
                             $deliveryDate->format('i')
                         );
                     } elseif ($this->deliveryService->isExpressDelivery($selectedDelivery)) {
-                        $deliveryTo = (new DateTime())->modify(sprintf('+%s minutes', $this->deliveryService->getExpressDeliveryInterval($selectedDelivery, $storage->getCityCode())));
+                        $deliveryTo = (new DateTime())->modify(sprintf('+%s minutes', $this->deliveryService->getExpressDeliveryInterval($storage->getCityCode(), $selectedDelivery)));
                         $value = sprintf(
                             '%s:%s-%s:%s',
                             $deliveryDate->format('H'),
