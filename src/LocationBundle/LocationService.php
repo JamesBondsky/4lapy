@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
@@ -41,6 +42,8 @@ use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\LocationBundle\Query\CityQuery;
+use FourPaws\LocationBundle\Repository\LocationParentsRepository;
+use FourPaws\LocationBundle\Repository\Table\LocationParentsTable;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -563,23 +566,37 @@ class LocationService
 
                 /** очень долгий запрос на получение родителей */
                 if ($needPath && !$excludeLocation) {
-                    /** @var Result $parentRes */
-                    $parentRes = LocationTable::query()
-                        ->where('DEPTH_LEVEL', '<', $item['DEPTH_LEVEL'])
-                        ->where('LEFT_MARGIN', '<', $item['LEFT_MARGIN'])
-                        ->where('RIGHT_MARGIN', '>', $item['RIGHT_MARGIN'])
-                        ->setSelect([
-                            'ID',
-                            'CODE',
-                            'DISPLAY' => 'NAME.NAME',
-                            '_TYPE_ID' => 'TYPE.ID',
-                            '_TYPE_CODE' => 'TYPE.CODE',
-                            '_TYPE_NAME' => 'TYPE.NAME.NAME',
-                        ])
-                        ->setOrder(['_TYPE_ID' => 'ASC'])
-                        ->exec();
+                    $parents = LocationParentsRepository::getById($item['ID']);
 
-                    while ($parentItem = $parentRes->fetch()) {
+                    if (!$parents) {
+                        // временное логирование для проверки работы функционала после релиза.
+                        // Можно убрать позднее (количество этих записей должно свестись к минимуму, если функционал работает правильно)
+                        $tempLogger = LoggerFactory::create('LocationParents', 'bsalelocation');
+                        $tempLogger->info('В таблице 4lapy_locations_parents создается новая запись, item id: ' . $item['ID']);
+
+                        $parents = LocationTable::query()
+                            ->where('DEPTH_LEVEL', '<', $item['DEPTH_LEVEL'])
+                            ->where('LEFT_MARGIN', '<', $item['LEFT_MARGIN'])
+                            ->where('RIGHT_MARGIN', '>', $item['RIGHT_MARGIN'])
+                            ->setSelect([
+                                'ID',
+                                'CODE',
+                                'DISPLAY' => 'NAME.NAME',
+                                '_TYPE_ID' => 'TYPE.ID',
+                                '_TYPE_CODE' => 'TYPE.CODE',
+                                '_TYPE_NAME' => 'TYPE.NAME.NAME',
+                            ])
+                            ->setOrder(['_TYPE_ID' => 'ASC'])
+                            ->exec()
+                            ->fetchAll();
+
+                        LocationParentsTable::add([
+                            'ID' => $item['ID'],
+                            'PARENTS' => json_encode($parents),
+                        ]);
+                    }
+
+                    foreach ($parents as $parentItem) {
                         $parentItem['NAME'] = $parentItem['DISPLAY'];
                         unset($parentItem['DISPLAY']);
                         $parentItem['TYPE'] = $this->stringArrayToArray($parentItem, 'TYPE');
