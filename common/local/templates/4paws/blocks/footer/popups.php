@@ -86,10 +86,12 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     if ($template->isDobrolap()) {
         include __DIR__ . '/dobrolap-popup.php';
     }
-
-    include __DIR__ . '/grooming-flagship-store.php';
-    include __DIR__ . '/recording-lecture-flagship-store.php';
-    include __DIR__ . '/enrollment-training-flagship-store.php';
+    
+    if ($template->isFlagman()) {
+        include __DIR__ . '/grooming-flagship-store.php';
+        include __DIR__ . '/recording-lecture-flagship-store.php';
+        include __DIR__ . '/enrollment-training-flagship-store.php';
+    }
 
     include __DIR__ . '/promo-subscribe.php';
 
