@@ -7,7 +7,7 @@ use Bitrix\Main\Db\SqlQueryException;
 
 class LocationsParentsTable20191113171800 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
 {
-    protected $description = 'Таблица для получения новых номеров заказов';
+    protected $description = 'Создание таблицы с родительскими местоположениями для каждого местоположения';
 
     public function up()
     {
