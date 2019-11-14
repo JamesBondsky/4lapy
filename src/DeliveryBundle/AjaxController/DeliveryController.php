@@ -2,17 +2,14 @@
 
 namespace FourPaws\DeliveryBundle\AjaxController;
 
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ObjectPropertyException;
-use Bitrix\Main\SystemException;
+
+use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\External\Exception\DaDataExecuteException;
 use FourPaws\LocationBundle\LocationService;
-use http\Exception\RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -29,11 +26,18 @@ class DeliveryController extends Controller
     protected $locationService;
 
     /**
-     * @param LocationService $locationService
+     * @var DeliveryService
      */
-    public function __construct(LocationService $locationService)
+    protected $deliveryService;
+
+    /**
+     * @param LocationService $locationService
+     * @param DeliveryService $deliveryService
+     */
+    public function __construct(LocationService $locationService, DeliveryService $deliveryService)
     {
         $this->locationService = $locationService;
+        $this->deliveryService = $deliveryService;
     }
 
     /**
@@ -42,9 +46,6 @@ class DeliveryController extends Controller
      *
      * @return JsonResponse
      * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
      */
     public function getAction(Request $request): JsonResponse
     {
@@ -63,25 +64,10 @@ class DeliveryController extends Controller
             if (!empty($locations)) {
                 $location = current($locations);
 
-                foreach ($this->locationService->findLocationGroupsById($location['ID']) as $groupCode) {
-                    if (in_array($groupCode, DeliveryService::ZONE_EXPRESS_DELIVERY, true)) {
-                        $expressAvailable = true;
-
-                        switch ($groupCode) {
-                            case DeliveryService::ZONE_EXPRESS_DELIVERY_45:
-                                $deliveryTime = '45';
-                                break;
-                            case DeliveryService::ZONE_EXPRESS_DELIVERY_90:
-                                $deliveryTime = '90';
-                                break;
-                            default:
-                                throw new RuntimeException('Delivery zone for express delivery not found');
-                                break;
-                        }
-                    }
-                }
+                $deliveryTime = $this->deliveryService->getExpressDeliveryInterval($location['CODE']);
+                $expressAvailable = true;
             }
-        } catch (DaDataExecuteException $e) {
+        } catch (Exception $e) {
         }
 
         return JsonSuccessResponse::createWithData(

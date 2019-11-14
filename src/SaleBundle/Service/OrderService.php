@@ -1676,8 +1676,9 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @throws NotFoundException
      * @return OfferCollection
+     * @throws ArgumentNullException
+     * @throws NotFoundException
      */
     public function getOrderProducts(Order $order): OfferCollection
     {
@@ -1705,7 +1706,6 @@ class OrderService implements LoggerAwareInterface
      * @param Order $order
      *
      * @throws ArgumentNullException
-     * @throws NotImplementedException
      * @throws NotFoundException
      * @return Order
      */

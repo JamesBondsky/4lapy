@@ -1510,15 +1510,15 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
-     * @param ExpressDeliveryResult $selectedDelivery
      * @param $locationCode
+     * @param ExpressDeliveryResult $selectedDelivery
      * @return int
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
      * @throws LocationNotFoundException
      */
-    public function getExpressDeliveryInterval(ExpressDeliveryResult $selectedDelivery, $locationCode): int
+    public function getExpressDeliveryInterval($locationCode, ExpressDeliveryResult $selectedDelivery = null): int
     {
         $locationGroups = $this->locationService->findLocationGroupsByCode($locationCode);
 
@@ -1531,10 +1531,10 @@ class DeliveryService implements LoggerAwareInterface
         foreach ($locationGroups as $group) {
             switch ($group) {
                 case self::ZONE_EXPRESS_DELIVERY_45:
-                    $deliveryInterval = (int)$selectedDelivery->getData()['PERIOD_FROM'];
+                    $deliveryInterval = ($selectedDelivery !== null) ? (int)$selectedDelivery->getData()['PERIOD_FROM'] : 45;
                     break;
                 case self::ZONE_EXPRESS_DELIVERY_90:
-                    $deliveryInterval = (int)$selectedDelivery->getData()['PERIOD_TO'];
+                    $deliveryInterval = ($selectedDelivery !== null) ? (int)$selectedDelivery->getData()['PERIOD_TO'] : 90;
                     break;
                 default:
                     throw new LocationNotFoundException('Неверный район для экспресс доставки');
