@@ -164,8 +164,12 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         value="<?= $deliveryDostavista->getDeliveryId() ?>"
                                         data-delivery="<?= $deliveryDostavista->getPrice() ?>"
                                         data-full="<?= $deliveryDostavista->getStockResult()->getOrderable()->getPrice() ?>"
-                                        data-check="js-list-orders-static"/>
-                                <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step" for="order-delivery-address">
+                                        data-check="js-list-orders-static"
+                                        data-input-order-delivery-address="dostavista" />
+                                <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
+                                       for="order-delivery-address"
+                                       data-tab-order-delivery-address="dostavista"
+                                       style="display: none;">
                                     <span class="b-choice-recovery__main-text">
                                         <span class="b-choice-recovery__main-text">
                                             Экспресс доставка
@@ -185,25 +189,28 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         class="b-choice-recovery__input js-recovery-dostavista js-delivery"
                                         data-set-delivery-type="<?= $expressDelivery->getDeliveryId() ?>"
                                         data-is-dostavista="1"
-                                        id="order-delivery-address"
+                                        id="order-express-delivery-address"
                                         type="radio"
                                         name="deliveryId"
                                         data-text="Экспресс доставка"
                                         value="<?= $expressDelivery->getDeliveryId() ?>"
                                         data-delivery="<?= $expressDelivery->getPrice() ?>"
                                         data-full="<?= $expressDelivery->getStockResult()->getOrderable()->getPrice() ?>"
-                                        data-check="js-list-orders-static"/>
-                                <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step" for="order-delivery-address">
+                                        data-check="js-list-orders-static"
+                                        data-input-order-delivery-address="express" />
+                                <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
+                                       for="order-express-delivery-address"
+                                       data-tab-order-delivery-address="express">
                                     <span class="b-choice-recovery__main-text">
                                         <span class="b-choice-recovery__main-text">
                                             Экспресс доставка
                                         </span>
                                     </span>
-                                    <span class="b-choice-recovery__addition-text js-cur-pickup">
-                                        В&nbsp;течение 90&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
+                                    <span class="b-choice-recovery__addition-text">
+                                        В&nbsp;течение <span data-time-order-delivery-address="express">90</span>&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-cur-pickup-mobile">
-                                        В&nbsp;течение 90&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
+                                        В&nbsp;течение <span data-time-order-delivery-address="express">90</span>&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
                                     </span>
                                 </label>
                             <?php } ?>
