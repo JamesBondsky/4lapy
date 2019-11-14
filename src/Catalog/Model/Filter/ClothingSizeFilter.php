@@ -70,7 +70,10 @@ class ClothingSizeFilter extends ReferenceFilterNested
     {
         $variantCollection = parent::doGetAllVariants();
 
-        return $variantCollection;
+        // костыль, чтобы фильтр выставлялся только на странице с одеждой для собак
+        if (strpos($_SERVER['REQUEST_URI'], '/catalog/sobaki/odezhda-i-obuv/') !== 0) {
+            return $variantCollection;
+        }
 
         $request = Request::createFromGlobals();
 
