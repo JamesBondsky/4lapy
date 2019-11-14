@@ -251,7 +251,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                 </div>
             <?php } ?>
 
-            <div class="b-choice-recovery b-choice-recovery--order-step b-choice-recovery--delivery-type-time">
+            <div class="b-choice-recovery b-choice-recovery--order-step b-choice-recovery--delivery-type-time" data-tab-wrap-courier-delivery="true">
                 <?php if ($deliveryDostavista) { ?>
                     <input <?= ($deliveryService->isDostavistaDelivery($selectedDelivery)) ? 'checked="checked" ' : '' ?>
                             data-set-delivery-type="<?= $deliveryDostavista->getDeliveryId() ?>"
