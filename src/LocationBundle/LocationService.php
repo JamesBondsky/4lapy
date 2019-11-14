@@ -710,8 +710,14 @@ class LocationService
             }
 
             if (!empty($locationsIds)) {
-                $res = $this->findLocationNew(['=ID' => $locationsIds]);
+                 // todo костыль, пока неккоректно работает findLocationNew
+                if (count($locationsIds) === 1) {
+                   $res[] = $this->findLocationById(current($locationsIds));
+                } else {
+                    $res = $this->findLocationNew(['=ID' => $locationsIds]);
+                }
             }
+
         }
         return $res;
     }
