@@ -46,8 +46,8 @@ class ExpressDelivery4Lapy20191113161811 extends SprintMigrationBase
                 'PRICE' => 197,
                 'FREE_PRICE_FROM' => 997,
                 'PERIOD' => [
-                    'FROM' => 0,
-                    'TO' => 0
+                    'FROM' => 45,
+                    'TO' => 90
                 ]
             ]
         ]
