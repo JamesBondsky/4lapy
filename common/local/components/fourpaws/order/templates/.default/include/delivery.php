@@ -243,11 +243,13 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                     <?php } ?>
                 </div>
             <?php } ?>
-            <div class="b-delivery-type-time__info js-info-express-detail" data-message-express-delivery="reserve" style="display: none;">
-                <div class="b-delivery-type-time__info-title">
-                    Вам доступна Экспресс-доставка в течение <span data-minutes-reserve-express-delivery="true"></span> минут за <?= $expressDelivery->getPrice() ?> ₽
+            <?php if ($expressDelivery) { ?>
+                <div class="b-delivery-type-time__info js-info-express-detail" data-message-express-delivery="reserve" style="display: none;">
+                    <div class="b-delivery-type-time__info-title">
+                        Вам доступна Экспресс-доставка в течение <span data-minutes-reserve-express-delivery="true"></span> минут за <?= $expressDelivery->getPrice() ?> ₽
+                    </div>
                 </div>
-            </div>
+            <?php } ?>
 
             <div class="b-choice-recovery b-choice-recovery--order-step b-choice-recovery--delivery-type-time">
                 <?php if ($deliveryDostavista) { ?>
