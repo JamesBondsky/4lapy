@@ -573,6 +573,15 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
         }
 
+        // костыль, экспресс доставку нельзя оплатить картой, меняем название платежной системы
+        if ($this->deliveryService->isExpressDelivery($selectedDelivery)) {
+            foreach ($payments as $key => $payment) {
+                if ($payment['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD) {
+                    $payments[$key]['NAME'] = 'Наличными';
+                }
+            }
+        }
+
         $this->arResult['BASKET']             = $basket;
         $this->arResult['USER']               = $user;
         $this->arResult['PAYMENTS']           = $payments;
