@@ -61,7 +61,7 @@ class CallCenterController extends Controller
             $additionalPhone = $this->getAdditionalPhone($phone);
             $this->sendData($additionalPhone);
         } catch (Exception $exception) {
-            $this->log()->error($exception->getMessage(), $exception);
+            $this->log()->error($exception->getMessage(), [$exception]);
             $answer['success'] = false;
             $status = ($exception->getCode() == 0 ? 400 : $exception->getCode());
 
