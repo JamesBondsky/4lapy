@@ -165,10 +165,10 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         data-delivery="<?= $deliveryDostavista->getPrice() ?>"
                                         data-full="<?= $deliveryDostavista->getStockResult()->getOrderable()->getPrice() ?>"
                                         data-check="js-list-orders-static"
-                                        data-input-order-delivery-address="dostavista" />
+                                        data-input-express-delivery="dostavista" />
                                 <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
                                        for="order-delivery-address"
-                                       data-tab-order-delivery-address="dostavista"
+                                       data-label-express-delivery="dostavista"
                                        style="display: none;">
                                     <span class="b-choice-recovery__main-text">
                                         <span class="b-choice-recovery__main-text">
@@ -197,20 +197,20 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         data-delivery="<?= $expressDelivery->getPrice() ?>"
                                         data-full="<?= $expressDelivery->getStockResult()->getOrderable()->getPrice() ?>"
                                         data-check="js-list-orders-static"
-                                        data-input-order-delivery-address="express" />
+                                        data-input-express-delivery="express" />
                                 <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
                                        for="order-express-delivery-address"
-                                       data-tab-order-delivery-address="express">
+                                       data-label-express-delivery="express">
                                     <span class="b-choice-recovery__main-text">
                                         <span class="b-choice-recovery__main-text">
                                             Экспресс доставка
                                         </span>
                                     </span>
                                     <span class="b-choice-recovery__addition-text">
-                                        В&nbsp;течение <span data-time-order-delivery-address="express">90</span>&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
+                                        В&nbsp;течение <span data-time-delivery-express-delivery="express">90</span>&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-cur-pickup-mobile">
-                                        В&nbsp;течение <span data-time-order-delivery-address="express">90</span>&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
+                                        В&nbsp;течение <span data-time-delivery-express-delivery="express">90</span>&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
                                     </span>
                                 </label>
                             <?php } ?>

@@ -52,7 +52,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
     <script>
         window.dadataConstraintsLocations = <?= $arResult['DADATA_CONSTRAINTS'] ?>;
     </script>
-    <div class="b-input-line b-input-line--delivery-address-current js-hide-if-address <?= $showNewAddressForm ? 'hide' : '' ?>"
+    <div class="b-input-line b-input-line--delivery-address-current js-hide-if-address <?= $showNewAddressForm ? 'hide js-no-valid' : '' ?>"
         <?= $showNewAddressForm ? 'style="display: none"' : '' ?>>
         <div class="b-input-line__label-wrapper">
             <span class="b-input-line__label">Адрес доставки</span>
@@ -230,7 +230,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
     <div class="b-delivery-type-time" data-container-delivery-type-time="true">
         <?php if ($deliveryDostavista || $expressDelivery) { ?>
             <?php if ($deliveryDostavista) { ?>
-                <div class="b-delivery-type-time__info js-info-express-detail" data-message-express-delivery="express">
+                <div class="b-delivery-type-time__info js-info-express-detail" data-msg-express-delivery="dostavista">
                     <div class="b-delivery-type-time__info-title  <?php if ($deliveryDostavista->getData()['TEXT_EXPRESS_DETAIL']) { ?>b-delivery-type-time__info-title--detail<?php } ?>">
                         <?= str_replace(['[time]', '[price]'], [round($deliveryDostavista->getPeriodTo() / 60), ($deliveryDostavista->getPrice() > 0) ? 'за ' . $deliveryDostavista->getPrice() . ' ₽' : 'бесплатно'], $deliveryDostavista->getData()['TEXT_EXPRESS_DELIVERY']); ?>
                     </div>
@@ -244,9 +244,9 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                 </div>
             <?php } ?>
             <?php if ($expressDelivery) { ?>
-                <div class="b-delivery-type-time__info js-info-express-detail" data-message-express-delivery="reserve" style="display: none;">
+                <div class="b-delivery-type-time__info js-info-express-detail" data-msg-express-delivery="express" style="display: none;">
                     <div class="b-delivery-type-time__info-title">
-                        Вам доступна Экспресс-доставка в течение <span data-minutes-reserve-express-delivery="true"></span> минут за <?= $expressDelivery->getPrice() ?> ₽
+                        Вам доступна Экспресс-доставка в течение <span data-time-delivery-express-delivery="express"></span> минут за <?= $expressDelivery->getPrice() ?> ₽
                     </div>
                 </div>
             <?php } ?>
@@ -262,10 +262,10 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                             data-delivery="<?= $deliveryDostavista->getPrice() ?>"
                             data-full="<?= $delivery->getStockResult()->getOrderable()->getPrice() ?>"
                             data-type-time-delivery="express"
-                            data-type-time-express-delivery="express"
+                            data-input-express-delivery="dostavista"
                             data-check="js-list-orders-cont">
                     <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
-                           data-tab-express-courier-delivery="express"
+                           data-label-express-delivery="dostavista"
                            for="order-express-courier-delivery">
                         <span class="b-choice-recovery__main-text">
                             <span class="b-choice-recovery__main-text">Экспресс</span>
@@ -289,20 +289,20 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                             data-delivery="<?= $expressDelivery->getPrice() ?>"
                             data-full="<?= $expressDelivery->getStockResult()->getOrderable()->getPrice() ?>"
                             data-type-time-delivery="express"
-                            data-type-time-express-delivery="reserve"
+                            data-input-express-delivery="express"
                             data-check="js-list-orders-cont">
-                    <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
-                           data-tab-express-courier-delivery="reserve"
+                    <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step is-inner-express-delivery"
+                           data-label-express-delivery="express"
                            for="order-express-reserve-courier-delivery"
                            style="display: none;">
                         <span class="b-choice-recovery__main-text">
                             <span class="b-choice-recovery__main-text">Экспресс</span>
                         </span>
                         <span class="b-choice-recovery__addition-text">
-                            В&nbsp;течение <span data-minutes-reserve-express-delivery="true"></span>&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
+                            В&nbsp;течение <span data-time-delivery-express-delivery="express"></span>&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
                         </span>
                         <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                            В&nbsp;течение <span data-minutes-reserve-express-delivery="true"></span>&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
+                            В&nbsp;течение <span data-time-delivery-express-delivery="express"></span>&nbsp;минут, <?= $expressDelivery->getPrice() ?>&nbsp;₽
                         </span>
                     </label>
                 <?php } ?>
@@ -337,23 +337,44 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
         <?php } ?>
 
         <ul class="b-radio-tab">
-            <?php if ($deliveryDostavista) { ?>
+            <?php if ($deliveryDostavista || $expressDelivery) { ?>
                 <li class="b-radio-tab__tab b-radio-tab__tab--express-dostavista" data-content-type-time-delivery="express">
                     <div class="b-input-line">
                         <div class="b-input-line__label-wrapper">
                             <span class="b-input-line__label">Время доставки</span>
                         </div>
-                        <div class="b-input b-input--registration-form b-input--time-express-delivery">
-                            <input class="b-input__input-field b-input__input-field--time-express-delivery js-no-valid"
-                                   id="time-express-delivery"
-                                   name="express_time_delivery"
-                                   disabled="disabled"
-                                   value="Сегодня, <?= (new DateTime())->format('d.m.Y') ?> — в течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?> часов с момента заказа"
-                            />
-                            <div class="b-error">
-                                <span class="js-message"></span>
+
+                        <?php if ($deliveryDostavista) { ?>
+                            <div class="b-input b-input--registration-form b-input--time-express-delivery" data-time-input-express-delivery="dostavista">
+                                <input class="b-input__input-field b-input__input-field--time-express-delivery js-no-valid"
+                                       id="time-express-delivery"
+                                       name="express_time_delivery"
+                                       disabled="disabled"
+                                       value="Сегодня, <?= (new DateTime())->format('d.m.Y') ?> — в течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?> часов с момента заказа"
+                                />
+                                <div class="b-error">
+                                    <span class="js-message"></span>
+                                </div>
                             </div>
-                        </div>
+                        <?php } ?>
+
+                        <?php if ($expressDelivery) { ?>
+                            <div class="b-input b-input--registration-form b-input--time-express-delivery"
+                                 data-time-input-express-delivery="express"
+                                 data-start-text-time-input-express-delivery="Сегодня, <?= (new DateTime())->format('d.m.Y') ?> — в течение"
+                                 data-finish-text-time-input-express-delivery="минут с момента заказа"
+                                 style="display: none;">
+                                <input class="b-input__input-field b-input__input-field--time-express-delivery js-no-valid"
+                                       id="time-express-delivery"
+                                       name="express_time_delivery"
+                                       disabled="disabled"
+                                       value="Сегодня, <?= (new DateTime())->format('d.m.Y') ?> — в течение 90 минут с момента заказа"
+                                />
+                                <div class="b-error">
+                                    <span class="js-message"></span>
+                                </div>
+                            </div>
+                        <?php } ?>
                     </div>
                     <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
                         <div class="b-input-line__label-wrapper">
