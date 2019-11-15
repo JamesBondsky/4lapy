@@ -124,7 +124,7 @@ try {
                                 <span class="b-icon b-icon_dostavista"><?= new SvgDecorator('icon-time', 24, 24) ?></span>
                                 <span class="item__text js-delivery-time-dostavista-result">Срок доставки</span>
                             </div>
-                            <div class="item js-dostavista-date-result">Будет доступен после ввода адреса</div>
+                            <div class="item js-dostavista-date-result" data-default-text-dostavista-date-result="Будет доступен после ввода адреса">Будет доступен после ввода адреса</div>
                         </div>
                         <button class="b-button b-button--social b-button--next b-button--next-disable js-dostavista-success-button">
                             Запомнить адрес
