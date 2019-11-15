@@ -18,6 +18,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DobrolapDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DostavistaDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\ExpressDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Exception\DeliveryInitializeException;
 use FourPaws\DeliveryBundle\Exception\UnknownDeliveryException;
@@ -67,6 +68,9 @@ class CalculationResultFactory
                 break;
             case DeliveryService::DOBROLAP_DELIVERY_CODE:
                 $result = new DobrolapDeliveryResult();
+                break;
+            case DeliveryService::EXPRESS_DELIVERY_CODE:
+                $result = new ExpressDeliveryResult();
                 break;
             default:
                 throw new UnknownDeliveryException(sprintf('Unknown delivery service %s', $service->getCode()));

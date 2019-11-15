@@ -3,9 +3,11 @@
 namespace FourPaws\StoreBundle\Collection;
 
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Entity\Stock;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
+use function in_array;
 
 class StockCollection extends BaseCollection
 {
@@ -24,8 +26,8 @@ class StockCollection extends BaseCollection
         }
 
         return $this->filter(
-            function (Stock $stock) use ($ids) {
-                return \in_array($stock->getStoreId(), $ids, true);
+            static function (Stock $stock) use ($ids) {
+                return in_array($stock->getStoreId(), $ids, true);
             }
         );
     }
@@ -38,7 +40,7 @@ class StockCollection extends BaseCollection
     public function filterByStore(Store $store): StockCollection
     {
         return $this->filter(
-            function (Stock $stock) use ($store) {
+            static function (Stock $stock) use ($store) {
                 return $stock->getStoreId() === $store->getId();
             }
         );
@@ -51,7 +53,7 @@ class StockCollection extends BaseCollection
     public function filterByOffer(Offer $offer): StockCollection
     {
         return $this->filter(
-            function (Stock $stock) use ($offer) {
+            static function (Stock $stock) use ($offer) {
                 return $stock->getProductId() === $offer->getId();
             }
         );
@@ -72,7 +74,6 @@ class StockCollection extends BaseCollection
     }
 
     /**
-     * @param $corrNum
      * @return int
      * @throws NotFoundException
      */
@@ -81,7 +82,7 @@ class StockCollection extends BaseCollection
         $amount = 0;
         /** @var Stock $item */
         foreach ($this->getIterator() as $item) {
-            if($item->getStore()->getXmlId() == 'DC01') {
+            if ($item->getStore()->getXmlId() === OrderService::STORE) {
                 $amount += $item->getAmount();
                 break;
             }

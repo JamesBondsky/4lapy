@@ -5,12 +5,12 @@ namespace FourPaws\SaleBundle\Service;
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentNullException;
-use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
+use FourPaws\App\Env;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Enum\CrudGroups;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -32,6 +32,7 @@ use FourPaws\SaleBundle\Enum\ForgotBasketEnum;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\Notification\UnknownMessageTypeException;
+use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -257,7 +258,8 @@ class NotificationService implements LoggerAwareInterface
             case $parameters['isOneClick']:
                 $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.one_click.html.php';
                 break;
-            case $parameters['deliveryCode'] === DeliveryService::INNER_DELIVERY_CODE:
+            case ($parameters['deliveryCode'] === DeliveryService::INNER_DELIVERY_CODE):
+            case ($parameters['deliveryCode'] === DeliveryService::EXPRESS_DELIVERY_CODE):
                 $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.inner.html.php';
                 break;
             case $parameters['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE:
@@ -278,7 +280,9 @@ class NotificationService implements LoggerAwareInterface
                     if ($paymentCode === OrderPayment::PAYMENT_CASH_OR_CARD || $paymentCode === OrderPayment::PAYMENT_CASH) {
                         $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.dostavista.is.not.paid.html.php';
                         break;
-                    } elseif($paymentCode == OrderPayment::PAYMENT_ONLINE && $order->isPaid()) {
+                    }
+
+                    if ($paymentCode === OrderPayment::PAYMENT_ONLINE && $order->isPaid()) {
                         $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.dostavista.is.paid.html.php';
                         break;
                     }
@@ -288,6 +292,14 @@ class NotificationService implements LoggerAwareInterface
 
         if ($smsTemplate) {
             $this->sendPushOrSms($smsTemplate, $parameters, 'status', true);
+        }
+
+        /* для экспресс доставки отсылаем еще сообщение для курьеров */
+        if (($parameters['deliveryCode'] === DeliveryService::EXPRESS_DELIVERY_CODE) && Env::isProd()) {
+            $parameters['phone'] = SapOrder::EXPRESS_COURIER_PHONE;
+            $parameters['deliveryAddress'] = $this->orderService->getOrderDeliveryAddress($order);
+            $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.express.for.courier.html.php';
+            $this->sendSms($smsTemplate, $parameters, true);
         }
 
         $this->sendNewUserSms($parameters);
@@ -826,24 +838,24 @@ class NotificationService implements LoggerAwareInterface
      *
      * @param string $template   - шаблон
      * @param array  $parameters - параметры
-     * @param string $typeCode   - тип пуша
-     * @param bool   $immediate  - мгновенная отправка смс
+     * @param string $typeCode - тип пуша
+     * @param bool $immediate - мгновенная отправка смс
      * @throws ApplicationCreateException
      */
-    public function sendPushOrSms(string $template, array $parameters, string $typeCode = "", bool $immediate = false): void
+    public function sendPushOrSms(string $template, array $parameters, string $typeCode = '', bool $immediate = false): void
     {
         // $user = $this->getUser();
 
         // if($user && $this->pushEventService->canSendPushMessage($user, $typeCode)){
-            $this->addPushMessage($template, $parameters);
+        $this->addPushMessage($template, $parameters);
         // } else {
-            $this->sendSms($template, $parameters, $immediate);
+        $this->sendSms($template, $parameters, $immediate);
         // }
     }
 
     public function getUser()
     {
-        if($this->user === null){
+        if ($this->user === null) {
             try {
                 $this->user = $this->userService->getCurrentUser();
             } catch (\Exception $e) {
