@@ -355,7 +355,11 @@ class OrderStorageService
             if (method_exists($storage, $setter)) {
                 switch ($name) {
                     case 'deliveryId':
-                        $storage->$setter($data['deliveryTypeId']);
+                        if (isset($data['deliveryTypeId']) && !empty($data['deliveryTypeId'])) {
+                            $storage->$setter($data['deliveryTypeId']);
+                        } else {
+                            $storage->$setter($data['deliveryId']);
+                        }
                         break;
                     case 'comment':
                         if (($step === OrderStorageEnum::DELIVERY_STEP) && (isset($deliveryCode)) && ($deliveryCode === DeliveryService::DELIVERY_DOSTAVISTA_CODE) && $data['comment_dostavista']) {
