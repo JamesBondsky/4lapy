@@ -1811,7 +1811,7 @@ class BasketService implements LoggerAwareInterface
             $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
             try {
                 foreach ($deliveryService->getByBasket($this->getBasket()) as $delivery) {
-                    if ($deliveryService->isDelivery($delivery) || $deliveryService->isDostavistaDelivery($delivery)) {
+                    if ($deliveryService->isDeliverable($delivery)) {
                         return true;
                     }
                 }
