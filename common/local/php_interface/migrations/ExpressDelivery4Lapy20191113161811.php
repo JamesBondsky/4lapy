@@ -43,8 +43,8 @@ class ExpressDelivery4Lapy20191113161811 extends SprintMigrationBase
         'CONFIG' => [
             'MAIN' => [
                 'CURRENCY' => 'RUB',
-                'PRICE' => 197,
-                'FREE_PRICE_FROM' => 997,
+                'PRICE' => 397,
+                'FREE_PRICE_FROM' => 3997,
                 'PERIOD' => [
                     'FROM' => 45,
                     'TO' => 90
