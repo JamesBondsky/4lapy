@@ -1284,7 +1284,7 @@ class OrderStorage
         $orderStreet = $this->getStreet();
         $orderHouse = $this->getHouse();
 
-        if (isset($cartParamArray['addressId'])) {
+        if ($this->addressId) {
             $saveAddress = $addressService->getById($this->addressId);
             $orderStreet = $saveAddress->getStreet();
             $orderHouse = $saveAddress->getHouse();
@@ -1298,7 +1298,7 @@ class OrderStorage
 
             if (count($locations)) {
                 $location = current($locations);
-                $this->setCity($location['NAME']);
+//                $this->setCity($location['NAME']);
                 $this->setCityCode($location['CODE']);
                 $this->setMoscowDistrictCode($location['CODE']);
                 $orderStorageService->updateStorage($this, OrderStorageEnum::NOVALIDATE_STEP);
