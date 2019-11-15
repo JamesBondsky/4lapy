@@ -35,12 +35,12 @@ class AddMoscowDistrictsForExpressDelivery20191113120250 extends SprintMigration
             'CODE' => 'ZONE_EXPRESS_DELIVERY_45',
             'ITEMS' => [
                 [
-                    'CODE' => '45268584000',
+                    'CODE' => '45268584',
                     'NAME_RU' => 'Район Раменки',
                     'SHORT_NAME_RU' => 'р-н Раменки'
                 ],
                 [
-                    'CODE' => '45293574000',
+                    'CODE' => '45293574',
                     'NAME_RU' => 'Район Ломоносовский',
                     'SHORT_NAME_RU' => 'р-н Ломоносовский',
                 ],

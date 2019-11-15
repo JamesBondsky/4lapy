@@ -1579,7 +1579,7 @@ class Offer extends IblockElement
     public function isDeliverable($locationId = ''): bool
     {
         if (null === $this->isDeliverable || $locationId != '') {
-            $this->isDeliverable = ($this->getAvailableAmount($locationId, array_merge(DeliveryService::DELIVERY_CODES, [DeliveryService::DELIVERY_DOSTAVISTA_CODE])) > 0);
+            $this->isDeliverable = ($this->getAvailableAmount($locationId, array_merge(DeliveryService::DELIVERY_CODES, [DeliveryService::DELIVERY_DOSTAVISTA_CODE, DeliveryService::EXPRESS_DELIVERY_CODE])) > 0);
         }
 
         return $this->isDeliverable;
