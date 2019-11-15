@@ -17,14 +17,12 @@ use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use CCurrencyRates;
-use COption;
 use DateTime;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use Bitrix\Main\Error;
 use Bitrix\Sale\Basket;
-use FourPaws\StoreBundle\Exception\NotFoundException;
 
 Loc::loadMessages(__FILE__);
 
@@ -210,13 +208,11 @@ class ExpressDeliveryHandler extends DeliveryHandlerBase
             $result->addError(new Error('Отсутствуют товары в наличии'));
         }
 
-        $result->setData(
-            [
-                'STOCK_RESULT' => $stockResult,
-                'PERIOD_FROM' => $this->config['MAIN']['PERIOD']['FROM'],
-                'PERIOD_TO' => $this->config['MAIN']['PERIOD']['TO'],
-            ]
-        );
+        $data['STOCK_RESULT'] = $stockResult;
+        $data['PERIOD_FROM'] = $this->config['MAIN']['PERIOD']['FROM'];
+        $data['PERIOD_TO'] = $this->config['MAIN']['PERIOD']['TO'];
+
+        $result->setData($data);
 
         return $result;
     }
