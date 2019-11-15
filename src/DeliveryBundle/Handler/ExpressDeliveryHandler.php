@@ -134,7 +134,7 @@ class ExpressDeliveryHandler extends DeliveryHandlerBase
     {
         $result = new CalculationResult();
 
-        $currentHour = (int)(new DateTime())->format('h');
+        $currentHour = (int)(new DateTime())->format('H');
 
         if (($currentHour < 10) || ($currentHour > 19)) {
             $result->addError(new Error('В данное время экспресс доставка не работает'));

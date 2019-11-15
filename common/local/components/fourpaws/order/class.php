@@ -361,7 +361,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
             /* ошибка от экспресс доставки 4 лап */
             $storage->setDeliveryId(0);
             $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
-            LocalRedirect('/cart');
+            if ($this->currentStep === OrderStorageEnum::PAYMENT_STEP) {
+                LocalRedirect('/cart');
+            }
         }
 
         $user = null;
