@@ -31,6 +31,7 @@ use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
+use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -113,9 +114,11 @@ class OrderController extends Controller implements LoggerAwareInterface
      */
     private $recaptcha;
 
+    /** @var AddressService $addressService */
+    private $addressService;
+
     /**
      * OrderController constructor.
-     *
      * @param OrderService $orderService
      * @param DeliveryService $deliveryService
      * @param OrderStorageService $orderStorageService
@@ -125,6 +128,8 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param StoreShopInfoService $storeShopInfoService
      * @param LocationService $locationService
      * @param ReCaptchaService $recaptcha
+     * @param AddressService $addressService
+     *
      */
     public function __construct(
         OrderService $orderService,
@@ -135,7 +140,8 @@ class OrderController extends Controller implements LoggerAwareInterface
         ShopInfoService $shopInfoService,
         StoreShopInfoService $storeShopInfoService,
         LocationService $locationService,
-        ReCaptchaService $recaptcha
+        ReCaptchaService $recaptcha,
+        AddressService $addressService
     )
     {
         $this->orderService = $orderService;
@@ -147,6 +153,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         $this->storeShopInfoService = $storeShopInfoService;
         $this->locationService = $locationService;
         $this->recaptcha = $recaptcha;
+        $this->addressService = $addressService;
     }
 
     /**
@@ -618,25 +625,7 @@ class OrderController extends Controller implements LoggerAwareInterface
 
         /* Если на шаге выбора доставки не выбирали адрес из подсказок, то пробуем определить его тут для проставления района Москвы */
         if (($step === OrderStorageEnum::DELIVERY_STEP) && ($storage->getCityCode() === DeliveryService::MOSCOW_LOCATION_CODE)) {
-            $city = (!empty($storage->getCity())) ? $storage->getCity() : 'Москва';
-            $strAddress = sprintf('%s, %s, %s', $city, $storage->getStreet(), $storage->getHouse());
-
-            $this->log()->info(sprintf('Попытка определить район москвы для данных %s', $strAddress));
-            try {
-                $okato = $this->locationService->getDadataLocationOkato($strAddress);
-                $this->log()->info(sprintf('Okato - %s', $okato));
-                $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
-
-                if (count($locations)) {
-                    $location = current($locations);
-                    $storage->setCity($location['NAME']);
-                    $storage->setCityCode($location['CODE']);
-                    $storage->setMoscowDistrictCode($location['CODE']);
-                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
-                }
-            } catch (\Exception $e) {
-                $this->log()->info(sprintf('Произошла ошибка при установке местоположения - %s', $e->getMessage()));
-            }
+            $storage->updateAddressBySaveAddress($this->addressService, $this->locationService, $this->orderStorageService);
         }
 
         if (empty($errors)) {
