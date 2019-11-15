@@ -721,9 +721,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $result1 = $storeData1['RESULT'];
             /** @var PickupResult $result2 */
             $result2 = $storeData2['RESULT'];
-
+            
             /** в киоске первым идёт магазин, в котором он стоит */
-            if (KioskService::isKioskMode()) {
+            if (KioskService::isKioskMode() && !$result2->getErrors()) {
                 /** @var KioskService $kioskService */
                 $kioskService = Application::getInstance()->getContainer()->get('kiosk.service');
                 $store = $kioskService->getStore();
