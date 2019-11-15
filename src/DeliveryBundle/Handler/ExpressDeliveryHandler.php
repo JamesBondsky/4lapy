@@ -18,6 +18,7 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use CCurrencyRates;
 use COption;
+use DateTime;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
@@ -129,12 +130,18 @@ class ExpressDeliveryHandler extends DeliveryHandlerBase
      * @throws LoaderException
      * @throws ObjectNotFoundException
      * @throws SystemException
-     * @throws NotFoundException
      * @throws ApplicationCreateException
      */
     protected function calculateConcrete(Shipment $shipment = null): CalculationResult
     {
         $result = new CalculationResult();
+
+        $currentHour = (int)(new DateTime())->format('h');
+
+        if (($currentHour < 10) || ($currentHour > 19)) {
+            $result->addError(new Error('В данное время экспресс доставка не работает'));
+        }
+
         $price = $this->config['MAIN']['PRICE'];
 
         if ($shipment && Loader::includeModule('currency')) {
