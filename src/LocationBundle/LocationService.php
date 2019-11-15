@@ -1461,6 +1461,7 @@ class LocationService
     /**
      * @param string $address
      * @return DadataLocation
+     * @throws ApplicationCreateException
      * @throws DaDataExecuteException
      */
     public function getDadataLocationOkato(string $address): string
@@ -1472,5 +1473,47 @@ class LocationService
 
         $okato = $dadataLocation->getOkato();
         return substr($okato, 0, 8);
+    }
+
+    /**
+     * @param $locationId
+     * @return array
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function findLocationGroupsById($locationId): array
+    {
+        $result = [];
+
+        $groupRes = GroupLocationTable::query()
+            ->setFilter(['=LOCATION_ID' => $locationId])
+            ->setLimit(10)
+            ->setSelect(['GROUP.CODE'])
+            ->setCacheTtl(360000)
+            ->exec();
+
+        while ($group = $groupRes->fetch()) {
+            $result[] = $group['SALE_LOCATION_GROUP_LOCATION_GROUP_CODE'];
+        }
+        return $result;
+    }
+
+    /**
+     * @param $locationCode
+     * @return array
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function findLocationGroupsByCode($locationCode): array
+    {
+        $location = $this->findLocationByCode($locationCode);
+
+        if (empty($location)) {
+            return [];
+        }
+
+        return $this->findLocationGroupsById($location['ID']);
     }
 }
