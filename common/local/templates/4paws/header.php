@@ -85,8 +85,8 @@ if(KioskService::isKioskMode()) {
     <?php
     $asset = Asset::getInstance();
     $asset->addCss($markup->getCssFile());
-    $asset->addJs('//api-maps.yandex.ru/2.1/?apikey=8bb38591-0ddc-44f1-a86c-7e5d50e8cac3&lang=ru_RU&load=package.full');
-    //$asset->addJs('/api-maps.yandex.ru.js');
+//    $asset->addJs('//api-maps.yandex.ru/2.1/?apikey=8bb38591-0ddc-44f1-a86c-7e5d50e8cac3&lang=ru_RU&load=package.full');
+    $asset->addJs('/api-maps.yandex.ru.js');
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
 
     /** onesignal.com */
