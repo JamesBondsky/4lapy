@@ -45,7 +45,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
     ?>
     <div class="b-registration b-registration--popup-authorization js-auth-block js-ajax-replace-block" data-registration-popup-authorization="true">
         <header class="b-registration__header">
-            <div class="b-title b-title--h1 b-title--registration">Авторизация</div>
+            <div class="b-title b-title--h1 b-title--registration">Автfffоризация</div>
             <div class="b-title b-title--h1 b-title--registration-subscribe">Авторизуйтесь на&nbsp;сайте, чтобы оформить подписку</div>
         </header>
         <form class="b-registration__form js-form-validation js-auth-2way"
@@ -91,7 +91,8 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                 </div>
             </div>
             <?php
-            if ($arResult['IS_SHOW_CAPTCHA'] && ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= $arResult['LIMIT_AUTH_ATTEMPT'])) {
+//            if ($arResult['IS_SHOW_CAPTCHA'] && ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= $arResult['LIMIT_AUTH_ATTEMPT'])) { todo captcha.enable
+              if (true) { // todo captcha.enable
                 try {
                     $recaptchaService = App::getInstance()
                         ->getContainer()
@@ -103,7 +104,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
             } ?>
             <div>
                 <span class="b-registration__auth-error">
-                    <?= ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= $arResult['LIMIT_AUTH_ATTEMPT']) ? 'Неверный логин или пароль' : '' ?>
+<!--                    --><?//= ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= $arResult['LIMIT_AUTH_ATTEMPT']) ? 'Неверный логин или пароль' : '' todo captcha.enable ?>
                 </span>
             </div>
             <button class="b-button b-button--social b-button--full-width b-button--popup-authorization">
