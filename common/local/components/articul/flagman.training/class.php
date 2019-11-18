@@ -20,7 +20,7 @@ class FlagmanTraining extends \CBitrixComponent
             $iblockId = $this->getIblockId();
             
             $this->arResult['SECTIONS'] = $this->getSections($iblockId);
-            
+
             $this->includeComponentTemplate();
         } catch (\Exception $e) {
             echo $e->getMessage();
@@ -37,7 +37,7 @@ class FlagmanTraining extends \CBitrixComponent
     
     private function getSections($iblockId)
     {
-        return SectionTable::query()
+        $result = SectionTable::query()
             ->setSelect(['ID', 'NAME'])
             ->setFilter([
                 '=IBLOCK_ID' => $iblockId,
@@ -45,5 +45,14 @@ class FlagmanTraining extends \CBitrixComponent
             ])
             ->exec()
             ->fetchAll();
+        
+        foreach ($result as $key => $item) {
+            preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $item['NAME'], $matches);
+            if (strtotime($matches[0]) < strtotime('today')) {
+                unset($result[$key]);
+            }
+        }
+        
+        return $result;
     }
 }
