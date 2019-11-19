@@ -825,6 +825,7 @@ class OrderController extends Controller implements LoggerAwareInterface
                 ->setApartment($request->get('apartment', ''));
 
             $updateStorage = (bool)$request->get('updateStorage', false);
+            $expressAvailable = (bool)$request->get('express_available', false);
 
             $deliveries = $this->orderStorageService->getDeliveries($storage);
             $delivery = null;
@@ -837,11 +838,11 @@ class OrderController extends Controller implements LoggerAwareInterface
                     $delivery = $availableDelivery;
                 }
 
-                if ($this->deliveryService->isDostavistaDelivery($availableDelivery)) {
+                if ($expressAvailable && $this->deliveryService->isDostavistaDelivery($availableDelivery)) {
                     $deliveryDostavista = $availableDelivery;
                 }
 
-                if ($this->deliveryService->isExpressDelivery($availableDelivery)) {
+                if ($expressAvailable && $this->deliveryService->isExpressDelivery($availableDelivery)) {
                     $expressDelivery = $availableDelivery;
                 }
 
