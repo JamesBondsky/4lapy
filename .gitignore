@@ -49,6 +49,8 @@ Desktop.ini
 
 /local
 
+/web/dobrolap
+
 /common/local/resources/sypexgeo/SxGeoCity.dat
 
 web/20190426.4lapy_db.dump.sql.gz
