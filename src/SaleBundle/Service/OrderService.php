@@ -458,6 +458,10 @@ class OrderService implements LoggerAwareInterface
                     }
                 }
 
+                if (!$basketItem->getPrice()) {
+                    $toUpdate['CAN_BUY'] = 'N';
+                }
+
                 if (!empty($toUpdate)) {
                     $basketItem->setFields($toUpdate);
                 }
