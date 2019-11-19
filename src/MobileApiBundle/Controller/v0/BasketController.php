@@ -408,7 +408,6 @@ class BasketController extends BaseController
         
         $results = [
             'dostavista' => new DeliveryVariant(),
-            'express' => new DeliveryVariant(),
         ];
         
         $container = Application::getInstance()->getContainer();
@@ -471,22 +470,28 @@ class BasketController extends BaseController
         $dostavistaDelivery->setCourierPrice($deliveryPrice);
         $expressDelivery->setCourierPrice($deliveryPrice);
 
-        $results['dostavista'] = $dostavistaDelivery;
-
         try {
+            if (!$expressDelivery->getAvailable()) {
+                throw new RuntimeException('express delivery not available');
+            }
+
             $locations = $this->appLocationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $this->appLocationService->getDadataLocationOkato($queryAddress));
 
-            if (!empty($locations)) {
-                $location = current($locations);
-
-                $deliveryInterval = $this->appDeliveryService->getExpressDeliveryInterval($location['CODE']);
-
-                $expressDelivery->setDate(str_replace('{{express.interval}}', $deliveryInterval, $expressDelivery->getDate()));
-                $expressDelivery->setShortDate(str_replace('{{express.interval}}', $deliveryInterval, $expressDelivery->getShortDate()));
-
-                $results['express'] = $expressDelivery;
+            if (empty($locations)) {
+                throw new RuntimeException('express delivery not available');
             }
+
+            $location = current($locations);
+
+            $deliveryInterval = $this->appDeliveryService->getExpressDeliveryInterval($location['CODE']);
+
+            $expressDelivery->setDate(str_replace('{{express.interval}}', $deliveryInterval, $expressDelivery->getDate()));
+            $expressDelivery->setShortDate(str_replace('{{express.interval}}', $deliveryInterval, $expressDelivery->getShortDate()));
+
+            $results['dostavista'] = $expressDelivery;
+
         } catch (Exception $e) {
+            $results['dostavista'] = $dostavistaDelivery;
         }
 
         return new Response($results);

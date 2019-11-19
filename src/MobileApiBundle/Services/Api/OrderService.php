@@ -57,6 +57,7 @@ use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\MobileApiBundle\Exception\BonusSubtractionException;
 use FourPaws\MobileApiBundle\Exception\OrderNotFoundException;
 use FourPaws\MobileApiBundle\Exception\ProductsAmountUnavailableException;
+use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException;
@@ -67,6 +68,7 @@ use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
@@ -161,7 +163,6 @@ class OrderService implements LoggerAwareInterface
     public const DELIVERY_TYPE_PICKUP = 'pickup';
     public const DELIVERY_TYPE_DOSTAVISTA = 'dostavista';
     public const DELIVERY_TYPE_DOBROLAP = 'dobrolap';
-    public const DELIVERY_TYPE_EXPRESS = 'express';
 
     public function __construct(
         ApiBasketService $apiBasketService,
@@ -1249,9 +1250,6 @@ class OrderService implements LoggerAwareInterface
                 $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::DOBROLAP_DELIVERY_CODE);
                 $cartParamArray['shelter'] = $cartParam->getShelter();
                 break;
-            case self::DELIVERY_TYPE_EXPRESS:
-                $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::EXPRESS_DELIVERY_CODE);
-                break;
         }
         $cartParamArray['deliveryId'] = $cartParamArray['deliveryTypeId'];
         $cartParamArray['comment1'] = $cartParamArray['comment'];
@@ -1309,9 +1307,13 @@ class OrderService implements LoggerAwareInterface
                     $storage->setMoscowDistrictCode($location['CODE']);
                     $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->log()->info(sprintf('Произошла ошибка при установке местоположения - %s', $e->getMessage()));
             }
+        }
+
+        if ($deliveryType === self::DELIVERY_TYPE_DOSTAVISTA) {
+            $this->updateExpressDelivery($storage);
         }
 
         try {
@@ -1369,6 +1371,31 @@ class OrderService implements LoggerAwareInterface
         return $response;
     }
 
+
+    /**
+     * @param OrderStorage $storage
+     * @return void
+     */
+    protected function updateExpressDelivery(OrderStorage $storage): void
+    {
+        try {
+            if (!$storage->getCityCode() || empty($storage->getCityCode())) {
+                throw new RuntimeException('no location in storage');
+            }
+
+            $this->appDeliveryService->getExpressDeliveryInterval($storage->getCityCode());
+
+            foreach ($this->orderStorageService->getDeliveries($storage) as $delivery) {
+                if ($this->appDeliveryService->isExpressDelivery($delivery)) {
+                    $storage->setDeliveryId($this->appDeliveryService->getDeliveryIdByCode(DeliveryService::EXPRESS_DELIVERY_CODE));
+                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+
+                }
+            }
+
+        } catch (Exception $e) {
+        }
+    }
 
     public function isMKAD($lat, $lng): bool
     {
@@ -1603,12 +1630,12 @@ class OrderService implements LoggerAwareInterface
     private function is_in_polygon($points_polygon, $vertices_x, $vertices_y, $longitude_x, $latitude_y)
     {
         $i = $j = $c = $point = 0;
-        for ($i = 0, $j = $points_polygon ; $i < $points_polygon; $j = $i++) {
+        for ($i = 0, $j = $points_polygon; $i < $points_polygon; $j = $i++) {
             $point = $i;
-            if( $point == $points_polygon )
+            if ($point == $points_polygon)
                 $point = 0;
-            if ( (($vertices_y[$point]  >  $latitude_y != ($vertices_y[$j] > $latitude_y)) &&
-                ($longitude_x < ($vertices_x[$j] - $vertices_x[$point]) * ($latitude_y - $vertices_y[$point]) / ($vertices_y[$j] - $vertices_y[$point]) + $vertices_x[$point]) ) )
+            if ((($vertices_y[$point] > $latitude_y != ($vertices_y[$j] > $latitude_y)) &&
+                ($longitude_x < ($vertices_x[$j] - $vertices_x[$point]) * ($latitude_y - $vertices_y[$point]) / ($vertices_y[$j] - $vertices_y[$point]) + $vertices_x[$point])))
                 $c = !$c;
         }
         return $c;
