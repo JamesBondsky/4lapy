@@ -465,7 +465,6 @@ class DeliveryService implements LoggerAwareInterface
             $result = (new BitrixCache())
                 ->withId(__METHOD__ . $locationCode)
                 ->withTag('location:groups')
-                ->withClearCache(true)
                 ->resultOf($getDeliveries);
             $deliveries = $result['result'];
         } catch (\Exception $e) {
