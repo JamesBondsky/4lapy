@@ -17,6 +17,7 @@ use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\KkmBundle\Service\KkmService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Coupon;
@@ -88,6 +89,9 @@ class BasketController extends BaseController
     
     /** @var AppUserService */
     private $appUserService;
+
+    /** @var LocationService */
+    private $appLocationService;
     
     /**
      * @var ApiUserDeliveryAddressService
@@ -103,7 +107,8 @@ class BasketController extends BaseController
         AppDeliveryService $appDeliveryService,
         OrderStorageService $orderStorageService,
         ApiUserDeliveryAddressService $apiUserDeliveryAddressService,
-        AppUserService $appUserService
+        AppUserService $appUserService,
+        LocationService $locationService
     ) {
         $this->manzana                       = $manzana;
         $this->appBasketService              = $appBasketService;
@@ -114,6 +119,7 @@ class BasketController extends BaseController
         $this->orderStorageService           = $orderStorageService;
         $this->apiUserDeliveryAddressService = $apiUserDeliveryAddressService;
         $this->appUserService                = $appUserService;
+        $this->appLocationService            = $locationService;
         $this->setLogger(LoggerFactory::create('BasketController', 'mobileApi'));
     }
     
@@ -402,6 +408,7 @@ class BasketController extends BaseController
         
         $results = [
             'dostavista' => new DeliveryVariant(),
+            'express' => new DeliveryVariant(),
         ];
         
         $container = Application::getInstance()->getContainer();
@@ -430,7 +437,7 @@ class BasketController extends BaseController
                 $cityInfo = $cityService->getCityByCode($city);
             }
             
-            $queryAddress = implode(', ', array_filter([$cityInfo ? $cityInfo->getTitle() : '', $street, $house, $building], function ($item) {
+            $queryAddress = implode(', ', array_filter([$cityInfo ? $cityInfo->getTitle() : $city, $street, $house, $building], function ($item) {
                 if (!empty($item)) {
                     return $item;
                 }
@@ -438,7 +445,7 @@ class BasketController extends BaseController
         }
         
         $_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE] = $city;
-        
+
         $address = $kkmService->geocode($queryAddress);
         
         $pos = explode(' ', $address['address']['pos']);
@@ -448,8 +455,7 @@ class BasketController extends BaseController
         if (!$isMKAD) {
             return new Response($results);
         }
-        
-        
+
         $deliveryPrice = 0;
         $deliveries    = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
         foreach ($deliveries as $calculationResult) {
@@ -459,13 +465,30 @@ class BasketController extends BaseController
                 }
             }
         }
-        
-        [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery] = $this->apiOrderService->getDeliveryVariants();
-        
+
+        [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery, $expressDelivery] = $this->apiOrderService->getDeliveryVariants();
+
         $dostavistaDelivery->setCourierPrice($deliveryPrice);
-        
+        $expressDelivery->setCourierPrice($deliveryPrice);
+
         $results['dostavista'] = $dostavistaDelivery;
-        
+
+        try {
+            $locations = $this->appLocationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $this->appLocationService->getDadataLocationOkato($queryAddress));
+
+            if (!empty($locations)) {
+                $location = current($locations);
+
+                $deliveryInterval = $this->appDeliveryService->getExpressDeliveryInterval($location['CODE']);
+
+                $expressDelivery->setDate(str_replace('{{express.interval}}', $deliveryInterval, $expressDelivery->getDate()));
+                $expressDelivery->setShortDate(str_replace('{{express.interval}}', $deliveryInterval, $expressDelivery->getShortDate()));
+
+                $results['express'] = $expressDelivery;
+            }
+        } catch (Exception $e) {
+        }
+
         return new Response($results);
     }
     

@@ -157,10 +157,11 @@ class OrderService implements LoggerAwareInterface
     /** @var Manzana */
     private $manzana;
 
-    const DELIVERY_TYPE_COURIER = 'courier';
-    const DELIVERY_TYPE_PICKUP = 'pickup';
-    const DELIVERY_TYPE_DOSTAVISTA = 'dostavista';
-    const DELIVERY_TYPE_DOBROLAP = 'dobrolap';
+    public const DELIVERY_TYPE_COURIER = 'courier';
+    public const DELIVERY_TYPE_PICKUP = 'pickup';
+    public const DELIVERY_TYPE_DOSTAVISTA = 'dostavista';
+    public const DELIVERY_TYPE_DOBROLAP = 'dobrolap';
+    public const DELIVERY_TYPE_EXPRESS = 'express';
 
     public function __construct(
         ApiBasketService $apiBasketService,
@@ -794,10 +795,10 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @return array
+     * @return DeliveryVariant[]
      * @throws Exception
      */
-    public function getDeliveryVariants()
+    public function getDeliveryVariants(): array
     {
         $basketProducts = $this->apiBasketService->getBasketProducts(true);
 
@@ -806,9 +807,10 @@ class OrderService implements LoggerAwareInterface
         $pickup     = null;
         $dostavista = null;
         $dobrolap   = null;
+        $express    = null;
         foreach ($deliveries as $calculationResult) {
             // toDo убрать условие "&& !$calculationResult instanceof DpdPickupResult" после того как в мобильном приложении будет реализован вывод точек DPD на карте в чекауте
-            if ($this->appDeliveryService->isInnerPickup($calculationResult) && !$calculationResult instanceof DpdPickupResult) {
+            if (!$calculationResult instanceof DpdPickupResult && $this->appDeliveryService->isInnerPickup($calculationResult)) {
                 $pickup = $calculationResult;
             } elseif ($this->appDeliveryService->isInnerDelivery($calculationResult)) {
                 $delivery = $calculationResult;
@@ -816,12 +818,15 @@ class OrderService implements LoggerAwareInterface
                 $dostavista = $calculationResult;
             } elseif ($this->appDeliveryService->isDobrolapDelivery($calculationResult)) {
                 $dobrolap = $calculationResult;
+            } elseif ($this->appDeliveryService->isExpressDelivery($calculationResult)) {
+                $express = $calculationResult;
             }
         }
         $courierDelivery = (new DeliveryVariant());
         $pickupDelivery = (new DeliveryVariant());
         $dostavistaDelivery = (new DeliveryVariant());
         $dobrolapDelivery = (new DeliveryVariant());
+        $expressDelivery = (new DeliveryVariant());
 
         if ($delivery && $basketProducts->count() != 0) {
             $courierDelivery
@@ -841,14 +846,14 @@ class OrderService implements LoggerAwareInterface
                 ->setPrice($pickup->getDeliveryPrice());
         }
         if ($dostavista) {
-            $avaliable = $this->checkDostavistaAvaliability($dostavista);
+            $available = $this->checkDostavistaAvaliability($dostavista);
 
             $currentDate = new \DateTime();
 
             $deliveryDate = $dostavista->getDeliveryDate();
 
             $dostavistaDelivery
-                ->setAvailable($avaliable)
+                ->setAvailable($available)
                 ->setPrice($dostavista->getDeliveryPrice())
                 ->setShortDate('В течение 3 часов');
 
@@ -865,7 +870,28 @@ class OrderService implements LoggerAwareInterface
                 ->setPrice($dobrolap->getDeliveryPrice());
         }
 
-        return [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery];
+        if ($express) {
+            $expressDelivery
+                ->setAvailable(true)
+                ->setPrice($express->getPrice());
+
+            $currentDate = new \DateTime();
+
+            $deliveryDate = $dostavista->getDeliveryDate();
+
+            $expressDelivery
+                ->setAvailable(true)
+                ->setPrice($express->getDeliveryPrice())
+                ->setShortDate('В течение {{express.interval}} минут');
+
+            if ($deliveryDate->format('d.m') === $currentDate->format('d.m')) {
+                $expressDelivery->setDate('Сегодня, ' . $deliveryDate->format('d.m.Y') . ' - в течение {{express.interval}} минут с момента заказа');
+            } else {
+                $expressDelivery->setDate(DeliveryTimeHelper::showTime($dostavista) . ' - в течение {{express.interval}} минут с момента заказа');
+            }
+        }
+
+        return [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery, $expressDelivery];
     }
 
     public function checkDostavistaAvaliability($dostavista)
@@ -1222,6 +1248,9 @@ class OrderService implements LoggerAwareInterface
                 $cartParamArray['delyveryType'] = $cartParamArray['split'] ? 'twoDeliveries' : ''; // have no clue why this param used
                 $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::DOBROLAP_DELIVERY_CODE);
                 $cartParamArray['shelter'] = $cartParam->getShelter();
+                break;
+            case self::DELIVERY_TYPE_EXPRESS:
+                $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::EXPRESS_DELIVERY_CODE);
                 break;
         }
         $cartParamArray['deliveryId'] = $cartParamArray['deliveryTypeId'];
