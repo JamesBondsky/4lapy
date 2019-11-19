@@ -460,6 +460,7 @@ class OrderService implements LoggerAwareInterface
 
                 if (!$basketItem->getPrice()) {
                     $toUpdate['CAN_BUY'] = 'N';
+                    $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
                 }
 
                 if (!empty($toUpdate)) {
