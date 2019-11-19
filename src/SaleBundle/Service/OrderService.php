@@ -767,13 +767,18 @@ class OrderService implements LoggerAwareInterface
             }
 
             try {
-                if ($storage->getBonus()) {
+                $amountBonus = $storage->getBonus();
+                if ($amountBonus) {
+                    if ($amountBonus > round($order->getBasket()->getOrderableItems()->getPrice()*0.9)) {
+                        $amountBonus = round($order->getBasket()->getOrderableItems()->getPrice()*0.9);
+                    }
+
                     if (!$innerPayment = $paymentCollection->getInnerPayment()) {
                         $innerPayment = $paymentCollection->createInnerPayment();
                     }
-                    $innerPayment->setField('SUM', $storage->getBonus());
+                    $innerPayment->setField('SUM', $amountBonus);
                     $innerPayment->setPaid('Y');
-                    $sum -= $storage->getBonus();
+                    $sum -= $amountBonus;
                 }
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('bonus payment failed: %s', $e->getMessage()), [
