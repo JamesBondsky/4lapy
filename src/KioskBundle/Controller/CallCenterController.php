@@ -40,7 +40,7 @@ class CallCenterController extends Controller
      * @param Request $request
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      *
-     * @Route("/add", methods={"POST"})
+     * @Route("/add/", methods={"POST"})
      */
     public function add(Request $request)
     {
