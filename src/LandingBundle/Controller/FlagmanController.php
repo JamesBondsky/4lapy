@@ -7,6 +7,8 @@ declare(strict_types=1);
 namespace FourPaws\LandingBundle\Controller;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Articul\Landing\Orm\GroomingAppsTable;
+use Articul\Landing\Orm\GroomingTable;
 use Articul\Landing\Orm\TrainingAppsTable;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Loader;
@@ -120,35 +122,35 @@ class FlagmanController extends Controller implements LoggerAwareInterface
      */
     public function getSchedule(Request $request, $action, $id): JsonResponse
     {
+        //@todo отрефакторить дублирование и вынести в сервис
         $result = [];
+    
+        $flagmanService = new FlagmanService();
+        $elements       = $flagmanService->getElementsBySectionGroomingId($id);
 
-        $this->url .= 'get-schedule/' . $action . '/';
-
-        $response = $this->guzzleClient->request('GET', $this->url, [
-            'headers' => [
-                'Content-Type'  => 'application/json',
-                'Authorization' => 'Bearer ' . $this->token,
-            ],
-        ]);
-
-        $body = $response->getBody();
-
-        $requestResult = json_decode($body->getContents(), true);
-
-        if ($requestResult[$id]) {
-            foreach ($requestResult[$id]['times'] as $timeKey => $time) {
-                if ($time['status'] == 'Y') {
-                    $result[$time['id']] = $timeKey;
-                }
+        foreach ($elements as $key => $element) {
+            if ($element['FREE_VALUE'] == 'N') {
+                unset($elements[$key]);
+                continue;
             }
-
+        
+            preg_match('/^[0-9]{2}/', $element['NAME'], $matches);
+            if ($matches[0] <= date('h')) {
+                unset($elements[$key]);
+                continue;
+            }
+        
+            $result[(string) $element['ID']] = $element['NAME'];
+        }
+        
+        if ($result) {
             return new JsonResponse([
                 'success' => 1,
                 'data'    => $result,
                 'errors'  => [],
             ]);
         }
-
+    
         return new JsonResponse([
             'success' => 0,
             'errors'  => ['message' => 'Такого дня нет =('],
@@ -168,28 +170,45 @@ class FlagmanController extends Controller implements LoggerAwareInterface
      */
     public function bookTheTime(Request $request, $idType): JsonResponse
     {
-
-        // $data = json_decode($request->getContent());
-
-        $this->url .= 'book-the-time/' . $idType . '/';
-
-        $response = $this->guzzleClient->request('POST', $this->url, [
-            'headers' => [
-                'Content-Type'  => 'application/json',
-                'Authorization' => 'Bearer ' . $this->token,
-            ],
-            'json'    => [
-                "name"    => $request->get('name'),
-                "phone"   => $request->get('phone'),
-                "id"      => $request->get('id'),
-                "comment" => $request->get('animal') . ' ' . $request->get('breed') . ' ' . $request->get('service'),
-                "email"   => $request->get('email'),
-            ],
+        // $flagmanService = new FlagmanService();
+        // $bookingResult = $flagmanService->bookTheTime($id);
+        //@todo сори за жирный контроллер и дублирование
+        if (!Loader::includeModule('articul.landing')) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Модуль для сохранения заявок не подключен']]);
+        }
+    
+        try {
+            $successAdding = GroomingAppsTable::add([
+                'UF_NAME'     => $request->get('name'),
+                'UF_PHONE'    => $request->get('phone'),
+                'UF_EVENT_ID' => (int)$request->get('id'),
+                'UF_EMAIL'    => $request->get('email'),
+            ]);
+        
+            if ($successAdding) {
+                \CIBlockElement::SetPropertyValuesEx($request->get('id'), 0, ['FREE' => 'N']);
+                \CEvent::Send('TRAINING_SERVICE', 's1', [
+                    'NAME'  => $request->get('name'),
+                    'PHONE' => $request->get('phone'),
+                    'DATE'  => $request->get('date'),
+                    'TIME'  => $request->get('time'),
+                    'EMAIL' => $request->get('email'),
+                ]);
+            }
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => 'N',
+                'errors'  => ['message' => $e->getMessage()],
+            ]);
+        
+        }
+    
+        $response = new JsonResponse([
+            'success' => 'Y',
+            'errors'  => [],
         ]);
-
-        $body = $response->getBody();
-
-        return new JsonResponse($body->getContents());
+    
+        return $response;
     }
 
     /**
@@ -208,7 +227,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         $result = [];
 
         $flagmanService = new FlagmanService();
-        $elements       = $flagmanService->getElementsBySectionId($id);
+        $elements       = $flagmanService->getElementsBySectionTrainingId($id);
 
         foreach ($elements as $key => $element) {
             if ($element['FREE_SITS'] <= 0) {

@@ -18,10 +18,17 @@ $APPLICATION->SetTitle('Запись на услуги');
         false
     );
 
+    // $APPLICATION->IncludeComponent(
+    //     'articul:flagman.events',
+    //     'grooming',
+    //     ['EVENT_NAME' => 'grooming'],
+    //     false
+    // );
+
     $APPLICATION->IncludeComponent(
-        'articul:flagman.events',
+        'articul:flagman.grooming',
         'grooming',
-        ['EVENT_NAME' => 'grooming'],
+        [],
         false
     );
 
