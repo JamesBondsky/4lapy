@@ -3,9 +3,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Catalog\Product\Basket;
+use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
@@ -104,23 +110,49 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
 
     /**
      * @param string $locationCode
-     * @param array  $possibleDeliveryCodes
+     * @param array $possibleDeliveryCodes
      *
+     * @return CalculationResultInterface[]
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws DeliveryNotFoundException
-     * @return CalculationResultInterface[]
-     * @throws RuntimeException
+     * @throws NotFoundException
+     * @throws SystemException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws UserMessageException
      */
     protected function getDeliveries(string $locationCode, array $possibleDeliveryCodes = [])
     {
         $result = [];
-        $deliveries = parent::getDeliveries($locationCode, $possibleDeliveryCodes);
+
+        $basket = Bitrix\Sale\Basket::create(SITE_ID);
+
+        $addResult = Basket::addProductToBasketWithPermissions(
+            $basket,
+            [
+                'PRODUCT_ID' => $this->arParams['OFFER']->getId(),
+                'QUANTITY' => 1,
+                'MODULE' => 'catalog',
+                'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
+            ],
+            [
+                'SITE_ID' => SITE_ID,
+            ]
+        );
+
+        if ($addResult->isSuccess()) {
+            $deliveries = $this->deliveryService->getByBasket($basket, $locationCode, $possibleDeliveryCodes);
+        } else {
+            $deliveries = parent::getDeliveries($locationCode, $possibleDeliveryCodes);
+        }
+
         foreach ($deliveries as $delivery) {
             $delivery->setStockResult(
                 $this->deliveryService->getStockResultForOffer($this->arParams['OFFER'], $delivery)
             )->setCurrentDate(new \DateTime());
+
             if ($delivery->isSuccess()) {
                 $result[] = $delivery;
             }
