@@ -242,7 +242,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     public function transformOrderToMessage(Order $order): SourceMessage
     {
         $orderDto = new OrderDtoOut();
-
+        $orderShop = '';
+        
         $this->getPropertyCollection($order);
 
         try {
@@ -279,7 +280,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     break;
             }
         }
-        if(KioskService::isKioskMode()){
+        if(KioskService::isKioskMode()) {
             $orderSource = OrderDtoOut::ORDER_SOURCE_KIOSK;
         }
 
@@ -294,7 +295,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         if ($deliveryTypeCode == DeliveryService::INNER_DELIVERY_CODE || $deliveryTypeCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
             $this->populateOrderDtoUserCoords($orderDto, $order);
         }
-
+        
         $orderDto
             ->setId($order->getField('ACCOUNT_NUMBER'))
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()
@@ -334,6 +335,16 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $this->populateOrderDtoDelivery($orderDto, $order);
         $this->populateOrderDtoProducts($orderDto, $order);
         $this->populateOrderDtoCouponNumber($orderDto, $order);
+
+        if (!$orderDto->getClientPhone()) {
+            $this->log()->info('not found phone sap', [
+                'order_phone' => $this->getPropertyValueByCode($order, 'PHONE'),
+                'object_phone' => $orderDto->getClientPhone(),
+                'order_id' => $order->getId(),
+                'xml' => $this->serializer->serialize($orderDto, 'xml')
+            ]);
+        }
+
 
         $xml = $this->serializer->serialize($orderDto, 'xml');
 
@@ -722,6 +733,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 return SapOrder::DELIVERY_TYPE_CONTRACTOR . '_' . SapOrder::DELIVERY_TYPE_CONTRACTOR_PICKUP;
                 break;
             case DeliveryService::DELIVERY_DOSTAVISTA_CODE:
+            case DeliveryService::EXPRESS_DELIVERY_CODE:
                 return SapOrder::DELIVERY_TYPE_DOSTAVISTA;
                 break;
             case DeliveryService::DOBROLAP_DELIVERY_CODE:
@@ -1236,9 +1248,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param BasketItem $item
-     * @param string     $code
+     * @param string $code
      *
      * @return string
+     * @throws ArgumentException
+     * @throws NotImplementedException
      */
     private function getBasketPropertyValueByCode(BasketItem $item, string $code): string
     {
@@ -1259,49 +1273,56 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         if ($deliveryPrice > 0) {
             $deliveryZone = $this->getDeliveryZone($order);
 
-            switch ($deliveryZone) {
-                case DeliveryService::ZONE_1:
-                    $xmlId = SapOrder::DELIVERY_ZONE_1_ARTICLE;
-                    break;
-                case DeliveryService::ZONE_5:
-                    $xmlId = SapOrder::DELIVERY_ZONE_5_ARTICLE;
-                    break;
-                case DeliveryService::ZONE_6:
-                    $xmlId = SapOrder::DELIVERY_ZONE_6_ARTICLE;
-                    break;
-                case DeliveryService::ZONE_2:
-                case DeliveryService::ZONE_NIZHNY_NOVGOROD:
-                case DeliveryService::ZONE_NIZHNY_NOVGOROD_REGION:
-                case DeliveryService::ZONE_VLADIMIR:
-                case DeliveryService::ZONE_VLADIMIR_REGION:
-                case DeliveryService::ZONE_VORONEZH:
-                case DeliveryService::ZONE_VORONEZH_REGION:
-                case DeliveryService::ZONE_YAROSLAVL:
-                case DeliveryService::ZONE_YAROSLAVL_REGION:
-                case DeliveryService::ZONE_TULA:
-                case DeliveryService::ZONE_TULA_REGION:
-                case DeliveryService::ZONE_KALUGA:
-                case DeliveryService::ZONE_KALUGA_REGION:
-                case DeliveryService::ZONE_IVANOVO:
-                case DeliveryService::ZONE_IVANOVO_REGION:
-                case DeliveryService::ADD_DELIVERY_ZONE_10:
-                    $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
-                    break;
-                case DeliveryService::ZONE_3:
-                    $xmlId = SapOrder::DELIVERY_ZONE_3_ARTICLE;
-                    break;
-                case DeliveryService::ZONE_4:
-                    $xmlId = SapOrder::DELIVERY_ZONE_4_ARTICLE;
-                    break;
-                default:
-                    if (
-                        mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
-                        mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
-                    ) {
+            $deliveryCode = $this->getDeliveryCode($order);
+
+            if ($this->deliveryService->isExpressDeliveryCode($deliveryCode) || $this->deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+                $xmlId = SapOrder::DELIVERY_ZONE_MOSCOW_ARTICLE;
+            } else {
+
+                switch ($deliveryZone) {
+                    case DeliveryService::ZONE_1:
+                        $xmlId = SapOrder::DELIVERY_ZONE_1_ARTICLE;
+                        break;
+                    case DeliveryService::ZONE_5:
+                        $xmlId = SapOrder::DELIVERY_ZONE_5_ARTICLE;
+                        break;
+                    case DeliveryService::ZONE_6:
+                        $xmlId = SapOrder::DELIVERY_ZONE_6_ARTICLE;
+                        break;
+                    case DeliveryService::ZONE_2:
+                    case DeliveryService::ZONE_NIZHNY_NOVGOROD:
+                    case DeliveryService::ZONE_NIZHNY_NOVGOROD_REGION:
+                    case DeliveryService::ZONE_VLADIMIR:
+                    case DeliveryService::ZONE_VLADIMIR_REGION:
+                    case DeliveryService::ZONE_VORONEZH:
+                    case DeliveryService::ZONE_VORONEZH_REGION:
+                    case DeliveryService::ZONE_YAROSLAVL:
+                    case DeliveryService::ZONE_YAROSLAVL_REGION:
+                    case DeliveryService::ZONE_TULA:
+                    case DeliveryService::ZONE_TULA_REGION:
+                    case DeliveryService::ZONE_KALUGA:
+                    case DeliveryService::ZONE_KALUGA_REGION:
+                    case DeliveryService::ZONE_IVANOVO:
+                    case DeliveryService::ZONE_IVANOVO_REGION:
+                    case DeliveryService::ADD_DELIVERY_ZONE_10:
                         $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
-                    } else {
+                        break;
+                    case DeliveryService::ZONE_3:
+                        $xmlId = SapOrder::DELIVERY_ZONE_3_ARTICLE;
+                        break;
+                    case DeliveryService::ZONE_4:
                         $xmlId = SapOrder::DELIVERY_ZONE_4_ARTICLE;
-                    }
+                        break;
+                    default:
+                        if (
+                            mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                            mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                        ) {
+                            $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
+                        } else {
+                            $xmlId = SapOrder::DELIVERY_ZONE_4_ARTICLE;
+                        }
+                }
             }
 
             $deliveryPlaceCode = $this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE');
@@ -1371,12 +1392,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $regularityFastDeliv = $scheduleResultService->getRegularityEnumByXmlId(ScheduleResultService::FAST_DELIV);
         return $regularityName == $regularityFastDeliv->getValue();
     }
-    
+
     public function sendOrderStatus($orderNumber, $status)
     {
         $sapStatusSender = new SapStatusSender($orderNumber, $status);
         $result = $sapStatusSender->send();
-        
+
         return $result;
     }
 }

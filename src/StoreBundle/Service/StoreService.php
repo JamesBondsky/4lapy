@@ -9,18 +9,14 @@ namespace FourPaws\StoreBundle\Service;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Data\Cache;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use Dadata\Response\Date;
-use Faker\Provider\DateTime;
 use FourPaws\AppBundle\Service\CacheGeneratingLocker;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\Dto\Coordinates;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\DeliverySchedule;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Entity\StoreSearchResult;
 use FourPaws\StoreBundle\Enum\StoreLocationType;
@@ -67,6 +63,8 @@ class StoreService implements LoggerAwareInterface
      * Ветаптека в сервисах
      */
     public const XML_ID_VET_APTEKA = 'vet-apteka';
+
+    public const EXPRESS_STORE_XML_ID = 'R298';
 
     /**
      * @var LocationService

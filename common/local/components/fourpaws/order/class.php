@@ -32,6 +32,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DobrolapDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Exception\LocationNotFoundException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
@@ -356,6 +357,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
             LocalRedirect('/cart');
 
             return;
+        } catch (LocationNotFoundException $e) {
+            /* ошибка от экспресс доставки 4 лап */
+            $storage->setDeliveryId(0);
+            $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+            if ($this->currentStep === OrderStorageEnum::PAYMENT_STEP) {
+                LocalRedirect('/cart');
+            }
         }
 
         $user = null;
@@ -423,7 +431,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $payments = null;
 
         $deliveries       = $this->orderStorageService->getDeliveries($storage);
+
         $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
+
         if ($this->currentStep === OrderStorageEnum::DELIVERY_STEP) {
             $this->getPickupData($deliveries, $storage);
 
@@ -437,17 +447,20 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $delivery = null;
             $pickup   = null;
             $deliveryDostavista = null;
+            $expressDelivery = null;
             $deliveryDobrolap = null;
             foreach ($deliveries as $calculationResult) {
                 if ($this->deliveryService->isPickup($calculationResult)) {
                     $pickup = $calculationResult;
                 } elseif (!$delivery && $this->deliveryService->isDelivery($calculationResult)) {
                     $delivery = $calculationResult;
-                } elseif($this->deliveryService->isDostavistaDelivery($calculationResult)){
+                } elseif ($this->deliveryService->isDostavistaDelivery($calculationResult)) {
                     $deliveryDostavista = $calculationResult;
-                } elseif($this->deliveryService->isDobrolapDelivery($calculationResult)){
+                } elseif ($this->deliveryService->isDobrolapDelivery($calculationResult)) {
                     $deliveryDobrolap = $calculationResult;
                     $this->getDobrolapData($deliveries, $storage, $selectedCity);
+                } elseif ($this->deliveryService->isExpressDelivery($calculationResult)) {
+                    $expressDelivery = $calculationResult;
                 }
             }
 
@@ -467,16 +480,14 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 }
             }
 
-            $this->arResult['PICKUP']               = $pickup;
-            $this->arResult['DELIVERY']             = $delivery;
-            if (isset($deliveryDostavista)) {
-                $this->arResult['DELIVERY_DOSTAVISTA'] = $deliveryDostavista;
-            }
-            if (isset($deliveryDobrolap)) {
-                $this->arResult['DELIVERY_DOBROLAP'] = $deliveryDobrolap;
-            }
-            $this->arResult['ADDRESSES']            = $addresses;
-            $this->arResult['SELECTED_DELIVERY']    = $selectedDelivery;
+            $this->arResult['PICKUP'] = $pickup;
+            $this->arResult['DELIVERY'] = $delivery;
+            $this->arResult['DELIVERY_DOSTAVISTA'] = $deliveryDostavista;
+            $this->arResult['EXPRESS_DELIVERY'] = $expressDelivery;
+            $this->arResult['DELIVERY_DOBROLAP'] = $deliveryDobrolap;
+
+            $this->arResult['ADDRESSES'] = $addresses;
+            $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
         } elseif ($this->currentStep === OrderStorageEnum::PAYMENT_STEP) {
             $this->getPickupData($deliveries, $storage);
 
@@ -562,6 +573,15 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
 
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
+        }
+
+        // костыль, экспресс доставку нельзя оплатить картой, меняем название платежной системы
+        if ($this->deliveryService->isExpressDelivery($selectedDelivery)) {
+            foreach ($payments as $key => $payment) {
+                if ($payment['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD) {
+                    $payments[$key]['NAME'] = 'Наличными';
+                }
+            }
         }
 
         $this->arResult['BASKET']             = $basket;
@@ -910,6 +930,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     private function checkAndReplaceDobrolapMagnet(Basket $basket, User $user, CalculationResultInterface $selectedDelivery)
     {
+        return; // Отключены лишние запросы для проверки магнитиков
         $magnets = $this->basketService->getDobrolapMagnets();
         if(!$magnets){
             return;

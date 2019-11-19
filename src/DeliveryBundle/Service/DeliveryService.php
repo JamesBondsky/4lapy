@@ -39,10 +39,12 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\ExpressDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\DeliveryBundle\Exception\DeliveryInitializeException;
+use FourPaws\DeliveryBundle\Exception\LocationNotFoundException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Exception\UnknownDeliveryException;
@@ -72,6 +74,7 @@ class DeliveryService implements LoggerAwareInterface
     public const DELIVERY_DOSTAVISTA_CODE = 'dostavista';
     public const DOBROLAP_DELIVERY_CODE = 'dobrolap_delivery';
     public const INNER_PICKUP_CODE = '4lapy_pickup';
+    public const EXPRESS_DELIVERY_CODE = '4lapy_express';
     public const DPD_DELIVERY_GROUP_CODE = 'ipolh_dpd';
     public const DPD_DELIVERY_CODE = self::DPD_DELIVERY_GROUP_CODE . ':COURIER';
     public const DPD_PICKUP_CODE = self::DPD_DELIVERY_GROUP_CODE . ':PICKUP';
@@ -149,6 +152,14 @@ class DeliveryService implements LoggerAwareInterface
      * Новые зоны - районы Москвы
      */
     public const ZONE_MOSCOW_DISTRICT_CODE_PATTERN = 'ZONE_MOSCOW_DISTRICT_';
+
+    public const ZONE_EXPRESS_DELIVERY_45 = 'ZONE_EXPRESS_DELIVERY_45';
+    public const ZONE_EXPRESS_DELIVERY_90 = 'ZONE_EXPRESS_DELIVERY_90';
+
+    public const ZONE_EXPRESS_DELIVERY = [
+        DeliveryService::ZONE_EXPRESS_DELIVERY_45,
+        DeliveryService::ZONE_EXPRESS_DELIVERY_90,
+    ];
 
     public const PICKUP_CODES = [
         DeliveryService::INNER_PICKUP_CODE,
@@ -454,6 +465,7 @@ class DeliveryService implements LoggerAwareInterface
             $result = (new BitrixCache())
                 ->withId(__METHOD__ . $locationCode)
                 ->withTag('location:groups')
+                ->withClearCache(true)
                 ->resultOf($getDeliveries);
             $deliveries = $result['result'];
         } catch (\Exception $e) {
@@ -899,7 +911,16 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function isDostavistaDeliveryCode($deliveryCode): bool
     {
-        return $deliveryCode == static::DELIVERY_DOSTAVISTA_CODE;
+        return $deliveryCode === static::DELIVERY_DOSTAVISTA_CODE;
+    }
+
+    /**
+     * @param string|null $deliveryCode
+     * @return bool
+     */
+    public function isExpressDeliveryCode($deliveryCode): bool
+    {
+        return $deliveryCode === static::EXPRESS_DELIVERY_CODE;
     }
 
     /**
@@ -908,7 +929,7 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function isDobrolapDeliveryCode($deliveryCode): bool
     {
-        return $deliveryCode == static::DOBROLAP_DELIVERY_CODE;
+        return $deliveryCode === static::DOBROLAP_DELIVERY_CODE;
     }
 
     /**
@@ -929,6 +950,15 @@ class DeliveryService implements LoggerAwareInterface
     public function isDostavistaDelivery(CalculationResultInterface $calculationResult): bool
     {
         return $this->isDostavistaDeliveryCode($calculationResult->getDeliveryCode());
+    }
+
+    /**
+     * @param CalculationResultInterface $calculationResult
+     * @return bool
+     */
+    public function isExpressDelivery(CalculationResultInterface $calculationResult): bool
+    {
+        return $this->isExpressDeliveryCode($calculationResult->getDeliveryCode());
     }
 
     /**
@@ -1015,6 +1045,16 @@ class DeliveryService implements LoggerAwareInterface
     public function isDpdDelivery(CalculationResultInterface $calculationResult): bool
     {
         return $this->isDpdDeliveryCode($calculationResult->getDeliveryCode());
+    }
+
+    /**
+     * @param CalculationResultInterface $calculationResult
+     *
+     * @return bool
+     */
+    public function isDeliverable(CalculationResultInterface $calculationResult): bool
+    {
+        return $this->isDostavistaDelivery($calculationResult) || $this->isDelivery($calculationResult) || $this->isExpressDelivery($calculationResult);
     }
 
     /**
@@ -1467,5 +1507,40 @@ class DeliveryService implements LoggerAwareInterface
             self::ZONE_IVANOVO,
             self::ZONE_IVANOVO_REGION
         ];
+    }
+
+    /**
+     * @param $locationCode
+     * @param ExpressDeliveryResult $selectedDelivery
+     * @return int
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws LocationNotFoundException
+     */
+    public function getExpressDeliveryInterval($locationCode, ExpressDeliveryResult $selectedDelivery = null): int
+    {
+        $locationGroups = $this->locationService->findLocationGroupsByCode($locationCode);
+
+        if (empty($locationGroups)) {
+            throw new LocationNotFoundException('Не найдены группы местоположения');
+        }
+
+        $deliveryInterval = 0;
+
+        foreach ($locationGroups as $group) {
+            switch ($group) {
+                case self::ZONE_EXPRESS_DELIVERY_45:
+                    $deliveryInterval = ($selectedDelivery !== null) ? (int)$selectedDelivery->getData()['PERIOD_FROM'] : 45;
+                    break;
+                case self::ZONE_EXPRESS_DELIVERY_90:
+                    $deliveryInterval = ($selectedDelivery !== null) ? (int)$selectedDelivery->getData()['PERIOD_TO'] : 90;
+                    break;
+                default:
+                    throw new LocationNotFoundException('Неверный район для экспресс доставки');
+            }
+        }
+
+        return $deliveryInterval;
     }
 }

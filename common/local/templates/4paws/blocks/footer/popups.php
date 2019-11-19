@@ -3,6 +3,7 @@
 use Bitrix\Main\Application;
 use FourPaws\App\MainTemplate;
 use FourPaws\KioskBundle\Service\KioskService;
+use FourPaws\SaleBundle\Service\BasketService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -86,6 +87,12 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     if ($template->isDobrolap()) {
         include __DIR__ . '/dobrolap-popup.php';
     }
+    
+    if ($template->isFlagman()) {
+        include __DIR__ . '/grooming-flagship-store.php';
+        include __DIR__ . '/recording-lecture-flagship-store.php';
+        include __DIR__ . '/enrollment-training-flagship-store.php';
+    }
 
     include __DIR__ . '/promo-subscribe.php';
 
@@ -95,6 +102,12 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 
     // собираем данные с ЛК с кучей и кучей условий, поэтому выносим отдельно..
     include __DIR__ . '/collect_data_popup.php';
+
+    /** @var BasketService $basketService */
+    $basketService = \FourPaws\App\Application::getInstance()->getContainer()->get(BasketService::class);
+    if (!$template->isOrderPage() && !$template->isBasket() && $basketService->needShowAddressPopup()) {
+        include __DIR__ . '/dostavista-address.php';
+    }
 
     if ($template->isOrderHistoryPage()) {
         include __DIR__ . '/cancel_order_popup.php';

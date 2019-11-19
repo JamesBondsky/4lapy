@@ -83,3 +83,11 @@ four_paws_mobile_api:
       code: 1030
       message: 'Данное количество товара не доступно к оформлению'
       status_code: 200
+    FourPaws\MobileApiBundle\Exception\AccessDeinedException:
+      code: 1001
+      message: 'Доступ запрещен'
+      status_code: 200
+    FourPaws\MobileApiBundle\Exception\RuntimeException:
+      code: 1002
+      message: 'Произошла ошибка'
+      status_code: 200
