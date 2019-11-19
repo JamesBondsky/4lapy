@@ -1288,6 +1288,9 @@ class OrderStorage
             $saveAddress = $addressService->getById($this->addressId);
             $orderStreet = $saveAddress->getStreet();
             $orderHouse = $saveAddress->getHouse();
+            $this->setStreet($orderStreet);
+            $this->setHouse($orderHouse);
+            $this->addressId = 0;
         }
 
         $strAddress = sprintf('%s, %s, %s', $city, $orderStreet, $orderHouse);
