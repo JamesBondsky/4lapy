@@ -3,8 +3,10 @@
 namespace FourPaws\UserBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Exception;
 use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -188,7 +190,7 @@ class CityController extends Controller
                     $response = JsonErrorResponse::createWithData($e->getMessage());
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->log()->error(
                 sprintf('cannot set user city: %s', $e->getMessage()),
                 [
@@ -218,13 +220,48 @@ class CityController extends Controller
         if (!is_dir($_SERVER['DOCUMENT_ROOT'] . '/local/logs/')) {
             mkdir($_SERVER['DOCUMENT_ROOT'] . '/local/logs/', 0775);
         }
-        $logger->pushHandler(new StreamHandler($_SERVER['DOCUMENT_ROOT'] . '/local/logs/useYandexGeolocation-' . date('m.d.Y') . '.log',
+        $logger->pushHandler(new StreamHandler($_SERVER['DOCUMENT_ROOT'] . '/local/logs/useSXGeolocation-' . date('m.d.Y') . '.log',
             Logger::NOTICE));
 
         $this->setLogger($logger);
 
         $this->log()->notice('Использование геолокации пользователем',
             ['user_ip' => $_SERVER['REMOTE_ADDR']]);
+
+        $response = JsonSuccessResponse::createWithData(
+            'Запись в лог об использовании геолокации прошла успешно',
+            [],
+            200,
+            ['reload' => true]
+        );
+        return $response;
+    }
+
+    /**
+     * @Route("/yandex_geolocation_log/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws Exception
+     */
+    public function useGeolocationLogAction(Request $request): JsonResponse
+    {
+        $logger = new Logger('geolocation use');
+        if (!is_dir($_SERVER['DOCUMENT_ROOT'] . '/local/logs/') && !mkdir($concurrentDirectory = $_SERVER['DOCUMENT_ROOT'] . '/local/logs/', 0775) && !is_dir($concurrentDirectory)) {
+            throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+        }
+
+        $url = $request->get('url', 'null');
+        $endPoint = $request->get('endpoint', 'null');
+        $query = $request->get('query', 'null');
+
+        $logger->pushHandler(new StreamHandler($_SERVER['DOCUMENT_ROOT'] . '/local/logs/useYandexGeolocation-' . date('m.d.Y') . '.log', Logger::NOTICE));
+
+        $this->setLogger($logger);
+
+        $this->log()->notice(sprintf('Использование геолокации на странице %s endpoint - %s query - "%s"', $url, $endPoint, $query));
 
         $response = JsonSuccessResponse::createWithData(
             'Запись в лог об использовании геолокации прошла успешно',
@@ -291,7 +328,7 @@ class CityController extends Controller
      *
      * @param Request $request
      * @return JsonResponse
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
     public function getGeolocationCityCode(Request $request): JsonResponse
     {
@@ -342,7 +379,7 @@ class CityController extends Controller
         try {
             $city = $this->userService->getSelectedCity();
             $response = JsonSuccessResponse::createWithData('', $city);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->log()->error(sprintf('cannot get user city: %s', $e->getMessage()));
             $response = JsonErrorResponse::create($e->getMessage());
         }
