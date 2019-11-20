@@ -169,6 +169,7 @@ class DeliveryService implements LoggerAwareInterface
     public const DELIVERY_CODES = [
         DeliveryService::INNER_DELIVERY_CODE,
         DeliveryService::DPD_DELIVERY_CODE,
+        DeliveryService::EXPRESS_DELIVERY_CODE,
     ];
 
     /** @var array */
