@@ -256,12 +256,13 @@ class CityController extends Controller
         $url = $request->get('url', 'null');
         $endPoint = $request->get('endpoint', 'null');
         $query = $request->get('query', 'null');
+        $userIp = $_SERVER['REMOTE_ADDR'];
 
         $logger->pushHandler(new StreamHandler($_SERVER['DOCUMENT_ROOT'] . '/local/logs/useYandexGeolocation-' . date('m.d.Y') . '.log', Logger::NOTICE));
 
         $this->setLogger($logger);
 
-        $this->log()->notice(sprintf('Использование геолокации на странице %s endpoint - %s query - "%s"', $url, $endPoint, $query));
+        $this->log()->notice(sprintf('%s, url: %s, endpoint - %s, query - "%s"', $userIp, $url, $endPoint, $query));
 
         $response = JsonSuccessResponse::createWithData(
             'Запись в лог об использовании геолокации прошла успешно',
