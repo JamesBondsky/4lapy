@@ -459,8 +459,11 @@ class OrderService implements LoggerAwareInterface
                 }
 
                 if (!$basketItem->getPrice()) {
-                    $toUpdate['CAN_BUY'] = 'N';
-                    $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
+                    $currOrder = $orderable->filterByOfferId($basketItem->getProductId())->first();
+                    if (!$currOrder || ($currOrder && !$currOrder->getOffer()->getPrice())) {
+                        $toUpdate['CAN_BUY'] = 'N';
+                        $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
+                    }
                 }
 
                 if (!empty($toUpdate)) {
