@@ -11,6 +11,7 @@ class FlagmanLection extends \CBitrixComponent
 {
     /**
      * @return mixed|void
+     * @throws \Bitrix\Main\LoaderException
      */
     public function executeComponent()
     {
@@ -28,11 +29,18 @@ class FlagmanLection extends \CBitrixComponent
         $this->includeComponentTemplate();
     }
     
+    /**
+     * @return mixed
+     */
     private function getIblockId()
     {
         return \CIBlock::GetList([], ['=CODE' => 'flagman_lections'])->Fetch()['ID'];
     }
     
+    /**
+     * @param $iblockId
+     * @return array
+     */
     private function getItems($iblockId)
     {
         return LectionsTable::query()
@@ -61,23 +69,16 @@ class FlagmanLection extends \CBitrixComponent
             ->fetchAll();
     }
     
-    private function checkAvailabitity()
-    {
-        foreach ($this->arResult['ITEMS'] as &$item) {
-            $item['AVAILABLE'] = 'N';
-            
-            if ($item['FREE_SITS'] > 0) {
-                $item['AVAILABLE'] = 'Y';
-            }
-        }
-    }
-    
+    /**
+     * @param $items
+     */
     private function groupItems($items)
     {
         foreach ($items as $key => $item) {
             $this->arResult['ITEMS'][$item['SECTION_ID']]['SECTION_NAME']      = $item['SECTION_NAME'];
             $this->arResult['ITEMS'][$item['SECTION_ID']]['MAIN_SECTION_NAME'] = $item['MAIN_SECTION_NAME'];
-            $this->arResult['ITEMS'][$item['SECTION_ID']][$key]['NAME']              = $item['NAME'];
+            $this->arResult['ITEMS'][$item['SECTION_ID']][$key]['NAME']        = $item['NAME'];
+            $this->arResult['ITEMS'][$item['SECTION_ID']][$key]['ID']          = $item['ID'];
         }
     }
 }
