@@ -17,31 +17,24 @@ $APPLICATION->SetTitle('Запись на услуги');
         ],
         false
     );
-
-    // $APPLICATION->IncludeComponent(
-    //     'articul:flagman.events',
-    //     'grooming',
-    //     ['EVENT_NAME' => 'grooming'],
-    //     false
-    // );
-
+    
     $APPLICATION->IncludeComponent(
         'articul:flagman.grooming',
         'grooming',
         [],
         false
     );
-
-    // $APPLICATION->IncludeComponent(
-    //     'articul:flagman.lection',
-    //     '',
-    //     [],
-    //     false
-    // );
-
+    
     $APPLICATION->IncludeComponent(
         'articul:flagman.training',
         'training',
+        [],
+        false
+    );
+    
+    $APPLICATION->IncludeComponent(
+        'articul:flagman.lection',
+        '',
         [],
         false
     );

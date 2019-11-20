@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Loader;
 use Articul\Landing\Orm\LectionsTable;
+use Bitrix\Main\Entity\ReferenceField;
 
 /**
  * Class FlagmanLection
@@ -16,11 +17,10 @@ class FlagmanLection extends \CBitrixComponent
         Loader::includeModule('iblock');
         
         try {
-            $iblockId                = $this->getIblockId();
-            $this->arResult['ITEMS'] = $this->getItems($iblockId);
-            $this->setPathforImage();
+            $iblockId = $this->getIblockId();
+            $items    = $this->getItems($iblockId);
             
-            $this->checkAvailabitity();
+            $this->groupItems($items);
         } catch (\Exception $e) {
             echo $e->getMessage();
         }
@@ -36,17 +36,29 @@ class FlagmanLection extends \CBitrixComponent
     private function getItems($iblockId)
     {
         return LectionsTable::query()
-            ->setSelect(['ID', 'NAME', 'PREVIEW_PICTURE', 'DATE' => 'UTS.EVENT_DATE', 'TIME' => 'UTS.EVENT_TIME', 'FREE_SITS' => 'UTS.FREE_SITS', 'SITS' => 'UTS.SITS'])
-            ->setFilter(['=IBLOCK_ID' => $iblockId])
+            ->setSelect([
+                'ID',
+                'NAME',
+                'PREVIEW_PICTURE',
+                'FREE_SITS'         => 'UTS.FREE_SITS',
+                'SITS'              => 'UTS.SITS',
+                'SECTION_NAME'      => 'SECTION.NAME',
+                'SECTION_ID'        => 'SECTION.ID',
+                'MAIN_SECTION_NAME' => 'MAIN_SECTION.NAME',
+            ])
+            ->setFilter(['=IBLOCK_ID' => $iblockId, '>UTS.FREE_SITS' => 0])
+            ->registerRuntimeField(new ReferenceField(
+                'SECTION',
+                'Bitrix\Iblock\SectionTable',
+                ['=this.IBLOCK_SECTION_ID' => 'ref.ID']
+            ))
+            ->registerRuntimeField(new ReferenceField(
+                'MAIN_SECTION',
+                'Bitrix\Iblock\SectionTable',
+                ['=this.SECTION.IBLOCK_SECTION_ID' => 'ref.ID']
+            ))
             ->exec()
             ->fetchAll();
-    }
-    
-    private function setPathforImage()
-    {
-        foreach ($this->arResult['ITEMS'] as &$item) {
-            $item['PREVIEW_PICTURE'] = \CFile::GetPath($item['PREVIEW_PICTURE']);
-        }
     }
     
     private function checkAvailabitity()
@@ -57,6 +69,15 @@ class FlagmanLection extends \CBitrixComponent
             if ($item['FREE_SITS'] > 0) {
                 $item['AVAILABLE'] = 'Y';
             }
+        }
+    }
+    
+    private function groupItems($items)
+    {
+        foreach ($items as $key => $item) {
+            $this->arResult['ITEMS'][$item['SECTION_ID']]['SECTION_NAME']      = $item['SECTION_NAME'];
+            $this->arResult['ITEMS'][$item['SECTION_ID']]['MAIN_SECTION_NAME'] = $item['MAIN_SECTION_NAME'];
+            $this->arResult['ITEMS'][$item['SECTION_ID']][$key]['NAME']              = $item['NAME'];
         }
     }
 }

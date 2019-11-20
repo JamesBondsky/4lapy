@@ -187,7 +187,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         
             if ($successAdding) {
                 \CIBlockElement::SetPropertyValuesEx($request->get('id'), 0, ['FREE' => 'N']);
-                \CEvent::Send('TRAINING_SERVICE', 's1', [
+                \CEvent::Send('GROOMING_SERVICE', 's1', [
                     'NAME'  => $request->get('name'),
                     'PHONE' => $request->get('phone'),
                     'DATE'  => $request->get('date'),
@@ -236,8 +236,13 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             }
 
             $result[$element['ID']] = $element['NAME'];
+    
+            // $result[$key] = [
+            //     'timeId' => $element['ID'],
+            //     'time' => $element['NAME'],
+            // ];
         }
-
+        
         if ($result) {
             return new JsonResponse([
                 'success' => 1,
@@ -275,7 +280,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             $successAdding = TrainingAppsTable::add([
                 'UF_NAME'     => $request->get('name'),
                 'UF_PHONE'    => $request->get('phone'),
-                'UF_EVENT_ID' => (int)$request->get('eventId'),
+                'UF_EVENT_ID' => (int)$request->get('id'),
                 'UF_EMAIL'    => $request->get('email'),
             ]);
 
@@ -289,7 +294,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 $newSits = (int)$sits - 1;
 
                 //@todo исправить как только реализуют метод update
-                \CIBlockElement::SetPropertyValuesEx($request->get('eventId'), 0, ['FREE_SITS' => $newSits]);
+                \CIBlockElement::SetPropertyValuesEx($request->get('id'), 0, ['FREE_SITS' => $newSits]);
                 \CEvent::Send('TRAINING_SERVICE', 's1', [
                     'NAME'  => $request->get('name'),
                     'PHONE' => $request->get('phone'),

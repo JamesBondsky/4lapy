@@ -102,7 +102,6 @@ class HLBlockLectionAppsCreate20191105171256 extends SprintMigrationBase
                 [
                     'DISPLAY'       => 'LIST',
                     'LIST_HEIGHT'   => 5,
-                    'IBLOCK_ID'     => 41, //@todo don't forget to change
                     'DEFAULT_VALUE' => '',
                     'ACTIVE_FILTER' => 'N',
                 ],
@@ -148,10 +147,34 @@ class HLBlockLectionAppsCreate20191105171256 extends SprintMigrationBase
                 'ru' => 'Email',
             ],
         ],
+        [
+            'FIELD_NAME'        => 'UF_DATE_CREATE',
+            'USER_TYPE_ID'      => 'string',
+            'XML_ID'            => 'UF_DATE_CREATE',
+            'SORT'              => 20,
+            'MULTIPLE'          => 'N',
+            'MANDATORY'         => 'N',
+            'SHOW_FILTER'       => 'Y',
+            'SHOW_IN_LIST'      => 'Y',
+            'EDIT_IN_LIST'      => 'Y',
+            'IS_SEARCHABLE'     => 'N',
+            'EDIT_FORM_LABEL'   => [
+                'ru' => 'Дата создания',
+            ],
+            'LIST_COLUMN_LABEL' => [
+                'ru' => 'Дата создания',
+            ],
+            'LIST_FILTER_LABEL' => [
+                'ru' => 'Дата создания',
+            ],
+        ],
     ];
     
     public function up()
     {
+        $iblockId = \CIBlock::GetList([], ['CODE' => 'flagman_lections'])->Fetch()['ID'];
+        $this->fields[3]['SETTINGS']['IBLOCK_ID'] = $iblockId;
+        
         /** @var HlblockHelper $hlBlockHelper */
         $hlBlockHelper = $this->getHelper()->Hlblock();
         
