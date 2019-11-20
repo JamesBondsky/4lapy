@@ -548,14 +548,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 }
 
                 $maxTemporaryBonuses = min($maxTemporaryBonuses, $this->arResult['MAX_BONUS_SUM']);
-                if (isset($maxTemporaryBonuses) && $maxTemporaryBonuses > 0)
-                {
+                if (isset($maxTemporaryBonuses) && $maxTemporaryBonuses > 0) {
                     $this->arResult['MAX_TEMPORARY_BONUS_SUM'] = floor($maxTemporaryBonuses);
                 }
             }
 
             // киоск: скидочная карта
-            if(KioskService::isKioskMode()){
+            if (KioskService::isKioskMode()) {
                 $curPage = BitrixApplication::getInstance()->getContext()->getRequest()->getRequestUri();
                 $url = $this->kioskService->addParamsToUrl($curPage, ['bindcard' => true]);
                 $this->arResult['BIND_CARD_URL'] = $url;
@@ -568,20 +567,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
 
             // магнит добролап
-            if($user){
+            if ($user) {
                 $this->checkAndReplaceDobrolapMagnet($basket, $user, $selectedDelivery);
             }
 
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
-        }
-
-        // костыль, экспресс доставку нельзя оплатить картой, меняем название платежной системы
-        if ($this->deliveryService->isExpressDelivery($selectedDelivery)) {
-            foreach ($payments as $key => $payment) {
-                if ($payment['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD) {
-                    $payments[$key]['NAME'] = 'Наличными';
-                }
-            }
         }
 
         $this->arResult['BASKET']             = $basket;
