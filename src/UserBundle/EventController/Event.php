@@ -55,7 +55,7 @@ class Event extends BaseServiceHandler
     public const GROUP_OPERATORS = 29;
 
     protected static $isEventsDisable = false;
-    public static $isManzanaEventsDisable = true;
+    public static $isManzanaEventsActive = true;
 
     public static function disableEvents(): void
     {
@@ -343,7 +343,7 @@ class Event extends BaseServiceHandler
 
     public static function updateManzana(&$fields): bool
     {
-        if (self::$isManzanaEventsDisable) {
+        if (self::$isManzanaEventsActive) {
             $container = App::getInstance()->getContainer();
 
             /** @var UserService $userService */
