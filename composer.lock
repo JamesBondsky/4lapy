@@ -122,11 +122,11 @@
         },
         {
             "name": "articul/articul.newrelic",
-            "version": "v1.2",
+            "version": "v1.2.1",
             "source": {
                 "type": "git",
                 "url": "git@bitbucket.org:articul/articul.newrelic.git",
-                "reference": "b43389ba0735720e83dd11d6ee8d6ce35e74b047"
+                "reference": "f41b1e7193a2cf264e66fcdba77fcfce20a29b07"
             },
             "require": {
                 "composer/installers": "~1.0",
@@ -158,7 +158,7 @@
                 "skype": "andrey.brajnikov",
                 "source": "https://bitbucket.org/articul/articul.newrelic"
             },
-            "time": "2019-11-20T13:40:15+00:00"
+            "time": "2019-11-20T15:15:21+00:00"
         },
         {
             "name": "ci/restclientbundle",
