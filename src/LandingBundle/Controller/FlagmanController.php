@@ -126,6 +126,11 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             }
             
             $result[(string)$element['ID']] = $element['NAME'];
+    
+            // $result[$key] = [
+            //     'timeId' => $element['ID'],
+            //     'time' => $element['NAME'],
+            // ];
         }
         
         if ($result) {

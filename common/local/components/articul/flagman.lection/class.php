@@ -22,6 +22,7 @@ class FlagmanLection extends \CBitrixComponent
             $items    = $this->getItems($iblockId);
             
             $this->groupItems($items);
+            $this->sortItems();
         } catch (\Exception $e) {
             echo $e->getMessage();
         }
@@ -75,10 +76,22 @@ class FlagmanLection extends \CBitrixComponent
     private function groupItems($items)
     {
         foreach ($items as $key => $item) {
-            $this->arResult['ITEMS'][$item['SECTION_ID']]['SECTION_NAME']      = $item['SECTION_NAME'];
-            $this->arResult['ITEMS'][$item['SECTION_ID']]['MAIN_SECTION_NAME'] = $item['MAIN_SECTION_NAME'];
-            $this->arResult['ITEMS'][$item['SECTION_ID']][$key]['NAME']        = $item['NAME'];
-            $this->arResult['ITEMS'][$item['SECTION_ID']][$key]['ID']          = $item['ID'];
+            $this->arResult['ITEMS'][$item['SECTION_ID']]['SECTION_NAME']              = $item['SECTION_NAME'];
+            $this->arResult['ITEMS'][$item['SECTION_ID']]['MAIN_SECTION_NAME']         = $item['MAIN_SECTION_NAME'];
+            $this->arResult['ITEMS'][$item['SECTION_ID']]['DETAIL_INFO'][$key]['NAME'] = $item['NAME'];
+            $this->arResult['ITEMS'][$item['SECTION_ID']]['DETAIL_INFO'][$key]['ID']   = $item['ID'];
+        }
+    }
+    
+    private function sortItems()
+    {
+        foreach ($this->arResult['ITEMS'] as $key => &$item) {
+            uasort($item['DETAIL_INFO'], function ($a, $b) {
+                preg_match('/^([0-9]{2})/', $a['NAME'], $matchesA);
+                preg_match('/^([0-9]{2})/', $b['NAME'], $matchesB);
+
+                return ($matchesA[0] > $matchesB[0]) ? 1 : -1;
+            });
         }
     }
 }
