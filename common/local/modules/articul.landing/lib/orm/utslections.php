@@ -2,7 +2,9 @@
 
 namespace Articul\Landing\Orm;
 
-use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Entity\DataManager;
+use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -18,8 +20,10 @@ Loc::loadMessages(__FILE__);
  *
  * @package Bitrix\Iblock
  **/
-class UtsLectionsTable extends Main\Entity\DataManager
+class UtsLectionsTable extends DataManager
 {
+    public static $iblockCode = 'flagman_lections';
+    
     /**
      * Returns DB table name for entity.
      *
@@ -27,7 +31,7 @@ class UtsLectionsTable extends Main\Entity\DataManager
      */
     public static function getTableName()
     {
-        $id = \CIBlock::GetList([], ['CODE' => 'flagman_lections'])->Fetch()['ID'];
+        $id = self::getIblockId();
         
         return 'b_iblock_element_prop_s' . $id;
     }
@@ -39,32 +43,41 @@ class UtsLectionsTable extends Main\Entity\DataManager
      */
     public static function getMap()
     {
-        return [
+        $id = self::getIblockId();
+    
+        $fields = [
             'IBLOCK_ELEMENT_ID' => [
                 'data_type' => 'integer',
                 'primary'   => true,
-                'title'     => Loc::getMessage('ELEMENT_PROP_S21_ENTITY_IBLOCK_ELEMENT_ID_FIELD'),
-            ],
-            'EVENT_DATE'        => [
-                'data_type'   => 'string',
-                'title'       => Loc::getMessage('ELEMENT_PROP_S3_ENTITY_PROPERTY_236_FIELD'),
-                'column_name' => 'PROPERTY_236',
-            ],
-            'EVENT_TIME'        => [
-                'data_type'   => 'string',
-                'title'       => Loc::getMessage('ELEMENT_PROP_S3_ENTITY_PROPERTY_237_FIELD'),
-                'column_name' => 'PROPERTY_237',
-            ],
-            'FREE_SITS'         => [
-                'data_type'   => 'string',
-                'title'       => Loc::getMessage('ELEMENT_PROP_S3_ENTITY_PROPERTY_238_FIELD'),
-                'column_name' => 'PROPERTY_238',
-            ],
-            'SITS'              => [
-                'data_type'   => 'string',
-                'title'       => Loc::getMessage('ELEMENT_PROP_S3_ENTITY_PROPERTY_239_FIELD'),
-                'column_name' => 'PROPERTY_239',
+                'title'     => Loc::getMessage('ELEMENT_PROP_S' . $id . '_ENTITY_IBLOCK_ELEMENT_ID_FIELD'),
             ],
         ];
+    
+        $props = self::getProps($id);
+        foreach ($props as $prop) {
+            $fields[$prop['CODE']] = [
+                'data_type'   => 'string',
+                'title'       => Loc::getMessage('ELEMENT_PROP_S' . $id . '_ENTITY_PROPERTY_' . $prop['ID'] . '_FIELD'),
+                'column_name' => 'PROPERTY_' . $prop['ID'],
+            ];
+        }
+    
+        return $fields;
+    }
+    
+    public static function getIblockId()
+    {
+        return \CIBlock::GetList([], ['CODE' => self::$iblockCode])->Fetch()['ID'];
+    }
+    
+    public static function getProps($id)
+    {
+        Loader::includeModule('iblock');
+        
+        return PropertyTable::query()
+            ->setSelect(['ID', 'CODE'])
+            ->setFilter(['=IBLOCK_ID' => $id])
+            ->exec()
+            ->fetchAll();
     }
 }

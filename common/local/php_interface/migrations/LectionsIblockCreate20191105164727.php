@@ -5,7 +5,7 @@ namespace Sprint\Migration;
 
 class LectionsIblockCreate20191105164727 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
 {
-    protected $description = 'Создание инфоблоков для лендинга Фоагманского магазина (лекции)';
+    protected $description = 'Создание инфоблоков для лендинга Флагманского магазина (лекции)';
     
     public function up()
     {
@@ -56,58 +56,6 @@ class LectionsIblockCreate20191105164727 extends \Adv\Bitrixtools\Migration\Spri
         ];
         
         $iblockId = $helper->Iblock()->addIblockIfNotExists($iblock);
-    
-        $props[] = [
-            'NAME' => 'Дата',
-            'ACTIVE' => 'Y',
-            'SORT' => '500',
-            'CODE' => 'EVENT_DATE',
-            'DEFAULT_VALUE' => '',
-            'PROPERTY_TYPE' => 'S',
-            'ROW_COUNT' => '1',
-            'COL_COUNT' => '30',
-            'LIST_TYPE' => 'L',
-            'MULTIPLE' => 'N',
-            'XML_ID' => '',
-            'FILE_TYPE' => '',
-            'MULTIPLE_CNT' => '5',
-            'TMP_ID' => null,
-            'LINK_IBLOCK_ID' => '0',
-            'WITH_DESCRIPTION' => 'N',
-            'SEARCHABLE' => 'N',
-            'FILTRABLE' => 'N',
-            'IS_REQUIRED' => 'N',
-            'VERSION' => '1',
-            'USER_TYPE' => null,
-            'USER_TYPE_SETTINGS' => null,
-            'HINT' => '',
-        ];
-    
-        $props[] = [
-            'NAME' => 'Время',
-            'ACTIVE' => 'Y',
-            'SORT' => '500',
-            'CODE' => 'EVENT_TIME',
-            'DEFAULT_VALUE' => '',
-            'PROPERTY_TYPE' => 'S',
-            'ROW_COUNT' => '1',
-            'COL_COUNT' => '30',
-            'LIST_TYPE' => 'L',
-            'MULTIPLE' => 'N',
-            'XML_ID' => '',
-            'FILE_TYPE' => '',
-            'MULTIPLE_CNT' => '5',
-            'TMP_ID' => null,
-            'LINK_IBLOCK_ID' => '0',
-            'WITH_DESCRIPTION' => 'N',
-            'SEARCHABLE' => 'N',
-            'FILTRABLE' => 'N',
-            'IS_REQUIRED' => 'N',
-            'VERSION' => '1',
-            'USER_TYPE' => null,
-            'USER_TYPE_SETTINGS' => null,
-            'HINT' => '',
-        ];
     
         $props[] = [
             'NAME' => 'Свободные места',
@@ -170,7 +118,7 @@ class LectionsIblockCreate20191105164727 extends \Adv\Bitrixtools\Migration\Spri
     {
         $helper = new HelperManager();
         
-        $helper->Iblock()->deleteIblock($helper->Iblock()->getIblockId('flagman_services', 'grandin'));
+        $helper->Iblock()->deleteIblock($helper->Iblock()->getIblockId('flagman_lections', 'grandin'));
     }
     
 }
