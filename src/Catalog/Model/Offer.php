@@ -2185,12 +2185,15 @@ class Offer extends IblockElement
         $result = null;
         $setItemsEntity = HLBlockFactory::createTableObject('BundleItems');
         $resBundleItems = $setItemsEntity::query()
-                                         ->where('UF_ACTIVE', true)
-                                         ->where('UF_PRODUCT', $offerId)
-                                         ->setSelect(['ID'])
-                                         ->setOrder(['RAND'])
-                                         ->registerRuntimeField(new ExpressionField('RAND', 'RAND()'))
-                                         ->exec();
+            ->where('UF_ACTIVE', true);
+        if ($this->getPrice()) {
+            $resBundleItems = $resBundleItems->where('UF_PRODUCT', $offerId);
+        }
+        $resBundleItems = $resBundleItems->setSelect(['ID'])
+            ->setOrder(['RAND']);
+
+        $resBundleItems = $resBundleItems->registerRuntimeField(new ExpressionField('RAND', 'RAND()'))
+            ->exec();
         while ($break === false) {
             /**
              * @var array $bundleItem

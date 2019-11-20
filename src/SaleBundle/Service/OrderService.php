@@ -412,7 +412,7 @@ class OrderService implements LoggerAwareInterface
             $basket = $basket->createClone();
             $orderable = $selectedDelivery->getStockResult()->getOrderable();
             /** @var BasketItem $basketItem */
-            foreach ($basket as $basketItem) {
+            foreach ($basket as $indexBasketItem => $basketItem) {
                 $toUpdate = [
                     'CUSTOM_PRICE' => 'Y',
                 ];
@@ -458,6 +458,7 @@ class OrderService implements LoggerAwareInterface
                     }
                 }
 
+                $isDeleted = false;
                 if (!$basketItem->getPrice()) {
                     $currOrder = $orderable->filterByOfferId($basketItem->getProductId())->first();
 
@@ -468,8 +469,8 @@ class OrderService implements LoggerAwareInterface
                     }
 
                     if ((!$currOrder || ($currOrder && !$currOrder->getOffer()->getPrice())) && !$isGift) {
-                        $toUpdate['CAN_BUY'] = 'N';
-                        $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
+                        $this->basketService->deleteOfferFromBasket($basketItem->getId());
+                        $basket->deleteItem($indexBasketItem);
                     }
                 }
 
