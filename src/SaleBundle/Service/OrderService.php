@@ -460,7 +460,14 @@ class OrderService implements LoggerAwareInterface
 
                 if (!$basketItem->getPrice()) {
                     $currOrder = $orderable->filterByOfferId($basketItem->getProductId())->first();
-                    if (!$currOrder || ($currOrder && !$currOrder->getOffer()->getPrice())) {
+
+                    try {
+                        $isGift = $currOrder ? $currOrder->getPriceForAmount()->first()->isGift() : false;
+                    } catch (Exception $e) {
+                        $isGift = false;
+                    }
+
+                    if ((!$currOrder || ($currOrder && !$currOrder->getOffer()->getPrice())) && !$isGift) {
                         $toUpdate['CAN_BUY'] = 'N';
                         $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
                     }
