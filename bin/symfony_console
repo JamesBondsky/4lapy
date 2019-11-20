@@ -22,6 +22,10 @@ if ($env) {
     putenv('APP_ENV=' . $env);
 }
 
+if (extension_loaded('newrelic')) {
+    newrelic_name_transaction('symfony_console ' . implode(' ', array_slice($_SERVER['argv'], 1)));
+}
+
 /**
  * Agents - hack.
  *
