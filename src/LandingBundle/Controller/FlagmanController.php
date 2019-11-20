@@ -219,6 +219,12 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 unset($elements[$key]);
                 continue;
             }
+
+            preg_match('/^[0-9]{2}/', $element['NAME'], $matches);
+            if ($matches[0] <= date('h')) {
+                unset($elements[$key]);
+                continue;
+            }
             
             $result[$element['ID']] = $element['NAME'];
             
@@ -227,6 +233,8 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             //     'time' => $element['NAME'],
             // ];
         }
+        
+        natsort($result);
         
         if ($result) {
             return new JsonResponse([

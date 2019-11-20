@@ -42,7 +42,7 @@ class FlagmanService extends Controller implements LoggerAwareInterface
     {
         return TrainingsTable::query()
             ->setSelect(['ID', 'NAME', 'FREE_SITS' => 'UTS.FREE_SITS', 'SITS' => 'UTS.SITS'])
-            ->setFilter(['=IBLOCK_SECTION_ID' => $id])
+            ->setFilter(['=IBLOCK_SECTION_ID' => $id, '=ACTIVE' => 'Y'])
             ->exec()
             ->fetchAll();
     }
