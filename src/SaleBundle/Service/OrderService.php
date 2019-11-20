@@ -768,9 +768,10 @@ class OrderService implements LoggerAwareInterface
 
             try {
                 $amountBonus = $storage->getBonus();
+                $percentSumm = round($order->getBasket()->getOrderableItems()->getPrice()*0.9);
                 if ($amountBonus) {
-                    if ($amountBonus > round($order->getBasket()->getOrderableItems()->getPrice()*0.9)) {
-                        $amountBonus = round($order->getBasket()->getOrderableItems()->getPrice()*0.9);
+                    if ($amountBonus > $percentSumm) {
+                        $amountBonus = $percentSumm;
                     }
 
                     if (!$innerPayment = $paymentCollection->getInnerPayment()) {
