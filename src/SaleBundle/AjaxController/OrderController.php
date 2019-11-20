@@ -824,8 +824,16 @@ class OrderController extends Controller implements LoggerAwareInterface
                 ->setFloor($request->get('floor', ''))
                 ->setApartment($request->get('apartment', ''));
 
-            $updateStorage = (bool)$request->get('updateStorage', false);
-            $expressAvailable = (bool)$request->get('express_available', false);
+            $updateStorage = $request->get('updateStorage', false);
+            $expressAvailable = $request->get('express_available', false);
+
+            if (is_string($updateStorage)) {
+                $updateStorage = ($updateStorage === 'true');
+            }
+
+            if (is_string($expressAvailable)) {
+                $expressAvailable = ($expressAvailable === 'true');
+            }
 
             $deliveries = $this->orderStorageService->getDeliveries($storage);
             $delivery = null;
