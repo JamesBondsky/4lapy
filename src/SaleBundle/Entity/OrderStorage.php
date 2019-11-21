@@ -1313,4 +1313,36 @@ class OrderStorage
         } catch (\Exception $e) {
         }
     }
+
+    public function updateAddressBySaveAddressByMoscowDistrict(AddressService $addressService, LocationService $locationService)
+    {
+        $city = (!empty($this->getCity())) ? $this->getCity() : 'Москва';
+        $orderStreet = $this->getStreet();
+        $orderHouse = $this->getHouse();
+
+        if ($this->addressId) {
+            $saveAddress = $addressService->getById($this->addressId);
+            $orderStreet = $saveAddress->getStreet();
+            $orderHouse = $saveAddress->getHouse();
+            $this->setStreet($orderStreet);
+            $this->setHouse($orderHouse);
+            $this->addressId = 0;
+        }
+
+        $strAddress = sprintf('%s, %s, %s', $city, $orderStreet, $orderHouse);
+
+        try {
+            $okato = $locationService->getDadataLocationOkato($strAddress);
+            $locations = $locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+
+            if (count($locations)) {
+                $location = current($locations);
+                if ($location['TYPE_ID'] == 9) {
+                    $this->setCityCode(end($location['PATH'])['CODE']);
+                    $this->setCity(end($location['PATH'])['NAME']);
+                }
+            }
+        } catch (\Exception $e) {
+        }
+    }
 }
