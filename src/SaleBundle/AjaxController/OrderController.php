@@ -813,7 +813,16 @@ class OrderController extends Controller implements LoggerAwareInterface
                 ->setFloor($request->get('floor', ''))
                 ->setApartment($request->get('apartment', ''));
 
-            $updateStorage = (bool)$request->get('updateStorage', false);
+            $updateStorage = $request->get('updateStorage', false);
+            $expressAvailable = $request->get('express_available', false);
+
+            if (is_string($updateStorage)) {
+                $updateStorage = ($updateStorage === 'true');
+            }
+
+            if (is_string($expressAvailable)) {
+                $expressAvailable = ($expressAvailable === 'true');
+            }
 
             $deliveries = $this->orderStorageService->getDeliveries($storage);
             $delivery = null;
@@ -826,11 +835,11 @@ class OrderController extends Controller implements LoggerAwareInterface
                     $delivery = $availableDelivery;
                 }
 
-                if ($this->deliveryService->isDostavistaDelivery($availableDelivery)) {
+                if ($expressAvailable && $this->deliveryService->isDostavistaDelivery($availableDelivery)) {
                     $deliveryDostavista = $availableDelivery;
                 }
 
-                if ($this->deliveryService->isExpressDelivery($availableDelivery)) {
+                if ($expressAvailable && $this->deliveryService->isExpressDelivery($availableDelivery)) {
                     $expressDelivery = $availableDelivery;
                 }
 
@@ -871,7 +880,7 @@ class OrderController extends Controller implements LoggerAwareInterface
                 $storage->setDeliveryId($selectedDelivery->getDeliveryId());
                 if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
                     $resultText = str_replace(['[time]', '[date]'], [round($selectedDelivery->getPeriodTo() / 60), ($selectedDelivery->getPrice() > 0) ? 'за ' . $selectedDelivery->getPrice() . ' ₽' : 'бесплатно'], $selectedDelivery->getData()['TEXT_EXPRESS_DELIVERY_TIME']);
-                } else if ( isset($deliveryTime) && $this->deliveryService->isExpressDelivery($selectedDelivery)) {
+                } else if (isset($deliveryTime) && $this->deliveryService->isExpressDelivery($selectedDelivery)) {
                     $resultText = sprintf('Заказ будет доставлен в течении %s минут', (string)$deliveryTime);
                 } else if ($this->deliveryService->isDelivery($selectedDelivery)) {
                     /** @var DeliveryResultInterface $nextDelivery */

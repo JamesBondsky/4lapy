@@ -566,7 +566,7 @@ class OrderStorageService
         if ($storage->getDeliveryId()) {
             $deliveryCode = $this->deliveryService->getDeliveryCodeById($storage->getDeliveryId());
         }
-        if ($deliveryCode === false || !$this->deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+        if ($deliveryCode === false || !($this->deliveryService->isDostavistaDeliveryCode($deliveryCode) || $this->deliveryService->isExpressDeliveryCode($deliveryCode))) {
             if ($filter
                 && !empty(array_filter($payments, static function ($item) {
                     return $item['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD;

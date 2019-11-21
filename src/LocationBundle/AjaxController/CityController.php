@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Exception;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\LocationBundle\Service\YandexGeocodeService;
 use FourPaws\MobileApiBundle\Services\Api\CityService as ApiCityService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -37,10 +38,20 @@ class CityController extends Controller
     /** @var ApiCityService */
     private $apiCityService;
 
-    public function __construct(LocationService $locationService, ApiCityService $apiCityService)
+    /** @var YandexGeocodeService */
+    private $yandexGeocodeService;
+
+    /**
+     * CityController constructor.
+     * @param LocationService $locationService
+     * @param ApiCityService $apiCityService
+     * @param YandexGeocodeService $yandexGeocodeService
+     */
+    public function __construct(LocationService $locationService, ApiCityService $apiCityService, YandexGeocodeService $yandexGeocodeService)
     {
         $this->locationService = $locationService;
         $this->apiCityService = $apiCityService;
+        $this->yandexGeocodeService = $yandexGeocodeService;
     }
 
     /**
@@ -118,6 +129,23 @@ class CityController extends Controller
         return new JsonResponse([
             'suggestions' => $result,
         ]);
+    }
+
+    /**
+     * @Route("/geocode/", methods={"GET"})
+     *
+     * @param Request $request
+     * @return \FourPaws\App\Response\JsonResponse
+     */
+    public function geocodeAction(Request $request): JsonResponse
+    {
+        try {
+            $coords = $this->yandexGeocodeService->getCityCoords($request->get('city', ''));
+        } catch (\Exception $e) {
+            $coords = YandexGeocodeService::DEFAULT_COORDS;
+        }
+
+        return new JsonSuccessResponse(['coords' => $coords]);
     }
 
     /**
