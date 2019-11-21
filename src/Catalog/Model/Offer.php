@@ -2040,24 +2040,37 @@ class Offer extends IblockElement
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
+     * @throws \Exception
+     *
      * @return int
      */
     protected function getAvailableAmount(string $locationId = '', $deliveryCodes = []): int
     {
-        /** @var DeliveryService $deliveryService */
-        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-        $deliveries = $deliveryService->getByLocation($locationId, $deliveryCodes);
-        $max = 0;
-        foreach ($deliveries as $delivery) {
+        $getAvailableAmount = function() use($locationId, $deliveryCodes): int
+        {
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+            $deliveries = $deliveryService->getByLocation($locationId, $deliveryCodes);
+            $max = 0;
+            foreach ($deliveries as $delivery) {
 
-            // Из-за того, что здесь не передаётся количество оффера, максимальное количество не будет >1
-            $delivery->setStockResult($deliveryService->getStockResultForOffer($this, $delivery));
+                // Из-за того, что здесь не передаётся количество оффера, максимальное количество не будет >1
+                $delivery->setStockResult($deliveryService->getStockResultForOffer($this, $delivery));
 
-            if ($delivery->isSuccess()) {
-                $availableAmount = $delivery->getStockResult()->getOrderable()->getAmount();
-                $max = $max > $availableAmount ? $max : $availableAmount;
+                if ($delivery->isSuccess()) {
+                    $availableAmount = $delivery->getStockResult()->getOrderable()->getAmount();
+                    $max = $max > $availableAmount ? $max : $availableAmount;
+                }
             }
-        }
+
+            return $max;
+        };
+
+        $max = (new BitrixCache())
+            ->withId(__METHOD__ . '_' . $this->getId() . '_' . $locationId . '_' . md5(serialize($deliveryCodes)))
+            ->withTime(3600) // 60 минут
+            ->withTag('getAvailableAmount')
+            ->resultOf($getAvailableAmount)['result'];
 
         return $max;
     }
