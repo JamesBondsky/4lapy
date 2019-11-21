@@ -91,11 +91,6 @@ class FlagmanGrooming extends \CBitrixComponent
     
     private function sortDays()
     {
-        uasort($this->arResult['DAYS'], function ($a, $b) {
-            preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $a['day'], $matchesA);
-            preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $b['day'], $matchesB);
-            
-            return (strtotime($matchesA[0]) > strtotime($matchesB[0])) ? -1 : 1;
-        });
+        natsort($this->arResult['DAYS']);
     }
 }
