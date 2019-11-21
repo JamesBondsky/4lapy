@@ -34,12 +34,17 @@ class FlagmanGrooming extends \CBitrixComponent
     public function executeComponent()
     {
         $result = $this->getDays();
-        
+
         foreach ($result as $item) {
             if (!empty($item['TIME'])) {
                 preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $item['NAME'], $matches);
-                
+
                 if (strtotime($matches[0]) < strtotime('today')) {
+                    continue;
+                }
+    
+                preg_match('/^[0-9]{2}/', $item['TIME'], $pregMTime);
+                if ($matches[0] == date('d.m.Y') && $pregMTime[0] <= date('H')) {
                     continue;
                 }
                 
@@ -48,7 +53,7 @@ class FlagmanGrooming extends \CBitrixComponent
         }
         
         $this->sortDays();
-        
+
         $this->includeComponentTemplate();
     }
     
@@ -89,11 +94,6 @@ class FlagmanGrooming extends \CBitrixComponent
     
     private function sortDays()
     {
-        uasort($this->arResult['DAYS'], function ($a, $b) {
-            preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $a['day'], $matchesA);
-            preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $b['day'], $matchesB);
-            
-            return (strtotime($matchesA[0]) > strtotime($matchesB[0])) ? -1 : 1;
-        });
+        natsort($this->arResult['DAYS']);
     }
 }
