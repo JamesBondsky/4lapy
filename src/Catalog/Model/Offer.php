@@ -13,7 +13,6 @@ use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\ExpressionField;
-use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -43,7 +42,6 @@ use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Query\HlbColorQuery;
 use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
-use FourPaws\Catalog\Collection\PriceCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Service\BrandService;
@@ -57,12 +55,9 @@ use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Object\Color;
-use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
-use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
-use FourPaws\StoreBundle\Repository\StockRepository;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserService;
@@ -79,7 +74,6 @@ use JMS\Serializer\SerializerInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use Symfony\Component\EventDispatcher\Tests\SubscriberService;
 use WebArch\BitrixCache\BitrixCache;
 
 /**
@@ -1585,7 +1579,7 @@ class Offer extends IblockElement
     public function isDeliverable($locationId = ''): bool
     {
         if (null === $this->isDeliverable || $locationId != '') {
-            $this->isDeliverable = ($this->getAvailableAmount($locationId, DeliveryService::DELIVERY_CODES) > 0);
+            $this->isDeliverable = ($this->getAvailableAmount($locationId, array_merge(DeliveryService::DELIVERY_CODES, [DeliveryService::DELIVERY_DOSTAVISTA_CODE, DeliveryService::EXPRESS_DELIVERY_CODE])) > 0);
         }
 
         return $this->isDeliverable;

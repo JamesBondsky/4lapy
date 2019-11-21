@@ -31,7 +31,7 @@ $showNewAddressFormHeader = false;
 <script>
     window.dadataConstraintsLocations = <?= $arResult['DADATA_CONSTRAINTS'] ?>;
 </script>
-<div class="b-input-line b-input-line--delivery-address-current js-hide-if-address <?= $showNewAddressForm ? 'hide' : '' ?>"
+<div class="b-input-line b-input-line--delivery-address-current js-hide-if-address <?= $showNewAddressForm ? 'hide js-no-valid' : '' ?>"
     <?= $showNewAddressForm ? 'style="display: none"' : '' ?>>
     <div class="b-input-line__label-wrapper">
         <span class="b-input-line__label">Адрес доставки</span>

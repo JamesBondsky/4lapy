@@ -269,31 +269,31 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
         }
 
         /** если авторизирован добавляем магнит */
-        if ($user) { // костыль, если магнитик не добавился сразу после оплаты исходного заказа)
-            $needAddDobrolapMagnet = $user->getGiftDobrolap();
-            /** Если пользователю должны магнит */
-            if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {
-                $magnetID = $this->basketService->getDobrolapMagnet()['ID'];
-                /** если магнит найден как оффер */
-                if ($magnetID) {
-                    $basketItem = $this->basketService->addOfferToBasket(
-                        (int)$magnetID,
-                        1,
-                        [],
-                        true,
-                        $basket
-                    );
-                    /** если магнит успешно добавлен в корзину */
-                    if ($basketItem->getId()) {
-                        $userDB = new \CUser;
-                        $fields = [
-                            'UF_GIFT_DOBROLAP' => false
-                        ];
-                        $userDB->Update($userId, $fields);
-                    }
-                }
-            }
-        }
+//        if ($user) { // костыль, если магнитик не добавился сразу после оплаты исходного заказа)
+//            $needAddDobrolapMagnet = $user->getGiftDobrolap();
+//            /** Если пользователю должны магнит */
+//            if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {
+//                $magnetID = $this->basketService->getDobrolapMagnet()['ID'];
+//                /** если магнит найден как оффер */
+//                if ($magnetID) {
+//                    $basketItem = $this->basketService->addOfferToBasket(
+//                        (int)$magnetID,
+//                        1,
+//                        [],
+//                        true,
+//                        $basket
+//                    );
+//                    /** если магнит успешно добавлен в корзину */
+//                    if ($basketItem->getId()) {
+//                        $userDB = new \CUser;
+//                        $fields = [
+//                            'UF_GIFT_DOBROLAP' => false
+//                        ];
+//                        $userDB->Update($userId, $fields);
+//                    }
+//                }
+//            }
+//        }
 
         $this->includeComponentTemplate($this->getPage());
     }
@@ -431,7 +431,14 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
         $this->arResult['OFFER_MIN_DELIVERY'] = [];
         $this->arResult['ONLY_PICKUP'] = [];
         $haveOrder = $basket->getOrder() instanceof Order;
-        $deliveries = $this->getDeliveryService()->getByLocation();
+        $deliveries = $this->getDeliveryService()->getByBasket($basket);
+
+        $availableExpress = false;
+        foreach ($deliveries as $delivery) {
+            if ($this->getDeliveryService()->isDostavistaDelivery($delivery) || $this->getDeliveryService()->isExpressDelivery($delivery)) {
+                $availableExpress = true;
+            }
+        }
 
         $this->arResult['HAS_DELIVERY'] = (empty($deliveries)) ? false : true;
 
@@ -464,25 +471,23 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
 
             if ($basketItem->isDelay()) {
                 $notAllowedItems->add($basketItem);
-            } else {
-                if (
-                    ($basketItem->getPrice() > 0 || $basketItem->getBasePrice() > 0)
-                    && $this->arResult['HAS_DELIVERY']
-                    &&
-                    (
-                        (null === $delivery) ||
-                        !(clone $delivery)->setStockResult(
-                            $this->getDeliveryService()->getStockResultForOffer(
-                                $offer,
-                                $delivery,
-                                (int)$basketItem->getQuantity(),
-                                $basketItem->getPrice()
-                            )
-                        )->isSuccess()
-                    )
-                ) {
-                    $this->arResult['ONLY_PICKUP'][] = $offer->getId();
-                }
+            } else if (
+                $this->arResult['HAS_DELIVERY']
+                && !$availableExpress
+                && ($basketItem->getPrice() > 0 || $basketItem->getBasePrice() > 0)
+                && (
+                    (null === $delivery) ||
+                    !(clone $delivery)->setStockResult(
+                        $this->getDeliveryService()->getStockResultForOffer(
+                            $offer,
+                            $delivery,
+                            (int)$basketItem->getQuantity(),
+                            $basketItem->getPrice()
+                        )
+                    )->isSuccess()
+                )
+            ) {
+                $this->arResult['ONLY_PICKUP'][] = $offer->getId();
             }
 
             if ($offer->isByRequest()) {

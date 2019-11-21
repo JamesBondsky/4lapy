@@ -11,6 +11,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
@@ -18,6 +19,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\UserMessageException;
+use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
@@ -53,6 +55,7 @@ use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\ShopInfoService as StoreShopInfoService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use Psr\Log\LoggerAwareInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -159,10 +162,10 @@ class OrderController extends Controller implements LoggerAwareInterface
     /**
      * @Route("/store-search/", methods={"GET"})
      *
-     * @throws SystemException
-     * @throws \Exception
-     * @throws ApplicationCreateException
      * @return JsonResponse
+     * @throws Exception
+     * @throws ApplicationCreateException
+     * @throws SystemException
      */
     public function storeSearchAction(): JsonResponse
     {
@@ -176,7 +179,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         );
         array_walk($shopInfo['items'], [$this->storeShopInfoService, 'locationTypeSortDecorate']);
         usort($shopInfo['items'], [$this->storeShopInfoService, 'shopCompareByLocationType']);
-        if (KioskService::isKioskMode()){
+        if (KioskService::isKioskMode()) {
             usort($shopInfo['items'], [$this->storeShopInfoService, 'shopCompareByKiosk']);
         }
         array_walk($shopInfo['items'], [$this->storeShopInfoService, 'locationTypeSortUndecorate']);
@@ -208,10 +211,10 @@ class OrderController extends Controller implements LoggerAwareInterface
     /**
      * @Route("/store-search-by-items/", methods={"POST"})
      *
-     * @throws SystemException
-     * @throws \Exception
-     * @throws ApplicationCreateException
      * @return JsonResponse
+     * @throws Exception
+     * @throws ApplicationCreateException
+     * @throws SystemException
      */
     public function storeSearchByItemsAction(Request $request): JsonResponse
     {
@@ -222,12 +225,12 @@ class OrderController extends Controller implements LoggerAwareInterface
         $storage = $this->orderStorageService->getStorage();
         $items = $request->get('items');
 
-        if(empty($items)){
+        if (empty($items)) {
             return JsonSuccessResponse::create('Не переданы товары для создания службы доставки');
         }
 
         // данные с 2 шага оформления заказа помешают расчётам
-        if($storage->getDeliveryId() > 0){
+        if ($storage->getDeliveryId() > 0) {
             $this->orderStorageService->clearStorage($storage);
             $storage = $this->orderStorageService->getStorage();
         }
@@ -235,7 +238,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         // получение самовывоза из набора товаров
         $basket = $basketService->createBasketFromItems($items);
         $deliveries = $deliveryService->getByBasket($basket, '', [DeliveryService::INNER_PICKUP_CODE]);
-        if(empty($deliveries)){
+        if (empty($deliveries)) {
             return JsonSuccessResponse::create('Нет доступных магазинов для самовывоза');
         }
         $pickup = current($deliveries);
@@ -256,6 +259,7 @@ class OrderController extends Controller implements LoggerAwareInterface
      *
      * @param Request $request
      *
+     * @return JsonResponse
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
@@ -265,8 +269,7 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @throws StoreNotFoundException
      * @throws SystemException
      * @throws UserMessageException
-     * @throws \Exception
-     * @return JsonResponse
+     * @throws Exception
      */
     public function storeInfoAction(Request $request): JsonResponse
     {
@@ -391,10 +394,8 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param Request $request
      *
      * @return JsonResponse
-     * @throws ArgumentException
      * @throws OrderStorageSaveException
-     * @throws SystemException
-     * @throws ObjectPropertyException
+     * @throws ApplicationCreateException
      */
     public function validateBonusCardAction(Request $request): JsonResponse
     {
@@ -421,10 +422,11 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @Route("/validate/auth", methods={"POST"})
      * @param Request $request
      *
+     * @return JsonResponse
+     * @return JsonResponse
      * @throws SystemException
-     * @return JsonResponse
-     * @return JsonResponse
-     * @throws OrderStorageSaveException
+     * @throws OrderStorageSaveException*
+     * @throws ApplicationCreateException
      */
     public function validateAuthAction(Request $request): JsonResponse
     {
@@ -455,14 +457,11 @@ class OrderController extends Controller implements LoggerAwareInterface
     /**
      * @Route("/validate/delivery", methods={"POST"})
      *
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
      * @return JsonResponse
      * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
      * @throws OrderStorageSaveException
-     * @throws SystemException
      */
     public function validateDeliveryAction(Request $request): JsonResponse
     {
@@ -512,8 +511,9 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @throws StoreNotFoundException
      * @throws SystemException
      * @throws UserMessageException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws NotImplementedException
+     * @throws GuzzleException
+     * @throws OrderStorageValidationException
      */
     public function validatePaymentAction(Request $request): JsonResponse
     {
@@ -539,7 +539,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         /**
          * Moscow Districts
          */
-        if ($storage->getMoscowDistrictCode() != '') {
+        if ($storage->getMoscowDistrictCode() !== '') {
             $this->orderStorageService->updateStorageMoscowZone($storage, OrderStorageEnum::NOVALIDATE_STEP);
 
             // необходимо обновить службы доставки, чтобы применилась зона
@@ -619,7 +619,7 @@ class OrderController extends Controller implements LoggerAwareInterface
                 $request,
                 $step
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $errors[] = $e->getMessage();
         }
 
@@ -657,7 +657,7 @@ class OrderController extends Controller implements LoggerAwareInterface
                     $errors[$key] = $error->getMessage();
                 }
                 $step = $e->getRealStep();
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $errors[$e->getCode()] = 'Произошла ошибка, пожалуйста, обратитесь к администратору';
                 $this->log()->error(sprintf('Error in order creating: %s: %s', \get_class($e), $e->getMessage()));
             }
@@ -790,6 +790,118 @@ class OrderController extends Controller implements LoggerAwareInterface
     }
 
     /**
+     * @Route("/set-address/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     *
+     * @throws ApplicationCreateException
+     */
+    public function setAddressAction(Request $request): JsonResponse
+    {
+        $step = OrderStorageEnum::NOVALIDATE_STEP;
+        try {
+            $storage = $this->orderStorageService->getStorage();
+
+            $storage
+                ->setCityCode(DeliveryService::MOSCOW_LOCATION_CODE)
+                ->setStreet($request->get('street', ''))
+                ->setHouse($request->get('house', ''))
+                ->setBuilding($request->get('building', ''))
+                ->setPorch($request->get('porch', ''))
+                ->setFloor($request->get('floor', ''))
+                ->setApartment($request->get('apartment', ''));
+
+            $updateStorage = (bool)$request->get('updateStorage', false);
+
+            $deliveries = $this->orderStorageService->getDeliveries($storage);
+            $delivery = null;
+            $deliveryDostavista = null;
+            $expressDelivery = null;
+            $pickup = null;
+
+            foreach ($deliveries as $availableDelivery) {
+                if ($this->deliveryService->isDelivery($availableDelivery)) {
+                    $delivery = $availableDelivery;
+                }
+
+                if ($this->deliveryService->isDostavistaDelivery($availableDelivery)) {
+                    $deliveryDostavista = $availableDelivery;
+                }
+
+                if ($this->deliveryService->isExpressDelivery($availableDelivery)) {
+                    $expressDelivery = $availableDelivery;
+                }
+
+                if ($this->deliveryService->isPickup($availableDelivery)) {
+                    $pickup = $availableDelivery;
+                }
+            }
+
+            $selectedDelivery = null;
+
+            if ($expressDelivery) {
+                try {
+                    $address = sprintf('Москва, %s, %s', $storage->getStreet(), $storage->getHouse());
+                    $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $this->locationService->getDadataLocationOkato($address));
+
+                    if (!empty($locations)) {
+                        $location = current($locations);
+
+                        $deliveryTime = $this->deliveryService->getExpressDeliveryInterval($location['CODE']);
+                        $selectedDelivery = $expressDelivery;
+                    }
+                } catch (Exception $e) {
+                }
+            }
+
+            if ($selectedDelivery === null) {
+                if ($deliveryDostavista) {
+                    $selectedDelivery = $deliveryDostavista;
+                } else if ($delivery) {
+                    $selectedDelivery = $delivery;
+                } else if ($pickup) {
+                    $updateStorage = false;
+                    $selectedDelivery = $pickup;
+                }
+            }
+
+            if ($selectedDelivery) {
+                $storage->setDeliveryId($selectedDelivery->getDeliveryId());
+                if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
+                    $resultText = str_replace(['[time]', '[date]'], [round($selectedDelivery->getPeriodTo() / 60), ($selectedDelivery->getPrice() > 0) ? 'за ' . $selectedDelivery->getPrice() . ' ₽' : 'бесплатно'], $selectedDelivery->getData()['TEXT_EXPRESS_DELIVERY_TIME']);
+                } else if ( isset($deliveryTime) && $this->deliveryService->isExpressDelivery($selectedDelivery)) {
+                    $resultText = sprintf('Заказ будет доставлен в течении %s минут', (string)$deliveryTime);
+                } else if ($this->deliveryService->isDelivery($selectedDelivery)) {
+                    /** @var DeliveryResultInterface $nextDelivery */
+                    $nextDelivery = current($this->deliveryService->getNextDeliveries($selectedDelivery, 1));
+                    $resultText = sprintf('Заказ будет доставлен - %s', DeliveryTimeHelper::showTime($nextDelivery));
+                } else {
+                    $shopInfo = $this->shopInfoService->toArray($this->shopInfoService->getShopInfo($storage, $pickup));
+                    $resultText = sprintf('Забрать самовывозом из %s %s', count($shopInfo), (count($shopInfo) === 1) ? 'магазина' : 'магазинов');
+                }
+            } else {
+                $updateStorage = false;
+                $resultText = 'Для данного адреса нет доступных доставок';
+            }
+
+            if ($updateStorage) {
+                $this->orderStorageService->updateStorage($storage, $step);
+            }
+
+        } catch (Exception $e) {
+            $this->log()->error(sprintf('%s при сохранении адреса в orderStorage произошла ошибка: %s', __METHOD__, $e->getMessage()));
+            return JsonErrorResponse::create('При добавлении адреса произошла ошибка');
+        }
+
+        return JsonSuccessResponse::createWithData('Адрес успешно сохранен', [
+            'next_delivery_text' => $resultText,
+            'is_dostavista' => (($this->deliveryService->isDostavistaDelivery($selectedDelivery)) || ($this->deliveryService->isExpressDelivery($selectedDelivery))),
+        ]);
+    }
+
+    /**
      * @Route("/cancel/", methods={"POST"})
      *
      * @param Request $request
@@ -805,7 +917,7 @@ class OrderController extends Controller implements LoggerAwareInterface
             $cancelResult = $this->orderService->cancelOrder($orderId);
         } catch (OrderCancelException | \FourPaws\SaleBundle\Exception\NotFoundException  $e) {
             return JsonErrorResponse::createWithData('', ['errors' => [$e->getMessage()]]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка']]);
         }
 
@@ -832,7 +944,7 @@ class OrderController extends Controller implements LoggerAwareInterface
             $extendResult = $this->orderService->extendOrder($orderId);
         } catch (OrderExtendException | \FourPaws\SaleBundle\Exception\NotFoundException  $e) {
             return JsonErrorResponse::createWithData('', ['errors' => [$e->getMessage()]]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return JsonErrorResponse::createWithData('', ['errors' => ['При продлении срока хранения произошла ошибка']]);
         }
 

@@ -11,7 +11,7 @@ use FourPaws\Decorators\SvgDecorator;
                 <span class="b-icon">
                     <?=new SvgDecorator('icon-delivery-header', 24, 24)?>
                 </span>
-            <span>Адрес: г. Москва, пр-кт Вернадского, д. 6, ТЦ «Капитолий», -1 этаж</span>
+            <span>Адрес: г.&nbsp;Москва, <nobr>пр-кт Вернадского, д.&nbsp;6,</nobr> ТЦ&nbsp;&laquo;Капитолий&raquo;, <nobr>-1 этаж</nobr></span>
         </div>
     </div>
 </section>

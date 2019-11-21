@@ -48,6 +48,14 @@ class KioskService
 
     /**
      * @return string
+     */
+    public static function getOrderShop()
+    {
+        return $_SESSION['kiosk_store'] ?? self::DEFAULT_STORE;
+    }
+
+    /**
+     * @return string
      * @throws \Bitrix\Main\SystemException
      */
     public function getAuthLink()

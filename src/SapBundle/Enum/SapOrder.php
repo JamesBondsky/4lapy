@@ -63,4 +63,6 @@ final class SapOrder
 
     public const TEST_PHONE = '79771358673';
     public const TEST_COMMENT = '!!! ТЕСТ';
+
+    public const EXPRESS_COURIER_PHONE = '79660800603';
 }

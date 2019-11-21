@@ -6,14 +6,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Main\Grid\Declension;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
-use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
-use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
-use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\UserBundle\Entity\User;
 
 /**
