@@ -725,7 +725,7 @@ class OrderStorageService
      */
     public function getSelectedDelivery(OrderStorage $storage): CalculationResultInterface
     {
-        $deliveries = $this->getDeliveries($storage);
+        $deliveries = $this->getDeliveries($storage, true);
         $selectedDelivery = current($deliveries);
         if ($deliveryId = $storage->getDeliveryId()) {
             /** @var CalculationResultInterface $delivery */

@@ -10,20 +10,12 @@ use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
 /**
- * Class ElementPropS21Table
- *
- * Fields:
- * <ul>
- * <li> IBLOCK_ELEMENT_ID int mandatory
- * <li> PROPERTY_114 string optional
- * </ul>
- *
- * @package Bitrix\Iblock
- **/
-
-class UtsTrainingsTable extends DataManager
+ * Class UtsGroomingTable
+ * @package Articul\Landing\Orm
+ */
+class UtsGroomingTable extends DataManager
 {
-    public static $iblockCode = 'flagman_training';
+    public static $iblockCode = 'flagman_grooming';
     
     /**
      * Returns DB table name for entity.
@@ -33,7 +25,7 @@ class UtsTrainingsTable extends DataManager
     public static function getTableName()
     {
         $id = self::getIblockId();
-
+        
         return 'b_iblock_element_prop_s' . $id;
     }
     

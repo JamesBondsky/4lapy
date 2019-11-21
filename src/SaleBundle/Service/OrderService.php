@@ -73,6 +73,7 @@ use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -412,7 +413,7 @@ class OrderService implements LoggerAwareInterface
             $basket = $basket->createClone();
             $orderable = $selectedDelivery->getStockResult()->getOrderable();
             /** @var BasketItem $basketItem */
-            foreach ($basket as $basketItem) {
+            foreach ($basket as $indexBasketItem => $basketItem) {
                 $toUpdate = [
                     'CUSTOM_PRICE' => 'Y',
                 ];
@@ -457,7 +458,7 @@ class OrderService implements LoggerAwareInterface
                         }
                     }
                 }
-
+                
                 if (!$basketItem->getPrice()) {
                     $currOrder = $orderable->filterByOfferId($basketItem->getProductId())->first();
 
@@ -468,8 +469,8 @@ class OrderService implements LoggerAwareInterface
                     }
 
                     if ((!$currOrder || ($currOrder && !$currOrder->getOffer()->getPrice())) && !$isGift) {
-                        $toUpdate['CAN_BUY'] = 'N';
-                        $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
+                        $this->basketService->deleteOfferFromBasket($basketItem->getId());
+                        $basket->deleteItem($indexBasketItem);
                     }
                 }
 
@@ -777,13 +778,19 @@ class OrderService implements LoggerAwareInterface
             }
 
             try {
-                if ($storage->getBonus()) {
+                $amountBonus = $storage->getBonus();
+                $percentSumm = floor($order->getBasket()->getOrderableItems()->getPrice()*0.9);
+                if ($amountBonus) {
+                    if ($amountBonus > $percentSumm) {
+                        $amountBonus = $percentSumm;
+                    }
+
                     if (!$innerPayment = $paymentCollection->getInnerPayment()) {
                         $innerPayment = $paymentCollection->createInnerPayment();
                     }
-                    $innerPayment->setField('SUM', $storage->getBonus());
+                    $innerPayment->setField('SUM', $amountBonus);
                     $innerPayment->setPaid('Y');
-                    $sum -= $storage->getBonus();
+                    $sum -= $amountBonus;
                 }
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('bonus payment failed: %s', $e->getMessage()), [
@@ -821,6 +828,9 @@ class OrderService implements LoggerAwareInterface
 
         $address = null;
         if ($storage->getAddressId()) {
+            if ($storage->getCityCode() !== \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
+                $storage->updateAddressBySaveAddressByMoscowDistrict($this->addressService, $this->locationService);
+            }
             try {
                 $address = $this->addressService->getById($storage->getAddressId());
                 $storage->setStreet($address->getStreet())

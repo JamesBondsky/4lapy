@@ -8,7 +8,11 @@ namespace FourPaws\SaleBundle\Entity;
 
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\PersonalBundle\Service\AddressService;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Validation as SaleValidation;
 use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
@@ -1272,5 +1276,75 @@ class OrderStorage
         $this->shelter = $shelter;
 
         return $this;
+    }
+
+    public function updateAddressBySaveAddress(AddressService $addressService, LocationService $locationService, OrderStorageService $orderStorageService)
+    {
+        $city = (!empty($this->getCity())) ? $this->getCity() : 'Москва';
+        $orderStreet = $this->getStreet();
+        $orderHouse = $this->getHouse();
+
+        if ($this->addressId) {
+            $saveAddress = $addressService->getById($this->addressId);
+            $orderStreet = $saveAddress->getStreet();
+            $orderHouse = $saveAddress->getHouse();
+            $this->setStreet($orderStreet);
+            $this->setHouse($orderHouse);
+            $this->addressId = 0;
+        }
+
+        $strAddress = sprintf('%s, %s, %s', $city, $orderStreet, $orderHouse);
+
+        try {
+            $okato = $locationService->getDadataLocationOkato($strAddress);
+            $locations = $locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+
+            if (count($locations)) {
+                $location = current($locations);
+//                if ($location['TYPE_ID'] == 9) {
+//                    $this->setCityCode(end($location['PATH'])['CODE']);
+//                    $this->setCity(end($location['PATH'])['NAME']);
+//                } else {
+//                    $this->setCityCode($location['CODE']);
+//                }
+                $this->setMoscowDistrictCode($location['CODE']);
+                $this->setCityCode($location['CODE']);
+                $orderStorageService->updateStorage($this, OrderStorageEnum::NOVALIDATE_STEP);
+            }
+        } catch (\Exception $e) {
+        }
+    }
+
+    public function updateAddressBySaveAddressByMoscowDistrict(AddressService $addressService, LocationService $locationService)
+    {
+        $city = (!empty($this->getCity())) ? $this->getCity() : 'Москва';
+        $orderStreet = $this->getStreet();
+        $orderHouse = $this->getHouse();
+
+        if ($this->addressId) {
+            $saveAddress = $addressService->getById($this->addressId);
+            $orderStreet = $saveAddress->getStreet();
+            $orderHouse = $saveAddress->getHouse();
+            $this->setStreet($orderStreet);
+            $this->setHouse($orderHouse);
+            $this->addressId = 0;
+        }
+
+        $strAddress = sprintf('%s, %s, %s', $city, $orderStreet, $orderHouse);
+
+        try {
+            $okato = $locationService->getDadataLocationOkato($strAddress);
+            $locations = $locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+
+            if (count($locations)) {
+                $location = current($locations);
+                if ($location['TYPE_ID'] == 9) {
+                    $this->setCityCode(end($location['PATH'])['CODE']);
+                    $this->setCity('Москва');
+                    $this->setMoscowDistrictCode($location['CODE']);
+                }
+            }
+        } catch (\Exception $e) {
+        }
     }
 }
