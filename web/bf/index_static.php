@@ -5,12 +5,12 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 <div class="page-blackfriday">
     <section class="products-blackfriday">
         <div class="b-container">
-            <div class="title-blackfriday">Скидки до 50% на 2 500 зоотоваров!</div>
+            <div class="title-blackfriday">Скидки до&nbsp;50% на&nbsp;2&nbsp;500 зоотоваров!</div>
             <div class="banner-blackfriday banner-blackfriday_full">
                 <div class="banner-blackfriday__bg-wrap">
-                    <div class="banner-blackfriday__bg banner-blackfriday__bg_desktop" style="background-image: url('/blackfriday/img/cat_desktop.jpg')"></div>
-                    <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('/blackfriday/img/.jpg')"></div>
-                    <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('/blackfriday/img/cat_mobile.jpg')"></div>
+                    <div class="banner-blackfriday__bg banner-blackfriday__bg_desktop" style="background-image: url('/bf/img/cat_desktop.jpg')"></div>
+                    <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('/bf/img/cat_tablet.jpg')"></div>
+                    <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('/bf/img/cat_mobile.jpg')"></div>
                 </div>
                 <div class="banner-blackfriday__label"></div>
                 <div class="banner-blackfriday__content">
@@ -145,9 +145,9 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
             <div class="banner-blackfriday banner-blackfriday_full">
                 <div class="banner-blackfriday__bg-wrap">
-                    <div class="banner-blackfriday__bg banner-blackfriday__bg_desktop" style="background-image: url('/blackfriday/img/dog_desktop.jpg')"></div>
-                    <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('/blackfriday/img/.jpg')"></div>
-                    <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('/blackfriday/img/dog_mobile.jpg')"></div>
+                    <div class="banner-blackfriday__bg banner-blackfriday__bg_desktop" style="background-image: url('/bf/img/dog_desktop.jpg')"></div>
+                    <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('/bf/img/dog_tablet.jpg')"></div>
+                    <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('/bf/img/dog_mobile.jpg')"></div>
                 </div>
                 <div class="banner-blackfriday__label"></div>
                 <div class="banner-blackfriday__content">
@@ -284,9 +284,9 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                 <div class="item">
                     <div class="banner-blackfriday">
                         <div class="banner-blackfriday__bg-wrap">
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_desktop" style="background-image: url('/blackfriday/img/ryby_desktop.jpg')"></div>
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('/blackfriday/img/.jpg')"></div>
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('/blackfriday/img/ryby_mobile.jpg')"></div>
+                            <div class="banner-blackfriday__bg banner-blackfriday__bg_desktop" style="background-image: url('/bf/img/ryby_desktop.jpg')"></div>
+                            <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('/bf/img/ryby_tablet.jpg')"></div>
+                            <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('/bf/img/ryby_mobile.jpg')"></div>
                         </div>
                         <div class="banner-blackfriday__content">
                             <div class="banner-blackfriday__title">Рыбки</div>
@@ -297,9 +297,9 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                 <div class="item">
                     <div class="banner-blackfriday">
                         <div class="banner-blackfriday__bg-wrap">
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_desktop" style="background-image: url('/blackfriday/img/ptitsy_desktop.jpg')"></div>
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('/blackfriday/img/.jpg')"></div>
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('/blackfriday/img/ptitsy_mobile.jpg')"></div>
+                            <div class="banner-blackfriday__bg banner-blackfriday__bg_desktop" style="background-image: url('/bf/img/ptitsy_desktop.jpg')"></div>
+                            <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('/bf/img/ptitsy_tablet.jpg')"></div>
+                            <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('/bf/img/ptitsy_mobile.jpg')"></div>
                         </div>
                         <div class="banner-blackfriday__content">
                             <div class="banner-blackfriday__title">Птицы</div>
@@ -310,9 +310,9 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                 <div class="item">
                     <div class="banner-blackfriday">
                         <div class="banner-blackfriday__bg-wrap">
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_desktop" style="background-image: url('/blackfriday/img/gryzuny_desktop.jpg')"></div>
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('/blackfriday/img/.jpg')"></div>
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('/blackfriday/img/gryzuny_mobile.jpg')"></div>
+                            <div class="banner-blackfriday__bg banner-blackfriday__bg_desktop" style="background-image: url('/bf/img/gryzuny_desktop.jpg')"></div>
+                            <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('/bf/img/gryzuny_tablet.jpg')"></div>
+                            <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('/bf/img/gryzuny_mobile.jpg')"></div>
                         </div>
                         <div class="banner-blackfriday__content">
                             <div class="banner-blackfriday__title">Грызуны</div>
@@ -323,9 +323,9 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                 <div class="item">
                     <div class="banner-blackfriday">
                         <div class="banner-blackfriday__bg-wrap">
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_desktop" style="background-image: url('/blackfriday/img/reptilii_desktop.jpg')"></div>
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('/blackfriday/img/.jpg')"></div>
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('/blackfriday/img/reptilii_mobile.jpg')"></div>
+                            <div class="banner-blackfriday__bg banner-blackfriday__bg_desktop" style="background-image: url('/bf/img/reptilii_desktop.jpg')"></div>
+                            <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('/bf/img/reptilii_tablet.jpg')"></div>
+                            <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('/bf/img/reptilii_mobile.jpg')"></div>
                         </div>
                         <div class="banner-blackfriday__content">
                             <div class="banner-blackfriday__title">Рептилии</div>
