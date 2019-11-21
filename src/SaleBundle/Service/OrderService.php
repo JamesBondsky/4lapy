@@ -785,6 +785,10 @@ class OrderService implements LoggerAwareInterface
             $order->setField('USER_DESCRIPTION', '');
         }
 
+        $this->log()->info('data', [
+            'storage' => $storage,
+            'request' => $_REQUEST
+        ]);
         $address = null;
         if ($storage->getAddressId()) {
             try {
@@ -2529,12 +2533,12 @@ class OrderService implements LoggerAwareInterface
             $orderNumber = $order->getField('ACCOUNT_NUMBER');
             $sapStatus = StatusService::STATUS_CANCELED;
             $setStatusResult = $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
-    
+
             if (!$setStatusResult) {
                 $connection->rollbackTransaction();
                 return false;
             }
-            
+
             // отменяем заказ
             $cancelResult = (new \CSaleOrder)->cancelOrder($orderId, BaseEntity::BITRIX_TRUE, '');
 
@@ -2550,7 +2554,7 @@ class OrderService implements LoggerAwareInterface
                 $connection->rollbackTransaction();
                 return false;
             }
-            
+
             $connection->commitTransaction();
         } catch (\Exception $e) {
             $connection->rollbackTransaction();
