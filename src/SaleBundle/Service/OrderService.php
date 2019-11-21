@@ -73,6 +73,7 @@ use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -827,6 +828,9 @@ class OrderService implements LoggerAwareInterface
 
         $address = null;
         if ($storage->getAddressId()) {
+            if ($storage->getCityCode() !== \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
+                $storage->updateAddressBySaveAddressByMoscowDistrict($this->addressService, $this->locationService);
+            }
             try {
                 $address = $this->addressService->getById($storage->getAddressId());
                 $storage->setStreet($address->getStreet())
