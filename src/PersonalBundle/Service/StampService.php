@@ -714,7 +714,6 @@ class StampService implements LoggerAwareInterface
         /** @var Variant[] $variants */
         try {
             $result = (new BitrixCache())->withId(__METHOD__ . self::HL_BLOCK_TYPE)
-                ->withClearCache(true)
                 ->withTime(604800)
                 ->resultOf($getExchangeRules);
 

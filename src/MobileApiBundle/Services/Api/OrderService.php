@@ -63,6 +63,7 @@ use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
+use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
 use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Gift;
@@ -159,6 +160,9 @@ class OrderService implements LoggerAwareInterface
     /** @var Manzana */
     private $manzana;
 
+    /** @var AddressService $addressService */
+    private $addressService;
+
     public const DELIVERY_TYPE_COURIER = 'courier';
     public const DELIVERY_TYPE_PICKUP = 'pickup';
     public const DELIVERY_TYPE_DOSTAVISTA = 'dostavista';
@@ -183,7 +187,8 @@ class OrderService implements LoggerAwareInterface
         AppBonusService $appBonusService,
         PersonalOffersService $personalOffersService,
         StampService $stampService,
-        Manzana $manzana
+        Manzana $manzana,
+        AddressService $addressService
     )
     {
         $this->apiBasketService = $apiBasketService;
@@ -205,6 +210,8 @@ class OrderService implements LoggerAwareInterface
         $this->personalOffersService = $personalOffersService;
         $this->stampService = $stampService;
         $this->manzana = $manzana;
+
+        $this->addressService = $addressService;
     }
 
     /**
@@ -1291,25 +1298,7 @@ class OrderService implements LoggerAwareInterface
 
         /* Если на шаге выбора доставки не выбирали адрес из подсказок, то пробуем определить его тут для проставления района Москвы */
         if ($storage->getCityCode() === \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
-            $city = (!empty($storage->getCity())) ? $storage->getCity() : 'Москва';
-            $strAddress = sprintf('%s, %s, %s', $city, $storage->getStreet(), $storage->getHouse());
-
-            $this->log()->info(sprintf('Попытка определить район москвы для данных %s', $strAddress));
-            try {
-                $okato = $this->locationService->getDadataLocationOkato($strAddress);
-                $this->log()->info(sprintf('Okato - %s', $okato));
-                $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
-
-                if (count($locations)) {
-                    $location = current($locations);
-                    $storage->setCity($location['NAME']);
-                    $storage->setCityCode($location['CODE']);
-                    $storage->setMoscowDistrictCode($location['CODE']);
-                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
-                }
-            } catch (Exception $e) {
-                $this->log()->info(sprintf('Произошла ошибка при установке местоположения - %s', $e->getMessage()));
-            }
+            $storage->updateAddressBySaveAddress($this->addressService, $this->locationService, $this->orderStorageService);
         }
 
         if ($deliveryType === self::DELIVERY_TYPE_DOSTAVISTA) {

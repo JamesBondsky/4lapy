@@ -60,6 +60,8 @@ class FlagmanEvents extends \CBitrixComponent
         $this->modifyTime();
         $this->checkEmptiness();
         
+        $this->sortDays();
+
         $this->includeComponentTemplate();
     }
     
@@ -89,5 +91,15 @@ class FlagmanEvents extends \CBitrixComponent
         $minutes = $actionTime % 60;
         
         $this->actionTime =  (int) $hours .':'. $minutes;
+    }
+    
+    private function sortDays()
+    {
+        uasort($this->arResult['SCHEDULE'], function ($a, $b) {
+            preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $a['day'], $matchesA);
+            preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $b['day'], $matchesB);
+        
+            return (strtotime($matchesA[0]) > strtotime($matchesB[0])) ? 1 : -1;
+        });
     }
 }

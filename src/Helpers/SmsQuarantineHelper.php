@@ -25,10 +25,9 @@ class SmsQuarantineHelper
         if (LogTable::getCurrentDayCount() >= 15000) {
             mail(implode(', ', [
                 's.mamontov@articul.ru',
+                'sbokanev@4lapy.ru',
                 'e.bagro@articul.ru',
                 'm.balezin@articul.ru',
-                'pvlasov@4lapy.ru',
-                'edushenko@4lapy.ru',
                 'mporotikov@4lapy.ru'
             ]), 'Превышен суточный лимит в 15000 смс на 4lapy.ru', '');
             return false;
@@ -37,6 +36,7 @@ class SmsQuarantineHelper
         if (LogTable::getCurrentHourCount() >= 1000) {
             mail(implode(', ', [
                 's.mamontov@articul.ru',
+                'sbokanev@4lapy.ru',
                 'e.bagro@articul.ru',
                 'm.balezin@articul.ru',
             ]), 'Превышен часовой лимит в 1000 смс на 4lapy.ru', '');
