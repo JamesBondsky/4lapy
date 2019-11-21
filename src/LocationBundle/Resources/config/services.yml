@@ -23,3 +23,7 @@ services:
     location.service:
         alias: FourPaws\LocationBundle\LocationService
         public: true
+
+    yandex_geocoder.service:
+        public: true
+        alias: FourPaws\LocationBundle\Service\YandexGeocodeService
