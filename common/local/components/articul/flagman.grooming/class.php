@@ -34,11 +34,13 @@ class FlagmanGrooming extends \CBitrixComponent
     public function executeComponent()
     {
         $result = $this->getDays();
-        
+
         foreach ($result as $item) {
-            if (!empty($item['TIME'])) {
+            preg_match('/^[0-9]{2}/', $item['TIME'], $pregMTime);
+
+            if (!empty($item['TIME']) && $pregMTime[0] <= date('H')) {
                 preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $item['NAME'], $matches);
-                
+
                 if (strtotime($matches[0]) < strtotime('today')) {
                     continue;
                 }
@@ -48,7 +50,7 @@ class FlagmanGrooming extends \CBitrixComponent
         }
         
         $this->sortDays();
-        
+
         $this->includeComponentTemplate();
     }
     

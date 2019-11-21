@@ -120,7 +120,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             }
             
             preg_match('/^[0-9]{2}/', $element['NAME'], $matches);
-            if ($matches[0] <= date('h')) {
+            if ($matches[0] <= date('H')) {
                 unset($elements[$key]);
                 continue;
             }
@@ -130,7 +130,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'time' => $element['NAME'],
             ];
         }
-
+        
         usort($result, function ($a, $b) {
             preg_match('/^([0-9]{2})/', $a['time'], $matchesA);
             preg_match('/^([0-9]{2})/', $b['time'], $matchesB);
@@ -231,7 +231,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             }
 
             preg_match('/^[0-9]{2}/', $element['NAME'], $matches);
-            if ($matches[0] <= date('h')) {
+            if ($matches[0] <= date('H')) {
                 unset($elements[$key]);
                 continue;
             }
