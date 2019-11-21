@@ -2236,6 +2236,10 @@ class Offer extends IblockElement
                     $countItems = (int)$enumField->getValue();
                 }
 
+                if (!$this->getPrice()) {
+                    $countItems = 2;
+                }
+
                 $res = $setItemsEntity::query()
                                       ->where('UF_ACTIVE', true)
                                       ->whereIn('ID', $setItem['UF_PRODUCTS'])
