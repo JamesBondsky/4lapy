@@ -1301,13 +1301,14 @@ class OrderStorage
 
             if (count($locations)) {
                 $location = current($locations);
-                if ($location['TYPE_ID'] == 9) {
-                    $this->setCityCode(end($location['PATH'])['CODE']);
-                    $this->setCity(end($location['PATH'])['NAME']);
-                } else {
-                    $this->setCityCode($location['CODE']);
-                }
+//                if ($location['TYPE_ID'] == 9) {
+//                    $this->setCityCode(end($location['PATH'])['CODE']);
+//                    $this->setCity(end($location['PATH'])['NAME']);
+//                } else {
+//                    $this->setCityCode($location['CODE']);
+//                }
                 $this->setMoscowDistrictCode($location['CODE']);
+                $this->setCityCode($location['CODE']);
                 $orderStorageService->updateStorage($this, OrderStorageEnum::NOVALIDATE_STEP);
             }
         } catch (\Exception $e) {
@@ -1339,7 +1340,7 @@ class OrderStorage
                 $location = current($locations);
                 if ($location['TYPE_ID'] == 9) {
                     $this->setCityCode(end($location['PATH'])['CODE']);
-                    $this->setCity(end($location['PATH'])['NAME']);
+                    $this->setCity('Москва');
                     $this->setMoscowDistrictCode($location['CODE']);
                 }
             }
