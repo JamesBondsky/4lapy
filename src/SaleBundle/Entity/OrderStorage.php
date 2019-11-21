@@ -1303,6 +1303,7 @@ class OrderStorage
                 $location = current($locations);
                 if ($location['TYPE_ID'] == 9) {
                     $this->setCityCode(end($location['PATH'])['CODE']);
+                    $this->setCity(end($location['PATH'])['NAME']);
                 } else {
                     $this->setCityCode($location['CODE']);
                 }
