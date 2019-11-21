@@ -1306,8 +1306,8 @@ class OrderStorage
                     $this->setCity(end($location['PATH'])['NAME']);
                 } else {
                     $this->setCityCode($location['CODE']);
+                    $this->setMoscowDistrictCode($location['CODE']);
                 }
-                $this->setMoscowDistrictCode($location['CODE']);
                 $orderStorageService->updateStorage($this, OrderStorageEnum::NOVALIDATE_STEP);
             }
         } catch (\Exception $e) {
