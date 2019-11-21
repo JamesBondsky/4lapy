@@ -6,6 +6,7 @@ namespace FourPaws\LandingBundle\Controller;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Articul\Landing\Orm\GroomingAppsTable;
 use Articul\Landing\Orm\TrainingAppsTable;
+use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\Loader;
 use Exception;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -113,6 +114,14 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         $flagmanService = new FlagmanService();
         $elements       = $flagmanService->getElementsBySectionGroomingId($id);
         
+        $sectionName = SectionTable::query()
+            ->setSelect(['NAME'])
+            ->setFilter(['=ID' => $id])
+            ->exec()
+            ->fetch()['NAME'];
+
+        preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $sectionName, $sectionMatches);
+        
         foreach ($elements as $key => $element) {
             if ($element['FREE_VALUE'] == 'N') {
                 unset($elements[$key]);
@@ -120,7 +129,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             }
             
             preg_match('/^[0-9]{2}/', $element['NAME'], $matches);
-            if ($matches[0] <= date('h')) {
+            if ($matches[0] <= date('H') && $sectionMatches[0] == date('d.m.Y')) {
                 unset($elements[$key]);
                 continue;
             }
@@ -130,7 +139,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'time' => $element['NAME'],
             ];
         }
-
+        
         usort($result, function ($a, $b) {
             preg_match('/^([0-9]{2})/', $a['time'], $matchesA);
             preg_match('/^([0-9]{2})/', $b['time'], $matchesB);
@@ -231,7 +240,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             }
 
             preg_match('/^[0-9]{2}/', $element['NAME'], $matches);
-            if ($matches[0] <= date('h')) {
+            if ($matches[0] <= date('H')) {
                 unset($elements[$key]);
                 continue;
             }
