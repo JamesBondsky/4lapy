@@ -1597,6 +1597,10 @@ class OrderCopy
                 $address = $this->locationService->splitAddress($addressString, $shop->getLocation());
             }
         }
+
+        [$cityCode, $city, $locationId] = $this->checkAddress($address->getCity(), $address->getStreet(), $address->getHouse());
+        $address->setCity($city)->setLocation($locationId);
+
         $orderService->setOrderAddress($order, $address);
 
         // параметры доставки
@@ -1644,5 +1648,34 @@ class OrderCopy
 
             $propertyValue->setValue($value);
         }
+    }
+
+    private function checkAddress(...$params)
+    {
+        $address = array_filter($params, function ($item) {
+            return !empty($item);
+        });
+
+        $address = implode(', ', $address);
+
+        $locationService = $this->getLocationService();
+
+        $okato = $locationService->getDadataLocationOkato($address);
+        $locations = $locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+
+        if (count($locations)) {
+            $location = current($locations);
+            $cityCode = end($location['PATH'])['CODE'];
+            $city = $location['TYPE_ID'] == 9 ? 'Москва' : $location['NAME'];
+            $locationId = $location['CODE'];
+
+            return [
+                $cityCode,
+                $city,
+                $locationId
+            ];
+        }
+
+        return [];
     }
 }
