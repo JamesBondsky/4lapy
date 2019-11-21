@@ -347,22 +347,23 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         try {
-            $order = $this->orderService->initOrder($storage);
+            $order = $this->orderService->initOrder($storage, null, null, ($this->currentStep !== OrderStorageEnum::PAYMENT_STEP));
         } catch (OrderCreateException | \FourPaws\SaleBundle\Exception\NotFoundException $e) {
             if ($this->currentStep === OrderStorageEnum::PAYMENT_STEP && $_SESSION['ORDER_PAYMENT_URL']) {
                 $url = $_SESSION['ORDER_PAYMENT_URL'];
                 unset($_SESSION['ORDER_PAYMENT_URL']);
                 LocalRedirect($url);
             }
+
             LocalRedirect('/cart');
 
             return;
         } catch (LocationNotFoundException $e) {
-            /* ошибка от экспресс доставки 4 лап */
-            $storage->setDeliveryId(0);
-            $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+            /* ошибка от экспресс доставки 4 лап выпадает только на последнем шаге */
             if ($this->currentStep === OrderStorageEnum::PAYMENT_STEP) {
-                LocalRedirect('/cart');
+                $storage->setDeliveryId(0);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+                LocalRedirect('/sale/order/delivery');
             }
         }
 

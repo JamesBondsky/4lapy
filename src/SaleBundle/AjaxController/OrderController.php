@@ -891,7 +891,7 @@ class OrderController extends Controller implements LoggerAwareInterface
                 $storage->setDeliveryId($selectedDelivery->getDeliveryId());
                 if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
                     $resultText = str_replace(['[time]', '[date]'], [round($selectedDelivery->getPeriodTo() / 60), ($selectedDelivery->getPrice() > 0) ? 'за ' . $selectedDelivery->getPrice() . ' ₽' : 'бесплатно'], $selectedDelivery->getData()['TEXT_EXPRESS_DELIVERY_TIME']);
-                } else if ( isset($deliveryTime) && $this->deliveryService->isExpressDelivery($selectedDelivery)) {
+                } else if (isset($deliveryTime) && $this->deliveryService->isExpressDelivery($selectedDelivery)) {
                     $resultText = sprintf('Заказ будет доставлен в течении %s минут', (string)$deliveryTime);
                 } else if ($this->deliveryService->isDelivery($selectedDelivery)) {
                     /** @var DeliveryResultInterface $nextDelivery */

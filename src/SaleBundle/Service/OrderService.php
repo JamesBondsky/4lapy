@@ -354,7 +354,8 @@ class OrderService implements LoggerAwareInterface
     public function initOrder(
         OrderStorage $storage,
         ?Basket $basket = null,
-        ?CalculationResultInterface $selectedDelivery = null
+        ?CalculationResultInterface $selectedDelivery = null,
+        bool $skipExpressDeliveryException = false
     ): Order {
         $order = Order::create(SITE_ID, $storage->getUserId() ?: null);
 
@@ -426,6 +427,7 @@ class OrderService implements LoggerAwareInterface
                         }
                     }
                 }
+
                 $diff = $basketItem->getQuantity() - $amount;
                 if ($amount === 0) {
                     $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
@@ -609,7 +611,15 @@ class OrderService implements LoggerAwareInterface
                         );
                     } elseif ($this->deliveryService->isExpressDelivery($selectedDelivery)) {
                         $deliveryDate = new DateTime();
-                        $deliveryTo = (new DateTime())->modify(sprintf('+%s minutes', $this->deliveryService->getExpressDeliveryInterval($storage->getCityCode(), $selectedDelivery)));
+                        try {
+                            $deliveryTo = (new DateTime())->modify(sprintf('+%s minutes', $this->deliveryService->getExpressDeliveryInterval($storage->getCityCode(), $selectedDelivery)));
+                        } catch (LocationNotFoundException $e) {
+                            if (!$skipExpressDeliveryException) {
+                                throw $e;
+                            }
+
+                            $deliveryTo = new DateTime();
+                        }
                         $value = sprintf(
                             '%s:%s-%s:%s',
                             $deliveryDate->format('H'),
