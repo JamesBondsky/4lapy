@@ -1301,7 +1301,6 @@ class OrderStorage
 
             if (count($locations)) {
                 $location = current($locations);
-//                $this->setCity($location['NAME']);
                 $this->setCityCode($location['CODE']);
                 $this->setMoscowDistrictCode($location['CODE']);
                 $orderStorageService->updateStorage($this, OrderStorageEnum::NOVALIDATE_STEP);
