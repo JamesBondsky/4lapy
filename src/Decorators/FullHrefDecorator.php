@@ -21,6 +21,8 @@ class FullHrefDecorator
     private $query;
     /** @var string Домен */
     private static $host = null;
+    /** @var string Кастомный домен (ссылка на другой сайт) */
+    private $customHost;
     /** @var string Протокол: http|https */
     private static $proto = null;
 
@@ -33,7 +35,7 @@ class FullHrefDecorator
     {
         if ($parsedUrl = parse_url($url)) {
             if ($parsedUrl['host']) {
-                $this::$host = $parsedUrl['host'];
+                $this->customHost = $parsedUrl['host'];
             }
             if ($parsedUrl['path']) {
                 $this->setPath($parsedUrl['path']);
@@ -147,6 +149,10 @@ class FullHrefDecorator
      */
     public function getHost() : string
     {
+        if ($this->customHost) {
+            return $this->customHost;
+        }
+
         if (static::$host === null) {
             $context = Application::getInstance()->getContext();
             static::$host = $context->getServer()->getHttpHost();
