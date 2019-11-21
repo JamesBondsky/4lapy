@@ -125,14 +125,19 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 continue;
             }
             
-            $result[(string)$element['ID']] = $element['NAME'];
-    
-            // $result[$key] = [
-            //     'timeId' => $element['ID'],
-            //     'time' => $element['NAME'],
-            // ];
+            $result[$key] = [
+                'timeId' => $element['ID'],
+                'time' => $element['NAME'],
+            ];
         }
-        
+
+        usort($result, function ($a, $b) {
+            preg_match('/^([0-9]{2})/', $a['time'], $matchesA);
+            preg_match('/^([0-9]{2})/', $b['time'], $matchesB);
+
+            return ($matchesA[0] > $matchesB[0]) ? 1 : -1;
+        });
+
         if ($result) {
             return new JsonResponse([
                 'success' => 1,
@@ -231,12 +236,10 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 continue;
             }
             
-            $result[$element['ID']] = $element['NAME'];
-            
-            // $result[$key] = [
-            //     'timeId' => $element['ID'],
-            //     'time' => $element['NAME'],
-            // ];
+            $result[$key] = [
+                'timeId' => $element['ID'],
+                'time' => $element['NAME'],
+            ];
         }
         
         natsort($result);
