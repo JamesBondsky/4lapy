@@ -69,6 +69,7 @@ use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -785,22 +786,22 @@ class OrderService implements LoggerAwareInterface
             $order->setField('USER_DESCRIPTION', '');
         }
 
-        $this->log()->info('data', [
-            'storage' => $this->orderStorageService->storageToArray($storage),
-            'request' => $_REQUEST
-        ]);
         $address = null;
         if ($storage->getAddressId()) {
-            try {
-                $address = $this->addressService->getById($storage->getAddressId());
-                $storage->setStreet($address->getStreet())
-                    ->setHouse($address->getHouse())
-                    ->setBuilding($address->getHousing())
-                    ->setFloor($address->getFloor())
-                    ->setApartment($address->getFlat())
-                    ->setPorch($address->getEntrance());
-            } catch (AddressNotFoundException $e) {
-                $storage->setAddressId(0);
+            if (($storage->getCityCode() === DeliveryService::MOSCOW_LOCATION_CODE)) {
+                $storage->updateAddressBySaveAddress($this->addressService, $this->locationService, $this->orderStorageService);
+            } else {
+                try {
+                    $address = $this->addressService->getById($storage->getAddressId());
+                    $storage->setStreet($address->getStreet())
+                        ->setHouse($address->getHouse())
+                        ->setBuilding($address->getHousing())
+                        ->setFloor($address->getFloor())
+                        ->setApartment($address->getFlat())
+                        ->setPorch($address->getEntrance());
+                } catch (AddressNotFoundException $e) {
+                    $storage->setAddressId(0);
+                }
             }
         }
 
