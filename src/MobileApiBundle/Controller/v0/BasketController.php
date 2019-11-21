@@ -353,6 +353,13 @@ class BasketController extends BaseController
 
         $bonusSubtractAmount = $userCartCalcRequest->getBonusSubtractAmount();
 
+        $actualPrice = $basketProducts->getTotalPrice()->getActual();
+        $maxAllowBonus = floor($actualPrice*0.9);
+
+        if ($bonusSubtractAmount > $maxAllowBonus) {
+            $bonusSubtractAmount = $maxAllowBonus;
+        }
+
         [$courierDelivery, $pickupDelivery, $dostavistaDelivery] = $this->apiOrderService->getDeliveryVariants();
 
         $orderCalculate = $this->apiOrderService->getOrderCalculate(
