@@ -1306,8 +1306,8 @@ class OrderStorage
                     $this->setCity(end($location['PATH'])['NAME']);
                 } else {
                     $this->setCityCode($location['CODE']);
-                    $this->setMoscowDistrictCode($location['CODE']);
                 }
+                $this->setMoscowDistrictCode($location['CODE']);
                 $orderStorageService->updateStorage($this, OrderStorageEnum::NOVALIDATE_STEP);
             }
         } catch (\Exception $e) {
@@ -1340,6 +1340,7 @@ class OrderStorage
                 if ($location['TYPE_ID'] == 9) {
                     $this->setCityCode(end($location['PATH'])['CODE']);
                     $this->setCity(end($location['PATH'])['NAME']);
+                    $this->setMoscowDistrictCode($location['CODE']);
                 }
             }
         } catch (\Exception $e) {
