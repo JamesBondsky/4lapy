@@ -36,12 +36,15 @@ class FlagmanGrooming extends \CBitrixComponent
         $result = $this->getDays();
 
         foreach ($result as $item) {
-            preg_match('/^[0-9]{2}/', $item['TIME'], $pregMTime);
-
-            if (!empty($item['TIME']) && $pregMTime[0] <= date('H')) {
+            if (!empty($item['TIME'])) {
                 preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $item['NAME'], $matches);
 
                 if (strtotime($matches[0]) < strtotime('today')) {
+                    continue;
+                }
+    
+                preg_match('/^[0-9]{2}/', $item['TIME'], $pregMTime);
+                if ($matches[0] == date('d.m.Y') && $pregMTime[0] <= date('H')) {
                     continue;
                 }
                 
