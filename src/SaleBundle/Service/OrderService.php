@@ -786,7 +786,7 @@ class OrderService implements LoggerAwareInterface
         }
 
         $this->log()->info('data', [
-            'storage' => $storage,
+            'storage' => $this->orderStorageService->storageToArray($storage),
             'request' => $_REQUEST
         ]);
         $address = null;
