@@ -457,8 +457,7 @@ class OrderService implements LoggerAwareInterface
                         }
                     }
                 }
-
-                $isDeleted = false;
+                
                 if (!$basketItem->getPrice()) {
                     $currOrder = $orderable->filterByOfferId($basketItem->getProductId())->first();
 
