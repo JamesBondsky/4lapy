@@ -788,7 +788,9 @@ class OrderService implements LoggerAwareInterface
 
         $address = null;
         if ($storage->getAddressId()) {
-            $storage->updateAddressBySaveAddressByMoscowDistrict($this->addressService, $this->locationService);
+            if ($storage->getCityCode() !== \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
+                $storage->updateAddressBySaveAddressByMoscowDistrict($this->addressService, $this->locationService);
+            }
             try {
                 $address = $this->addressService->getById($storage->getAddressId());
                 $storage->setStreet($address->getStreet())
