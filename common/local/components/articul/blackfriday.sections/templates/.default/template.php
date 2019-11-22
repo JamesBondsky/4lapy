@@ -11,7 +11,7 @@
                     </div>
                     <div class="banner-blackfriday__label"></div>
                     <div class="banner-blackfriday__content">
-                        <div class="banner-blackfriday__title"><?=$section['SECTION_NAME']?>></div>
+                        <div class="banner-blackfriday__title"><?=$section['SECTION_NAME']?></div>
                         <a href="<?=$section['LINK']?>" target="_blank" class="banner-blackfriday__btn">Посмотреть все</a>
                     </div>
                 </div>
@@ -34,7 +34,6 @@
                         </div>
                     <?php endforeach; ?>
                 </div>
-            
             <?php endforeach; ?>
         <?php endif; ?>
         
