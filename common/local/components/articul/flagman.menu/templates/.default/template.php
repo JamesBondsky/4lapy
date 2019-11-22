@@ -11,7 +11,7 @@ use FourPaws\Decorators\SvgDecorator;
                 <span class="b-icon">
                     <?=new SvgDecorator('icon-delivery-header', 24, 24)?>
                 </span>
-            <span>Адрес: г. Москва, пр-кт Вернадского, д. 6, ТЦ «Капитолий», -1 этаж</span>
+            <span>Адрес: г.&nbsp;Москва, <nobr>пр-кт Вернадского, д.&nbsp;6,</nobr> ТЦ&nbsp;&laquo;Капитолий&raquo;, <nobr>-1 этаж</nobr></span>
         </div>
     </div>
 </section>
@@ -27,14 +27,6 @@ use FourPaws\Decorators\SvgDecorator;
                     <div class="nav-flagship-store__title">Груминг</div>
                 </div>
             <?php endif; ?>
-            <?/*<?php if ($arParams['SHOW_LECTION'] == 'Y') : ?>
-                <div class="nav-flagship-store__item" data-nav-flagship-store="lectures">
-                    <div class="nav-flagship-store__icon">
-                        <?=new SvgDecorator('icon-flagship-lectures', 61, 61)?>
-                    </div>
-                    <div class="nav-flagship-store__title">Лекции</div>
-                </div>
-            <?php endif; ?>*/?>
             <?php if ($arParams['SHOW_TRAINING'] == 'Y') : ?>
                 <div class="nav-flagship-store__item" data-nav-flagship-store="training">
                     <div class="nav-flagship-store__icon">
@@ -43,6 +35,14 @@ use FourPaws\Decorators\SvgDecorator;
                     <div class="nav-flagship-store__title">Тренировочный клуб</div>
                 </div>
             <?php endif; ?>
+            <?php /*if ($arParams['SHOW_LECTION'] == 'Y') : ?>
+                <div class="nav-flagship-store__item" data-nav-flagship-store="lectures">
+                    <div class="nav-flagship-store__icon">
+                        <?=new SvgDecorator('icon-flagship-lectures', 61, 61)?>
+                    </div>
+                    <div class="nav-flagship-store__title">Лекции</div>
+                </div>
+            <?php endif; */?>
         </div>
     </div>
 </section>

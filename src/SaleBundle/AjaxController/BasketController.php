@@ -49,8 +49,6 @@ use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
-use FourPaws\SaleBundle\Exception\BitrixProxyException;
-use FourPaws\PersonalBundle\Service\CouponService;
 
 /**
  * Class BasketController
@@ -160,6 +158,7 @@ class BasketController extends Controller implements LoggerAwareInterface
                 'remainQuantity' => 10,
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
                 'disableAdd' => false,
+                'show_address_popup' => $this->basketService->needShowAddressPopup(null, true),
             ];
 
             $temporaryItem = clone $basketItem;

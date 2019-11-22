@@ -3,13 +3,16 @@
 namespace FourPaws\UserBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Exception;
 use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\External\DaDataService;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
+use FourPaws\LocationBundle\Service\YandexGeocodeService;
 use FourPaws\UserBundle\Service\UserService;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
@@ -17,6 +20,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\App\Geo\Geo as SxGeo;
+use function is_array;
 
 /**
  * Class CityController
@@ -27,19 +31,23 @@ class CityController extends Controller
 {
     use LazyLoggerAwareTrait;
 
-    const DEFAULT_CITY_NAME = 'Москва';
-    const DEFAULT_CITY_CODE = '0000073738';
+    public const DEFAULT_CITY_NAME = 'Москва';
+    public const DEFAULT_CITY_CODE = '0000073738';
 
-    /**@var UserService */
+    /** @var UserService */
     protected $userService;
 
-    /**@var DaDataService */
+    /** @var DaDataService */
     protected $daDataService;
 
-    public function __construct(UserService $userService, DaDataService $daDataService)
+    /** @var YandexGeocodeService */
+    protected $yandexGeocoderService;
+
+    public function __construct(UserService $userService, DaDataService $daDataService, YandexGeocodeService $yandexGeocodeService)
     {
         $this->userService = $userService;
         $this->daDataService = $daDataService;
+        $this->yandexGeocoderService = $yandexGeocodeService;
     }
 
     /**
@@ -48,6 +56,8 @@ class CityController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws Exception
      */
     public function setAction(Request $request): JsonResponse
     {
@@ -56,8 +66,8 @@ class CityController extends Controller
         $dadata = null;
         $dadataLocationAdapter = new DaDataLocationAdapter();
         $dadataNotFound = false;
-        if (\is_array($codeList) || \is_array($code)) {
-            if(\is_array($codeList) && !empty($codeList)){
+        if (is_array($codeList) || is_array($code)) {
+            if (!empty($codeList)) {
                 $code = $codeList;
             }
             $dadata = $code;
@@ -67,7 +77,7 @@ class CityController extends Controller
             $code = $bitrixLocation->getCode();
             $name = $bitrixLocation->getName();
             $regionName = $bitrixLocation->getRegion();
-            if(empty($code) && !isset($dadata['code'])){
+            if (empty($code) && !isset($dadata['code'])) {
                 $dadataNotFound = true;
             }
 
@@ -82,11 +92,11 @@ class CityController extends Controller
         }
 
         try {
-            if($dadata !== null && $dadataNotFound && !isset($dadata['code'])){
+            if ($dadata !== null && $dadataNotFound && !isset($dadata['code'])) {
                 throw new CityNotFoundException('населенный пункт не найден');
             }
             $city = $this->userService->setSelectedCity($code, $name, $regionName);
-            if(\is_bool($city)){
+            if (\is_bool($city)) {
                 throw new CityNotFoundException('населенный пункт не найден');
             }
             $response = JsonSuccessResponse::createWithData(
@@ -96,14 +106,14 @@ class CityController extends Controller
                 ['reload' => true]
             );
         } catch (CityNotFoundException $e) {
-            if($dadata !== null){
+            if ($dadata !== null) {
                 try {
-                    if(empty($dadata['area_fias_id'])){
+                    if (empty($dadata['area_fias_id'])) {
                         throw new CityNotFoundException('населенный пункт не найден');
                     }
                     $code = $this->daDataService->getCenterDistrictByFias($regionName, $dadata['area_fias_id']);
 
-                    if(empty($code)){
+                    if (empty($code)) {
                         throw new CityNotFoundException('населенный пункт не найден');
                     }
 
@@ -111,12 +121,12 @@ class CityController extends Controller
                     $bitrixLocation = $dadataLocationAdapter->convertFromArray($code);
                     $code = $bitrixLocation->getCode();
 
-                    if(empty($code)){
+                    if (empty($code)) {
                         throw new CityNotFoundException('населенный пункт не найден');
                     }
 
                     $city = $this->userService->setSelectedCity($code);
-                    if(\is_bool($city)){
+                    if (\is_bool($city)) {
                         throw new CityNotFoundException('населенный пункт не найден');
                     }
                     $response = JsonSuccessResponse::createWithData(
@@ -127,12 +137,12 @@ class CityController extends Controller
                     );
                 } catch (CityNotFoundException $e) {
                     try {
-                        if(empty($dadata['region_fias_id'])){
+                        if (empty($dadata['region_fias_id'])) {
                             throw new CityNotFoundException('населенный пункт не найден');
                         }
                         $code = $this->daDataService->getCenterRegionByFias($regionName, $dadata['region_fias_id']);
 
-                        if(empty($code)){
+                        if (empty($code)) {
                             throw new CityNotFoundException('населенный пункт не найден');
                         }
 
@@ -140,12 +150,12 @@ class CityController extends Controller
                         $bitrixLocation = $dadataLocationAdapter->convertFromArray($code);
                         $code = $bitrixLocation->getCode();
 
-                        if(empty($code)){
+                        if (empty($code)) {
                             throw new CityNotFoundException('населенный пункт не найден');
                         }
 
                         $city = $this->userService->setSelectedCity($code);
-                        if(\is_bool($city)){
+                        if (\is_bool($city)) {
                             throw new CityNotFoundException('населенный пункт не найден');
                         }
                         $response = JsonSuccessResponse::createWithData(
@@ -158,11 +168,11 @@ class CityController extends Controller
                         $response = JsonErrorResponse::createWithData($e->getMessage());
                     }
                 }
-            } else{
+            } else {
                 try {
                     $code = $this->daDataService->getCenterRegion($regionName);
 
-                    if(empty($code)){
+                    if (empty($code)) {
                         throw new CityNotFoundException('населенный пункт не найден');
                     }
 
@@ -170,12 +180,12 @@ class CityController extends Controller
                     $bitrixLocation = $dadataLocationAdapter->convertFromArray($code);
                     $code = $bitrixLocation->getCode();
 
-                    if(empty($code)){
+                    if (empty($code)) {
                         throw new CityNotFoundException('населенный пункт не найден');
                     }
 
                     $city = $this->userService->setSelectedCity($code);
-                    if(\is_bool($city)){
+                    if (\is_bool($city)) {
                         throw new CityNotFoundException('населенный пункт не найден');
                     }
                     $response = JsonSuccessResponse::createWithData(
@@ -188,7 +198,7 @@ class CityController extends Controller
                     $response = JsonErrorResponse::createWithData($e->getMessage());
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->log()->error(
                 sprintf('cannot set user city: %s', $e->getMessage()),
                 [
@@ -209,16 +219,16 @@ class CityController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Exception
+     * @throws ApplicationCreateException
+     * @throws Exception
      */
     public function useGeolocationAction(Request $request): JsonResponse
     {
         $logger = new Logger('geolocation use');
-        if (!is_dir($_SERVER['DOCUMENT_ROOT'] . '/local/logs/')) {
-            mkdir($_SERVER['DOCUMENT_ROOT'] . '/local/logs/', 0775);
+        if (!is_dir($_SERVER['DOCUMENT_ROOT'] . '/local/logs/') && !mkdir($concurrentDirectory = $_SERVER['DOCUMENT_ROOT'] . '/local/logs/', 0775) && !is_dir($concurrentDirectory)) {
+            throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
         }
-        $logger->pushHandler(new StreamHandler($_SERVER['DOCUMENT_ROOT'] . '/local/logs/useYandexGeolocation-' . date('m.d.Y') . '.log',
+        $logger->pushHandler(new StreamHandler($_SERVER['DOCUMENT_ROOT'] . '/local/logs/useSXGeolocation-' . date('m.d.Y') . '.log',
             Logger::NOTICE));
 
         $this->setLogger($logger);
@@ -236,13 +246,39 @@ class CityController extends Controller
     }
 
     /**
+     * @Route("/yandex_geolocation_log/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws Exception
+     */
+    public function useGeolocationLogAction(Request $request): JsonResponse
+    {
+        $url = $request->get('url', 'null');
+        $endPoint = $request->get('endpoint', 'null');
+        $query = $request->get('query', 'null');
+
+        $this->yandexGeocoderService->geocodeLog($url, $endPoint, $query);
+
+        $response = JsonSuccessResponse::createWithData(
+            'Запись в лог об использовании геолокации прошла успешно',
+            [],
+            200,
+            ['reload' => true]
+        );
+        return $response;
+    }
+
+    /**
      * @Route("/get_geolocation/", methods={"POST"})
      *
      * @param Request $request
      *
      * @return JsonResponse
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Exception
+     * @throws ApplicationCreateException
+     * @throws Exception
      */
     public function useGetGeolocationAction(Request $request): JsonResponse
     {
@@ -291,7 +327,7 @@ class CityController extends Controller
      *
      * @param Request $request
      * @return JsonResponse
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
     public function getGeolocationCityCode(Request $request): JsonResponse
     {
@@ -336,13 +372,14 @@ class CityController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
      */
     public function getAction(Request $request): JsonResponse
     {
         try {
             $city = $this->userService->getSelectedCity();
             $response = JsonSuccessResponse::createWithData('', $city);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->log()->error(sprintf('cannot get user city: %s', $e->getMessage()));
             $response = JsonErrorResponse::create($e->getMessage());
         }

@@ -5,7 +5,12 @@ namespace FourPaws\CatalogBundle\AjaxController;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
+use CMain;
+use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
@@ -26,11 +31,10 @@ use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SapBundle\Repository\BasketRulesRepository;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use Psr\Log\LoggerAwareInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use WebArch\BitrixCache\BitrixCache;
@@ -182,14 +186,15 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
      * @return JsonResponse
      *
      * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws \Exception
-     * @global \CMain $APPLICATION
+     * @throws Exception
+     * @global CMain $APPLICATION
      */
     public function infoAction(ProductListRequest $productListRequest): JsonResponse
     {
         $validator = $this->validator;
         $getProductInfo = function ($product, $offer) {
+            //$tempLogger = LoggerFactory::create('info', 'devProductInfo');
+            //$tempLogger->info('getting productInfo. product: ' . $product->getId() . ' - ' . $offer->getId());
             return $this->getProductInfo($product, $offer);
         };
 
@@ -198,88 +203,102 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
         $response = [
             'products' => [],
         ];
+        //$devId = md5(serialize($productListRequest)) . '_' . $locationCode;
+        //$tempLogger = LoggerFactory::create('info', 'devProductInfo');
+        //$tempLogger->info('try to get cache: ' . $devId);
+
+        $getProductListInfo = static function () use ($productListRequest, $response, $validator, $getProductInfo, $locationCode) {
+            //$tempLogger = LoggerFactory::create('info', 'devProductInfo');
+            //$tempLogger->info('generate new cache: ' . $devId);
+            $currentOffer = null;
+
+            if (!$validator->validate($productListRequest)->count()) {
+                /** @var ProductSearchResult $result */
+                /** для списка товаров дает небольой выйгрыш отдельное получение офферов*/
+                $productIds = $productListRequest->getProductIds();
+                /** исправляем проблему с сортировкой */
+                sort($productIds, SORT_NUMERIC);
+                $getProducts = function () use ($productIds) {
+                    $productCollection = (new ProductQuery())->withFilter(['=ID' => $productIds])->exec();
+                    /** @var Product $product */
+                    $products = [];
+                    if ($productCollection->count() === 1) {
+                        $product = $productCollection->first();
+                        $products[$product->getId()] = $product;
+                    } else {
+                        foreach ($productCollection as $product) {
+                            $products[$product->getId()] = $product;
+                        }
+                    }
+                    return $products;
+                };
+
+                $products = $getProducts();
+
+                $offerCollection = (new OfferQuery())->withFilter([
+                    '=PROPERTY_CML2_LINK' => $productIds,
+                    'ACTIVE'              => 'Y',
+                    '>CATALOG_PRICE_2'    => 0,
+                ])->exec();
+
+                /** @var Offer $offer */
+                /** @var Product $product */
+                /** добавляем офферы чтобы е было запроса по всем офферам */
+                foreach ($offerCollection as $offer) {
+                    $product = $products[$offer->getCml2Link()];
+                    $product->addOffer($offer);
+                    $offer->setProduct($product);
+                }
+
+                /** @var Product $product */
+                foreach ($products as $product) {
+                    $ratings = [];
+                    $sortedOffers = $product->getOffersSorted();
+                    foreach ($sortedOffers as $offer) {
+                        $rating = 0;
+                        if ($offer->isAvailable()) {
+                            $rating++;
+                            if (!$offer->isByRequest()) {
+                                $rating++;
+                            }
+                        }
+                        $ratings[$offer->getId()] = $rating;
+                    }
+
+                    /** @var Offer $activeOffer */
+                    $activeOffer = $sortedOffers->first();
+                    foreach ($sortedOffers as $offer) {
+                        if ($ratings[$activeOffer->getId()] < $ratings[$offer->getId()]) {
+                            $activeOffer = $offer;
+                        }
+                    }
+
+                    foreach ($product->getOffers() as $offer) {
+                        $responseItem = (new BitrixCache())
+                            ->withId('getProductInfo_' . $product->getId() . '_' . $offer->getId() . '_' . $locationCode)
+                            ->withTag('productInfo')
+                            ->withTime(1800) // 30 минут
+                            ->resultOf(static function () use ($product, $offer, $getProductInfo) {
+                                return $getProductInfo($product, $offer);
+                            });
+                        //$responseItem = $getProductInfo($product, $offer);
+                        //$tempLogger = LoggerFactory::create('info', 'devProductInfo');
+                        //$tempLogger->info('product info: ', $responseItem);
+                        //$responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
+                        $responseItem['active'] = $activeOffer->getId() === $offer->getId();
+                        $response['products'][$product->getId()][$offer->getId()] = $responseItem;
+                    }
+                }
+            }
+
+            return $response;
+        };
 
         $response = (new BitrixCache())
             ->withId(__METHOD__ . '_' . md5(serialize($productListRequest)) . '_' . $locationCode)
             ->withTag('infoAction')
-            ->withTime(600) // 10 минут
-            ->resultOf(
-                static function () use ($productListRequest, $response, $validator, $getProductInfo) {
-                    $currentOffer = null;
-
-                    if (!$validator->validate($productListRequest)->count()) {
-                        /** @var ProductSearchResult $result */
-                        /** для списка товаров дает небольой выйгрыш отдельное получение офферов*/
-                        $productIds = $productListRequest->getProductIds();
-                        /** исправляем проблему с сортировкой */
-                        sort($productIds, SORT_NUMERIC);
-                        $getProducts = function () use ($productIds) {
-                            $productCollection = (new ProductQuery())->withFilter(['=ID' => $productIds])->exec();
-                            /** @var Product $product */
-                            $products = [];
-                            if ($productCollection->count() === 1) {
-                                $product = $productCollection->first();
-                                $products[$product->getId()] = $product;
-                            } else {
-                                foreach ($productCollection as $product) {
-                                    $products[$product->getId()] = $product;
-                                }
-                            }
-                            return $products;
-                        };
-
-                        $products = $getProducts();
-
-                        $offerCollection = (new OfferQuery())->withFilter([
-                            '=PROPERTY_CML2_LINK' => $productIds,
-                            'ACTIVE'              => 'Y',
-                            '>CATALOG_PRICE_2'    => 0,
-                        ])->exec();
-
-                        /** @var Offer $offer */
-                        /** @var Product $product */
-                        /** добавляем офферы чтобы е было запроса по всем офферам */
-                        foreach ($offerCollection as $offer) {
-                            $product = $products[$offer->getCml2Link()];
-                            $product->addOffer($offer);
-                            $offer->setProduct($product);
-                        }
-
-                        /** @var Product $product */
-                        foreach ($products as $product) {
-                            $ratings = [];
-                            $sortedOffers = $product->getOffersSorted();
-                            foreach ($sortedOffers as $offer) {
-                                $rating = 0;
-                                if ($offer->isAvailable()) {
-                                    $rating++;
-                                    if (!$offer->isByRequest()) {
-                                        $rating++;
-                                    }
-                                }
-                                $ratings[$offer->getId()] = $rating;
-                            }
-
-                            /** @var Offer $activeOffer */
-                            $activeOffer = $sortedOffers->first();
-                            foreach ($sortedOffers as $offer) {
-                                if ($ratings[$activeOffer->getId()] < $ratings[$offer->getId()]) {
-                                    $activeOffer = $offer;
-                                }
-                            }
-
-                            foreach ($product->getOffers() as $offer) {
-                                $responseItem = $getProductInfo($product, $offer);
-                                //$responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
-                                $responseItem['active'] = $activeOffer->getId() === $offer->getId();
-                                $response['products'][$product->getId()][$offer->getId()] = $responseItem;
-                            }
-                        }
-                    }
-
-                    return $response;
-                }
-        );
+            ->withTime(3600) // 60 минут
+            ->resultOf($getProductListInfo);
 
         if ($response['products']) {
             $cartItems = $this->basketService->getBasketProducts();
@@ -302,8 +321,8 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
      * @param Request $request
      *
      * @return JsonResponse
-     * @throws \Exception
-     * @global \CMain $APPLICATION
+     * @throws Exception
+     * @global CMain $APPLICATION
      */
     public function infoProductDeliveryAction(Request $request): JsonResponse
     {
@@ -448,7 +467,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                 $catalogBrandRequest->getSearchString()
             );
             $count = $productSearchResult->getResultSet()->getTotalHits();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $logger->error('Ошибка подгрузки количества итемов в фильтре ' . $e->getMessage());
         }
         return JsonSuccessResponse::createWithData('подгрузка количества успешна',
@@ -477,7 +496,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                 $searchRequest->getSearchString()
             );
             $count = $productSearchResult->getResultSet()->getTotalHits();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $logger->error('Ошибка подгрузки количества итемов в фильтре ' . $e->getMessage());
         }
         return JsonSuccessResponse::createWithData('подгрузка количества успешна',
@@ -506,7 +525,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                 $categoryRequest->getSearchString()
             );
             $count = $productSearchResult->getResultSet()->getTotalHits();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $logger->error('Ошибка подгрузки количества итемов в фильтре ' . $e->getMessage());
         }
         return JsonSuccessResponse::createWithData('подгрузка количества успешна',
@@ -528,15 +547,18 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
      * $offer->isPickupAvailable() - Не ставить в начало условия, он генерирует много PHP-кода и может отрабатывать по 0.5с
      *
      * @param Product $product
-     * @param Offer   $offer
+     * @param Offer $offer
      *
      * @return array
-     * @throws ArgumentException
      * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
-     * @throws ServiceNotFoundException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws NotFoundException
      */
-    private function getProductInfo(Product $product, Offer $offer)
+    private function getProductInfo(Product $product, Offer $offer): array
     {
         $available = $offer->isAvailable();
         $price = $offer->getCatalogPrice();

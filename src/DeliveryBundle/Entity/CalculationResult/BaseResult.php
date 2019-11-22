@@ -346,7 +346,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
         if (null !== $this->fullstockResult) {
             if ($this->fullstockResult->getOrderable()->isEmpty()) {
-                $this->addError(new Error('Нет остатков на складах по данному набору товаров'));
+//                $this->addError(new Error('Нет остатков на складах по данному набору товаров')); todo
             } else {
                 $this->getSelectedStore();
                 $stockResult = $this->getStockResult()->getOrderable()->filterByStore($this->selectedStore);
