@@ -9,7 +9,14 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                 <div class="main-banner-blackfriday__date">с&nbsp;28 ноября по&nbsp;1 декабря</div>
                 <div class="timer-blackfriday">
                     <div class="timer-blackfriday__title">До&nbsp;завершения <span class="hide-mobile">акции</span> осталось:</div>
-                    <div class="timer-blackfriday__time"></div>
+                    <div class="timer-blackfriday__time-wrap">
+                        <div class="timer-blackfriday__time timer-blackfriday__time_desktop">
+                            <script src="/bf/js/timer-bf.js" data-skip-moving="true"></script>
+                        </div>
+                        <div class="timer-blackfriday__time timer-blackfriday__time_mobile">
+                            <script src="/bf/js/timer-bf_mobile.js" data-skip-moving="true"></script>
+                        </div>
+                    </div>
                 </div>
                 <div class="main-banner-blackfriday__title main-banner-blackfriday__title_mobile">до&nbsp;-50% на&nbsp;2&nbsp;500 товаров</div>
             </div>
