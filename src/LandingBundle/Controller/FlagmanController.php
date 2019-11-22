@@ -76,6 +76,13 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 }
                 //@todo исправить как только реализуют метод update
                 \CIBlockElement::SetPropertyValuesEx($request->get('id'), 0, ['FREE_SITS' => $newSits]);
+                \CEvent::Send('GROOMING_SERVICE', 's1', [
+                    'NAME'  => $request->get('name'),
+                    'PHONE' => $request->get('phone'),
+                    'DATE'  => $request->get('date'),
+                    'TIME'  => $request->get('time'),
+                    'EMAIL' => $request->get('email'),
+                ]);
             }
         } catch (\Exception $e) {
             return new JsonResponse([
@@ -281,7 +288,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
     {
         // $flagmanService = new FlagmanService();
         // $bookingResult = $flagmanService->bookTheTime($id);
-        //@todo сори за жирный контроллер
+        //@todo сори за жирный контроллер а так же отрефакторить повторяющийся код, изначально он таким не был, но куча изменений требований, сделали свое дело
         if (!Loader::includeModule('articul.landing')) {
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Модуль для сохранения заявок не подключен']]);
         }
