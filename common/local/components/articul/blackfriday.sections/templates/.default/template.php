@@ -9,15 +9,18 @@
                         <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('<?=$section['TABLET_PICTURE']?>')"></div>
                         <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('<?=$section['MOBILE_PICTURE']?>')"></div>
                     </div>
-                    <div class="banner-blackfriday__label banner-blackfriday__label_right">
-                        <img src="/bf/img/sale-bf.svg"/>
-                        <span class="sale-label">-50%</span>
-                    </div>
-                    <?php /* Для собак */ ?>
-                    <div class="banner-blackfriday__label banner-blackfriday__label_left">
-                        <img src="/bf/img/sale-bf.svg"/>
-                        <span class="sale-label">-50%</span>
-                    </div>
+                    <?php if ($section['LABEL_RIGHT']) : ?>
+                        <div class="banner-blackfriday__label banner-blackfriday__label_right">
+                            <img src="/bf/img/sale-bf.svg"/>
+                            <span class="sale-label">-<?=$section['DISCOUNT_SIZE']?>%</span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($section['LABEL_LEFT']) : ?>
+                        <div class="banner-blackfriday__label banner-blackfriday__label_left">
+                            <img src="/bf/img/sale-bf.svg"/>
+                            <span class="sale-label">-<?=$section['DISCOUNT_SIZE']?>%</span>
+                        </div>
+                    <?php endif; ?>
                     <div class="banner-blackfriday__content">
                         <div class="banner-blackfriday__title"><?=$section['SECTION_NAME']?></div>
                         <a href="<?=$section['LINK']?>" target="_blank" class="banner-blackfriday__btn">Посмотреть все</a>
