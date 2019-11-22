@@ -460,7 +460,7 @@ class OrderService implements LoggerAwareInterface
                         }
                     }
                 }
-                
+
                 if (!$basketItem->getPrice()) {
                     $currOrder = $orderable->filterByOfferId($basketItem->getProductId())->first();
 
@@ -844,12 +844,24 @@ class OrderService implements LoggerAwareInterface
             }
             try {
                 $address = $this->addressService->getById($storage->getAddressId());
-                $storage->setStreet($address->getStreet())
-                    ->setHouse($address->getHouse())
-                    ->setBuilding($address->getHousing())
-                    ->setFloor($address->getFloor())
-                    ->setApartment($address->getFlat())
-                    ->setPorch($address->getEntrance());
+
+                if ($address->getLocation() == \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
+                    $storage->updateAddressBySaveAddressByMoscowDistrict($this->addressService, $this->locationService);
+
+                    $storage->setStreet($address->getStreet())
+                        ->setHouse($address->getHouse())
+                        ->setBuilding($address->getHousing())
+                        ->setFloor($address->getFloor())
+                        ->setApartment($address->getFlat())
+                        ->setPorch($address->getEntrance());
+                } else {
+                    $storage->setStreet($address->getStreet())
+                        ->setHouse($address->getHouse())
+                        ->setBuilding($address->getHousing())
+                        ->setFloor($address->getFloor())
+                        ->setApartment($address->getFlat())
+                        ->setPorch($address->getEntrance());
+                }
             } catch (AddressNotFoundException $e) {
                 $storage->setAddressId(0);
             }
