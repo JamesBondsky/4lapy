@@ -26,7 +26,10 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('/bf/img/cat_tablet.jpg')"></div>
                     <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('/bf/img/cat_mobile.jpg')"></div>
                 </div>
-                <div class="banner-blackfriday__label"></div>
+                <div class="banner-blackfriday__label banner-blackfriday__label_right">
+                    <img src="/bf/img/sale-bf.svg" />
+                    <span class="sale-label">-50%</span>
+                </div>
                 <div class="banner-blackfriday__content">
                     <div class="banner-blackfriday__title">Всё для кошек</div>
                     <a href="/catalog/koshki/" target="_blank" class="banner-blackfriday__btn">Посмотреть все</a>
@@ -163,7 +166,10 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('/bf/img/dog_tablet.jpg')"></div>
                     <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('/bf/img/dog_mobile.jpg')"></div>
                 </div>
-                <div class="banner-blackfriday__label"></div>
+                <div class="banner-blackfriday__label banner-blackfriday__label_left">
+                    <img src="/bf/img/sale-bf.svg" />
+                    <span class="sale-label">-50%</span>
+                </div>
                 <div class="banner-blackfriday__content">
                     <div class="banner-blackfriday__title">Всё для собак</div>
                     <a href="/catalog/sobaki/" target="_blank" class="banner-blackfriday__btn">Посмотреть все</a>
@@ -611,7 +617,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
 
 
-<?php/*script>
+<script>
     window.addEventListener('load', function() {
         var items = document.querySelectorAll('a.js-item-link, a.b-news-item__link');
 
@@ -620,6 +626,6 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
             items[i].target = '_blank';
         }
     });
-</script */?>
+</script>
 
 <?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'; ?>
