@@ -1,8 +1,3 @@
-<?php
-echo '<pre>';
-print_r($arResult);
-echo '</pre>';
-?>
 <section class="brands-blackfriday">
     <div class="b-container">
         <div class="title-blackfriday">Бренды со скидками до 50%</div>
@@ -10,7 +5,7 @@ echo '</pre>';
             <div class="b-popular-brand">
                 <?php foreach ($arResult['ITEMS'] as $item): ?>
                     <div class="b-popular-brand-item">
-                        <a class="b-popular-brand-item__link" title="Mealfeel" href="<?=$item['LINK'] //@todo ?>">
+                        <a class="b-popular-brand-item__link" title="<?=$item['NAME'] ?>" href="<?=$item['LINK'] ?>">
                             <img class="b-popular-brand-item__image js-image-wrapper js-lazy lazy-loaded" alt="<?=$item['NAME'] ?>" title="<?=$item['NAME'] ?>"
                                  src="<?=$item['PREVIEW_PICTURE']?>" style="">
                         </a>
