@@ -3,6 +3,20 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 ?>
 
 <div class="page-blackfriday">
+    <section class="main-banner-blackfriday">
+        <div class="b-container">
+            <div class="main-banner-blackfriday__info">
+                <div class="main-banner-blackfriday__title main-banner-blackfriday__title_desktop">до&nbsp;-50% на&nbsp;2&nbsp;500 товаров</div>
+                <div class="main-banner-blackfriday__date">с&nbsp;28 ноября по&nbsp;1 декабря</div>
+                <div class="timer-blackfriday">
+                    <div class="timer-blackfriday__title">До&nbsp;завершения <span class="hide-mobile">акции</span> осталось:</div>
+                    <div class="timer-blackfriday__time"></div>
+                </div>
+                <div class="main-banner-blackfriday__title main-banner-blackfriday__title_mobile">до&nbsp;-50% на&nbsp;2&nbsp;500 товаров</div>
+            </div>
+        </div>
+    </section>
+
     <section class="products-blackfriday">
         <div class="b-container">
             <div class="title-blackfriday">Скидки до&nbsp;50% на&nbsp;2&nbsp;500 зоотоваров!</div>
