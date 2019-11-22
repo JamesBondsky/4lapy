@@ -40,7 +40,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 </div>
 
 
-<?php /*script>
+<script>
     window.addEventListener('load', function() {
         var items = document.querySelectorAll('a.js-item-link, a.b-news-item__link');
 
@@ -49,6 +49,6 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
             items[i].target = '_blank';
         }
     });
-</script */ ?>
+</script>
 
 <?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'; ?>
