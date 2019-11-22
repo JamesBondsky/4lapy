@@ -1598,8 +1598,8 @@ class OrderCopy
             }
         }
 
-        [$cityCode, $city, $locationId] = $this->checkAddress($address->getCity(), $address->getStreet(), $address->getHouse());
-        $address->setCity($city)->setLocation($locationId);
+//        [$cityCode, $city, $locationId] = $this->checkAddress($address->getCity(), $address->getStreet(), $address->getHouse());
+//        $address->setCity($city)->setLocation($locationId);
 
         $orderService->setOrderAddress($order, $address);
 
