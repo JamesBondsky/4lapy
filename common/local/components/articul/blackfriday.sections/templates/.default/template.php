@@ -15,8 +15,8 @@
                         <a href="<?=$section['LINK']?>" target="_blank" class="banner-blackfriday__btn">Посмотреть все</a>
                     </div>
                 </div>
-                <?php foreach ($section['ITEMS'] as $item): ?>
-                    <div class="products-blackfriday__list-products">
+                <div class="products-blackfriday__list-products">
+                    <?php foreach ($section['ITEMS'] as $item): ?>
                         <div class="b-common-item b-common-item--catalog">
                             <a class="b-common-item__link" href="<?=$item['LINK']?>" title="Средства гигиены и косметика">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
@@ -32,29 +32,30 @@
                         </span>
                             </a>
                         </div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </div>
+            
             <?php endforeach; ?>
         <?php endif; ?>
-    
+        
         <?php if ($arResult['EMPTY_SECTIONS']): ?>
-        <div class="products-blackfriday__list-banner">
-            <?php foreach ($arResult['EMPTY_SECTIONS'] as $emptySection): ?>
-                <div class="item">
-                    <div class="banner-blackfriday">
-                        <div class="banner-blackfriday__bg-wrap">
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_desktop" style="background-image: url('<?=$emptySection['DESKTOP_PICTURE']?>')"></div>
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('<?=$emptySection['TABLET_PICTURE']?>')"></div>
-                            <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('<?=$emptySection['MOBILE_PICTURE']?>')"></div>
-                        </div>
-                        <div class="banner-blackfriday__content">
-                            <div class="banner-blackfriday__title"><?=$emptySection['NAME']?></div>
-                            <a href="<?=$emptySection['UF_LINK']?><" target="_blank" class="banner-blackfriday__btn">Посмотреть все</a>
+            <div class="products-blackfriday__list-banner">
+                <?php foreach ($arResult['EMPTY_SECTIONS'] as $emptySection): ?>
+                    <div class="item">
+                        <div class="banner-blackfriday">
+                            <div class="banner-blackfriday__bg-wrap">
+                                <div class="banner-blackfriday__bg banner-blackfriday__bg_desktop" style="background-image: url('<?=$emptySection['DESKTOP_PICTURE']?>')"></div>
+                                <div class="banner-blackfriday__bg banner-blackfriday__bg_tablet" style="background-image: url('<?=$emptySection['TABLET_PICTURE']?>')"></div>
+                                <div class="banner-blackfriday__bg banner-blackfriday__bg_mobile" style="background-image: url('<?=$emptySection['MOBILE_PICTURE']?>')"></div>
+                            </div>
+                            <div class="banner-blackfriday__content">
+                                <div class="banner-blackfriday__title"><?=$emptySection['NAME']?></div>
+                                <a href="<?=$emptySection['UF_LINK']?><" target="_blank" class="banner-blackfriday__btn">Посмотреть все</a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
+                <?php endforeach; ?>
+            </div>
         <?php endif; ?>
     </div>
 </section>
