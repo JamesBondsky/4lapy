@@ -45,7 +45,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
             <div class="products-blackfriday__list-products">
                 <div class="b-common-item b-common-item--catalog">
-                    <a class="b-common-item__link" href="/catalog/koshki/gigiena-i-kosmetika-koshki/" title="Средства гигиены и косметика">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/gigiena-i-kosmetika-koshki/" title="Средства гигиены и косметика">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/fd8/fd8e8ee58e432edfb9d7c36efbde41f3.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -60,7 +60,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     </a>
                 </div>
                 <div class="b-common-item b-common-item--catalog" >
-                    <a class="b-common-item__link" href="/catalog/koshki/korrektsiya-povedeniya-koshki/" title="Средства коррекции поведения">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/korrektsiya-povedeniya-koshki/" title="Средства коррекции поведения">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/2cc/2cc9bfa5399f844135baac5b02fdcf18.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -75,7 +75,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     </a>
                 </div>
                 <div class="b-common-item b-common-item--catalog">
-                    <a class="b-common-item__link" href="/catalog/koshki/sredstva-ot-zapakha-i-pyaten-koshki/" title="Средства от запаха и пятен">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/sredstva-ot-zapakha-i-pyaten-koshki/" title="Средства от запаха и пятен">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/a7f/a7f2432a770554c35a52fbca95e083a7.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -90,7 +90,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     </a>
                 </div>
                 <div class="b-common-item b-common-item--catalog">
-                    <a class="b-common-item__link" href="/catalog/koshki/gigiena-i-kosmetika-koshki/" title="Средства гигиены и косметика">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/gigiena-i-kosmetika-koshki/" title="Средства гигиены и косметика">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/fd8/fd8e8ee58e432edfb9d7c36efbde41f3.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -105,7 +105,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     </a>
                 </div>
                 <div class="b-common-item b-common-item--catalog" >
-                    <a class="b-common-item__link" href="/catalog/koshki/korrektsiya-povedeniya-koshki/" title="Средства коррекции поведения">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/korrektsiya-povedeniya-koshki/" title="Средства коррекции поведения">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/2cc/2cc9bfa5399f844135baac5b02fdcf18.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -120,7 +120,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     </a>
                 </div>
                 <div class="b-common-item b-common-item--catalog">
-                    <a class="b-common-item__link" href="/catalog/koshki/sredstva-ot-zapakha-i-pyaten-koshki/" title="Средства от запаха и пятен">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/sredstva-ot-zapakha-i-pyaten-koshki/" title="Средства от запаха и пятен">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/a7f/a7f2432a770554c35a52fbca95e083a7.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -135,7 +135,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     </a>
                 </div>
                 <div class="b-common-item b-common-item--catalog">
-                    <a class="b-common-item__link" href="/catalog/koshki/gigiena-i-kosmetika-koshki/" title="Средства гигиены и косметика">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/gigiena-i-kosmetika-koshki/" title="Средства гигиены и косметика">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/fd8/fd8e8ee58e432edfb9d7c36efbde41f3.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -150,7 +150,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     </a>
                 </div>
                 <div class="b-common-item b-common-item--catalog" >
-                    <a class="b-common-item__link" href="/catalog/koshki/korrektsiya-povedeniya-koshki/" title="Средства коррекции поведения">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/korrektsiya-povedeniya-koshki/" title="Средства коррекции поведения">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/2cc/2cc9bfa5399f844135baac5b02fdcf18.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -185,7 +185,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
             <div class="products-blackfriday__list-products">
                 <div class="b-common-item b-common-item--catalog">
-                    <a class="b-common-item__link" href="/catalog/koshki/gigiena-i-kosmetika-koshki/" title="Средства гигиены и косметика">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/gigiena-i-kosmetika-koshki/" title="Средства гигиены и косметика">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/fd8/fd8e8ee58e432edfb9d7c36efbde41f3.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -200,7 +200,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     </a>
                 </div>
                 <div class="b-common-item b-common-item--catalog" >
-                    <a class="b-common-item__link" href="/catalog/koshki/korrektsiya-povedeniya-koshki/" title="Средства коррекции поведения">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/korrektsiya-povedeniya-koshki/" title="Средства коррекции поведения">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/2cc/2cc9bfa5399f844135baac5b02fdcf18.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -215,7 +215,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     </a>
                 </div>
                 <div class="b-common-item b-common-item--catalog">
-                    <a class="b-common-item__link" href="/catalog/koshki/sredstva-ot-zapakha-i-pyaten-koshki/" title="Средства от запаха и пятен">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/sredstva-ot-zapakha-i-pyaten-koshki/" title="Средства от запаха и пятен">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/a7f/a7f2432a770554c35a52fbca95e083a7.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -230,7 +230,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     </a>
                 </div>
                 <div class="b-common-item b-common-item--catalog">
-                    <a class="b-common-item__link" href="/catalog/koshki/gigiena-i-kosmetika-koshki/" title="Средства гигиены и косметика">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/gigiena-i-kosmetika-koshki/" title="Средства гигиены и косметика">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/fd8/fd8e8ee58e432edfb9d7c36efbde41f3.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -245,7 +245,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     </a>
                 </div>
                 <div class="b-common-item b-common-item--catalog" >
-                    <a class="b-common-item__link" href="/catalog/koshki/korrektsiya-povedeniya-koshki/" title="Средства коррекции поведения">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/korrektsiya-povedeniya-koshki/" title="Средства коррекции поведения">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/2cc/2cc9bfa5399f844135baac5b02fdcf18.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -260,7 +260,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     </a>
                 </div>
                 <div class="b-common-item b-common-item--catalog">
-                    <a class="b-common-item__link" href="/catalog/koshki/sredstva-ot-zapakha-i-pyaten-koshki/" title="Средства от запаха и пятен">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/sredstva-ot-zapakha-i-pyaten-koshki/" title="Средства от запаха и пятен">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/a7f/a7f2432a770554c35a52fbca95e083a7.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -275,7 +275,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     </a>
                 </div>
                 <div class="b-common-item b-common-item--catalog">
-                    <a class="b-common-item__link" href="/catalog/koshki/gigiena-i-kosmetika-koshki/" title="Средства гигиены и косметика">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/gigiena-i-kosmetika-koshki/" title="Средства гигиены и косметика">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/fd8/fd8e8ee58e432edfb9d7c36efbde41f3.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -290,7 +290,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                     </a>
                 </div>
                 <div class="b-common-item b-common-item--catalog" >
-                    <a class="b-common-item__link" href="/catalog/koshki/korrektsiya-povedeniya-koshki/" title="Средства коррекции поведения">
+                    <a class="b-common-item__link" target="_blank" href="/catalog/koshki/korrektsiya-povedeniya-koshki/" title="Средства коррекции поведения">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="/resize/180x180/upload/iblock/2cc/2cc9bfa5399f844135baac5b02fdcf18.jpg"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -369,52 +369,52 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
             <div class="title-blackfriday">Бренды со скидками до 50%</div>
             <div class="b-common-section__content b-common-section__content--popular-brand">
                 <div class="b-popular-brand"><div class="b-popular-brand-item">
-                        <a class="b-popular-brand-item__link" title="Mealfeel" href="/brand/mealfeel/">
+                        <a class="b-popular-brand-item__link" title="Mealfeel" href="/brand/mealfeel/" target="_blank">
                             <img class="b-popular-brand-item__image js-image-wrapper js-lazy lazy-loaded" alt="Mealfeel" title="Mealfeel" src="/resize/195x69/upload/iblock/f4f/f4f82b57751776e742b20f5a046620bc.png" style="">
                         </a>
                     </div>
                     <div class="b-popular-brand-item">
-                        <a class="b-popular-brand-item__link" title="Royal Canin" href="/brand/royal-canin/">
+                        <a class="b-popular-brand-item__link" title="Royal Canin" href="/brand/royal-canin/" target="_blank">
                             <img class="b-popular-brand-item__image js-image-wrapper js-lazy lazy-loaded" alt="Royal Canin" title="Royal Canin" src="/resize/195x69/upload/iblock/536/536a0f7e630708a31c48a58c07765860.png" style="">
                         </a>
                     </div>
                     <div class="b-popular-brand-item">
-                        <a class="b-popular-brand-item__link" title="Grandin" href="/brand/grandin/">
+                        <a class="b-popular-brand-item__link" title="Grandin" href="/brand/grandin/" target="_blank">
                             <img class="b-popular-brand-item__image js-image-wrapper js-lazy lazy-loaded" alt="Grandin" title="Grandin" src="/resize/195x69/upload/iblock/572/572126ee0a11c290b3e4bfcf93e2a05f.png" style="">
                         </a>
                     </div>
                     <div class="b-popular-brand-item">
-                        <a class="b-popular-brand-item__link" title="Pro Plan" href="/brand/proplan/">
+                        <a class="b-popular-brand-item__link" title="Pro Plan" href="/brand/proplan/" target="_blank">
                             <img class="b-popular-brand-item__image js-image-wrapper js-lazy lazy-loaded" alt="Pro Plan" title="Pro Plan" src="/resize/195x69/upload/iblock/3dc/3dc78057e8a395081cd167aae802807d.png" style="">
                         </a>
                     </div>
                     <div class="b-popular-brand-item">
-                        <a class="b-popular-brand-item__link" title="Wellkiss" href="/brand/wellkiss/">
+                        <a class="b-popular-brand-item__link" title="Wellkiss" href="/brand/wellkiss/" target="_blank">
                             <img class="b-popular-brand-item__image js-image-wrapper js-lazy lazy-loaded" alt="Wellkiss" title="Wellkiss" src="/resize/195x69/upload/iblock/2b5/2b518d0557f6e0155ca9477754edf8b4.png" style="">
                         </a>
                     </div>
                     <div class="b-popular-brand-item">
-                        <a class="b-popular-brand-item__link" title="Авва" href="/brand/avva/">
+                        <a class="b-popular-brand-item__link" title="Авва" href="/brand/avva/" target="_blank">
                             <img class="b-popular-brand-item__image js-image-wrapper js-lazy lazy-loaded" alt="Авва" title="Авва" src="/resize/195x69/upload/iblock/416/416a3a0cb8411ac245712125e2572b7d.png" style="">
                         </a>
                     </div>
                     <div class="b-popular-brand-item">
-                        <a class="b-popular-brand-item__link" title="Hill's" href="/brand/hills/">
+                        <a class="b-popular-brand-item__link" title="Hill's" href="/brand/hills/" target="_blank">
                             <img class="b-popular-brand-item__image js-image-wrapper js-lazy lazy-loaded" alt="Hill's" title="Hill's" src="/resize/195x69/upload/iblock/ef1/ef133cb50c3525907d45a3dde531dd29.png" style="">
                         </a>
                     </div>
                     <div class="b-popular-brand-item">
-                        <a class="b-popular-brand-item__link" title="Acana" href="/brand/acana/">
+                        <a class="b-popular-brand-item__link" title="Acana" href="/brand/acana/" target="_blank">
                             <img class="b-popular-brand-item__image js-image-wrapper js-lazy lazy-loaded" alt="Acana" title="Acana" src="/resize/195x69/upload/iblock/d59/d59fc57e6ee0ce87b1c62f6aa1c1cf8a.jpg" style="">
                         </a>
                     </div>
                     <div class="b-popular-brand-item">
-                        <a class="b-popular-brand-item__link" title="Fresh Step" href="/brand/fresh-step/">
+                        <a class="b-popular-brand-item__link" title="Fresh Step" href="/brand/fresh-step/" target="_blank">
                             <img class="b-popular-brand-item__image js-image-wrapper js-lazy lazy-loaded" alt="Fresh Step" title="Fresh Step" src="/resize/195x69/upload/iblock/a5c/a5ccf41dc469393209843a30b27b0945.png" style="">
                         </a>
                     </div>
                     <div class="b-popular-brand-item">
-                        <a class="b-popular-brand-item__link" title="Petmax" href="/brand/petmax/">
+                        <a class="b-popular-brand-item__link" title="Petmax" href="/brand/petmax/" target="_blank">
                             <img class="b-popular-brand-item__image js-image-wrapper js-lazy lazy-loaded" alt="Petmax" title="Petmax" src="/resize/195x69/upload/iblock/6b8/6b852b8683edb12cfcc88feee0cb7ddb.png" style="">
                         </a>
                     </div>
