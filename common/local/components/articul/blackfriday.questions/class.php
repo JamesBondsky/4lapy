@@ -45,19 +45,15 @@ class BlackFridayQuestions extends \CBitrixComponent
             return;
         }
         
-       //if ($this->StartResultCache($this->arParams['CACHE_TIME'])) {
+       if ($this->StartResultCache($this->arParams['CACHE_TIME'])) {
             $this->arResult['ITEMS'] = $this->getItems();
-    
-           echo '<pre>';
-           print_r($this->arResult['ITEMS']);
-           echo '</pre>';
-           die;
-            // if (count($this->arResult['ITEMS']) <= 0) {
-            //     $this->abortResultCache();
-            // }
-            //
-            // $this->includeComponentTemplate();
-      // }
+        
+            if (count($this->arResult['ITEMS']) <= 0) {
+                $this->abortResultCache();
+            }
+            
+            $this->includeComponentTemplate();
+      }
     }
     
     /**

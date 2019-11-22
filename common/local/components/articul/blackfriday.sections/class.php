@@ -3,7 +3,7 @@
 use Articul\BlackFriday\Orm\BFSectionsTable;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
-use \Bitrix\Iblock\Model\Section;
+use Bitrix\Iblock\Model\Section;
 
 /**
  * Class BlackFridaySections
@@ -54,6 +54,8 @@ class BlackFridaySections extends \CBitrixComponent
         if ($this->StartResultCache($this->arParams['CACHE_TIME'])) {
             $this->arResult['SECTION_WITH_ELEMENTS'] = $this->getElements();
             $this->arResult['EMPTY_SECTIONS']        = $this->getSections();
+    
+            $this->setSectionLinkForSectionWithElements();
             
             if (!$this->arResult['SECTION_WITH_ELEMENTS'] && !$this->arResult['EMPTY_SECTIONS']) {
                 $this->abortResultCache();
@@ -69,7 +71,7 @@ class BlackFridaySections extends \CBitrixComponent
     private function getElements()
     {
         $elements = BFSectionsTable::query()
-            ->setSelect(['ID', 'IBLOCK_SECTION_ID', 'NAME', 'LINK' => 'UTS.LINK', 'SECTION_NAME' => 'SECTION.NAME'])
+            ->setSelect(['ID', 'IBLOCK_SECTION_ID', 'NAME', 'PREVIEW_PICTURE', 'LINK' => 'UTS.LINK', 'SECTION_NAME' => 'SECTION.NAME'])
             ->setFilter(['=IBLOCK_ID' => $this->iblockId, '=ACTIVE' => 'Y'])
             ->registerRuntimeField(new ReferenceField(
                 'SECTION',
@@ -79,6 +81,10 @@ class BlackFridaySections extends \CBitrixComponent
             ->setCacheTtl($this->arParams['CACHE_TIME'])
             ->exec()
             ->fetchAll();
+    
+        foreach ($elements as &$element) {
+            $element['PREVIEW_PICTURE'] = \CFile::GetPath($element['PREVIEW_PICTURE']);
+        }
         
         $result = $this->allocateElements($elements);
         
@@ -92,11 +98,17 @@ class BlackFridaySections extends \CBitrixComponent
     {
         $entity   = Section::compileEntityByIblock($this->iblockId);
         $sections = $entity::query()
-            ->setSelect(['ID', 'NAME', 'UF_LINK'])
+            ->setSelect(['ID', 'NAME', 'UF_LINK', 'UF_DESKTOP_PICTURE',  'UF_TABLET_PICTURE', 'UF_MOBILE_PICTURE'])
             ->setFilter(['=IBLOCK_ID' => $this->iblockId, '=ACTIVE' => 'Y', '!ID' => $this->sectinonsWithElements])
             ->setCacheTtl($this->arParams['CACHE_TIME'])
             ->exec()
             ->fetchAll();
+    
+        foreach ($sections as $key => $section) {
+            $sections[$key]['DESKTOP_PICTURE'] = \CFile::GetPath($section['UF_DESKTOP_PICTURE']);
+            $sections[$key]['TABLET_PICTURE'] = \CFile::GetPath($section['UF_TABLET_PICTURE']);
+            $sections[$key]['MOBILE_PICTURE'] = \CFile::GetPath($section['UF_MOBILE_PICTURE']);
+        }
         
         return $sections;
     }
@@ -126,5 +138,32 @@ class BlackFridaySections extends \CBitrixComponent
         }
         
         return $result;
+    }
+    
+    /**
+     * @return mixed
+     */
+    private function setSectionLinkForSectionWithElements()
+    {
+        foreach ($this->arResult['SECTION_WITH_ELEMENTS'] as $key => $section) {
+            $sectionsId[] = $key;
+        }
+
+        $entity   = Section::compileEntityByIblock($this->iblockId);
+        $sections = $entity::query()
+            ->setSelect(['ID', 'UF_LINK', 'UF_DESKTOP_PICTURE',  'UF_TABLET_PICTURE', 'UF_MOBILE_PICTURE'])
+            ->setFilter(['=IBLOCK_ID' => $this->iblockId, '=ACTIVE' => 'Y', '=ID' => $sectionsId])
+            ->setCacheTtl($this->arParams['CACHE_TIME'])
+            ->exec()
+            ->fetchAll();
+    
+        foreach ($sections as $section) {
+            $this->arResult['SECTION_WITH_ELEMENTS'][$section['ID']]['LINK'] = $section['UF_LINK'];
+            $this->arResult['SECTION_WITH_ELEMENTS'][$section['ID']]['DESKTOP_PICTURE'] = \CFile::GetPath($section['UF_DESKTOP_PICTURE']);
+            $this->arResult['SECTION_WITH_ELEMENTS'][$section['ID']]['TABLET_PICTURE'] = \CFile::GetPath($section['UF_TABLET_PICTURE']);
+            $this->arResult['SECTION_WITH_ELEMENTS'][$section['ID']]['MOBILE_PICTURE'] = \CFile::GetPath($section['UF_MOBILE_PICTURE']);
+        }
+
+        return $sections;
     }
 }

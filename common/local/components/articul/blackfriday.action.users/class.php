@@ -46,15 +46,15 @@ class BlackFridayActionUsers extends \CBitrixComponent
             return;
         }
         
-       if ($this->StartResultCache($this->arParams['CACHE_TIME'])) {
+        if ($this->StartResultCache($this->arParams['CACHE_TIME'])) {
             $this->arResult['ITEMS'] = $this->getItems();
-
+            
             if (count($this->arResult['ITEMS']) <= 0) {
                 $this->abortResultCache();
             }
             
             $this->includeComponentTemplate();
-       }
+        }
     }
     
     /**
@@ -63,7 +63,7 @@ class BlackFridayActionUsers extends \CBitrixComponent
     private function getItems()
     {
         $items = BFActionUsersTable::query()
-            ->setSelect(['ID', 'PREVIEW_PICTURE'])
+            ->setSelect(['ID', 'NAME', 'PREVIEW_PICTURE', 'LINK' => 'UTS.LINK'])
             ->setFilter(['=IBLOCK_ID' => $this->iblockId, '=ACTIVE' => 'Y'])
             ->setCacheTtl($this->arParams['CACHE_TIME'])
             ->exec()
