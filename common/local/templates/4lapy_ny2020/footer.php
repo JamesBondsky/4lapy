@@ -1,0 +1,807 @@
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+    die();
+}
+
+/**
+ * @var \CMain $APPLICATION
+ */
+
+use Bitrix\Main\Application;
+use FourPaws\App\Application as PawsApplication;
+use FourPaws\App\MainTemplate;
+use FourPaws\KioskBundle\Service\KioskService;
+
+$markup = PawsApplication::markup();
+/** @var MainTemplate $template */
+if (!isset($template) || !($template instanceof MainTemplate)) {
+    $template = MainTemplate::getInstance(Application::getInstance()->getContext());
+}
+
+if ($template->hasMainWrapper()) { ?>
+
+    <?php /** Основной прелоадер из gui */ ?>
+    <?php include __DIR__ . '/blocks/preloader.php'; ?>
+
+    </main>
+<?php } ?>
+
+</div>
+
+<div class="bottom-landing">
+    <section data-id-section-landing="prizes" class="prizes-mealfeel">
+        <div class="container-landing">
+            <div class="landing-title">
+                Призы
+            </div>
+            <div class="prizes-mealfeel__list">
+                <div class="item">
+                    <div class="item-card">
+                        <div class="item-card__img-wrap">
+                            <div class="item-card__img item-card__img_tank" style="background-image: url('/img/prizes1.png')"></div>
+                        </div>
+                        <div class="item-card__title">Бак для корма</div>
+                        <div class="item-card__descr">Выдается за&nbsp;покупку корма Mealfeel (сухого вместе с&nbsp;влажным) на&nbsp;сумму&nbsp;от&nbsp;1500&nbsp;р.<br /> Бак вмещает 3 кг&nbsp;корма.</div>
+                    </div>
+                </div>
+                <div class="item">
+                    <div class="item-card">
+                        <div class="item-card__img-wrap">
+                            <div class="item-card__img item-card__img_devices" style="background-image: url('/img/prizes2.png')"></div>
+                        </div>
+                        <div class="item-card__title">Девайсы для правильного&nbsp;питания</div>
+                        <div class="item-card__descr">
+                            В&nbsp;розыгрыше новые подарки каждую неделю:
+                            <ul>
+                                <li><b>5&nbsp;июля</b>&nbsp;&mdash; мультиварка: готовит правильно и&nbsp;быстро</li>
+                                <li><b>12&nbsp;июля</b>&nbsp;&mdash; соковыжималка: фреш каждый день</li>
+                                <li><b>19&nbsp;июля</b>&nbsp;&mdash; фильтр для воды: чистая вода&nbsp;&mdash; основа здоровья</li>
+                                <li><b>26&nbsp;июля</b>&nbsp;&mdash; блендер: смузи и&nbsp;коктейли каждый день</li>
+                                <li><b>1&nbsp;августа</b>&nbsp;&mdash; умный сад: свежая зелень круглый год</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="item">
+                    <div class="item-card">
+                        <div class="item-card__img-wrap">
+                            <div class="item-card__img item-card__img_spa" style="background-image: url('/img/prizes3.png')"></div>
+                        </div>
+                        <div class="item-card__title"><nobr>SPA-Weekend</nobr></div>
+                        <div class="item-card__descr"><nobr>SPA-weekend</nobr> на&nbsp;курорте Роза Хутор в&nbsp;Сочи на&nbsp;двоих. Срок поездки&nbsp;&mdash; 3 дня 2&nbsp;ночи. Розыгрыш 1&nbsp;августа.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section data-id-section-landing="info-prizes" class="info-prizes-ny2020">
+        <div class="container-landing">
+            <div class="info-prizes-ny2020__content">
+                <div class="info-prizes-ny2020__message"></div>
+                <div class="info-prizes-ny2020__primary"></div>
+            </div>
+        </div>
+    </section>
+
+    <section data-id-section-landing="where-buy" class="where-buy-landing">
+        <div class="where-buy-landing__map" id="mapWhereBuylanding" data-map-where-buy-landing="dark"></div>
+    </section>
+
+    <section data-id-section-landing="winners" class="winners-ny2020 winners-ny2020_mealfeel">
+        <div class="container-landing">
+            <div class="winners-ny2020__inner">
+                <div class="title-ny2020">
+                    Победители
+                </div>
+                <div class="b-tab winners-ny2020__content">
+                    <div class="b-tab-title">
+                        <ul class="b-tab-title__list">
+                            <li class="b-tab-title__item js-tab-item">
+                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny20200">
+                                    <span class="b-tab-title__text">05.07</span>
+                                </a>
+                            </li>
+                            <li class="b-tab-title__item js-tab-item">
+                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny20201">
+                                    <span class="b-tab-title__text">12.07</span>
+                                </a>
+                            </li>
+                            <li class="b-tab-title__item js-tab-item">
+                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny20202">
+                                    <span class="b-tab-title__text">19.07</span>
+                                </a>
+                            </li>
+                            <li class="b-tab-title__item js-tab-item">
+                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny20203">
+                                    <span class="b-tab-title__text">26.07</span>
+                                </a>
+                            </li>
+                            <li class="b-tab-title__item js-tab-item">
+                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny20204">
+                                    <span class="b-tab-title__text">01.08</span>
+                                </a>
+                            </li>
+                            <li class="b-tab-title__item js-tab-item active">
+                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny20205">
+                                    <span class="b-tab-title__text">Главный приз</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="b-tab-content">
+                        <div class="b-tab-content__container js-tab-content" data-tab-content="winners-ny20200" style="display: none;">
+                            <div class="winners-ny2020__list">
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Тимошина Анна">Тимошина Анна</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********437</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Кузин Андрей">Кузин Андрей</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********348</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Попова Ксения">Попова Ксения</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********003</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Голубева	Наталья">Голубева	Наталья</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********647</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Христофоров	Василий">Христофоров	Василий</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********636</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Филипчук Виктор">Филипчук Виктор</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********010</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Абдулин	Роман">Абдулин	Роман</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********605</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Ляпин Валерий">Ляпин Валерий</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********613</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Прибора	Евгения">Прибора	Евгения</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********509</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Гусева Марина">Гусева Марина</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********933</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="b-tab-content__container js-tab-content" data-tab-content="winners-ny20201" style="display: none;">
+                            <div class="winners-ny2020__list">
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Дорохина Елена">Дорохина Елена</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********441</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Савельев Александр">Савельев Александр</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********788</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Седых Наталья">Седых Наталья</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********820</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Баракина Наталья">Баракина Наталья</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********852</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Маховиков Владимир">Маховиков Владимир</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********390</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Балабанов Дмитрий">Балабанов Дмитрий</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********866</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Еринская Ольга">Еринская Ольга</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********027</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Лазарев Никита">Лазарев Никита</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********279</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Дубова Светлана">Дубова Светлана</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********394</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Запольских Алексей">Запольских Алексей</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********411</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="b-tab-content__container js-tab-content" data-tab-content="winners-ny20202" style="display: none;">
+                            <div class="winners-ny2020__list">
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Шеренина Ольга">Шеренина Ольга</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********445</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Малахова Эльвира">Малахова Эльвира</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********131</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Пушкина Лидия">Пушкина Лидия</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********158</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Карпова Юлия">Карпова Юлия</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********902</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Леонов Алексей">Леонов Алексей</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********522</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Бабенко Алексей">Бабенко Алексей</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********119</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Джабраилова Анжела">Джабраилова Анжела</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********844</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Батманов Николай">Батманов Николай</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********422</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Коваленко Кирилл">Коваленко Кирилл</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********360</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Ремнева Мария">Ремнева Мария</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********951</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="b-tab-content__container js-tab-content" data-tab-content="winners-ny20203" style="display: none;">
+                            <div class="winners-ny2020__list">
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Проценко Кирилл">Проценко Кирилл</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********208</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Ценарёва Анна">Ценарёва Анна</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********826</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Бржевская Анастасия">Бржевская Анастасия</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********000</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Милюхина Ирина">Милюхина Ирина</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********392</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Барилович Ольга">Барилович Ольга</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********365</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Суллерова Нина">Суллерова Нина</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********103</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Румянцев Сергей">Румянцев Сергей</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********634</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Алексеев Владимир">Алексеев Владимир</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********505</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Борина Ирина">Борина Ирина</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********869</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Абросимова Юлия">Абросимова Юлия</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********244</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="b-tab-content__container js-tab-content" data-tab-content="winners-ny20204" style="display: none;">
+                            <div class="winners-ny2020__list">
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Пайвина Ольга">Пайвина Ольга</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********724</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Горичев Константин">Горичев Константин</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********724</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Жильцова Ольга">Жильцова Ольга</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********446</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Фомина Мария">Фомина Мария</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********200</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Овчинникова Светлана">Овчинникова Светлана</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********530</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Кананчук Руслан">Кананчук Руслан</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********168</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Елена Евгеньевна ">Елена Евгеньевна </div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********729</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Трубачев Андрей">Трубачев Андрей</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********464</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Муравьева Елена">Муравьева Елена</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********301</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Мартьянова Вилена ">Мартьянова Вилена </div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********545</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="b-tab-content__container js-tab-content active" data-tab-content="winners-ny20205" style="display: block;">
+                            <div class="winners-ny2020__list">
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Щербакова Ирина">Щербакова Ирина</div>
+                                        <div class="item__dotes"></div>
+                                        <div class="item__phone">********804</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section data-id-section-landing="questions" class="questions-ny2020">
+        <div class="b-container">
+            <h2 class="questions-ny2020__title">Вопросы и ответы</h2>
+            <div class="questions-ny2020__accordion">
+                <div class="item-accordion">
+                    <div class="item-accordion__header js-toggle-accordion">
+                        <span class="item-accordion__header-inner">КАК НАКОПИТЬ МАРКИ?</span>
+                    </div>
+                    <div class="item-accordion__block js-dropdown-block">
+                        <div class="item-accordion__block-content">
+                            <div class="item-accordion__block-text">
+                                Марки начисляются с 1 октября по 30 ноября 2019 г.&nbsp; за покупки во всех розничных зоомагазинах, на сайте и в мобильном приложении.<br>
+                                <b>За каждые 500р в чеке начисляется&nbsp;1 марка. </b><br>
+                                Марки копятся в <a target="_blank" href="https://4lapy.ru/personal/marki/"><u><span style="color: #004a80;">личном кабинете</span></u></a> или на буклете, который выдается в зоомагазине.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="item-accordion">
+                    <div class="item-accordion__header js-toggle-accordion">
+                        <span class="item-accordion__header-inner">Я накопил марки. Как купить со скидкой 30%?</span>
+                    </div>
+                    <div class="item-accordion__block js-dropdown-block">
+                        <div class="item-accordion__block-content">
+                            <div class="item-accordion__block-text">
+                                с 2 октября по 15 декабря 2019 г. накопленные марки можно обменять на скидки до -30% на любые товары из разделов лежаки, домики и когтеточки.<br>
+                                <br>
+                                <b>-30% = 12 марок</b><br>
+                                <b>
+                                    -20% = 9 марок</b><br>
+                                <b>
+                                    -10% = 6 марок</b><br>
+                                <br>
+                                &nbsp; Чтобы купить лежак, домик или когтеточку со скидкой необходимо:<br>
+                                <ul>
+                                    <li>на&nbsp;сайте или в&nbsp;приложении: добавь товар в&nbsp;корзину, нажми кнопку «списать марки» в корзине. скидка добавится автоматически.</li>
+                                    <li>в&nbsp;магазине: предъяви буклет с наклеенными марками или сообщи кассиру номер телефона. кассир спишет марки и сделает скидку.</li>
+                                </ul>
+                                <br>
+                                <b>Скидка за накопленные марки суммируется со всеми другими скидками и специальными предложениями.</b><br>
+                                <b>15 декабря 2019г все неиспользованные марки сгорят.</b><br>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="item-accordion">
+                    <div class="item-accordion__header js-toggle-accordion">
+                        <span class="item-accordion__header-inner">Какие товары можно купить со скидкой 30%?</span>
+                    </div>
+                    <div class="item-accordion__block js-dropdown-block">
+                        <div class="item-accordion__block-content">
+                            <div class="item-accordion__block-text">
+                                с 2 октября по 15 декабря 2019 г. накопленные марки можно обменять на скидки до -30% на любые товары из разделов:<br>
+                                <ul>
+                                    <li style="color: #005b7e;"><b><a target="_blank" href="https://4lapy.ru/catalog/sobaki/lezhaki-i-domiki/"><u>лежаки</u></a></b></li>
+                                    <li style="color: #005b7e;"><b><a target="_blank" href="https://4lapy.ru/catalog/sobaki/lezhaki-i-domiki/domiki-myagkie-lezhaki/"><u>домики</u></a></b></li>
+                                    <li style="color: #005b7e;"><b><u><a target="_blank" href="https://4lapy.ru/catalog/koshki/kogtetochki/">когтеточки</a></u></b></li>
+                                </ul>
+                                <br>
+                                Скидка&nbsp; -30% = 12 марок<br>
+                                Скидка&nbsp; -20% = 9 марок<br>
+                                Скидка&nbsp; -10% = 6 марок<br>
+                                <br>
+                                <br>
+                                <ul></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="item-accordion">
+                    <div class="item-accordion__header js-toggle-accordion">
+                        <span class="item-accordion__header-inner">Суммируются ли скидки за марки с другими скидками?</span>
+                    </div>
+                    <div class="item-accordion__block js-dropdown-block">
+                        <div class="item-accordion__block-content">
+                            <div class="item-accordion__block-text">
+                                <b>ДА.</b><br>
+                                Скидка за накопленные марки суммируется со всеми другими скидками и специальными предложениями, которые в данный момент&nbsp; действуют на сайте.<br>
+                                В первую очередь к товару применяется скидка по любой другой акции, затем начисляется скидка за накопленные марки.<br>
+                                <br>
+                                <br>
+                                <br>
+                                <ul></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="item-accordion">
+                    <div class="item-accordion__header js-toggle-accordion">
+                        <span class="item-accordion__header-inner">Действуют ли марки в розничном магазине и на сайте?</span>
+                    </div>
+                    <div class="item-accordion__block js-dropdown-block">
+                        <div class="item-accordion__block-content">
+                            <div class="item-accordion__block-text">
+                                <b>ДА.<br>
+                                </b><br>
+                                <ul>
+                                    <li>Марки начисляются за любые покупки в розничных зоомагазинах, на сайте и в мобильном приложении.</li>
+                                </ul>
+                                <ul>
+                                    <li>Скидку за накопленные марки можно получить в розничных магазинах, на сайте и в мобильном приложении.</li>
+                                </ul>
+                                <br>
+                                <br>
+                                &nbsp;Для получения скидки:<br>
+                                <ul>
+                                    <li>на&nbsp;сайте или в&nbsp;приложении: добавь товар в&nbsp;корзину, нажми кнопку «списать марки» в корзине. скидка добавится автоматически.</li>
+                                    <li>в&nbsp;магазине: предъяви буклет с наклеенными марками или сообщи кассиру номер телефона. кассир спишет марки и сделает скидку</li>
+                                </ul>
+                                <b>
+                                    <ul></ul>
+                                </b>
+                                <ul></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="item-accordion">
+                    <div class="item-accordion__header js-toggle-accordion">
+                        <span class="item-accordion__header-inner">Суммируются ли бумажные и электронные марки?</span>
+                    </div>
+                    <div class="item-accordion__block js-dropdown-block">
+                        <div class="item-accordion__block-content">
+                            <div class="item-accordion__block-text">
+                                <b>НЕТ.<br>
+                                </b><br>
+                                Марки, которые копятся в электронном виде в личном кабинете и марки-наклейки, которые копятся на буклете не суммируются друг с другом.<br>
+                                Вы можете получить скидку или за электронные марки, или за&nbsp; марки-наклейки на буклете, но не одновременно.<b><br>
+                                </b>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="item-accordion">
+                    <div class="item-accordion__header js-toggle-accordion">
+                        <span class="item-accordion__header-inner">Какой срок действия марок?</span>
+                    </div>
+                    <div class="item-accordion__block js-dropdown-block">
+                        <div class="item-accordion__block-content">
+                            <div class="item-accordion__block-text">
+                                Срок накопления марок: с 1 октября по 30 ноября 2019 г.<b><br>
+                                </b>Срок обмена марок на скидки: с 2 октября по 15 декабря (включительно) 2019 г.<br>
+                                <br>
+                                16 декабря все неиспользованные марки сгорят.<br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <ul></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="item-accordion">
+                    <div class="item-accordion__header js-toggle-accordion">
+                        <span class="item-accordion__header-inner">У меня не отображаются марки в личном кабинете. Что делать?</span>
+                    </div>
+                    <div class="item-accordion__block js-dropdown-block">
+                        <div class="item-accordion__block-content">
+                            <div class="item-accordion__block-text">
+                                <b>Напишите нам письмо на </b><b><a href="mailto:welcome@4lapy.ru">welcome@4lapy.ru</a><br>
+                                </b><br>
+                                В письме укажите Ваш номер мобильного телефона и номер бонусной карты (если есть).<br>
+                                Для ускорения начисления марок рекомендуем указать в письме за какие покупки&nbsp;не хватает марок (например, дату и сумму покупки)<br>
+                                Мы оперативно исправим ошибку!<br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <ul></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="item-accordion">
+                    <div class="item-accordion__header js-toggle-accordion">
+                        <span class="item-accordion__header-inner">Посмотреть полные условия акции</span>
+                    </div>
+                    <div class="item-accordion__block js-dropdown-block">
+                        <div class="item-accordion__block-content">
+                            <div class="item-accordion__block-text">
+                                Посмотреть полные условия акции <u><span style="color: #005951;"><b><a target="_blank" href="https://4lapy.ru/home/img/Правила_Акции_Уютно_жить_октябрь2019.pdf">по ссылке.</a></b></span></u><br>
+                                <br>
+                                <ul></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+</div>
+
+<footer class="b-footer js-main-footer <?= $template->getFooterClass() ?>">
+    <?php if (!$template->hasShortHeaderFooter()) { ?>
+        <? if(!KioskService::isKioskMode()) { ?>
+            <div class="b-footer__communication">
+                <div class="b-container">
+                    <div class="b-footer__inner">
+                        <div class="b-footer-communication">
+                            <?php require_once __DIR__ . '/blocks/footer/communication_area.php' ?>
+                        </div>
+                        <?php require_once __DIR__ . '/blocks/footer/social_links.php' ?>
+                    </div>
+                </div>
+            </div>
+        <? } ?>
+    <?php } ?>
+    <div class="b-footer__nav">
+        <div class="b-container">
+            <?php if (!$template->hasShortHeaderFooter()) { ?>
+                <div class="b-footer__line">
+                    <? if(!KioskService::isKioskMode()) { ?>
+                        <div class="b-footer__column js-here-permutantion">
+                            <?php $APPLICATION->IncludeComponent(
+                                'bitrix:menu',
+                                'footer.menu',
+                                [
+                                    'COMPONENT_TEMPLATE'   => 'footer.menu',
+                                    'ROOT_MENU_TYPE'       => 'top',
+                                    'MENU_CACHE_TYPE'      => 'A',
+                                    'MENU_CACHE_TIME'      => '360000',
+                                    'CACHE_SELECTED_ITEMS' => 'N',
+                                    'TEMPLATE_NO_CACHE'    => 'N',
+                                    'MENU_CACHE_GET_VARS'  => [],
+                                    'MAX_LEVEL'            => '2',
+                                    'CHILD_MENU_TYPE'      => 'left',
+                                    'USE_EXT'              => 'N',
+                                    'DELAY'                => 'N',
+                                    'ALLOW_MULTI_SELECT'   => 'N',
+                                ],
+                                false,
+                                ['HIDE_ICONS' => 'Y']
+                            ); ?>
+                            <?php $APPLICATION->IncludeComponent(
+                                'fourpaws:expertsender.form',
+                                '',
+                                [],
+                                false,
+                                ['HIDE_ICONS' => 'Y']
+                            ); ?>
+                        </div>
+                    <? } ?>
+                    <?php require_once __DIR__ . '/blocks/footer/application_links.php'; ?>
+                </div>
+            <?php } ?>
+            <div class="b-footer__line b-footer__line--change-viewport">
+                <div class="b-footer__column">
+                    <?php require_once __DIR__ . '/blocks/footer/copyright.php' ?>
+                </div>
+                <? if(!KioskService::isKioskMode()) { ?>
+                    <div class="b-footer__column
+                                b-footer__column--small
+                                b-footer__column--change-viewport
+                                <?= ($sViewportCookie === 'mobile') ? 'mobile' : '' ?>"
+                         data-footer-links-change-viewport="true">
+                        <?php if ($sViewportCookie === null) { ?>
+                            <div class="link-toggle-view active mobile" data-change-viewport-mode='mobile' data-type="desktop">
+                                Перейти в<br/> полноэкранный режим
+                            </div>
+                        <?php }else{ ?>
+                            <div class="link-toggle-view <?= $sViewportCookie === 'desktop' ? 'active' : '' ?>" data-change-viewport-mode='desktop' data-type="mobile">
+                                Перейти в<br/> мобильную версию
+                            </div>
+                            <div class="link-toggle-view <?= $sViewportCookie === 'mobile' ? 'active mobile' : '' ?>" data-change-viewport-mode='mobile' data-type="desktop">
+                                Перейти в<br/> полноэкранный режим
+                            </div>
+                        <?php } ?>
+                    </div>
+                <?php } ?>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+<div class="b-shadow js-shadow"></div>
+<div class="b-shadow b-shadow--popover js-open-shadow"></div>
+</div>
+<?php require_once __DIR__ . '/blocks/footer/popups.php' ?>
+<script src="<?= $markup->getJsFile() ?>"></script>
+<script src="//yastatic.net/es5-shims/0.0.2/es5-shims.min.js"></script>
+<script src="//yastatic.net/share2/share.js"></script>
+
+</body>
+</html>
