@@ -245,7 +245,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         
         $flagmanService = new FlagmanService();
         $elements       = $flagmanService->getElementsBySectionTrainingId($id);
-        
+
         foreach ($elements as $key => $element) {
             if ($element['FREE_SITS'] <= 0) {
                 unset($elements[$key]);
@@ -253,7 +253,8 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             }
 
             preg_match('/^[0-9]{2}/', $element['NAME'], $matches);
-            if ($matches[0] <= date('H')) {
+            preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $element['SECTION_NAME'], $matchesDate);
+            if ($matches[0] <= date('H') && $matchesDate[0] == date('d.m.Y')) {
                 unset($elements[$key]);
                 continue;
             }
@@ -263,8 +264,13 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'time' => $element['NAME'],
             ];
         }
+    
+        usort($result, function ($a, $b) {
+            preg_match('/^([0-9]{2})/', $a['time'], $matchesA);
+            preg_match('/^([0-9]{2})/', $b['time'], $matchesB);
         
-        natsort($result);
+            return ($matchesA[0] > $matchesB[0]) ? 1 : -1;
+        });
         
         if ($result) {
             return new JsonResponse([
