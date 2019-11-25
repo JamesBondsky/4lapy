@@ -138,6 +138,8 @@ class ExpressDeliveryHandler extends DeliveryHandlerBase
 
         if (($currentHour < 10) || ($currentHour > 19)) {
             $result->addError(new Error('В данное время экспресс доставка не работает'));
+
+            return $result;
         }
 
         $price = $this->config['MAIN']['PRICE'];

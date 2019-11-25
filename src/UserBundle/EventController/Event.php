@@ -55,6 +55,7 @@ class Event extends BaseServiceHandler
     public const GROUP_OPERATORS = 29;
 
     protected static $isEventsDisable = false;
+    public static $isManzanaEventsActive = true;
 
     public static function disableEvents(): void
     {
@@ -342,33 +343,35 @@ class Event extends BaseServiceHandler
 
     public static function updateManzana(&$fields): bool
     {
-        $container = App::getInstance()->getContainer();
+        if (self::$isManzanaEventsActive) {
+            $container = App::getInstance()->getContainer();
 
-        /** @var UserService $userService */
-        $userService = $container->get(CurrentUserProviderInterface::class);
-        $user = $userService->getUserRepository()->find((int)$fields['ID']);
-        if ($user === null) {
-            return false;
-        }
-
-        $clientByCheck = new Client();
-
-        /**
-         * @var ManzanaService $manzanaService
-         */
-        $manzanaService = $container->get('manzana.service');
-
-        $client = $userService->setManzanaClientPersonalDataByUser($fields, $user);
-        $userService->setClientPersonalDataByCurUser($clientByCheck, $user);
-
-        foreach ($clientByCheck as $clientKey => $clientValue) {
-            if ($client->$clientKey != $clientValue && empty($client->$clientKey)) {
-                $client->$clientKey = $clientValue;
+            /** @var UserService $userService */
+            $userService = $container->get(CurrentUserProviderInterface::class);
+            $user = $userService->getUserRepository()->find((int)$fields['ID']);
+            if ($user === null) {
+                return false;
             }
-        }
 
-        if ($client != $clientByCheck) {
-            $manzanaService->updateContactAsync($client);
+            $clientByCheck = new Client();
+
+            /**
+             * @var ManzanaService $manzanaService
+             */
+            $manzanaService = $container->get('manzana.service');
+
+            $client = $userService->setManzanaClientPersonalDataByUser($fields, $user);
+            $userService->setClientPersonalDataByCurUser($clientByCheck, $user);
+
+            foreach ($clientByCheck as $clientKey => $clientValue) {
+                if ($client->$clientKey != $clientValue && empty($client->$clientKey)) {
+                    $client->$clientKey = $clientValue;
+                }
+            }
+
+            if ($client != $clientByCheck) {
+                $manzanaService->updateContactAsync($client);
+            }
         }
 
         return true;

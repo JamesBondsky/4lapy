@@ -333,7 +333,11 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
             $basketPrice = $delivery->getStockResult()->getOrderable()->getPrice();
         } elseif ($deliveryDobrolap) {
             $basketPrice = $deliveryDobrolap->getStockResult()->getOrderable()->getPrice();
-        } ?>
+        } elseif ($expressDelivery) {
+            $basketPrice = $expressDelivery->getStockResult()->getOrderable()->getPrice();
+        } elseif ($deliveryDostavista) {
+          $basketPrice = $deliveryDostavista->getStockResult()->getOrderable()->getPrice();
+        }?>
 
         <div class="b-order-list b-order-list--cost b-order-list--order-step-two js-order-next">
             <ul class="b-order-list__list b-order-list__list--cost">

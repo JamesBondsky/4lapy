@@ -25,7 +25,10 @@ parameters:
   manzana.guzzle.curl.timeout: 3
   recaptcha.guzzle.curl.timeout: 5
   callback.guzzle.curl.timeout: 3
-
+  manzana.guzzle.proxy:
+    # proxy: 'http://test:test@185.58.205.33:3128'
+    timeout: 3
+    connect_timeout: 3
   metro.guzzle.url: https://api.hh.ru/metro/
 
   # See \Elastica\Client::$_config for more options
