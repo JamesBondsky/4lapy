@@ -29,7 +29,7 @@
                 <div class="products-blackfriday__list-products">
                     <?php foreach ($section['ITEMS'] as $item): ?>
                         <div class="b-common-item b-common-item--catalog">
-                            <a class="b-common-item__link" href="<?=$item['LINK']?>" title="Средства гигиены и косметика">
+                            <a class="b-common-item__link" href="<?=$item['LINK']?>" title="<?=$item['NAME']?>" target="_blank">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
                             <img src="<?=$item['PREVIEW_PICTURE']?>"
                                  class="b-common-item__image b-common-item__image--catalog"
@@ -60,7 +60,7 @@
                             </div>
                             <div class="banner-blackfriday__content">
                                 <div class="banner-blackfriday__title"><?=$emptySection['NAME']?></div>
-                                <a href="<?=$emptySection['UF_LINK']?><" target="_blank" class="banner-blackfriday__btn">Посмотреть все</a>
+                                <a href="<?=$emptySection['UF_LINK']?>" target="_blank" class="banner-blackfriday__btn">Посмотреть все</a>
                             </div>
                         </div>
                     </div>
