@@ -76,7 +76,7 @@ $markup = PawsApplication::markup();
 
 
 </head>
-<body class="body-landing body-landing_mealfeel">
+<body class="body-landing">
 <?php $APPLICATION->ShowPanel(); ?>
 
 <!-- Yandex.Metrika counter -->
@@ -95,7 +95,7 @@ $markup = PawsApplication::markup();
 <noscript><div><img src="https://mc.yandex.ru/watch/52251391" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
 
-<header class="header-landing  header-landing_mealfeel" data-header-landing="true">
+<header class="header-landing" data-header-landing="true">
     <div class="container-landing">
         <div class="header-landing__content">
             <div class="header-landing__logo header-landing__logo_mealfeel">
@@ -104,7 +104,7 @@ $markup = PawsApplication::markup();
             <div class="header-landing-menu" data-mobile-menu-landing="true">
                 <ul class="header-landing-menu__list" data-list-mobile-menu-landing="true">
                     <li  class="header-landing-menu__item">
-                        <a href="/mealfeel_rules.pdf" class="header-landing-menu__link" target="_blank">Правила акции</a>
+                        <a href="/" class="header-landing-menu__link" target="_blank">Правила акции</a>
                     </li>
 
                     <li class="header-landing-menu__item">
@@ -124,7 +124,7 @@ $markup = PawsApplication::markup();
                     </li>
 
                     <li  class="header-landing-menu__item">
-                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="contacts">Контакты</a>
+                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="questions">Вопросы</a>
                     </li>
                 </ul>
             </div>

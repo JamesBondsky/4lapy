@@ -30,46 +30,49 @@ if ($template->hasMainWrapper()) { ?>
 </div>
 
 <div class="bottom-landing">
-    <section data-id-section-landing="prizes" class="prizes-mealfeel">
+    <section data-id-section-landing="prizes" class="prizes-ny2020">
         <div class="container-landing">
-            <div class="landing-title">
-                Призы
-            </div>
-            <div class="prizes-mealfeel__list">
+            <div class="title-ny2020">Призы</div>
+            <div class="prizes-ny2020__list">
                 <div class="item">
                     <div class="item-card">
                         <div class="item-card__img-wrap">
-                            <div class="item-card__img item-card__img_tank" style="background-image: url('/img/prizes1.png')"></div>
+                            <div class="item-card__img" style="background-image: url('/ny2020/img/prizes1.png')"></div>
                         </div>
-                        <div class="item-card__title">Бак для корма</div>
-                        <div class="item-card__descr">Выдается за&nbsp;покупку корма Mealfeel (сухого вместе с&nbsp;влажным) на&nbsp;сумму&nbsp;от&nbsp;1500&nbsp;р.<br /> Бак вмещает 3 кг&nbsp;корма.</div>
-                    </div>
-                </div>
-                <div class="item">
-                    <div class="item-card">
-                        <div class="item-card__img-wrap">
-                            <div class="item-card__img item-card__img_devices" style="background-image: url('/img/prizes2.png')"></div>
-                        </div>
-                        <div class="item-card__title">Девайсы для правильного&nbsp;питания</div>
+                        <div class="item-card__title">Термокружка</div>
                         <div class="item-card__descr">
-                            В&nbsp;розыгрыше новые подарки каждую неделю:
-                            <ul>
-                                <li><b>5&nbsp;июля</b>&nbsp;&mdash; мультиварка: готовит правильно и&nbsp;быстро</li>
-                                <li><b>12&nbsp;июля</b>&nbsp;&mdash; соковыжималка: фреш каждый день</li>
-                                <li><b>19&nbsp;июля</b>&nbsp;&mdash; фильтр для воды: чистая вода&nbsp;&mdash; основа здоровья</li>
-                                <li><b>26&nbsp;июля</b>&nbsp;&mdash; блендер: смузи и&nbsp;коктейли каждый день</li>
-                                <li><b>1&nbsp;августа</b>&nbsp;&mdash; умный сад: свежая зелень круглый год</li>
-                            </ul>
+                            Всего 200 призов<br />
+                            Разыгрываются по&nbsp;50шт<br />
+                            каждый понедельник<br />
+                            <b>9, 16, 23 и&nbsp;30 декабря.</b>
                         </div>
                     </div>
                 </div>
                 <div class="item">
                     <div class="item-card">
                         <div class="item-card__img-wrap">
-                            <div class="item-card__img item-card__img_spa" style="background-image: url('/img/prizes3.png')"></div>
+                            <div class="item-card__img" style="background-image: url('/ny2020/img/prizes2.png')"></div>
                         </div>
-                        <div class="item-card__title"><nobr>SPA-Weekend</nobr></div>
-                        <div class="item-card__descr"><nobr>SPA-weekend</nobr> на&nbsp;курорте Роза Хутор в&nbsp;Сочи на&nbsp;двоих. Срок поездки&nbsp;&mdash; 3 дня 2&nbsp;ночи. Розыгрыш 1&nbsp;августа.</div>
+                        <div class="item-card__title">Iphone 11 PRO</div>
+                        <div class="item-card__descr">
+                            Всего 4 приза<br />
+                            Разыгрывается по&nbsp;1шт каждый понедельник<br />
+                            <b>9, 16, 23 и&nbsp;30 декабря</b>
+                        </div>
+                    </div>
+                </div>
+                <div class="item">
+                    <div class="item-card">
+                        <div class="item-card__img-wrap">
+                            <div class="item-card__img" style="background-image: url('/ny2020/img/prizes3.png')"></div>
+                        </div>
+                        <div class="item-card__title">Путешествие</div>
+                        <div class="item-card__descr">
+                            <b>В&nbsp;Великий устюг на&nbsp;родину</b> Деда Мороза<br />
+                            1 приз на&nbsp;семью из&nbsp;4х человек<br />
+                            Срок поездки: х&nbsp;дней<br />
+                            <b>Розыгрыш 30 декабря</b>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -79,17 +82,18 @@ if ($template->hasMainWrapper()) { ?>
     <section data-id-section-landing="info-prizes" class="info-prizes-ny2020">
         <div class="container-landing">
             <div class="info-prizes-ny2020__content">
-                <div class="info-prizes-ny2020__message"></div>
-                <div class="info-prizes-ny2020__primary"></div>
+                <div class="info-prizes-ny2020__message">Зарегистрируйтесь и&nbsp;выигрывайте призы каждую неделю!</div>
+                <div class="info-prizes-ny2020__primary">204 победителя + 1 главный приз!</div>
             </div>
         </div>
     </section>
 
-    <section data-id-section-landing="where-buy" class="where-buy-landing">
-        <div class="where-buy-landing__map" id="mapWhereBuylanding" data-map-where-buy-landing="dark"></div>
+    <section data-id-section-landing="where-buy" class="where-buy-ny2020">
+        <div class="where-buy-ny2020__title">Где купить?</div>
+        <div class="where-buy-ny2020__map" id="mapWhereBuylanding" data-map-where-buy-landing="0"></div>
     </section>
 
-    <section data-id-section-landing="winners" class="winners-ny2020 winners-ny2020_mealfeel">
+    <section data-id-section-landing="winners" class="winners-ny2020">
         <div class="container-landing">
             <div class="winners-ny2020__inner">
                 <div class="title-ny2020">
@@ -99,414 +103,300 @@ if ($template->hasMainWrapper()) { ?>
                     <div class="b-tab-title">
                         <ul class="b-tab-title__list">
                             <li class="b-tab-title__item js-tab-item">
-                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny20200">
-                                    <span class="b-tab-title__text">05.07</span>
+                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny2020-0">
+                                    <span class="b-tab-title__text">09.12</span>
                                 </a>
                             </li>
                             <li class="b-tab-title__item js-tab-item">
-                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny20201">
-                                    <span class="b-tab-title__text">12.07</span>
+                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny2020-1">
+                                    <span class="b-tab-title__text">16.12</span>
                                 </a>
                             </li>
                             <li class="b-tab-title__item js-tab-item">
-                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny20202">
-                                    <span class="b-tab-title__text">19.07</span>
+                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny2020-2">
+                                    <span class="b-tab-title__text">23.12</span>
                                 </a>
                             </li>
                             <li class="b-tab-title__item js-tab-item">
-                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny20203">
-                                    <span class="b-tab-title__text">26.07</span>
-                                </a>
-                            </li>
-                            <li class="b-tab-title__item js-tab-item">
-                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny20204">
-                                    <span class="b-tab-title__text">01.08</span>
+                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny2020-3">
+                                    <span class="b-tab-title__text">30.12</span>
                                 </a>
                             </li>
                             <li class="b-tab-title__item js-tab-item active">
-                                <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-ny20205">
+                                <a class="b-tab-title__link b-tab-title__link_main js-tab-link" href="javascript:void(0);" data-tab="winners-ny2020-4">
                                     <span class="b-tab-title__text">Главный приз</span>
                                 </a>
                             </li>
                         </ul>
                     </div>
                     <div class="b-tab-content">
-                        <div class="b-tab-content__container js-tab-content" data-tab-content="winners-ny20200" style="display: none;">
+                        <div class="b-tab-content__container js-tab-content" data-tab-content="winners-ny2020-0" >
                             <div class="winners-ny2020__list">
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Тимошина Анна">Тимошина Анна</div>
-                                        <div class="item__dotes"></div>
+                                        <div class="item__name" title="Тимошина Анна">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Тимошина Анна
+                                        </div>
                                         <div class="item__phone">********437</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Кузин Андрей">Кузин Андрей</div>
-                                        <div class="item__dotes"></div>
+                                        <div class="item__name" title="Кузин Андрей">
+                                            <div class="item__icon item__icon_phone"></div>
+                                            Кузин Андрей
+                                        </div>
                                         <div class="item__phone">********348</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Попова Ксения">Попова Ксения</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********003</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Голубева	Наталья">Голубева	Наталья</div>
-                                        <div class="item__dotes"></div>
+                                        <div class="item__name" title="Голубева	Наталья">Голубева Наталья</div>
                                         <div class="item__phone">********647</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Христофоров	Василий">Христофоров	Василий</div>
-                                        <div class="item__dotes"></div>
+                                        <div class="item__name" title="Христофоров	Василий">Христофоров Василий</div>
                                         <div class="item__phone">********636</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Филипчук Виктор">Филипчук Виктор</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********010</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Абдулин	Роман">Абдулин	Роман</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********605</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Ляпин Валерий">Ляпин Валерий</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********613</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Прибора	Евгения">Прибора	Евгения</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********509</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Гусева Марина">Гусева Марина</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********933</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="b-tab-content__container js-tab-content" data-tab-content="winners-ny20201" style="display: none;">
+                        <div class="b-tab-content__container js-tab-content" data-tab-content="winners-ny2020-1">
                             <div class="winners-ny2020__list">
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Дорохина Елена">Дорохина Елена</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********441</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Савельев Александр">Савельев Александр</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********788</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Седых Наталья">Седых Наталья</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********820</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Баракина Наталья">Баракина Наталья</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********852</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Маховиков Владимир">Маховиков Владимир</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********390</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Балабанов Дмитрий">Балабанов Дмитрий</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********866</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Еринская Ольга">Еринская Ольга</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********027</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Лазарев Никита">Лазарев Никита</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********279</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Дубова Светлана">Дубова Светлана</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********394</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Запольских Алексей">Запольских Алексей</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********411</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="b-tab-content__container js-tab-content" data-tab-content="winners-ny20202" style="display: none;">
+                        <div class="b-tab-content__container js-tab-content" data-tab-content="winners-ny2020-2">
                             <div class="winners-ny2020__list">
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Шеренина Ольга">Шеренина Ольга</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********445</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Малахова Эльвира">Малахова Эльвира</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********131</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Пушкина Лидия">Пушкина Лидия</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********158</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Карпова Юлия">Карпова Юлия</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********902</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Леонов Алексей">Леонов Алексей</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********522</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Бабенко Алексей">Бабенко Алексей</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********119</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Джабраилова Анжела">Джабраилова Анжела</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********844</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Батманов Николай">Батманов Николай</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********422</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Коваленко Кирилл">Коваленко Кирилл</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********360</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Ремнева Мария">Ремнева Мария</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********951</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="b-tab-content__container js-tab-content" data-tab-content="winners-ny20203" style="display: none;">
+                        <div class="b-tab-content__container js-tab-content" data-tab-content="winners-ny2020-3">
                             <div class="winners-ny2020__list">
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Проценко Кирилл">Проценко Кирилл</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********208</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Ценарёва Анна">Ценарёва Анна</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********826</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Бржевская Анастасия">Бржевская Анастасия</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********000</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Милюхина Ирина">Милюхина Ирина</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********392</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Барилович Ольга">Барилович Ольга</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********365</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Суллерова Нина">Суллерова Нина</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********103</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Румянцев Сергей">Румянцев Сергей</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********634</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Алексеев Владимир">Алексеев Владимир</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********505</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Борина Ирина">Борина Ирина</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********869</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Абросимова Юлия">Абросимова Юлия</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********244</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="b-tab-content__container js-tab-content" data-tab-content="winners-ny20204" style="display: none;">
-                            <div class="winners-ny2020__list">
-                                <div class="item__wrap">
-                                    <div class="item">
-                                        <div class="item__name" title="Пайвина Ольга">Пайвина Ольга</div>
-                                        <div class="item__dotes"></div>
-                                        <div class="item__phone">********724</div>
-                                    </div>
-                                </div>
-                                <div class="item__wrap">
-                                    <div class="item">
-                                        <div class="item__name" title="Горичев Константин">Горичев Константин</div>
-                                        <div class="item__dotes"></div>
-                                        <div class="item__phone">********724</div>
-                                    </div>
-                                </div>
-                                <div class="item__wrap">
-                                    <div class="item">
-                                        <div class="item__name" title="Жильцова Ольга">Жильцова Ольга</div>
-                                        <div class="item__dotes"></div>
-                                        <div class="item__phone">********446</div>
-                                    </div>
-                                </div>
-                                <div class="item__wrap">
-                                    <div class="item">
-                                        <div class="item__name" title="Фомина Мария">Фомина Мария</div>
-                                        <div class="item__dotes"></div>
-                                        <div class="item__phone">********200</div>
-                                    </div>
-                                </div>
-                                <div class="item__wrap">
-                                    <div class="item">
-                                        <div class="item__name" title="Овчинникова Светлана">Овчинникова Светлана</div>
-                                        <div class="item__dotes"></div>
-                                        <div class="item__phone">********530</div>
-                                    </div>
-                                </div>
-                                <div class="item__wrap">
-                                    <div class="item">
-                                        <div class="item__name" title="Кананчук Руслан">Кананчук Руслан</div>
-                                        <div class="item__dotes"></div>
-                                        <div class="item__phone">********168</div>
-                                    </div>
-                                </div>
-                                <div class="item__wrap">
-                                    <div class="item">
-                                        <div class="item__name" title="Елена Евгеньевна ">Елена Евгеньевна </div>
-                                        <div class="item__dotes"></div>
-                                        <div class="item__phone">********729</div>
-                                    </div>
-                                </div>
-                                <div class="item__wrap">
-                                    <div class="item">
-                                        <div class="item__name" title="Трубачев Андрей">Трубачев Андрей</div>
-                                        <div class="item__dotes"></div>
-                                        <div class="item__phone">********464</div>
-                                    </div>
-                                </div>
-                                <div class="item__wrap">
-                                    <div class="item">
-                                        <div class="item__name" title="Муравьева Елена">Муравьева Елена</div>
-                                        <div class="item__dotes"></div>
-                                        <div class="item__phone">********301</div>
-                                    </div>
-                                </div>
-                                <div class="item__wrap">
-                                    <div class="item">
-                                        <div class="item__name" title="Мартьянова Вилена ">Мартьянова Вилена </div>
-                                        <div class="item__dotes"></div>
-                                        <div class="item__phone">********545</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="b-tab-content__container js-tab-content active" data-tab-content="winners-ny20205" style="display: block;">
+                        <div class="b-tab-content__container js-tab-content active" data-tab-content="winners-ny2020-4">
                             <div class="winners-ny2020__list">
                                 <div class="item__wrap">
                                     <div class="item">
                                         <div class="item__name" title="Щербакова Ирина">Щербакова Ирина</div>
-                                        <div class="item__dotes"></div>
                                         <div class="item__phone">********804</div>
                                     </div>
                                 </div>
