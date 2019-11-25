@@ -76,7 +76,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 }
                 //@todo исправить как только реализуют метод update
                 \CIBlockElement::SetPropertyValuesEx($request->get('id'), 0, ['FREE_SITS' => $newSits]);
-                \CEvent::Send('GROOMING_SERVICE', 's1', [
+                \CEvent::Send('LECTION_SERVICE', 's1', [
                     'NAME'  => $request->get('name'),
                     'PHONE' => $request->get('phone'),
                     'DATE'  => $request->get('date'),
@@ -204,6 +204,9 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                     'DATE'  => $request->get('date'),
                     'TIME'  => $request->get('time'),
                     'EMAIL' => $request->get('email'),
+                    'ANIMAL' => $request->get('animal'),
+                    'BREED' => $request->get('breed'),
+                    'SERVICE' => $request->get('service'),
                 ]);
             }
         } catch (\Exception $e) {
