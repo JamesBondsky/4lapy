@@ -1290,7 +1290,13 @@ class OrderStorage
             $orderHouse = $saveAddress->getHouse();
             $this->setStreet($orderStreet);
             $this->setHouse($orderHouse);
-            $this->addressId = 0;
+
+            $this->setBuilding($saveAddress->getHousing())
+                ->setFloor($saveAddress->getFloor())
+                ->setApartment($saveAddress->getFlat())
+                ->setPorch($saveAddress->getEntrance());
+
+            //$this->addressId = 0;
         }
 
         $strAddress = sprintf('%s, %s, %s', $city, $orderStreet, $orderHouse);
@@ -1327,7 +1333,13 @@ class OrderStorage
             $orderHouse = $saveAddress->getHouse();
             $this->setStreet($orderStreet);
             $this->setHouse($orderHouse);
-            $this->addressId = 0;
+            $this->setBuilding($saveAddress->getHousing())
+                ->setFloor($saveAddress->getFloor())
+                ->setApartment($saveAddress->getFlat())
+                ->setPorch($saveAddress->getEntrance());
+
+            //$this->addressId = 0;
+
         }
 
         $strAddress = sprintf('%s, %s, %s', $city, $orderStreet, $orderHouse);
