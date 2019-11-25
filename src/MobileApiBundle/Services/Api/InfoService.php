@@ -447,7 +447,7 @@ class InfoService implements LoggerAwareInterface
             if (!array_key_exists($property['VALUE'], self::$cache)) {
                 $offer = (new OfferQuery())->withFilter(['=XML_ID' => $offerId])->exec()->current();
                 $product = $offer->getProduct();
-                self::$cache[$offerId] = $this->productService->convertToFullProduct($product, $offer, true);
+                self::$cache[$offerId] = $this->productService->convertToFullProduct($product, $offer, true, false);
             }
 
             $products->add(self::$cache[$offerId]);
