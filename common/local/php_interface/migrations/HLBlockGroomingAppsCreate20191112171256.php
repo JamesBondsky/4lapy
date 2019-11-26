@@ -147,6 +147,69 @@ class HLBlockGroomingAppsCreate20191112171256 extends SprintMigrationBase
                 'ru' => 'Email',
             ],
         ],
+        [
+            'FIELD_NAME'        => 'UF_ANIMAL',
+            'USER_TYPE_ID'      => 'string',
+            'XML_ID'            => 'UF_ANIMAL',
+            'SORT'              => 20,
+            'MULTIPLE'          => 'N',
+            'MANDATORY'         => 'N',
+            'SHOW_FILTER'       => 'Y',
+            'SHOW_IN_LIST'      => 'Y',
+            'EDIT_IN_LIST'      => 'Y',
+            'IS_SEARCHABLE'     => 'N',
+            'EDIT_FORM_LABEL'   => [
+                'ru' => 'Вид животного',
+            ],
+            'LIST_COLUMN_LABEL' => [
+                'ru' => 'Вид животного',
+            ],
+            'LIST_FILTER_LABEL' => [
+                'ru' => 'Вид животного',
+            ],
+        ],
+        [
+            'FIELD_NAME'        => 'UF_BREED',
+            'USER_TYPE_ID'      => 'string',
+            'XML_ID'            => 'UF_BREED',
+            'SORT'              => 20,
+            'MULTIPLE'          => 'N',
+            'MANDATORY'         => 'N',
+            'SHOW_FILTER'       => 'Y',
+            'SHOW_IN_LIST'      => 'Y',
+            'EDIT_IN_LIST'      => 'Y',
+            'IS_SEARCHABLE'     => 'N',
+            'EDIT_FORM_LABEL'   => [
+                'ru' => 'Порода',
+            ],
+            'LIST_COLUMN_LABEL' => [
+                'ru' => 'Порода',
+            ],
+            'LIST_FILTER_LABEL' => [
+                'ru' => 'Порода',
+            ],
+        ],
+        [
+            'FIELD_NAME'        => 'UF_SERVICE',
+            'USER_TYPE_ID'      => 'string',
+            'XML_ID'            => 'UF_SERVICE',
+            'SORT'              => 20,
+            'MULTIPLE'          => 'N',
+            'MANDATORY'         => 'N',
+            'SHOW_FILTER'       => 'Y',
+            'SHOW_IN_LIST'      => 'Y',
+            'EDIT_IN_LIST'      => 'Y',
+            'IS_SEARCHABLE'     => 'N',
+            'EDIT_FORM_LABEL'   => [
+                'ru' => 'Услуга',
+            ],
+            'LIST_COLUMN_LABEL' => [
+                'ru' => 'Услуга',
+            ],
+            'LIST_FILTER_LABEL' => [
+                'ru' => 'Услуга',
+            ],
+        ],
     ];
     
     public function up()
