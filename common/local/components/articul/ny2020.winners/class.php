@@ -20,7 +20,7 @@ class Ny20202WinnersComponent extends CBitrixComponent
     /** @var DataManager */
     protected $dataManager;
 
-    public function onPrepareComponentParams($arParams)
+    public function onPrepareComponentParams($arParams): array
     {
         $arParams['CACHE_TIME'] = $arParams['CACHE_TIME'] ?? 86400;
         return parent::onPrepareComponentParams($arParams);
@@ -60,7 +60,6 @@ class Ny20202WinnersComponent extends CBitrixComponent
 
     protected function getPeriods(): array
     {
-
         try {
             $result = [];
             global $DB;
