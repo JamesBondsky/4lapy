@@ -24,7 +24,9 @@ class ChanceService
 
     protected const HL_BLOCK_NAME = 'NewYearUserChance';
 
-    protected const PERIODS = [
+//Ny2020Winners
+
+    public const PERIODS = [
         [
             'from' => '01.10.2019 00:00:00',
             'to' => '08.12.2019 23:59:59',
@@ -177,6 +179,11 @@ class ChanceService
 
         } catch (Exception $e) {
         }
+    }
+
+    public function getPeriods(): array
+    {
+        return $this->periods;
     }
 
     /**

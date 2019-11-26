@@ -11,78 +11,78 @@ $APPLICATION->SetPageProperty('description', '');
 $APPLICATION->SetTitle('Путешествие на 4-х человек на родину Деда Мороза!');
 ?>
 
-<?if ($USER->IsAuthorized()) {?>
+<?php if ($USER->IsAuthorized()) { ?>
 
-<section id="participate" data-id-section-landing="participate" class="participate-ny2020">
+  <section id="participate" data-id-section-landing="participate" class="participate-ny2020">
     <div class="participate-ny2020__container" data-wrap-data-form-participate-ny2020="true">
-        <? $arUser = \CUser::GetById($USER->GetID())->Fetch(); ?>
-        <div class="title-ny2020 title-ny2020_white">Принять участие</div>
+        <?php $arUser = \CUser::GetById($USER->GetID())->Fetch(); ?>
+      <div class="title-ny2020 title-ny2020_white">Принять участие</div>
 
-        <div class="participate-ny2020__form-info">Все поля обязательны для заполнения</div>
-        <form data-form-participate-ny2020="true"
-              class="participate-ny2020__form js-form-validation"
-              method="post"
-              action="/ajax/landing/request/add/"
-              name=""
-              enctype="multipart/form-data">
-            <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD); ?>
+      <div class="participate-ny2020__form-info">Все поля обязательны для заполнения</div>
+      <form data-form-participate-ny2020="true"
+            class="participate-ny2020__form js-form-validation"
+            method="post"
+            action="/ajax/landing/request/add/"
+            name=""
+            enctype="multipart/form-data">
+          <?php $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD); ?>
 
-            <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
-            <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$mealfeelLanding ?>">
+        <input class="js-no-valid" type="hidden" name="<?= $token['field'] ?>" value="<?= $token['token'] ?>">
+        <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$mealfeelLanding ?>">
 
-            <div class="form-group">
-                <input type="text" id="SURNAME_REG_CHECK_NY" class="js-small-input" name="surname" value="<?=$arUser['LAST_NAME']?:''?>" placeholder="Фамилия" >
-                <div class="b-error">
-                    <span class="js-message"></span>
-                </div>
-            </div>
-            <div class="form-group">
-                <input type="text" id="NAME_REG_CHECK_NY" class="js-small-input" name="name" value="<?=$arUser['NAME']?:''?>" placeholder="Имя" >
-                <div class="b-error">
-                    <span class="js-message"></span>
-                </div>
-            </div>
-            <div class="form-group">
-                <input type="tel" id="PHONE_REG_CHECK_NY" name="phone" value="<?=$arUser['PERSONAL_PHONE']?:''?>" placeholder="Телефон" >
-                <div class="b-error">
-                    <span class="js-message"></span>
-                </div>
-            </div>
-            <div class="form-group">
-                <input type="emailLanding" id="EMAIL_REG_CHECK_NY" name="email" value="<?=$arUser['EMAIL']?:''?>" placeholder="E-mail" >
-                <div class="b-error">
-                    <span class="js-message"></span>
-                </div>
-            </div>
-
-            <div class="read-rules">
-                <input type="checkbox" id="READ_RULES_REG_CHECK_NY" name="rules" value="Y" checked>
-                <label for="READ_RULES_REG_CHECK_NY"><span></span> <a href="/" target="_blank">с правилами акции ознакомлен</a></label>
-                <div class="b-error">
-                    <span class="js-message"></span>
-                </div>
-            </div>
-
-            <div class="participate-ny2020__btn-form">
-                <button type="submit" class="participate-ny2020__btn" >Отправить</button>
-            </div>
-        </form>
-
-        <div class="participate-ny2020__primary">
-            <p>Личные данные, вводимые при регистрации в&nbsp;акции, должны совпадать с&nbsp;личными данными, к&nbsp;которым привязана бонусная карта Четыре лапы, также используемая для&nbsp;регистрации в&nbsp;акции.</p>
-            <p>Участники, у&nbsp;которых указанная информация не&nbsp;совпадает, автоматически выбывают из&nbsp;общего списка зарегистрированных участников для начисления бонусов и&nbsp;розыгрыша призов.</p>
+        <div class="form-group">
+          <input type="text" id="SURNAME_REG_CHECK_NY" class="js-small-input" name="surname" value="<?= $arUser['LAST_NAME'] ?: '' ?>" placeholder="Фамилия">
+          <div class="b-error">
+            <span class="js-message"></span>
+          </div>
         </div>
+        <div class="form-group">
+          <input type="text" id="NAME_REG_CHECK_NY" class="js-small-input" name="name" value="<?= $arUser['NAME'] ?: '' ?>" placeholder="Имя">
+          <div class="b-error">
+            <span class="js-message"></span>
+          </div>
+        </div>
+        <div class="form-group">
+          <input type="tel" id="PHONE_REG_CHECK_NY" name="phone" value="<?= $arUser['PERSONAL_PHONE'] ?: '' ?>" placeholder="Телефон">
+          <div class="b-error">
+            <span class="js-message"></span>
+          </div>
+        </div>
+        <div class="form-group">
+          <input type="emailLanding" id="EMAIL_REG_CHECK_NY" name="email" value="<?= $arUser['EMAIL'] ?: '' ?>" placeholder="E-mail">
+          <div class="b-error">
+            <span class="js-message"></span>
+          </div>
+        </div>
+
+        <div class="read-rules">
+          <input type="checkbox" id="READ_RULES_REG_CHECK_NY" name="rules" value="Y" checked>
+          <label for="READ_RULES_REG_CHECK_NY"><span></span> <a href="/" target="_blank">с правилами акции ознакомлен</a></label>
+          <div class="b-error">
+            <span class="js-message"></span>
+          </div>
+        </div>
+
+        <div class="participate-ny2020__btn-form">
+          <button type="submit" class="participate-ny2020__btn">Отправить</button>
+        </div>
+      </form>
+
+      <div class="participate-ny2020__primary">
+        <p>Личные данные, вводимые при регистрации в&nbsp;акции, должны совпадать с&nbsp;личными данными, к&nbsp;которым привязана бонусная карта Четыре лапы, также используемая для&nbsp;регистрации в&nbsp;акции.</p>
+        <p>Участники, у&nbsp;которых указанная информация не&nbsp;совпадает, автоматически выбывают из&nbsp;общего списка зарегистрированных участников для начисления бонусов и&nbsp;розыгрыша призов.</p>
+      </div>
     </div>
     <div class="response-form-participate-ny2020" data-response-form-participate-ny2020="true">
-        <div class="response-form-participate-ny2020__title">Спасибо!</div>
-        <div class="response-form-participate-ny2020__subtitle">За участие в акции</div>
-        <div class="response-form-participate-ny2020__info">
-            <div class="response-form-participate-ny2020__odds">Мои шансы</div>
-            <div class="response-form-participate-ny2020__count" data-odds-form-participate-ny2020="true">0</div>
-            <div class="response-form-participate-ny2020__icon"></div>
-        </div>
+      <div class="response-form-participate-ny2020__title">Спасибо!</div>
+      <div class="response-form-participate-ny2020__subtitle">За участие в акции</div>
+      <div class="response-form-participate-ny2020__info">
+        <div class="response-form-participate-ny2020__odds">Мои шансы</div>
+        <div class="response-form-participate-ny2020__count" data-odds-form-participate-ny2020="true">0</div>
+        <div class="response-form-participate-ny2020__icon"></div>
+      </div>
     </div>
-</section>
-<? } ?>
+  </section>
+<?php } ?>
 
 <?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'; ?>
