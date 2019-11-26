@@ -17,12 +17,11 @@ $APPLICATION->SetTitle('Путешествие на 4-х человек на р�
     <div class="participate-ny2020__container" data-wrap-data-form-participate-ny2020="true">
         <?php $arUser = \CUser::GetById($USER->GetID())->Fetch(); ?>
       <div class="title-ny2020 title-ny2020_white">Принять участие</div>
-
       <div class="participate-ny2020__form-info">Все поля обязательны для заполнения</div>
       <form data-form-participate-ny2020="true"
             class="participate-ny2020__form js-form-validation"
             method="post"
-            action="/ajax/landing/request/add/"
+            action="/ajax/personal/chance/register/"
             name=""
             enctype="multipart/form-data">
           <?php $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD); ?>
@@ -31,25 +30,25 @@ $APPLICATION->SetTitle('Путешествие на 4-х человек на р�
         <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$mealfeelLanding ?>">
 
         <div class="form-group">
-          <input type="text" id="SURNAME_REG_CHECK_NY" class="js-small-input" name="surname" value="<?= $arUser['LAST_NAME'] ?: '' ?>" placeholder="Фамилия">
+          <input type="text" id="SURNAME_REG_CHECK_NY" class="js-small-input" name="lastname" value="<?= $arUser['LAST_NAME'] ?: '' ?>" placeholder="Фамилия" <?= (!empty($arUser['LAST_NAME'])) ? 'disabled="disabled"' : '' ?>>
           <div class="b-error">
             <span class="js-message"></span>
           </div>
         </div>
         <div class="form-group">
-          <input type="text" id="NAME_REG_CHECK_NY" class="js-small-input" name="name" value="<?= $arUser['NAME'] ?: '' ?>" placeholder="Имя">
+          <input type="text" id="NAME_REG_CHECK_NY" class="js-small-input" name="name" value="<?= $arUser['NAME'] ?: '' ?>" placeholder="Имя" <?= (!empty($arUser['NAME'])) ? 'disabled="disabled"' : '' ?>>
           <div class="b-error">
             <span class="js-message"></span>
           </div>
         </div>
         <div class="form-group">
-          <input type="tel" id="PHONE_REG_CHECK_NY" name="phone" value="<?= $arUser['PERSONAL_PHONE'] ?: '' ?>" placeholder="Телефон">
+          <input type="tel" id="PHONE_REG_CHECK_NY" name="phone" value="<?= $arUser['PERSONAL_PHONE'] ?: '' ?>" placeholder="Телефон" disabled="disabled" class="js-no-valid">
           <div class="b-error">
             <span class="js-message"></span>
           </div>
         </div>
         <div class="form-group">
-          <input type="emailLanding" id="EMAIL_REG_CHECK_NY" name="email" value="<?= $arUser['EMAIL'] ?: '' ?>" placeholder="E-mail">
+          <input type="emailLanding" id="EMAIL_REG_CHECK_NY" name="email" value="<?= $arUser['EMAIL'] ?: '' ?>" placeholder="E-mail" <?= (!empty($arUser['EMAIL'])) ? 'disabled="disabled"' : '' ?>>
           <div class="b-error">
             <span class="js-message"></span>
           </div>
