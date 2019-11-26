@@ -50,7 +50,16 @@ class GroomingAppsTable extends Main\Entity\DataManager
             ),
             'UF_EMAIL' => array(
                 'data_type' => 'string',
-            )
+            ),
+            'UF_ANIMAL' => array(
+                'data_type' => 'string',
+            ),
+            'UF_BREED' => array(
+                'data_type' => 'string',
+            ),
+            'UF_SERVICE' => array(
+                'data_type' => 'string',
+            ),
         );
     }
 }
