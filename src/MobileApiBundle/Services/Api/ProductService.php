@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\Loader;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
@@ -69,6 +70,7 @@ use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
+use Articul\Main\Orm\CommentsTable;
 
 
 class ProductService
@@ -107,6 +109,12 @@ class ProductService
 
     /** @var StampService */
     private $stampService;
+    
+    /** @var array */
+    private $productStars = [];
+    
+    /** @var int */
+    private $totalComments;
 
 
     /**
@@ -438,6 +446,17 @@ class ProductService
             ->setBundle($this->getBundle($offer));                       // с этим товаром покупают
             $fullProduct->setPictureList($this->getPictureList($product, $offer));           // картинки
 
+        $fullProduct->setComments($this->getProductCommentsById($product->getId()));
+        
+        if ($this->productStars) {
+            $fullProduct->setTotalStars(array_sum($this->productStars)/2);
+        }
+        
+        if ($this->totalComments) {
+            $fullProduct->setTotalComments($this->totalComments);
+        }
+        
+
         if ($product->getNormsOfUse()->getText() || $product->getLayoutRecommendations()->getText()) {
             if ($product->getLayoutRecommendations()->getText() != '' && $product->getLayoutRecommendations()->getText() != null) {
                 $fullProduct->setNutritionRecommendations($product->getLayoutRecommendations()->getText());
@@ -659,8 +678,8 @@ class ProductService
             ->setIsAvailable($shortProduct->getIsAvailable())
             ->setPickupOnly($shortProduct->getPickupOnly())
             ->setInPack($shortProduct->getInPack())
-            ->setStampLevels($shortProduct->getStampLevels());
-        $fullProduct->setColor($shortProduct->getColor());
+            ->setStampLevels($shortProduct->getStampLevels())
+            ->setColor($shortProduct->getColor());
 
         if ($needPackingVariants) {
             if ($hasOnlyColourCombinations) {
@@ -1216,5 +1235,79 @@ class ProductService
         }
 
         return $stampCategories;
+    }
+    
+    private function getProductCommentsById($id)
+    {
+        try {
+            Loader::includeModule('articul.main');
+    
+            $comments = CommentsTable::query()
+                ->setSelect(['stars' => 'UF_MARK', 'text' => 'UF_TEXT', 'date' => 'UF_DATE', 'images' => 'UF_PHOTOS', 'author' => 'UF_USER_ID'])
+                ->setFilter(['=UF_OBJECT_ID' => $id, '=UF_ACTIVE' => 1])
+                ->setLimit(2)
+                ->exec()
+                ->fetchAll();
+    
+            $result = $this->buildCommentsFieldResult($comments);
+
+            $this->totalComments = count($result);
+            return $result;
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+    
+    private function buildCommentsFieldResult($comments)
+    {
+        foreach ($comments as &$comment) {
+            $this->productStars[] = $comment['stars'];
+            
+            $serializedId = unserialize($comment['images']);
+
+            $paths = $this->getImagePaths($serializedId);
+    
+            $comment['author'] = $this->getUserById($comment['author']);
+            $comment['images'] = $this->getImagePaths($serializedId); //$this->codeImagesToBase64($paths);
+        }
+    
+        return $comments;
+    }
+    
+    private function getImagePaths($serializedId)
+    {
+        $paths = [];
+        
+        foreach ($serializedId as $key => $imgId) {
+            $paths[] = getenv('SITE_URL') . \CFile::GetPath($imgId);
+        }
+        
+        return $paths;
+    }
+    
+    private function codeImagesToBase64($paths)
+    {
+        $result = [];
+
+        foreach ($paths as $path) {
+            $type = pathinfo($path, PATHINFO_EXTENSION);
+            $data = file_get_contents($_SERVER['DOCUMENT_ROOT'] . $path);
+            $result[] = 'data:image/' . $type . ';base64,' . base64_encode($data);
+        }
+        
+        return $result;
+    }
+    
+    private function getUserById($id)
+    {
+        $user = \Bitrix\Main\UserTable::query()
+            ->setSelect(['NAME', 'LAST_NAME'])
+            ->setFilter(['=ID' => $id])
+            ->exec()
+            ->fetch();
+        
+        $result = $user['NAME'] . ' ' . $user['LAST_NAME'];
+        
+        return $result;
     }
 }
