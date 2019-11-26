@@ -138,7 +138,7 @@ if ($template->hasMainWrapper()) { ?>
                                             <div class="item__icon item__icon_cup"></div>
                                             Тимошина Анна
                                         </div>
-                                        <div class="item__phone">********437</div>
+                                        <div class="item__phone">*(***)****437</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
@@ -147,55 +147,78 @@ if ($template->hasMainWrapper()) { ?>
                                             <div class="item__icon item__icon_phone"></div>
                                             Кузин Андрей
                                         </div>
-                                        <div class="item__phone">********348</div>
+                                        <div class="item__phone">*(***)****348</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Попова Ксения">Попова Ксения</div>
-                                        <div class="item__phone">********003</div>
+                                        <div class="item__name" title="Попова Ксения">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Попова Ксения
+                                        </div>
+                                        <div class="item__phone">*(***)****003</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Голубева	Наталья">Голубева Наталья</div>
-                                        <div class="item__phone">********647</div>
+                                        <div class="item__name" title="Голубева	Наталья">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Голубева Наталья
+                                        </div>
+                                        <div class="item__phone">*(***)****647</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Христофоров	Василий">Христофоров Василий</div>
-                                        <div class="item__phone">********636</div>
+                                        <div class="item__name" title="Христофоров	Василий">
+                                            <div class="item__icon item__icon_phone"></div>
+                                            Христофоров Василий
+                                        </div>
+                                        <div class="item__phone">*(***)****636</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Филипчук Виктор">Филипчук Виктор</div>
-                                        <div class="item__phone">********010</div>
+                                        <div class="item__name" title="Филипчук Виктор">
+                                            <div class="item__icon item__icon_phone"></div>
+                                            Филипчук Виктор
+                                        </div>
+                                        <div class="item__phone">*(***)****010</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Абдулин	Роман">Абдулин	Роман</div>
-                                        <div class="item__phone">********605</div>
+                                        <div class="item__name" title="Абдулин	Роман">
+                                            <div class="item__icon item__icon_cup"></div>Абдулин	Роман
+                                        </div>
+                                        <div class="item__phone">*(***)****605</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Ляпин Валерий">Ляпин Валерий</div>
-                                        <div class="item__phone">********613</div>
+                                        <div class="item__name" title="Ляпин Валерий">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Ляпин Валерий
+                                        </div>
+                                        <div class="item__phone">*(***)****613</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Прибора	Евгения">Прибора	Евгения</div>
-                                        <div class="item__phone">********509</div>
+                                        <div class="item__name" title="Прибора	Евгения">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Прибора Евгения
+                                        </div>
+                                        <div class="item__phone">*(***)****509</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Гусева Марина">Гусева Марина</div>
-                                        <div class="item__phone">********933</div>
+                                        <div class="item__name" title="Гусева Марина">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Гусева Марина
+                                        </div>
+                                        <div class="item__phone">*(***)****933</div>
                                     </div>
                                 </div>
                             </div>
@@ -204,62 +227,91 @@ if ($template->hasMainWrapper()) { ?>
                             <div class="winners-ny2020__list">
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Дорохина Елена">Дорохина Елена</div>
-                                        <div class="item__phone">********441</div>
+                                        <div class="item__name" title="Тимошина Анна">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Тимошина Анна 1
+                                        </div>
+                                        <div class="item__phone">*(***)****437</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Савельев Александр">Савельев Александр</div>
-                                        <div class="item__phone">********788</div>
+                                        <div class="item__name" title="Кузин Андрей">
+                                            <div class="item__icon item__icon_phone"></div>
+                                            Кузин Андрей
+                                        </div>
+                                        <div class="item__phone">*(***)****348</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Седых Наталья">Седых Наталья</div>
-                                        <div class="item__phone">********820</div>
+                                        <div class="item__name" title="Попова Ксения">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Попова Ксения
+                                        </div>
+                                        <div class="item__phone">*(***)****003</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Баракина Наталья">Баракина Наталья</div>
-                                        <div class="item__phone">********852</div>
+                                        <div class="item__name" title="Голубева	Наталья">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Голубева Наталья
+                                        </div>
+                                        <div class="item__phone">*(***)****647</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Маховиков Владимир">Маховиков Владимир</div>
-                                        <div class="item__phone">********390</div>
+                                        <div class="item__name" title="Христофоров	Василий">
+                                            <div class="item__icon item__icon_phone"></div>
+                                            Христофоров Василий
+                                        </div>
+                                        <div class="item__phone">*(***)****636</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Балабанов Дмитрий">Балабанов Дмитрий</div>
-                                        <div class="item__phone">********866</div>
+                                        <div class="item__name" title="Филипчук Виктор">
+                                            <div class="item__icon item__icon_phone"></div>
+                                            Филипчук Виктор
+                                        </div>
+                                        <div class="item__phone">*(***)****010</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Еринская Ольга">Еринская Ольга</div>
-                                        <div class="item__phone">********027</div>
+                                        <div class="item__name" title="Абдулин	Роман">
+                                            <div class="item__icon item__icon_cup"></div>Абдулин	Роман
+                                        </div>
+                                        <div class="item__phone">*(***)****605</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Лазарев Никита">Лазарев Никита</div>
-                                        <div class="item__phone">********279</div>
+                                        <div class="item__name" title="Ляпин Валерий">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Ляпин Валерий
+                                        </div>
+                                        <div class="item__phone">*(***)****613</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Дубова Светлана">Дубова Светлана</div>
-                                        <div class="item__phone">********394</div>
+                                        <div class="item__name" title="Прибора	Евгения">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Прибора Евгения
+                                        </div>
+                                        <div class="item__phone">*(***)****509</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Запольских Алексей">Запольских Алексей</div>
-                                        <div class="item__phone">********411</div>
+                                        <div class="item__name" title="Гусева Марина">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Гусева Марина
+                                        </div>
+                                        <div class="item__phone">*(***)****933</div>
                                     </div>
                                 </div>
                             </div>
@@ -268,62 +320,91 @@ if ($template->hasMainWrapper()) { ?>
                             <div class="winners-ny2020__list">
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Шеренина Ольга">Шеренина Ольга</div>
-                                        <div class="item__phone">********445</div>
+                                        <div class="item__name" title="Тимошина Анна">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Тимошина Анна 2
+                                        </div>
+                                        <div class="item__phone">*(***)****437</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Малахова Эльвира">Малахова Эльвира</div>
-                                        <div class="item__phone">********131</div>
+                                        <div class="item__name" title="Кузин Андрей">
+                                            <div class="item__icon item__icon_phone"></div>
+                                            Кузин Андрей
+                                        </div>
+                                        <div class="item__phone">*(***)****348</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Пушкина Лидия">Пушкина Лидия</div>
-                                        <div class="item__phone">********158</div>
+                                        <div class="item__name" title="Попова Ксения">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Попова Ксения
+                                        </div>
+                                        <div class="item__phone">*(***)****003</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Карпова Юлия">Карпова Юлия</div>
-                                        <div class="item__phone">********902</div>
+                                        <div class="item__name" title="Голубева	Наталья">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Голубева Наталья
+                                        </div>
+                                        <div class="item__phone">*(***)****647</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Леонов Алексей">Леонов Алексей</div>
-                                        <div class="item__phone">********522</div>
+                                        <div class="item__name" title="Христофоров	Василий">
+                                            <div class="item__icon item__icon_phone"></div>
+                                            Христофоров Василий
+                                        </div>
+                                        <div class="item__phone">*(***)****636</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Бабенко Алексей">Бабенко Алексей</div>
-                                        <div class="item__phone">********119</div>
+                                        <div class="item__name" title="Филипчук Виктор">
+                                            <div class="item__icon item__icon_phone"></div>
+                                            Филипчук Виктор
+                                        </div>
+                                        <div class="item__phone">*(***)****010</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Джабраилова Анжела">Джабраилова Анжела</div>
-                                        <div class="item__phone">********844</div>
+                                        <div class="item__name" title="Абдулин	Роман">
+                                            <div class="item__icon item__icon_cup"></div>Абдулин	Роман
+                                        </div>
+                                        <div class="item__phone">*(***)****605</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Батманов Николай">Батманов Николай</div>
-                                        <div class="item__phone">********422</div>
+                                        <div class="item__name" title="Ляпин Валерий">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Ляпин Валерий
+                                        </div>
+                                        <div class="item__phone">*(***)****613</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Коваленко Кирилл">Коваленко Кирилл</div>
-                                        <div class="item__phone">********360</div>
+                                        <div class="item__name" title="Прибора	Евгения">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Прибора Евгения
+                                        </div>
+                                        <div class="item__phone">*(***)****509</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Ремнева Мария">Ремнева Мария</div>
-                                        <div class="item__phone">********951</div>
+                                        <div class="item__name" title="Гусева Марина">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Гусева Марина
+                                        </div>
+                                        <div class="item__phone">*(***)****933</div>
                                     </div>
                                 </div>
                             </div>
@@ -332,62 +413,91 @@ if ($template->hasMainWrapper()) { ?>
                             <div class="winners-ny2020__list">
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Проценко Кирилл">Проценко Кирилл</div>
-                                        <div class="item__phone">********208</div>
+                                        <div class="item__name" title="Тимошина Анна">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Тимошина Анна 3
+                                        </div>
+                                        <div class="item__phone">*(***)****437</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Ценарёва Анна">Ценарёва Анна</div>
-                                        <div class="item__phone">********826</div>
+                                        <div class="item__name" title="Кузин Андрей">
+                                            <div class="item__icon item__icon_phone"></div>
+                                            Кузин Андрей
+                                        </div>
+                                        <div class="item__phone">*(***)****348</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Бржевская Анастасия">Бржевская Анастасия</div>
-                                        <div class="item__phone">********000</div>
+                                        <div class="item__name" title="Попова Ксения">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Попова Ксения
+                                        </div>
+                                        <div class="item__phone">*(***)****003</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Милюхина Ирина">Милюхина Ирина</div>
-                                        <div class="item__phone">********392</div>
+                                        <div class="item__name" title="Голубева	Наталья">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Голубева Наталья
+                                        </div>
+                                        <div class="item__phone">*(***)****647</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Барилович Ольга">Барилович Ольга</div>
-                                        <div class="item__phone">********365</div>
+                                        <div class="item__name" title="Христофоров	Василий">
+                                            <div class="item__icon item__icon_phone"></div>
+                                            Христофоров Василий
+                                        </div>
+                                        <div class="item__phone">*(***)****636</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Суллерова Нина">Суллерова Нина</div>
-                                        <div class="item__phone">********103</div>
+                                        <div class="item__name" title="Филипчук Виктор">
+                                            <div class="item__icon item__icon_phone"></div>
+                                            Филипчук Виктор
+                                        </div>
+                                        <div class="item__phone">*(***)****010</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Румянцев Сергей">Румянцев Сергей</div>
-                                        <div class="item__phone">********634</div>
+                                        <div class="item__name" title="Абдулин	Роман">
+                                            <div class="item__icon item__icon_cup"></div>Абдулин	Роман
+                                        </div>
+                                        <div class="item__phone">*(***)****605</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Алексеев Владимир">Алексеев Владимир</div>
-                                        <div class="item__phone">********505</div>
+                                        <div class="item__name" title="Ляпин Валерий">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Ляпин Валерий
+                                        </div>
+                                        <div class="item__phone">*(***)****613</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Борина Ирина">Борина Ирина</div>
-                                        <div class="item__phone">********869</div>
+                                        <div class="item__name" title="Прибора	Евгения">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Прибора Евгения
+                                        </div>
+                                        <div class="item__phone">*(***)****509</div>
                                     </div>
                                 </div>
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Абросимова Юлия">Абросимова Юлия</div>
-                                        <div class="item__phone">********244</div>
+                                        <div class="item__name" title="Гусева Марина">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Гусева Марина
+                                        </div>
+                                        <div class="item__phone">*(***)****933</div>
                                     </div>
                                 </div>
                             </div>
@@ -396,8 +506,65 @@ if ($template->hasMainWrapper()) { ?>
                             <div class="winners-ny2020__list">
                                 <div class="item__wrap">
                                     <div class="item">
-                                        <div class="item__name" title="Щербакова Ирина">Щербакова Ирина</div>
-                                        <div class="item__phone">********804</div>
+                                        <div class="item__name" title="Иванова Ольга">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Иванова Ольга
+                                        </div>
+                                        <div class="item__phone">*(***)****437</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Седов Максим">
+                                            <div class="item__icon item__icon_phone"></div>
+                                            Седов Максим
+                                        </div>
+                                        <div class="item__phone">*(***)****437</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Кириллов Олег">
+                                            <div class="item__icon item__icon_phone"></div>
+                                            Кириллов Олег
+                                        </div>
+                                        <div class="item__phone">*(***)****437</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Григорий Лялин">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Григорий Лялин
+                                        </div>
+                                        <div class="item__phone">*(***)****437</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Сандалова Александр">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Сандалова Александр
+                                        </div>
+                                        <div class="item__phone">*(***)****437</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Пронина Ирин">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Пронина Ирин
+                                        </div>
+                                        <div class="item__phone">*(***)****437</div>
+                                    </div>
+                                </div>
+                                <div class="item__wrap">
+                                    <div class="item">
+                                        <div class="item__name" title="Иванова Ольга">
+                                            <div class="item__icon item__icon_cup"></div>
+                                            Иванова Ольга
+                                        </div>
+                                        <div class="item__phone">*(***)****437</div>
                                     </div>
                                 </div>
                             </div>
