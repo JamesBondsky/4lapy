@@ -10,7 +10,6 @@ use Bitrix\Highloadblock\HighloadBlockTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use Sprint\Migration\Helpers\HlblockHelper;
 
 /** @noinspection AutoloadingIssuesInspection */
 
@@ -23,7 +22,7 @@ class Ny20202WinnersComponent extends CBitrixComponent
 
     public function onPrepareComponentParams($arParams)
     {
-        $arParams['CACHE_TIME'] = $arParams['CACHE_TIME'] ?? 0;
+        $arParams['CACHE_TIME'] = $arParams['CACHE_TIME'] ?? 86400;
         return parent::onPrepareComponentParams($arParams);
     }
 
@@ -61,16 +60,20 @@ class Ny20202WinnersComponent extends CBitrixComponent
 
     protected function getPeriods(): array
     {
-        $result = [];
 
-        global $DB;
-        $res = $DB->Query(sprintf('select ID, VALUE, XML_ID from b_user_field_enum where USER_FIELD_ID = %s', $this->getPeriodFieldId()));
+        try {
+            $result = [];
+            global $DB;
+            $res = $DB->Query(sprintf('select ID, VALUE, XML_ID from b_user_field_enum where USER_FIELD_ID = %s', $this->getPeriodFieldId()));
 
-        while ($a = $res->Fetch()) {
-            $result[$a['ID']] = $a['VALUE'];
+            while ($a = $res->Fetch()) {
+                $result[$a['ID']] = $a['VALUE'];
+            }
+
+            return $result;
+        } catch (Exception $e) {
+            return [];
         }
-
-        return $result;
     }
 
     /**
@@ -86,8 +89,6 @@ class Ny20202WinnersComponent extends CBitrixComponent
             ->exec()
             ->fetch();
 
-        $entityId  = 'HLBLOCK_' . $entity['ID'];
-
         global $DB;
         $res = $DB->Query(sprintf('select ID from b_user_field where ENTITY_ID = \'%s\' and FIELD_NAME = \'%s\'', 'HLBLOCK_' . $entity['ID'], 'UF_PERIOD'));
 
@@ -96,9 +97,8 @@ class Ny20202WinnersComponent extends CBitrixComponent
 
     protected function getWinners(): array
     {
-        $result = [];
-
         try {
+            $result = [];
             $res = HLBlockFactory::createTableObject(self::HL_BLOCK_NAME)::query()
                 ->setOrder(['UF_SORT' => 'ASC'])
                 ->setSelect(['UF_NAME', 'UF_PHONE', 'UF_PERIOD'])
@@ -107,10 +107,9 @@ class Ny20202WinnersComponent extends CBitrixComponent
             while ($winner = $res->fetch()) {
                 $result[] = $winner;
             }
+            return $result;
         } catch (Exception $e) {
-            $result = [];
+            return [];
         }
-
-        return $result;
     }
 }
