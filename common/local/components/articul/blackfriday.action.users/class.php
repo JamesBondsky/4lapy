@@ -65,6 +65,7 @@ class BlackFridayActionUsers extends \CBitrixComponent
         $items = BFActionUsersTable::query()
             ->setSelect(['ID', 'NAME', 'PREVIEW_PICTURE', 'LINK' => 'UTS.LINK'])
             ->setFilter(['=IBLOCK_ID' => $this->iblockId, '=ACTIVE' => 'Y'])
+            ->setOrder(['SORT' => 'ASC'])
             ->setCacheTtl($this->arParams['CACHE_TIME'])
             ->exec()
             ->fetchAll();

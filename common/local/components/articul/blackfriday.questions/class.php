@@ -64,6 +64,7 @@ class BlackFridayQuestions extends \CBitrixComponent
         $items = \Bitrix\Iblock\ElementTable::query()
             ->setSelect(['ID', 'NAME', 'PREVIEW_TEXT'])
             ->setFilter(['=IBLOCK_ID' => $this->iblockId, '=ACTIVE' => 'Y'])
+            ->setOrder(['SORT' => 'ASC'])
             ->setCacheTtl($this->arParams['CACHE_TIME'])
             ->exec()
             ->fetchAll();
