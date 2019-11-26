@@ -63,6 +63,7 @@ class ActionWinners extends CBitrixComponent
                 false,
                 [
                     'NAME',
+                    'CODE',
                     'IBLOCK_SECTION_ID',
                     'PROPERTY_PHONE'
                 ]

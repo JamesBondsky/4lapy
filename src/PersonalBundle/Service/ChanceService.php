@@ -102,7 +102,7 @@ class ChanceService
         }
 
         if ($this->updateUserFields($request, $user) && !$this->userRepository->update($user)) {
-           throw new RuntimeException('При регистрации произошла ошибка');
+            throw new RuntimeException('При регистрации произошла ошибка');
         }
 
         $data = [];
@@ -123,6 +123,34 @@ class ChanceService
         }
 
         return $data[$currentPeriod];
+    }
+
+    /**
+     * @return int
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws RuntimeException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function getCurrentUserChances(): int
+    {
+        $userId = $this->userService->getCurrentUserId();
+
+        try {
+            if (!$userData = $this->getDataManager()::query()->setFilter(['UF_USER_ID' => $userId])->setSelect(['UF_DATA'])->exec()->fetch()) {
+                throw new RuntimeException('Пользователь не зарегистрирован');
+            }
+        } catch (RuntimeException $e) {
+            throw $e;
+        }
+
+        try {
+            $userData = unserialize($userData['UF_DATA']);
+            return $userData[$this->getCurrentPeriod()];
+        } catch (Exception $e) {
+            return 0;
+        }
     }
 
     /**
