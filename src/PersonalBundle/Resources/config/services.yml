@@ -59,6 +59,10 @@ services:
         class: FourPaws\PersonalBundle\Service\PersonalOffersService
         public: true
 
+    FourPaws\PersonalBundle\Service\ChanceService:
+        class: FourPaws\PersonalBundle\Service\ChanceService
+        public: true
+
     FourPaws\PersonalBundle\AjaxController\:
         resource: '../../AjaxController'
         public: true
