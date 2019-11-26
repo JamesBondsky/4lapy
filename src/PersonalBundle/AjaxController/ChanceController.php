@@ -3,6 +3,7 @@
 namespace FourPaws\PersonalBundle\AjaxController;
 
 use Exception;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -38,18 +39,19 @@ class ChanceController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
      * @global $APPLICATION
      */
     public function registerAction(Request $request): JsonResponse
     {
         try {
-            return new JsonSuccessResponse(['userChances' => $this->chanceService->registerUser($request)]);
+            return JsonSuccessResponse::createWithData('', ['userChances' => $this->chanceService->registerUser($request)]);
         } catch (NotAuthorizedException $e) {
-            return new JsonErrorResponse(['error' => 'Авторизуйтесь для участия']);
+            return JsonErrorResponse::createWithData('Авторизуйтесь для участия');
         } catch (NotFoundException|InvalidArgumentException $e) {
-            return new JsonErrorResponse(['error' => $e->getMessage()]);
+            return JsonErrorResponse::createWithData($e->getMessage());
         } catch (Exception $e) {
-            return new JsonErrorResponse(['error' => 'При регистрации произошла ошибка']);
+            return JsonErrorResponse::createWithData('При регистрации произошла ошибка');
         }
     }
 }
