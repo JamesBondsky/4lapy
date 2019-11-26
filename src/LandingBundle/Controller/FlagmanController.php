@@ -76,6 +76,13 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 }
                 //@todo исправить как только реализуют метод update
                 \CIBlockElement::SetPropertyValuesEx($request->get('id'), 0, ['FREE_SITS' => $newSits]);
+                \CEvent::Send('LECTION_SERVICE', 's1', [
+                    'NAME'  => $request->get('name'),
+                    'PHONE' => $request->get('phone'),
+                    'DATE'  => $request->get('date'),
+                    'TIME'  => $request->get('time'),
+                    'EMAIL' => $request->get('email'),
+                ]);
             }
         } catch (\Exception $e) {
             return new JsonResponse([
@@ -187,6 +194,9 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'UF_PHONE'    => $request->get('phone'),
                 'UF_EVENT_ID' => (int)$request->get('id'),
                 'UF_EMAIL'    => $request->get('email'),
+                'UF_ANIMAL'    => $request->get('animal'),
+                'UF_BREED'    => $request->get('breed'),
+                'UF_SERVICE'    => $request->get('service'),
             ]);
             
             if ($successAdding) {
@@ -197,6 +207,9 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                     'DATE'  => $request->get('date'),
                     'TIME'  => $request->get('time'),
                     'EMAIL' => $request->get('email'),
+                    'ANIMAL' => $request->get('animal'),
+                    'BREED' => $request->get('breed'),
+                    'SERVICE' => $request->get('service'),
                 ]);
             }
         } catch (\Exception $e) {
@@ -232,7 +245,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         
         $flagmanService = new FlagmanService();
         $elements       = $flagmanService->getElementsBySectionTrainingId($id);
-        
+
         foreach ($elements as $key => $element) {
             if ($element['FREE_SITS'] <= 0) {
                 unset($elements[$key]);
@@ -240,7 +253,8 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             }
 
             preg_match('/^[0-9]{2}/', $element['NAME'], $matches);
-            if ($matches[0] <= date('H')) {
+            preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $element['SECTION_NAME'], $matchesDate);
+            if ($matches[0] <= date('H') && $matchesDate[0] == date('d.m.Y')) {
                 unset($elements[$key]);
                 continue;
             }
@@ -250,8 +264,13 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'time' => $element['NAME'],
             ];
         }
+    
+        usort($result, function ($a, $b) {
+            preg_match('/^([0-9]{2})/', $a['time'], $matchesA);
+            preg_match('/^([0-9]{2})/', $b['time'], $matchesB);
         
-        natsort($result);
+            return ($matchesA[0] > $matchesB[0]) ? 1 : -1;
+        });
         
         if ($result) {
             return new JsonResponse([
@@ -281,7 +300,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
     {
         // $flagmanService = new FlagmanService();
         // $bookingResult = $flagmanService->bookTheTime($id);
-        //@todo сори за жирный контроллер
+        //@todo сори за жирный контроллер а так же отрефакторить повторяющийся код, изначально он таким не был, но куча изменений требований, сделали свое дело
         if (!Loader::includeModule('articul.landing')) {
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Модуль для сохранения заявок не подключен']]);
         }
