@@ -56,7 +56,8 @@ if ($template->hasMainWrapper()) { ?>
                         <div class="item-card__title">Iphone 11 PRO</div>
                         <div class="item-card__descr">
                             Всего 4 приза<br />
-                            Разыгрывается по&nbsp;1шт каждый понедельник<br />
+                            Разыгрывается по&nbsp;1шт<br/>
+                            каждый понедельник<br />
                             <b>9, 16, 23 и&nbsp;30 декабря</b>
                         </div>
                     </div>
@@ -68,7 +69,7 @@ if ($template->hasMainWrapper()) { ?>
                         </div>
                         <div class="item-card__title">Путешествие</div>
                         <div class="item-card__descr">
-                            <b>В&nbsp;Великий устюг на&nbsp;родину</b> Деда Мороза<br />
+                            <b>В&nbsp;Великий устюг на&nbsp;родину</b> <nobr>Деда Мороза</nobr><br />
                             1 приз на&nbsp;семью из&nbsp;4х человек<br />
                             Срок поездки: х&nbsp;дней<br />
                             <b>Розыгрыш 30 декабря</b>
@@ -79,17 +80,8 @@ if ($template->hasMainWrapper()) { ?>
         </div>
     </section>
 
-    <section data-id-section-landing="info-prizes" class="info-prizes-ny2020">
-        <div class="container-landing">
-            <div class="info-prizes-ny2020__content">
-                <div class="info-prizes-ny2020__message">Зарегистрируйтесь и&nbsp;выигрывайте призы каждую неделю!</div>
-                <div class="info-prizes-ny2020__primary">204 победителя + 1 главный приз!</div>
-            </div>
-        </div>
-    </section>
-
     <section data-id-section-landing="where-buy" class="where-buy-ny2020">
-        <div class="where-buy-ny2020__title">Где купить?</div>
+        <div class="title-ny2020 title-ny2020_white">Где купить?</div>
         <div class="where-buy-ny2020__map" id="mapWhereBuylanding" data-map-where-buy-landing="0"></div>
     </section>
 

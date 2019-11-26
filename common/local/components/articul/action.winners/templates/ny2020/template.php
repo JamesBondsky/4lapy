@@ -7,7 +7,7 @@
 if (!empty($arResult)): ?>
   <div class="container-landing">
     <div class="winners-ny2020__inner">
-      <div class="title-ny2020">
+      <div class="title-ny2020 title-ny2020_white">
         Победители
       </div>
       <div class="b-tab winners-ny2020__content">
@@ -31,6 +31,7 @@ if (!empty($arResult)): ?>
                         <div class="item">
                           <div class="item__name" title="<?= $winner['NAME'] ?>">
                             <div class="item__icon item__icon_cup"></div>
+                            <?/*<div class="item__icon item__icon_phone"></div>*/?>
                               <?= $winner['NAME'] ?>
                           </div>
                           <div class="item__phone"><?= $winner['PROPERTY_PHONE_VALUE'] ?></div>
