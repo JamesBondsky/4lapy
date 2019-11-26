@@ -37,6 +37,7 @@ use FourPaws\App\Tools\StaticLoggerTrait;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Exception\CouponNotFoundException;
+use FourPaws\PersonalBundle\Service\ChanceService;
 use FourPaws\PersonalBundle\Service\CouponService;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
@@ -97,202 +98,92 @@ class Event extends BaseServiceHandler
     {
         parent::initHandlers($eventManager);
 
-        static::initHandlerCompatible('OnBuildGlobalMenu', [
-            self::class,
-            'addRetailRocketOrderReportToAdminMenu',
-        ], 'main');
+        static::initHandlerCompatible('OnBuildGlobalMenu', [self::class, 'addRetailRocketOrderReportToAdminMenu',], 'main');
 
         $module = 'sale';
         ###   Обработчики скидок       ###
 
-        /** Инициализация кастомных правил работы с корзиной */
-        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [
-            Gift::class,
-            'GetControlDescr'
-        ], $module);
-        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [
-            BasketFilter::class,
-            'GetControlDescr'
-        ], $module);
-        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [
-            BasketQuantity::class,
-            'GetControlDescr'
-        ], $module);
-        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [
-            DiscountFromProperty::class,
-            'GetControlDescr'
-        ], $module);
-        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [
-            DetachedRowDiscount::class,
-            'GetControlDescr'
-        ], $module);
-        /** Здесь дополнительная обработка акций */
-        static::initHandler('OnAfterSaleOrderFinalAction', [
-            Manager::class,
-            'OnAfterSaleOrderFinalAction'
-        ], $module);
-        static::initHandler('OnBeforeSaleOrderFinalAction', [
-            Manager::class,
-            'OnBeforeSaleOrderFinalAction'
-        ], $module);
+        /* Инициализация кастомных правил работы с корзиной */
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [Gift::class, 'GetControlDescr'], $module);
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [BasketFilter::class, 'GetControlDescr'], $module);
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [BasketQuantity::class, 'GetControlDescr'], $module);
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr'], $module);
+        static::initHandlerCompatible('OnCondSaleActionsControlBuildList', [DetachedRowDiscount::class, 'GetControlDescr'], $module);
+        /* Здесь дополнительная обработка акций */
+        static::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction'], $module);
+        static::initHandler('OnBeforeSaleOrderFinalAction', [Manager::class, 'OnBeforeSaleOrderFinalAction'], $module);
 
         ###   Обработчики скидок EOF   ###
 
-        /** сброс кеша малой корзины */
+        /* сброс кеша малой корзины */
         $module = 'sale';
-        static::initHandler('OnSaleBasketItemSaved', [
-            self::class,
-            'resetBasketCache'
-        ], $module);
-        static::initHandler('OnSaleBasketItemEntityDeleted', [
-            self::class,
-            'resetBasketCache'
-        ], $module);
+        static::initHandler('OnSaleBasketItemSaved', [self::class, 'resetBasketCache'], $module);
+        static::initHandler('OnSaleBasketItemEntityDeleted', [self::class, 'resetBasketCache'], $module);
 
-        /** предотвращение попадания отложенных товаров в заказ */
-        static::initHandler('OnSaleBasketItemBeforeSaved', [
-            self::class,
-            'removeDelayedItems'
-        ], $module);
+        /* предотвращение попадания отложенных товаров в заказ */
+        static::initHandler('OnSaleBasketItemBeforeSaved', [self::class, 'removeDelayedItems'], $module);
 
-        /** добавление марок в заказ */
-        /*static::initHandler('OnSaleOrderBeforeSaved', [
-            self::class,
-            'addMarksToOrderBasket'
-        ], $module);*/
+        /* добавление марок в заказ */
+//        static::initHandler('OnSaleOrderBeforeSaved', [self::class, 'addMarksToOrderBasket'], $module);
 
-        /** Добавление газеты октябрь (3006893) в заказ */
-//        static::initHandler('OnSaleOrderBeforeSaved', [
-//            self::class,
-//            'addOctoberNewspaper'
-//        ], $module);
+        /* Добавление газеты октябрь (3006893) в заказ */
+//        static::initHandler('OnSaleOrderBeforeSaved', [self::class, 'addOctoberNewspaper'], $module);
 
-        /** генерация номера заказа */
-        static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [
-            self::class,
-            'updateOrderAccountNumber'
-        ], $module);
-        static::initHandler('OnSaleOrderEntitySaved', [
-            self::class,
-            'unlockOrderTables'
-        ], $module);
+        /* генерация номера заказа */
+        static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [self::class, 'updateOrderAccountNumber'], $module);
+        static::initHandler('OnSaleOrderEntitySaved', [self::class, 'unlockOrderTables'], $module);
 
         /** отправка email */
         // новый заказ
-        static::initHandler('OnSaleOrderEntitySaved', [
-            self::class,
-            'sendNewOrderMessage'
-        ], $module);
+        static::initHandler('OnSaleOrderEntitySaved', [self::class, 'sendNewOrderMessage'], $module);
         // смена платежной системы у заказа
-        static::initHandler('OnSalePaymentEntitySaved', [
-            self::class,
-            'sendNewOrderMessage'
-        ], $module);
+        static::initHandler('OnSalePaymentEntitySaved', [self::class, 'sendNewOrderMessage'], $module);
         // оплата заказа
-        static::initHandler('OnSaleOrderPaid', [
-            self::class,
-            'sendOrderPaymentMessage'
-        ], $module);
+        static::initHandler('OnSaleOrderPaid', [self::class, 'sendOrderPaymentMessage'], $module);
         // отмена заказа
-        static::initHandler('OnSaleOrderCanceled', [
-            self::class,
-            'sendOrderCancelMessage'
-        ], $module);
+        static::initHandler('OnSaleOrderCanceled', [self::class, 'sendOrderCancelMessage'], $module);
         // смена статуса заказа
-        static::initHandler('OnSaleStatusOrderChange', [
-            self::class,
-            'sendOrderStatusMessage'
-        ], $module);
+        static::initHandler('OnSaleStatusOrderChange', [self::class, 'sendOrderStatusMessage'], $module);
 
-        /** отмена заказа, перешедшего в статус отмены */
-        static::initHandler('OnSaleStatusOrderChange', [
-            self::class,
-            'cancelOrder'
-        ], $module);
+        /* отмена заказа, перешедшего в статус отмены */
+        static::initHandler('OnSaleStatusOrderChange', [self::class, 'cancelOrder'], $module);
 
-        /** очистка кеша заказа */
-        static::initHandler('OnSaleOrderSaved', [
-            self::class,
-            'clearOrderCache'
-        ], $module);
+        /* очистка кеша заказа */
+        static::initHandler('OnSaleOrderSaved', [self::class, 'clearOrderCache'], $module);
 
-        static::initHandler('OnSaleOrderSaved', [
-            self::class,
-            'setCouponUsed'
-        ], $module);
+        static::initHandler('OnSaleOrderSaved', [self::class, 'setCouponUsed'], $module);
 
-        /*static::initHandler('OnSaleOrderSaved', [
-            self::class,
-            'addCouponForSecondOrder'
-        ], $module);
-        static::initHandler('OnSaleOrderEntitySaved', [
-            self::class,
-            'addCouponForSecondOrder'
-        ], $module);*/
+//        static::initHandler('OnSaleOrderSaved', [self::class, 'addCouponForSecondOrder'], $module);
+//        static::initHandler('OnSaleOrderEntitySaved', [self::class, 'addCouponForSecondOrder'], $module);
 
-        /**
-         * Сохранение имени пользователя
-         */
-        static::initHandler('OnSaleOrderEntitySaved', [
-            self::class,
-            'setNameAfterOrder'
-        ], $module);
+        /* Сохранение имени пользователя */
+        static::initHandler('OnSaleOrderEntitySaved', [self::class, 'setNameAfterOrder'], $module);
 
         /** обновление бонусного счета пользователя и бонусного процента пользователя */
         $module = 'main';
-        static::initHandlerCompatible('OnAfterUserLogin', [
-            self::class,
-            'updateUserAccountBalance'
-        ], $module);
-        static::initHandlerCompatible('OnAfterUserAuthorize', [
-            self::class,
-            'updateUserAccountBalance'
-        ], $module);
-        static::initHandlerCompatible('OnAfterUserLoginByHash', [
-            self::class,
-            'updateUserAccountBalance'
-        ], $module);
+        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'updateUserAccountBalance'], $module);
+        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'updateUserAccountBalance'], $module);
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'updateUserAccountBalance'], $module);
 
-        /**
-         * Забытая корзина
-         */
+        /* Забытая корзина */
         $module = 'sale';
-        static::initHandler('OnSaleBasketItemSaved', [
-            self::class,
-            'disableForgotBasketReminder'
-        ], $module);
-        static::initHandler('OnSaleBasketItemEntityDeleted', [
-            self::class,
-            'disableForgotBasketReminder'
-        ], $module);
+        static::initHandler('OnSaleBasketItemSaved', [self::class, 'disableForgotBasketReminder'], $module);
+        static::initHandler('OnSaleBasketItemEntityDeleted', [self::class, 'disableForgotBasketReminder'], $module);
 
-        /**
-         * При добавлении в корзину
-         */
+        /* При добавлении в корзину */
         $module = 'sale';
-        static::initHandler('OnBasketAdd', [
-            self::class,
-            'addDiscountProperties'
-        ], $module);
+        static::initHandler('OnBasketAdd', [self::class, 'addDiscountProperties'], $module);
 
-        /**
-         * Добавление марок в корзину
-         */
-        /*$module = 'sale';
-        static::initHandler('OnSaleBasketSaved', [
-            self::class,
-            'addStampsToBasket'
-        ], $module);*/
+        /* Добавление марок в корзину */
+//        $module = 'sale';
+//        static::initHandler('OnSaleBasketSaved', [self::class, 'addStampsToBasket'], $module);
 
         $module = 'sale';
-        static::initHandler('OnOrderNewSendEmail', [
-            self::class,
-            'cancelEventAddition'
-        ], $module);
-        static::initHandler('OnOrderPaySendEmail', [
-            self::class,
-            'cancelEventAddition'
-        ], $module);
+        static::initHandler('OnOrderNewSendEmail', [self::class, 'cancelEventAddition'], $module);
+        static::initHandler('OnOrderPaySendEmail', [self::class, 'cancelEventAddition'], $module);
+
+        /* Обновление шансов после оформления заказа */
+        static::initHandler('OnSaleOrderSaved', [self::class, 'updateUserChances'], $module);
     }
 
     /**
@@ -1220,5 +1111,12 @@ class Event extends BaseServiceHandler
         {
             return false;
         }
+    }
+
+    public function updateUserChances(): void
+    {
+        /** @var ChanceService $chanceService */
+        $chanceService = Application::getInstance()->getContainer()->get(ChanceService::class);
+        $chanceService->updateUserChance();
     }
 }

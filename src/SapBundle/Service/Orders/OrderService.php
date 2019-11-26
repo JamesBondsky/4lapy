@@ -243,7 +243,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     {
         $orderDto = new OrderDtoOut();
         $orderShop = '';
-        
+
         $this->getPropertyCollection($order);
 
         try {
@@ -295,7 +295,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         if ($deliveryTypeCode == DeliveryService::INNER_DELIVERY_CODE || $deliveryTypeCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
             $this->populateOrderDtoUserCoords($orderDto, $order);
         }
-        
+
         $orderDto
             ->setId($order->getField('ACCOUNT_NUMBER'))
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()
@@ -661,7 +661,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @throws NotFoundOrderShipmentException
      * @return string
      */
-    private function getDeliveryTypeCode(Order $order): string
+    public function getDeliveryTypeCode(Order $order): string
     {
         $code = $this->getDeliveryCode($order);
         $deliveryZone = $this->getDeliveryZone($order);
@@ -1370,6 +1370,22 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         }
 
         $location = $this->getPropertyValueByCode($order, 'CITY_CODE');
+        if ($location == \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
+            $address = [$this->getPropertyValueByCode($order, 'CITY'), $this->getPropertyValueByCode($order, 'STREET'), $this->getPropertyValueByCode($order, 'HOUSE')];
+
+            $address = array_filter($address, function ($item) {
+                return !empty($item);
+            });
+
+            $address = implode(', ', $address);
+
+            $okato = $this->locationService->getDadataLocationOkato($address);
+            $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+            $locationCurrent = current($locations);
+
+            $location = $locationCurrent['CODE'];
+        }
+
         $deliveryId = $shipment->getDeliveryId();
 
         return $this->deliveryService->getDeliveryZoneByDelivery($location, $deliveryId) ?? '';
