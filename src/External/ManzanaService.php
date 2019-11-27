@@ -840,7 +840,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         try {
             if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
                 $result = $this->newExec(__METHOD__, func_get_args());
-                $cheques = $this->serializer->deserialize(json_encode(['Cheques' => $result['Cheque'] ?? $result]), ChequesByContractCheques::class, 'json')->cheques->toArray();
+                $cheques = $this->serializer->deserialize(json_encode(['Cheques' => $result['Cheques'] ?? $result]), ChequesByContractCheques::class, 'json')->cheques->toArray();
             } else {
                 $result = $this->execute(self::CONTRACT_CHEQUES, $bag->getParameters());
                 $cheques = $this->serializer->deserialize($result, ChequesByContractCheques::class, 'xml')->cheques->toArray();
