@@ -16,7 +16,7 @@ class Ny20202QuestionsComponent extends CBitrixComponent
 {
     public function onPrepareComponentParams($arParams): array
     {
-        $arParams['CACHE_TIME'] = $arParams['CACHE_TIME'] ?? 0;
+        $arParams['CACHE_TIME'] = $arParams['CACHE_TIME'] ?? 86400;
         return parent::onPrepareComponentParams($arParams);
     }
 
