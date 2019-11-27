@@ -48,7 +48,7 @@ class ChanceController extends Controller
             return JsonSuccessResponse::createWithData('', ['userChances' => $this->chanceService->registerUser($request)]);
         } catch (NotAuthorizedException $e) {
             return JsonErrorResponse::createWithData('Авторизуйтесь для участия');
-        } catch (NotFoundException|InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             return JsonErrorResponse::createWithData($e->getMessage());
         } catch (Exception $e) {
             return JsonErrorResponse::createWithData('При регистрации произошла ошибка');

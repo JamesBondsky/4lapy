@@ -31,7 +31,7 @@ class ChanceService
 
     public const PERIODS = [
         [
-            'from' => '01.10.2019 00:00:00',
+            'from' => '01.12.2019 00:00:00',
             'to' => '08.12.2019 23:59:59',
         ],
         [
@@ -85,7 +85,6 @@ class ChanceService
      * @param Request $request
      * @return int
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws ObjectException
      * @throws ObjectPropertyException
      * @throws RuntimeException
@@ -95,7 +94,6 @@ class ChanceService
      */
     public function registerUser(Request $request): int
     {
-        $currentPeriod = $this->getCurrentPeriod();
         $user = $this->userService->getCurrentUser();
 
         if ($this->getDataManager()::query()->setFilter(['UF_USER_ID' => $user->getId()])->exec()->fetch()) {
@@ -111,7 +109,11 @@ class ChanceService
             $data[$period] = 0;
         }
 
-        $data[$currentPeriod] = $this->getUserPeriodChance($user->getId(), $currentPeriod);
+        try {
+            $currentPeriod = $this->getCurrentPeriod();
+            $data[$currentPeriod] = $this->getUserPeriodChance($user->getId(), $currentPeriod);
+        } catch (Exception $e) {
+        }
 
         $addResult = $this->getDataManager()::add([
             'UF_USER_ID' => $user->getId(),
@@ -123,7 +125,7 @@ class ChanceService
             throw new RuntimeException('При регистрации произошла ошибка');
         }
 
-        return $data[$currentPeriod];
+        return (isset($currentPeriod)) ? $data[$currentPeriod] : 0;
     }
 
     /**
