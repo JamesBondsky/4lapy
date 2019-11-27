@@ -840,7 +840,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         try {
             if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
                 $result = $this->newExec(__METHOD__, func_get_args());
-                $cheques = $this->serializer->deserialize(json_encode(['Cheques' => $result]), ChequesByContractCheques::class, 'json')->cheques->toArray();
+                $cheques = $this->serializer->deserialize(json_encode(['Cheques' => $result['Cheque'] ?? $result]), ChequesByContractCheques::class, 'json')->cheques->toArray();
             } else {
                 $result = $this->execute(self::CONTRACT_CHEQUES, $bag->getParameters());
                 $cheques = $this->serializer->deserialize($result, ChequesByContractCheques::class, 'xml')->cheques->toArray();
@@ -876,7 +876,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
                 $result = $this->newExec(__METHOD__, func_get_args());
                 /** @var ChequeItems $resChequeItems */
-                $resChequeItems = $this->serializer->deserialize(json_encode(['ChequeItems' => $result]), ChequeItems::class, 'json');
+                $resChequeItems = $this->serializer->deserialize(json_encode(['ChequeItems' => $result['ChequeItem'] ?? $result]), ChequeItems::class, 'json');
             } else {
                 $result = $this->execute(self::CONTRACT_CHEQUE_ITEMS, $bag->getParameters());
                 /** @var ChequeItems $resChequeItems */
