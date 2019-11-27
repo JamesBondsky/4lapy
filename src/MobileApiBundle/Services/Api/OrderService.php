@@ -935,7 +935,7 @@ class OrderService implements LoggerAwareInterface
         if ($dobrolapDelivery) {
             $result['dobrolap'] = [
                 'available' => $dobrolapDelivery->getAvailable(),
-                'description' => 'Ваш заказ будет доставлен в выбранный Вами приют для бездомных животных. После оплаты заказа вы получите сюрприз и памятный магнит.',
+                'description' => 'Ваш заказ будет доставлен в выбранный Вами приют для бездомных животных. После оплаты заказа вы получите памятный магнит.',
             ];
         }
 
@@ -1334,15 +1334,15 @@ class OrderService implements LoggerAwareInterface
                 'title' => 'СПАСИБО ЧТО ВЫ ТВОРИТЕ ДОБРО ВМЕСТЕ С НАМИ!',
                 'titleOrder' => 'Ваш заказ №' . $order->getField('ACCOUNT_NUMBER') . ' оформлен',
                 'description' => 'И будет доставлен в ' . ($this->shelterData ? $this->shelterData['name'] : ''),
-                'titleThank' => 'МЫ ГОВОРИМ ВАМ СПАСИБО!',
-                'descriptionFirstThank' => 'В знак благодарности мы подготовили небольшой сюрприз фанты "Добролап" с приятными презентами',
-                'descriptionSecondThank' => 'Также мы вложим в Ваш следующий заказ подарок - памятный магнит.',
-                'titleNow' => 'А СЕЙЧАС',
-                'descriptionNow' => 'Выберите для себя один из шести сюрпризов, тапнув на любой из них.',
+                'titleThank' => 'Мы говорим Вам спасибо!',
+                //'descriptionFirstThank' => 'В знак благодарности мы подготовили небольшой сюрприз фанты "Добролап" с приятными презентами',
+                //'descriptionSecondThank' => 'Также мы вложим в Ваш следующий заказ подарок - памятный магнит.',
+                //'titleNow' => 'А СЕЙЧАС',
+                //'descriptionNow' => 'Выберите для себя один из шести сюрпризов, тапнув на любой из них.',
             ];
             $icons = [
                 'mainIcon' => $mainIcon,
-                'fantIcons' => $fantIcons,
+                //'fantIcons' => $fantIcons,
             ];
         }
 

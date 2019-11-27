@@ -1383,7 +1383,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
             $locationCurrent = current($locations);
 
-            $location = $locationCurrent['CODE'];
+
+            if ($locationCurrent['CODE']) {
+                $location = $locationCurrent['CODE'];
+            }
         }
 
         $deliveryId = $shipment->getDeliveryId();
