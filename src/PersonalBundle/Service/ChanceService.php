@@ -15,6 +15,7 @@ use Exception;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Exception\RuntimeException;
+use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -209,7 +210,12 @@ class ChanceService
             ->setFilter([
                 'USER_ID' => $userId,
                 '>=DATE_INSERT' => self::PERIODS[$period]['from'],
-                '<=DATE_INSERT' => self::PERIODS[$period]['to']
+                '<=DATE_INSERT' => self::PERIODS[$period]['to'],
+                'STATUS_ID' => [
+                    OrderStatus::STATUS_ISSUING_POINT,
+                    OrderStatus::STATUS_DELIVERED,
+                    OrderStatus::STATUS_FINISHED,
+                ],
             ])
             ->setSelect(['ID', 'PRICE'])
             ->exec();

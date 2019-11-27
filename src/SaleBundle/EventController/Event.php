@@ -184,6 +184,7 @@ class Event extends BaseServiceHandler
 
         /* Обновление шансов после оформления заказа */
         static::initHandler('OnSaleOrderSaved', [self::class, 'updateUserChances'], $module);
+        static::initHandler('OnSaleStatusOrderChange', [self::class, 'updateUserChances'], $module);
     }
 
     /**
