@@ -12,9 +12,13 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Sale\OrderTable;
 use DateTime;
 use Exception;
+use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Exception\RuntimeException;
+use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use Symfony\Component\HttpFoundation\Request;
 use function serialize;
 use function unserialize;
 
@@ -23,8 +27,6 @@ class ChanceService
     protected const CHANCE_RATE = 500;
 
     protected const HL_BLOCK_NAME = 'NewYearUserChance';
-
-//Ny2020Winners
 
     public const PERIODS = [
         [
@@ -48,15 +50,20 @@ class ChanceService
     /** @var CurrentUserProviderInterface */
     protected $userService;
 
+    /** @var UserRepository */
+    protected $userRepository;
+
     protected $periods = [];
+
     protected $currentPeriod;
 
     /** @var DataManager */
     protected $dataManager;
 
-    public function __construct(CurrentUserProviderInterface $userService)
+    public function __construct(CurrentUserProviderInterface $userService, UserRepository $userRepository)
     {
         $this->userService = $userService;
+        $this->userRepository = $userRepository;
 
         foreach (self::PERIODS as $period) {
             $this->periods[] = [
@@ -74,22 +81,28 @@ class ChanceService
     }
 
     /**
+     * @param Request $request
      * @return int
      * @throws ArgumentException
      * @throws NotFoundException
      * @throws ObjectException
      * @throws ObjectPropertyException
      * @throws RuntimeException
+     * @throws InvalidArgumentException
      * @throws SystemException
      * @throws Exception
      */
-    public function registerUser(): int
+    public function registerUser(Request $request): int
     {
         $currentPeriod = $this->getCurrentPeriod();
-        $userId = $this->userService->getCurrentUserId();
+        $user = $this->userService->getCurrentUser();
 
-        if ($this->getDataManager()::query()->setFilter(['UF_USER_ID' => $userId])->exec()->fetch()) {
+        if ($this->getDataManager()::query()->setFilter(['UF_USER_ID' => $user->getId()])->exec()->fetch()) {
             throw new RuntimeException('Пользователь уже зарегистрирован');
+        }
+
+        if ($this->updateUserFields($request, $user) && !$this->userRepository->update($user)) {
+            throw new RuntimeException('При регистрации произошла ошибка');
         }
 
         $data = [];
@@ -97,10 +110,10 @@ class ChanceService
             $data[$period] = 0;
         }
 
-        $data[$currentPeriod] = $this->getUserPeriodChance($userId, $currentPeriod);
+        $data[$currentPeriod] = $this->getUserPeriodChance($user->getId(), $currentPeriod);
 
         $addResult = $this->getDataManager()::add([
-            'UF_USER_ID' => $userId,
+            'UF_USER_ID' => $user->getId(),
             'UF_DATA' => serialize($data),
             'UF_DATE_CREATE' => new Date(),
         ]);
@@ -110,6 +123,61 @@ class ChanceService
         }
 
         return $data[$currentPeriod];
+    }
+
+    /**
+     * @return int
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws RuntimeException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function getCurrentUserChances(): int
+    {
+        $userId = $this->userService->getCurrentUserId();
+
+        try {
+            if (!$userData = $this->getDataManager()::query()->setFilter(['UF_USER_ID' => $userId])->setSelect(['UF_DATA'])->exec()->fetch()) {
+                throw new RuntimeException('Пользователь не зарегистрирован');
+            }
+        } catch (RuntimeException $e) {
+            throw $e;
+        }
+
+        try {
+            $userData = unserialize($userData['UF_DATA']);
+            return $userData[$this->getCurrentPeriod()];
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param User $user
+     * @return bool
+     * @throws InvalidArgumentException
+     */
+    protected function updateUserFields(Request $request, User $user): bool
+    {
+        $update = false;
+        $fields = ['Name', 'LastName', 'Email'];
+
+        foreach ($fields as $field) {
+            if (empty($user->{"get$field"}())) {
+                $value = $request->get(strtolower($field), '');
+
+                if (empty($value)) {
+                    throw new InvalidArgumentException('Заполнте все поля');
+                }
+
+                $user->{"set$field"}($value);
+                $update = true;
+            }
+        }
+
+        return $update;
     }
 
     /**
