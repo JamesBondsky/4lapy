@@ -109,8 +109,8 @@ class BasketService implements LoggerAwareInterface
     /** @var StockService $stockService */
     private $stockService;
 
-    public const GIFT_DOBROLAP_XML_ID = '3006635';
-    public const GIFT_DOBROLAP_XML_ID_ALT = '3006616';
+    public const GIFT_DOBROLAP_XML_ID = '3007113';
+    public const GIFT_DOBROLAP_XML_ID_ALT = '3007113';
     private $dobrolapMagnets;
 
     public const GIFT_NOVEMBER_NEWSPAPER_XML_ID = '3006893';
