@@ -69,9 +69,8 @@ if ($template->hasMainWrapper()) { ?>
                         </div>
                         <div class="item-card__title">Путешествие</div>
                         <div class="item-card__descr">
-                            <b>В&nbsp;Великий устюг на&nbsp;родину</b> <nobr>Деда Мороза</nobr><br />
+                            В&nbsp;Великий устюг на&nbsp;родину <nobr>Деда Мороза</nobr><br />
                             1 приз на&nbsp;семью из&nbsp;4х человек<br />
-                            Срок поездки: х&nbsp;дней<br />
                             <b>Розыгрыш 30 декабря</b>
                         </div>
                     </div>
