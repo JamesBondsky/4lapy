@@ -33,8 +33,8 @@ $markup = PawsApplication::markup();
     <meta name="format-detection" content="telephone=no">
     <meta name="yandex-verification" content="6266e34669b85ed6">
 
-    <meta property="og:title" content="Выиграйте SPA-weekend, Роза Хутор Сочи"/>
-    <meta property="og:description" content="Купите Mealfeel, регистрируйтесь и проверяйте результаты розыгрыша каждую пятницу июля. В розыгрыше 50 призов для правильного питания. Главный приз разыгрывается 1 августа. Удачи!"/>
+    <meta property="og:title" content="Выиграйте главный приз: Путешествие на 4-х человек на родину Деда Мороза!"/>
+    <meta property="og:description" content="Зарегистрируйтесь и выигрывайте призы каждую неделю!"/>
     <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/img/mealfeel-share.png'?>">
 
     <link href="https://fonts.googleapis.com/css?family=PT+Sans+Narrow|Roboto+Condensed&display=swap" rel="stylesheet">
@@ -95,121 +95,113 @@ $markup = PawsApplication::markup();
 <noscript><div><img src="https://mc.yandex.ru/watch/52251391" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
 
-<header class="header-landing" data-header-landing="true">
-    <div class="container-landing">
-        <div class="header-landing__content">
-            <div class="header-landing__logo header-landing__logo_mealfeel">
-                <img src="/img/mealfeel-logo.svg" alt="Mealfeel" title="Mealfeel"/>
+<header class="header-ny2020" data-header-landing="true">
+    <div class="header-ny2020__container">
+        <div class="header-ny2020__content">
+            <div class="header-ny2020__logo">
+                <img src="/ny2020/img/logo.svg" alt="NY2020" title="NY2020"/>
             </div>
-            <div class="header-landing-menu" data-mobile-menu-landing="true">
-                <ul class="header-landing-menu__list" data-list-mobile-menu-landing="true">
-                    <li  class="header-landing-menu__item">
-                        <a href="/" class="header-landing-menu__link" target="_blank">Правила акции</a>
+            <div class="header-ny2020-menu" data-mobile-menu-landing="true">
+                <ul class="header-ny2020-menu__list" data-list-mobile-menu-landing="true">
+                    <li  class="header-ny2020-menu__item">
+                        <a href="/" class="header-ny2020-menu__link" target="_blank">Правила акции</a>
                     </li>
 
-                    <li class="header-landing-menu__item">
-                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="regulations">Принять участие</a>
+                    <li class="header-ny2020-menu__item">
+                        <a href="javascript:void(0);"  class="header-ny2020-menu__link" data-btn-scroll-landing="regulations">Принять участие</a>
                     </li>
 
-                    <li  class="header-landing-menu__item">
-                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="prizes">Призы</a>
+                    <li  class="header-ny2020-menu__item">
+                        <a href="javascript:void(0);"  class="header-ny2020-menu__link" data-btn-scroll-landing="prizes">Призы</a>
                     </li>
 
-                    <li  class="header-landing-menu__item" style="<?$APPLICATION->ShowViewContent('empty-winners');?>">
-                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="winners">Победители</a>
+                    <li  class="header-ny2020-menu__item" style="<?$APPLICATION->ShowViewContent('empty-winners');?>">
+                        <a href="javascript:void(0);"  class="header-ny2020-menu__link" data-btn-scroll-landing="winners">Победители</a>
                     </li>
 
-                    <li  class="header-landing-menu__item">
-                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="where-buy">Где купить</a>
+                    <li  class="header-ny2020-menu__item">
+                        <a href="javascript:void(0);"  class="header-ny2020-menu__link" data-btn-scroll-landing="where-buy">Где купить</a>
                     </li>
 
-                    <li  class="header-landing-menu__item">
-                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="questions">Вопросы</a>
+                    <li  class="header-ny2020-menu__item">
+                        <a href="javascript:void(0);"  class="header-ny2020-menu__link" data-btn-scroll-landing="questions">Вопросы</a>
                     </li>
                 </ul>
             </div>
-            <div class="header-landing__toggle-mobile-menu" data-toggle-mobile-menu-landing="true"><span></span></div>
+            <div class="header-ny2020__toggle-mobile-menu" data-toggle-mobile-menu-landing="true"><span></span></div>
         </div>
     </div>
 </header>
 
 <div class="page-ny2020">
 <div class="top-landing" data-top-landing="true">
-    <section class="splash-screen-mealfeel">
-        <div class="splash-screen-mealfeel__bg" style="background-image: url('/img/bg-splash-mealfeel.jpg')"></div>
-        <div class="splash-screen-mealfeel__prizes" style="background-image: url('/img/prizes-splash-screen.png')"></div>
-        <div class="splash-screen-mealfeel__container">
-            <div class="splash-screen-mealfeel__content">
-                <div class="splash-screen-mealfeel__title">
-                    Выиграй отдых в&nbsp;Сочи для&nbsp;гурманов
-                </div>
-                <div class="splash-screen-mealfeel__subtitle">
-                    <span class="main-prizes-subtitle">Главный приз</span>
-                    <span>
-                        SPA-weekend<br/>
-                        Роза Хутор Сочи
-                    </span>
+    <section class="main-banner-ny2020">
+        <div class="main-banner-ny2020__container">
+            <div class="main-banner-ny2020__main">
+                <div class="main-banner-ny2020__title">Выиграйте главный приз:</div>
+                <div class="main-banner-ny2020__subtitle">Путешествие на&nbsp;<nobr>4-х</nobr> человек на&nbsp;родину Деда Мороза!</div>
+                <div class="main-banner-ny2020__prizes">
+                    <div class="prizes-info">
+                        <div class="prizes-info__title">
+                            Розыгрыши каждую неделю
+                        </div>
+                        <ul class="prizes-info__list">
+                            <li>iPhone 11 Pro</li>
+                            <li>50 термокружек</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="splash-screen-mealfeel__separator"></div>
-        <div class="splash-screen-mealfeel__primary">
-            <div class="splash-screen-mealfeel__container">
-                <span>Новые призы каждую неделю!</span>
+            <div class="main-banner-ny2020__info">
+                <div class="info-title">Зарегистрируйтесь и&nbsp;выигрывайте призы каждую неделю!</div>
+                <div class="info-subtitle">204&nbsp;победителя <nobr>+ 1</nobr> главный приз!</div>
             </div>
         </div>
     </section>
 
-    <section id="info-prizes" data-id-section-landing="info-prizes" class="info-prizes info-prizes_mealfeel">
-        <div class="container-landing">
-            <div class="info-prizes__message">
-                Регистрируйте чеки и&nbsp;выигрывайте!<br />
-                Новые подарки каждую неделю!<br />
-                50 победителей + 1 главный приз!
-            </div>
-        </div>
-    </section>
-
-    <section data-id-section-landing="regulations" class="regulations-mealfeel">
-        <div class="container-landing">
-            <div class="landing-title">Как принять участие в&nbsp;акции</div>
-            <div class="regulations-mealfeel__list">
-                <div class="regulations-mealfeel__step-wrap">
-                    <div class="regulations-mealfeel__step">
-                        <img class="regulations-mealfeel__number" src="/img/step1-regulations.png" alt="1">
-                        <div class="regulations-mealfeel__descr">
-                            Купите корм Mealfeel (сухой вместе с&nbsp;влажным) на&nbsp;сумму 1500 р. и&nbsp;получите гарантированный приз&nbsp;&mdash; бак для хранения корма.
+    <section data-id-section-landing="regulations" class="regulations-ny2020">
+        <div class="regulations-ny2020__container">
+            <div class="title-ny2020">Как принять участие в&nbsp;акции</div>
+            <div class="regulations-ny2020__list">
+                <div class="step">
+                    <div class="step__inner">
+                        <div class="step__descr">Покупайте<br/> любые товары<br/> в&nbsp;зоомагазинах, в&nbsp;<nobr>интернет-магазине</nobr> и&nbsp;в&nbsp;мобильном<br/> приложении<br/> <b>&laquo;Четыре Лапы&raquo;.</b></div>
+                        <div class="step__icon">
+                            <img src="/ny2020/img/step1-regulations.png" alt="" title="" >
                         </div>
                     </div>
                 </div>
-                <div class="regulations-mealfeel__step-wrap">
-                    <div class="regulations-mealfeel__step">
-                        <img class="regulations-mealfeel__number" src="/img/step2-regulations.png" alt="2">
-                        <div class="regulations-mealfeel__descr">
-                            Зарегистрируйте<br/> чек и&nbsp;участвуйте в&nbsp;розыгрыше<br/> призов
+                <div class="step">
+                    <div class="step__inner">
+                        <div class="step__descr">Зарегистрируйтесь для<br/> участия в&nbsp;акции.<br/> Больше покупок кратных <b>500&nbsp;рублей</b>, больше шансов выиграть один из&nbsp;ценных<br/> призов.</div>
+                        <div class="step__icon">
+                            <img src="/ny2020/img/step2-regulations.png" alt="" title="" >
                         </div>
                     </div>
                 </div>
-                <div class="regulations-mealfeel__step-wrap">
-                    <div class="regulations-mealfeel__step">
-                        <img class="regulations-mealfeel__number" src="/img/step3-regulations.png" alt="3">
-                        <div class="regulations-mealfeel__descr">
-                            Проверяйте результаты розыгрыша каждую пятницу.<br />
-                            Розыгрыш главного приза состоится <span class="red"><b>1&nbsp;августа</b></span>.
+                <div class="step">
+                    <div class="step__inner">
+                        <div class="step__descr">Проверяйте<br/> результаты розыгрыша<br/> на&nbsp;этом сайте<br/> каждый понедельник<br/> <b>9, 16, 23 и&nbsp;30 декабря</b>.</div>
+                        <div class="step__icon">
+                            <img src="/ny2020/img/step3-regulations.png" alt="" title="" >
                         </div>
                     </div>
                 </div>
             </div>
             <?if ($USER->IsAuthorized()) {?>
-                <div class="regulations-landing__btn">
-                    <div class="landing-btn landing-btn_mealfeel" data-btn-scroll-landing="registr-check">Зарегистрировать чек</div>
+                <div class="regulations-ny2020__btn-wrap">
+                    <div class="regulations-ny2020__btn" data-btn-scroll-landing="registr-check">Принять участие</div>
                 </div>
             <?} else {?>
-                <div class="regulations-landing__btn">
-                    <div class="landing-btn landing-btn_mealfeel js-open-popup" data-popup-id="authorization">Принять участие</div>
+                <div class="regulations-ny2020__btn-wrap">
+                    <div class="regulations-ny2020__btn js-open-popup" data-popup-id="authorization">Принять участие</div>
                 </div>
             <?}?>
         </div>
+        <div class="regulations-ny2020__triangles-top"></div>
+        <div class="regulations-ny2020__triangles-left"></div>
+        <div class="regulations-ny2020__triangles-right"></div>
+        <div class="regulations-ny2020__spruce"></div>
     </section>
 </div>
 

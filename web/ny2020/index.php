@@ -6,9 +6,9 @@ use FourPaws\AppBundle\AjaxController\LandingController;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
-$APPLICATION->SetPageProperty('title', 'Путешествие на 4-х человек на родину Деда Мороза!');
-$APPLICATION->SetPageProperty('description', '');
-$APPLICATION->SetTitle('Путешествие на 4-х человек на родину Деда Мороза!');
+$APPLICATION->SetPageProperty('title', 'Выиграйте главный приз: Путешествие на 4-х человек на родину Деда Мороза!');
+$APPLICATION->SetPageProperty('description', 'Зарегистрируйтесь и выигрывайте призы каждую неделю!');
+$APPLICATION->SetTitle('Выиграйте главный приз: Путешествие на 4-х человек на родину Деда Мороза!');
 ?>
 
 <?php if ($USER->IsAuthorized()) { ?>
