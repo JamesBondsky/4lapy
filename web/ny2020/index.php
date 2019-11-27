@@ -6,7 +6,6 @@ use FourPaws\AppBundle\AjaxController\LandingController;
 use FourPaws\PersonalBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Service\ChanceService;
 
-
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
 $APPLICATION->SetPageProperty('title', 'Выиграйте главный приз: Путешествие на 4-х человек на родину Деда Мороза!');
@@ -68,7 +67,7 @@ $chanceService = Application::getInstance()->getContainer()->get(ChanceService::
 
         <div class="read-rules">
           <input type="checkbox" id="READ_RULES_REG_CHECK_NY" name="rules" value="Y" checked>
-          <label for="READ_RULES_REG_CHECK_NY"><span></span> <a href="/" target="_blank">с правилами акции ознакомлен</a></label>
+          <label for="READ_RULES_REG_CHECK_NY"><span></span> с правилами акции ознакомлен</label>
           <div class="b-error">
             <span class="js-message"></span>
           </div>

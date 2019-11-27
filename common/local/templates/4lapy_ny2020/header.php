@@ -103,9 +103,9 @@ $markup = PawsApplication::markup();
             </div>
             <div class="header-ny2020-menu" data-mobile-menu-landing="true">
                 <ul class="header-ny2020-menu__list" data-list-mobile-menu-landing="true">
-                    <li  class="header-ny2020-menu__item">
+                    <?/*<li  class="header-ny2020-menu__item">
                         <a href="/" class="header-ny2020-menu__link" target="_blank">Правила акции</a>
-                    </li>
+                    </li>*/?>
 
                     <li class="header-ny2020-menu__item">
                         <a href="javascript:void(0);"  class="header-ny2020-menu__link" data-btn-scroll-landing="regulations">Принять участие</a>
@@ -190,7 +190,7 @@ $markup = PawsApplication::markup();
             </div>
             <?if ($USER->IsAuthorized()) {?>
                 <div class="regulations-ny2020__btn-wrap">
-                    <div class="regulations-ny2020__btn" data-btn-scroll-landing="registr-check">Принять участие</div>
+                    <div class="regulations-ny2020__btn" data-btn-scroll-landing="participate">Принять участие</div>
                 </div>
             <?} else {?>
                 <div class="regulations-ny2020__btn-wrap">
