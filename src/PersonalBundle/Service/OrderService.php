@@ -1107,11 +1107,11 @@ class OrderService
                 );
             }
 
-            if (!$offer->isActive()) {
-                throw new ChequeItemNotActiveException(
-                    \sprintf('Catalog offer %s (#%s) is not active', $offer->getXmlId(), $offer->getId())
-                );
-            }
+//            if (!$offer->isActive()) { импортируем заказ все равно
+//                throw new ChequeItemNotActiveException(
+//                    \sprintf('Catalog offer %s (#%s) is not active', $offer->getXmlId(), $offer->getId())
+//                );
+//            }
 
             $item = new OrderItem();
             $item
