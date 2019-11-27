@@ -11,12 +11,12 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
                 </div>
                 <div class="main-banner-blackfriday__date">с&nbsp;28 ноября по&nbsp;1 декабря</div>
                 <div class="timer-blackfriday">
-                    <?php if (strtotime(date('d.m.Y')) < strtotime('29.11.2019')) : ?>
+                    <?php if (strtotime(date('d.m.Y')) < strtotime('28.11.2019')) : ?>
                         <div class="timer-blackfriday__title">До&nbsp;начала <span class="hide-mobile">акции</span> осталось:</div>
                     <?php else : ?>
                         <div class="timer-blackfriday__title">До&nbsp;завершения <span class="hide-mobile">акции</span> осталось:</div>
                     <?php endif; ?>
-                    <?php if (strtotime(date('d.m.Y')) < strtotime('29.11.2019')) : ?>
+                    <?php if (strtotime(date('d.m.Y')) < strtotime('28.11.2019')) : ?>
                     <div class="timer-blackfriday__time-wrap">
                         <div class="timer-blackfriday__time timer-blackfriday__time_desktop">
                             <script src="/bf/js/timer-bf.js" data-skip-moving="true"></script>
@@ -40,7 +40,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
             </div>
         </div>
     </section>
-    
+
     <?php
     $APPLICATION->IncludeComponent(
         'articul:blackfriday.sections',
@@ -52,7 +52,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
         false
     );
     ?>
-    
+
     <?php
     $APPLICATION->IncludeComponent(
         'articul:blackfriday.action.users',
@@ -64,7 +64,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
         false
     );
     ?>
-    
+
     <?php
     $APPLICATION->IncludeComponent(
         'articul:blackfriday.questions',
