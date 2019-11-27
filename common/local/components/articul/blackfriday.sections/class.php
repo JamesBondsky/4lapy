@@ -78,6 +78,7 @@ class BlackFridaySections extends \CBitrixComponent
                 '\Bitrix\Iblock\SectionTable',
                 ['=this.IBLOCK_SECTION_ID' => 'ref.ID']
             ))
+            ->setOrder(['SORT' => 'ASC'])
             ->setCacheTtl($this->arParams['CACHE_TIME'])
             ->exec()
             ->fetchAll();
@@ -100,6 +101,7 @@ class BlackFridaySections extends \CBitrixComponent
         $sections = $entity::query()
             ->setSelect(['ID', 'NAME', 'UF_LINK', 'UF_DESKTOP_PICTURE', 'UF_TABLET_PICTURE', 'UF_MOBILE_PICTURE'])
             ->setFilter(['=IBLOCK_ID' => $this->iblockId, '=ACTIVE' => 'Y', '!ID' => $this->sectinonsWithElements])
+            ->setOrder(['SORT' => 'ASC'])
             ->setCacheTtl($this->arParams['CACHE_TIME'])
             ->exec()
             ->fetchAll();
@@ -153,6 +155,7 @@ class BlackFridaySections extends \CBitrixComponent
         $sections = $entity::query()
             ->setSelect(['ID', 'UF_LINK', 'UF_DESKTOP_PICTURE', 'UF_TABLET_PICTURE', 'UF_MOBILE_PICTURE', 'UF_LABEL_LEFT', 'UF_LABEL_RIGHT', 'UF_DISCOUNT_SIZE'])
             ->setFilter(['=IBLOCK_ID' => $this->iblockId, '=ACTIVE' => 'Y', '=ID' => $sectionsId])
+            ->setOrder(['SORT' => 'ASC'])
             ->setCacheTtl($this->arParams['CACHE_TIME'])
             ->exec()
             ->fetchAll();
