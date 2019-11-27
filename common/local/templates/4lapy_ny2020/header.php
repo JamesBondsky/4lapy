@@ -188,11 +188,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
             </div>
-            <?if ($USER->IsAuthorized()) {?>
-                <div class="regulations-ny2020__btn-wrap">
-                    <div class="regulations-ny2020__btn" data-btn-scroll-landing="participate">Принять участие</div>
-                </div>
-            <?} else {?>
+            <?if (!$USER->IsAuthorized()) {?>
                 <div class="regulations-ny2020__btn-wrap">
                     <div class="regulations-ny2020__btn js-open-popup" data-popup-id="authorization">Принять участие</div>
                 </div>
