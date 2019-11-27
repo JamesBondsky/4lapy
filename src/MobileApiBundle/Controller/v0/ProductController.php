@@ -196,6 +196,51 @@ class ProductController extends BaseController
     }
     
     /**
+     * @Rest\Get("/all_comments/")
+     * @Rest\View(serializerGroups={"Default", "product"})
+     * @param Request $request
+     * @return Response
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function allCommentsAction(Request $request)
+    {
+        $comments = $this->apiProductService->getProductCommentsById($request->get('id'), 0);
+    
+        return (new Response())->setData([
+            'comments' => $comments
+        ]);
+    }
+    
+    /**
+     * @Rest\Post("/add_comment/")
+     * @Rest\View(serializerGroups={"Default", "product"})
+     * @param Request $request
+     * @return Response
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function addCommentAction(Request $request)
+    {
+        echo '<pre>';
+        print_r($request);
+        echo '</pre>';
+        die;
+        $offer = $this->apiProductService->getOne($goodsItemRequest->getId());
+        return (new Response())->setData([
+            'goods' => $offer
+        ]);
+    }
+    
+    /**
      * @Rest\Get("/goods_search/")
      * @Rest\View(serializerGroups={"Default", "productsList"})
      * @param Request $request

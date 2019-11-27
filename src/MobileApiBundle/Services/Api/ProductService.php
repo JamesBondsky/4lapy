@@ -1237,18 +1237,18 @@ class ProductService
         return $stampCategories;
     }
     
-    private function getProductCommentsById($id)
+    public function getProductCommentsById($id, $limit = 2)
     {
         try {
             Loader::includeModule('articul.main');
-    
+
             $comments = CommentsTable::query()
                 ->setSelect(['stars' => 'UF_MARK', 'text' => 'UF_TEXT', 'date' => 'UF_DATE', 'images' => 'UF_PHOTOS', 'author' => 'UF_USER_ID'])
                 ->setFilter(['=UF_OBJECT_ID' => $id, '=UF_ACTIVE' => 1])
-                ->setLimit(2)
+                ->setLimit($limit)
                 ->exec()
                 ->fetchAll();
-    
+
             $result = $this->buildCommentsFieldResult($comments);
 
             $this->totalComments = count($result);
