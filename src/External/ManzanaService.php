@@ -876,7 +876,12 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
                 $result = $this->newExec(__METHOD__, func_get_args());
                 /** @var ChequeItems $resChequeItems */
-                $resChequeItems = $this->serializer->deserialize(json_encode(['ChequeItems' => $result['ChequeItem'] ?? $result]), ChequeItems::class, 'json');
+                try {
+                    $resChequeItems = $this->serializer->deserialize(json_encode(['ChequeItems' => $result['ChequeItem'] ?? $result]), ChequeItems::class, 'json');
+                } catch (\Exception $e) {
+                    // в $result может быть ключ ChequeItem c полями айтема, а может быть ключ ChequeItem, за которым скрывается массив айтемов, так что тут пока костыль
+                    $resChequeItems = $this->serializer->deserialize(json_encode(['ChequeItems' => $result]), ChequeItems::class, 'json');
+                }
             } else {
                 $result = $this->execute(self::CONTRACT_CHEQUE_ITEMS, $bag->getParameters());
                 /** @var ChequeItems $resChequeItems */
