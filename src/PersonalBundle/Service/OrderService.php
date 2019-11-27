@@ -1102,16 +1102,18 @@ class OrderService
         foreach ($chequeItems as $chequeItem) {
             $offer = $this->manzanaOrderOffers[$chequeItem->number];
             if (null === $offer) {
+                continue;
                 throw new ChequeItemNotExistsException(
                     \sprintf('Cheque %s item %s not found', $cheque->chequeNumber, $chequeItem->number)
                 );
             }
 
-//            if (!$offer->isActive()) { импортируем заказ все равно
-//                throw new ChequeItemNotActiveException(
-//                    \sprintf('Catalog offer %s (#%s) is not active', $offer->getXmlId(), $offer->getId())
-//                );
-//            }
+            if (!$offer->isActive()) {
+                continue;
+                throw new ChequeItemNotActiveException(
+                    \sprintf('Catalog offer %s (#%s) is not active', $offer->getXmlId(), $offer->getId())
+                );
+            }
 
             $item = new OrderItem();
             $item
