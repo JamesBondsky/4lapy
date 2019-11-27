@@ -1436,7 +1436,7 @@ class PersonalOffersService
                         </div>
                     </div>';
         }
-
+        $html = null; //@todo oops
         return $html;
     }
 
