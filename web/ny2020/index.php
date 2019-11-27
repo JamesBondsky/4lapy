@@ -22,11 +22,7 @@ $chanceService = Application::getInstance()->getContainer()->get(ChanceService::
 
   <section id="participate" data-id-section-landing="participate" class="participate-ny2020">
     <div class="participate-ny2020__container" data-wrap-data-form-participate-ny2020="true">
-      <?php $arUser = \CUser::GetById($USER->GetID())->Fetch(); ?>
-
-      <?php try {
-        $userChance = $chanceService->getCurrentUserChances();
-      } catch (RuntimeException $e) { ?>
+        <?php $arUser = \CUser::GetById($USER->GetID())->Fetch(); ?>
       <div class="title-ny2020 title-ny2020_white">Принять участие</div>
       <div class="participate-ny2020__form-info">Все поля обязательны для заполнения</div>
       <form data-form-participate-ny2020="true"
