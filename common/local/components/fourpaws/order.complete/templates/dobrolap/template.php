@@ -2,6 +2,7 @@
 
 use Bitrix\Sale\Order;
 use Picqer\Barcode\BarcodeGeneratorPNG;
+use FourPaws\KioskBundle\Service\KioskService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -10,9 +11,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $barcodeGenerator = new BarcodeGeneratorPNG();
 
 /** @var Order $order */
-$order = $arResult['ORDER'];
-$offer = $arResult['OFFER'];
-$coupon = $arResult['COUPON'];
+$order     = $arResult['ORDER'];
+$offer     = $arResult['OFFER'];
+$coupon    = $arResult['COUPON'];
 $promocode = $coupon['UF_PROMO_CODE'];
 ?>
 
@@ -23,13 +24,13 @@ $promocode = $coupon['UF_PROMO_CODE'];
             <div class="b-order__content b-order__content--no-border b-order__content--no-padding b-order__content--no-flex">
                 <hr class="b-hr b-hr--order b-hr--top-line"/>
                 <h2 class="b-title b-title--order-heading b-title--block">
-                    Ваш заказ №<strong><?= $order->getField('ACCOUNT_NUMBER') ?></strong> оформлен
+                    Ваш заказ №<strong><?=$order->getField('ACCOUNT_NUMBER')?></strong> оформлен
                 </h2>
-                <div class="b-order__text-block">и&nbsp;будет&nbsp;доставлен&nbsp;в <b><?= $arResult['SHELTER'] ?></b></div>
+                <div class="b-order__text-block">и&nbsp;будет&nbsp;доставлен&nbsp;в <b><?=$arResult['SHELTER']?></b></div>
                 <? if ($arResult['EXIST_COUPON'] || $arResult['AVAILABLE_COUPONS']) { ?>
                     <hr class="b-hr b-hr--order b-hr--top-line"/>
                 <? } ?>
-                <div data-b-dobrolap-prizes data-order-id="<?= $order->getField('ACCOUNT_NUMBER') ?>" data-url="<?= $arResult['GET_COUPON_URL'] ?>">
+                <div data-b-dobrolap-prizes data-order-id="<?=$order->getField('ACCOUNT_NUMBER')?>" data-url="<?=$arResult['GET_COUPON_URL']?>">
                     <? /*if ($arResult['EXIST_COUPON']) { ?>
                         <div data-b-dobrolap-prizes="coupon-section"><? //FIXME Этот html практически целиком дублирует блок <div data-b-dobrolap-prizes="coupon-section"> в www/deploy/release/src/PersonalBundle/Service/PersonalOffersService.php:978 ?>
                             <div class="b-order__text-block">
@@ -117,6 +118,35 @@ $promocode = $coupon['UF_PROMO_CODE'];
                             </div>
                         </div>
                     <? } */ ?>
+                    <div class="b-order__text-block">
+                        <p>
+                            Перейти в
+                            <a class="b-link b-link--inherit b-link--orange <?=$arResult['IS_AUTH'] ? '' : ' js-open-popup'?>" <?=$arResult['IS_AUTH'] ? ' href="/personal/index.php"' : ' data-popup-id="authorization" href="javascript:void(0)"'?>
+                               title="личный кабинет">личный
+                                                      кабинет</a>.
+                        </p>
+                        <p>
+                            Что-то забыли? Вы можете добавить товары к заказу -
+                            <a class="b-link b-link--inherit b-link--orange" href="/" title="">продолжить покупки</a>.
+                        </p>
+                        <p>Если у вас остались вопросы, свяжитесь с нами по номеру <?=tplvar('phone_main')?></p>
+                        <?php
+                        if (!KioskService::isKioskMode()) {
+                            $APPLICATION->IncludeFile(
+                                'blocks/components/social_share.php',
+                                [
+                                    'shareTitle' => 'Расскажите о нас друзьям',
+                                    'shareUrl'   => '/',
+                                ],
+                                [
+                                    'SHOW_BORDER' => false,
+                                    'NAME'        => 'Блок Рассказать в соцсетях',
+                                    'MODE'        => 'php',
+                                ]
+                            );
+                        }
+                        ?>
+                    </div>
                 </div>
             </div>
         </div>

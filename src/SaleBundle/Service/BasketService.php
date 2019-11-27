@@ -1146,8 +1146,9 @@ class BasketService implements LoggerAwareInterface
     {
         /**
          * @todo выпилить 1 октября 2018 года (коммент перенесен из метода isGiftProduct)
+         *       #магнит #магнитики #магнит цена корзина пипец #подарок магнит #что за жопа #magnet #fmagnet
          */
-        return (!\in_array($xmlId, ['3005425', '3005437', '3005424', '3005436'], true) && // @todo костыль для акции "добролап" (коммент перенесен из метода isGiftProduct)
+        return (!\in_array($xmlId, ['3005425', '3005437', '3005424', '3005436', '3007113'], true) && // @todo костыль для акции "добролап" (коммент перенесен из метода isGiftProduct)
             ($xmlId[0] === '3')) || ($extendedCheck && $xmlId[0] === '2');
     }
 
