@@ -501,6 +501,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 } ?>
             </ul>
         </div>
+        <? if ($currentOffer->getPrice()) { ?>
         <div class="b-counter-basket js-product-controls">
             <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--counter-basket js-buy1click-ps js-plus-minus-cont">
                 <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"></a>
@@ -520,26 +521,26 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 <?php
             } ?>
 
-            <? if($arParams['IS_POPUP']) { ?>
-                <a class="b-counter-basket__basket-link b-counter-basket__basket-link--subscribe js-basket-add js-this-product"
-                   href="javascript:void(0)"
-                   title=""
-                   data-offerId="<?= $currentOffer->getId(); ?>"
-                   data-url="/ajax/sale/basket/add/">
-                    <span class="b-counter-basket__basket-text">Добавить в подписку</span>
-                    <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-add-to-discribe', 20, 20) ?></span>
-                </a>
-            <? } else { ?>
-                <a class="b-counter-basket__basket-link js-basket-add js-this-product"
-                   href="javascript:void(0)"
-                   <?= $arResult['BASKET_LINK_EVENT'] ?>
-                   title=""
-                   data-offerId="<?= $currentOffer->getId(); ?>"
-                   data-url="/ajax/sale/basket/add/">
-                    <span class="b-counter-basket__basket-text">Добавить в корзину</span>
-                    <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
-                </a>
-            <? } ?>
+                <? if ($arParams['IS_POPUP']) { ?>
+                    <a class="b-counter-basket__basket-link b-counter-basket__basket-link--subscribe js-basket-add js-this-product"
+                       href="javascript:void(0)"
+                       title=""
+                       data-offerId="<?= $currentOffer->getId(); ?>"
+                       data-url="/ajax/sale/basket/add/">
+                        <span class="b-counter-basket__basket-text">Добавить в подписку</span>
+                        <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-add-to-discribe', 20, 20) ?></span>
+                    </a>
+                <? } else { ?>
+                    <a class="b-counter-basket__basket-link js-basket-add js-this-product"
+                       href="javascript:void(0)"
+                        <?= $arResult['BASKET_LINK_EVENT'] ?>
+                       title=""
+                       data-offerId="<?= $currentOffer->getId(); ?>"
+                       data-url="/ajax/sale/basket/add/">
+                        <span class="b-counter-basket__basket-text">Добавить в корзину</span>
+                        <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
+                    </a>
+                <? } ?>
 
 
             <?php if ($arResult['SHOW_FAST_ORDER']) { ?>
@@ -552,6 +553,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
             <hr class="b-counter-basket__hr">
             <div class="js-dynaminc-content" data-id="shares"></div>
         </div>
+        <? } ?>
         <div class="b-preloader">
             <div class="b-preloader__spinner">
                 <img class="b-preloader__image"

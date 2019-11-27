@@ -126,7 +126,7 @@ try {
                             </div>
                             <div class="item js-dostavista-date-result" data-default-text-dostavista-date-result="Будет доступен после ввода адреса">Будет доступен после ввода адреса</div>
                         </div>
-                        <button class="b-button b-button--social b-button--next b-button--next-disable js-dostavista-success-button">
+                        <button class="b-button b-button--social b-button--next b-button--next-disable js-dostavista-success-button" disabled="disabled">
                             Запомнить адрес
                         </button>
                     </div>

@@ -57,16 +57,19 @@ use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\MobileApiBundle\Exception\BonusSubtractionException;
 use FourPaws\MobileApiBundle\Exception\OrderNotFoundException;
 use FourPaws\MobileApiBundle\Exception\ProductsAmountUnavailableException;
+use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
+use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
 use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
@@ -157,10 +160,13 @@ class OrderService implements LoggerAwareInterface
     /** @var Manzana */
     private $manzana;
 
-    const DELIVERY_TYPE_COURIER = 'courier';
-    const DELIVERY_TYPE_PICKUP = 'pickup';
-    const DELIVERY_TYPE_DOSTAVISTA = 'dostavista';
-    const DELIVERY_TYPE_DOBROLAP = 'dobrolap';
+    /** @var AddressService $addressService */
+    private $addressService;
+
+    public const DELIVERY_TYPE_COURIER = 'courier';
+    public const DELIVERY_TYPE_PICKUP = 'pickup';
+    public const DELIVERY_TYPE_DOSTAVISTA = 'dostavista';
+    public const DELIVERY_TYPE_DOBROLAP = 'dobrolap';
 
     public function __construct(
         ApiBasketService $apiBasketService,
@@ -181,7 +187,8 @@ class OrderService implements LoggerAwareInterface
         AppBonusService $appBonusService,
         PersonalOffersService $personalOffersService,
         StampService $stampService,
-        Manzana $manzana
+        Manzana $manzana,
+        AddressService $addressService
     )
     {
         $this->apiBasketService = $apiBasketService;
@@ -203,6 +210,8 @@ class OrderService implements LoggerAwareInterface
         $this->personalOffersService = $personalOffersService;
         $this->stampService = $stampService;
         $this->manzana = $manzana;
+
+        $this->addressService = $addressService;
     }
 
     /**
@@ -794,10 +803,10 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @return array
+     * @return DeliveryVariant[]
      * @throws Exception
      */
-    public function getDeliveryVariants()
+    public function getDeliveryVariants(): array
     {
         $basketProducts = $this->apiBasketService->getBasketProducts(true);
 
@@ -806,9 +815,10 @@ class OrderService implements LoggerAwareInterface
         $pickup     = null;
         $dostavista = null;
         $dobrolap   = null;
+        $express    = null;
         foreach ($deliveries as $calculationResult) {
             // toDo убрать условие "&& !$calculationResult instanceof DpdPickupResult" после того как в мобильном приложении будет реализован вывод точек DPD на карте в чекауте
-            if ($this->appDeliveryService->isInnerPickup($calculationResult) && !$calculationResult instanceof DpdPickupResult) {
+            if (!$calculationResult instanceof DpdPickupResult && $this->appDeliveryService->isInnerPickup($calculationResult)) {
                 $pickup = $calculationResult;
             } elseif ($this->appDeliveryService->isInnerDelivery($calculationResult)) {
                 $delivery = $calculationResult;
@@ -816,12 +826,15 @@ class OrderService implements LoggerAwareInterface
                 $dostavista = $calculationResult;
             } elseif ($this->appDeliveryService->isDobrolapDelivery($calculationResult)) {
                 $dobrolap = $calculationResult;
+            } elseif ($this->appDeliveryService->isExpressDelivery($calculationResult)) {
+                $express = $calculationResult;
             }
         }
         $courierDelivery = (new DeliveryVariant());
         $pickupDelivery = (new DeliveryVariant());
         $dostavistaDelivery = (new DeliveryVariant());
         $dobrolapDelivery = (new DeliveryVariant());
+        $expressDelivery = (new DeliveryVariant());
 
         if ($delivery && $basketProducts->count() != 0) {
             $courierDelivery
@@ -841,14 +854,14 @@ class OrderService implements LoggerAwareInterface
                 ->setPrice($pickup->getDeliveryPrice());
         }
         if ($dostavista) {
-            $avaliable = $this->checkDostavistaAvaliability($dostavista);
+            $available = $this->checkDostavistaAvaliability($dostavista);
 
             $currentDate = new \DateTime();
 
             $deliveryDate = $dostavista->getDeliveryDate();
 
             $dostavistaDelivery
-                ->setAvailable($avaliable)
+                ->setAvailable($available)
                 ->setPrice($dostavista->getDeliveryPrice())
                 ->setShortDate('В течение 3 часов');
 
@@ -865,7 +878,28 @@ class OrderService implements LoggerAwareInterface
                 ->setPrice($dobrolap->getDeliveryPrice());
         }
 
-        return [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery];
+        if ($express) {
+            $expressDelivery
+                ->setAvailable(true)
+                ->setPrice($express->getPrice());
+
+            $currentDate = new \DateTime();
+
+            $deliveryDate = $dostavista->getDeliveryDate();
+
+            $expressDelivery
+                ->setAvailable(true)
+                ->setPrice($express->getDeliveryPrice())
+                ->setShortDate('В течение {{express.interval}} минут');
+
+            if ($deliveryDate->format('d.m') === $currentDate->format('d.m')) {
+                $expressDelivery->setDate('Сегодня, ' . $deliveryDate->format('d.m.Y') . ' - в течение {{express.interval}} минут с момента заказа');
+            } else {
+                $expressDelivery->setDate(DeliveryTimeHelper::showTime($dostavista) . ' - в течение {{express.interval}} минут с момента заказа');
+            }
+        }
+
+        return [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery, $expressDelivery];
     }
 
     public function checkDostavistaAvaliability($dostavista)
@@ -1264,25 +1298,11 @@ class OrderService implements LoggerAwareInterface
 
         /* Если на шаге выбора доставки не выбирали адрес из подсказок, то пробуем определить его тут для проставления района Москвы */
         if ($storage->getCityCode() === \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
-            $city = (!empty($storage->getCity())) ? $storage->getCity() : 'Москва';
-            $strAddress = sprintf('%s, %s, %s', $city, $storage->getStreet(), $storage->getHouse());
+            $storage->updateAddressBySaveAddress($this->addressService, $this->locationService, $this->orderStorageService);
+        }
 
-            $this->log()->info(sprintf('Попытка определить район москвы для данных %s', $strAddress));
-            try {
-                $okato = $this->locationService->getDadataLocationOkato($strAddress);
-                $this->log()->info(sprintf('Okato - %s', $okato));
-                $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
-
-                if (count($locations)) {
-                    $location = current($locations);
-                    $storage->setCity($location['NAME']);
-                    $storage->setCityCode($location['CODE']);
-                    $storage->setMoscowDistrictCode($location['CODE']);
-                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
-                }
-            } catch (\Exception $e) {
-                $this->log()->info(sprintf('Произошла ошибка при установке местоположения - %s', $e->getMessage()));
-            }
+        if ($deliveryType === self::DELIVERY_TYPE_DOSTAVISTA) {
+            $this->updateExpressDelivery($storage);
         }
 
         try {
@@ -1340,6 +1360,31 @@ class OrderService implements LoggerAwareInterface
         return $response;
     }
 
+
+    /**
+     * @param OrderStorage $storage
+     * @return void
+     */
+    protected function updateExpressDelivery(OrderStorage $storage): void
+    {
+        try {
+            if (!$storage->getCityCode() || empty($storage->getCityCode())) {
+                throw new RuntimeException('no location in storage');
+            }
+
+            $this->appDeliveryService->getExpressDeliveryInterval($storage->getCityCode());
+
+            foreach ($this->orderStorageService->getDeliveries($storage) as $delivery) {
+                if ($this->appDeliveryService->isExpressDelivery($delivery)) {
+                    $storage->setDeliveryId($this->appDeliveryService->getDeliveryIdByCode(DeliveryService::EXPRESS_DELIVERY_CODE));
+                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+
+                }
+            }
+
+        } catch (Exception $e) {
+        }
+    }
 
     public function isMKAD($lat, $lng): bool
     {
@@ -1574,12 +1619,12 @@ class OrderService implements LoggerAwareInterface
     private function is_in_polygon($points_polygon, $vertices_x, $vertices_y, $longitude_x, $latitude_y)
     {
         $i = $j = $c = $point = 0;
-        for ($i = 0, $j = $points_polygon ; $i < $points_polygon; $j = $i++) {
+        for ($i = 0, $j = $points_polygon; $i < $points_polygon; $j = $i++) {
             $point = $i;
-            if( $point == $points_polygon )
+            if ($point == $points_polygon)
                 $point = 0;
-            if ( (($vertices_y[$point]  >  $latitude_y != ($vertices_y[$j] > $latitude_y)) &&
-                ($longitude_x < ($vertices_x[$j] - $vertices_x[$point]) * ($latitude_y - $vertices_y[$point]) / ($vertices_y[$j] - $vertices_y[$point]) + $vertices_x[$point]) ) )
+            if ((($vertices_y[$point] > $latitude_y != ($vertices_y[$j] > $latitude_y)) &&
+                ($longitude_x < ($vertices_x[$j] - $vertices_x[$point]) * ($latitude_y - $vertices_y[$point]) / ($vertices_y[$j] - $vertices_y[$point]) + $vertices_x[$point])))
                 $c = !$c;
         }
         return $c;

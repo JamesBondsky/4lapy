@@ -209,7 +209,7 @@ if ($storage->getUserId() && !$addresses->isEmpty()) {
     </div>
     <div class="b-input--dostavista-warning b-input--dostavista-warning-hidden js-dostavista-address-warning">
         <span>
-            Доставка из магазина  возможна только внутри МКАД, воспользуйтесь самовывозом
+            Экспресс доставка возможна только внутри МКАД, воспользуйтесь самовывозом
         </span>
     </div>
     <div class="b-input-line b-radio-tab__address-map js-courierdelivery-map hidden">

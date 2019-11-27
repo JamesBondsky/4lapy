@@ -7,18 +7,18 @@ use Bitrix\Main\Application;
 use Sprint\Migration\Helpers\HlblockHelper;
 use CUserFieldEnum;
 
-class HLBlockLectionAppsCreate20191105171256 extends SprintMigrationBase
+class HLBlockGroomingAppsCreate20191112171256 extends SprintMigrationBase
 {
-    protected $description = 'Создание таблицы для хранения заявок на лекции';
+    protected $description = 'Создание таблицы для хранения заявок на груминг';
     
-    const HL_BLOCK_NAME = 'LectionApps';
+    const HL_BLOCK_NAME = 'GroomingApps';
     
     protected $hlBlockData = [
         'NAME'       => self::HL_BLOCK_NAME,
-        'TABLE_NAME' => 'b_hlbd_lection_apps',
+        'TABLE_NAME' => 'b_hlbd_grooming_apps',
         'LANG'       => [
             'ru' => [
-                'NAME' => 'Заявки на лекции',
+                'NAME' => 'Заявки на груминг',
             ],
         ],
     ];
@@ -148,9 +148,9 @@ class HLBlockLectionAppsCreate20191105171256 extends SprintMigrationBase
             ],
         ],
         [
-            'FIELD_NAME'        => 'UF_DATE_CREATE',
+            'FIELD_NAME'        => 'UF_ANIMAL',
             'USER_TYPE_ID'      => 'string',
-            'XML_ID'            => 'UF_DATE_CREATE',
+            'XML_ID'            => 'UF_ANIMAL',
             'SORT'              => 20,
             'MULTIPLE'          => 'N',
             'MANDATORY'         => 'N',
@@ -159,20 +159,62 @@ class HLBlockLectionAppsCreate20191105171256 extends SprintMigrationBase
             'EDIT_IN_LIST'      => 'Y',
             'IS_SEARCHABLE'     => 'N',
             'EDIT_FORM_LABEL'   => [
-                'ru' => 'Дата создания',
+                'ru' => 'Вид животного',
             ],
             'LIST_COLUMN_LABEL' => [
-                'ru' => 'Дата создания',
+                'ru' => 'Вид животного',
             ],
             'LIST_FILTER_LABEL' => [
-                'ru' => 'Дата создания',
+                'ru' => 'Вид животного',
+            ],
+        ],
+        [
+            'FIELD_NAME'        => 'UF_BREED',
+            'USER_TYPE_ID'      => 'string',
+            'XML_ID'            => 'UF_BREED',
+            'SORT'              => 20,
+            'MULTIPLE'          => 'N',
+            'MANDATORY'         => 'N',
+            'SHOW_FILTER'       => 'Y',
+            'SHOW_IN_LIST'      => 'Y',
+            'EDIT_IN_LIST'      => 'Y',
+            'IS_SEARCHABLE'     => 'N',
+            'EDIT_FORM_LABEL'   => [
+                'ru' => 'Порода',
+            ],
+            'LIST_COLUMN_LABEL' => [
+                'ru' => 'Порода',
+            ],
+            'LIST_FILTER_LABEL' => [
+                'ru' => 'Порода',
+            ],
+        ],
+        [
+            'FIELD_NAME'        => 'UF_SERVICE',
+            'USER_TYPE_ID'      => 'string',
+            'XML_ID'            => 'UF_SERVICE',
+            'SORT'              => 20,
+            'MULTIPLE'          => 'N',
+            'MANDATORY'         => 'N',
+            'SHOW_FILTER'       => 'Y',
+            'SHOW_IN_LIST'      => 'Y',
+            'EDIT_IN_LIST'      => 'Y',
+            'IS_SEARCHABLE'     => 'N',
+            'EDIT_FORM_LABEL'   => [
+                'ru' => 'Услуга',
+            ],
+            'LIST_COLUMN_LABEL' => [
+                'ru' => 'Услуга',
+            ],
+            'LIST_FILTER_LABEL' => [
+                'ru' => 'Услуга',
             ],
         ],
     ];
     
     public function up()
     {
-        $iblockId = \CIBlock::GetList([], ['CODE' => 'flagman_lections'])->Fetch()['ID'];
+        $iblockId = \CIBlock::GetList([], ['CODE' => 'flagman_grooming'])->Fetch()['ID'];
         $this->fields[3]['SETTINGS']['IBLOCK_ID'] = $iblockId;
         
         /** @var HlblockHelper $hlBlockHelper */

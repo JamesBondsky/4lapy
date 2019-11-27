@@ -1569,11 +1569,11 @@ class PaymentService implements LoggerAwareInterface
 //                    }
 //                }
 //            }
-
-            if ($bonusAmount && $order->getDeliveryPrice() > $bonusAmount) {
-                $order->setFieldNoDemand('PRICE_DELIVERY', $order->getDeliveryPrice() - $bonusAmount);
-                $bonusAmount = 0;
-            }
+//
+//            if ($bonusAmount && $order->getDeliveryPrice() > $bonusAmount) {
+//                $order->setFieldNoDemand('PRICE_DELIVERY', $order->getDeliveryPrice() - $bonusAmount);
+//                $bonusAmount = 0;
+//            }
 
 
             foreach ($xmlIdsItems as $xmlIdItem) {

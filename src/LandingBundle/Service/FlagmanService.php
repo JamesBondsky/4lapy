@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace FourPaws\LandingBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Articul\Landing\Orm\GroomingTable;
 use Articul\Landing\Orm\TrainingAppsTable;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Loader;
@@ -20,7 +21,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Articul\Landing\Orm\LectionsTable;
 use Articul\Landing\Orm\TrainingsTable;
 use Articul\Landing\Orm\LectionAppsTable;
-use GuzzleHttp\Client;
+use Bitrix\Main\Entity\ReferenceField;
 
 /**
  * Class FlagmanService
@@ -37,11 +38,33 @@ class FlagmanService extends Controller implements LoggerAwareInterface
         Loader::includeModule('iblock');
     }
     
-    public function getElementsBySectionId($id)
+    public function getElementsBySectionTrainingId($id)
     {
         return TrainingsTable::query()
-            ->setSelect(['ID', 'NAME', 'FREE_SITS' => 'UTS.FREE_SITS', 'SITS' => 'UTS.SITS'])
+            ->setSelect(['ID', 'NAME', 'FREE_SITS' => 'UTS.FREE_SITS', 'SITS' => 'UTS.SITS', 'SECTION_NAME' => 'SECTION.NAME'])
             ->setFilter(['=IBLOCK_SECTION_ID' => $id, '=ACTIVE' => 'Y'])
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'SECTION',
+                    '\Bitrix\Iblock\SectionTable',
+                    ['=this.IBLOCK_SECTION_ID' => 'ref.ID']
+                ))
+            ->exec()
+            ->fetchAll();
+    }
+    
+    public function getElementsBySectionGroomingId($id)
+    {
+        return GroomingTable::query()
+            ->setSelect(['ID', 'NAME', 'FREE' => 'UTS.FREE', 'FREE_VALUE' => 'ENUM.XML_ID'])
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'ENUM',
+                    '\Bitrix\Iblock\PropertyEnumerationTable',
+                    ['=this.FREE' => 'ref.ID']
+                )
+            )
+            ->setFilter(['=IBLOCK_SECTION_ID' => $id])
             ->exec()
             ->fetchAll();
     }
