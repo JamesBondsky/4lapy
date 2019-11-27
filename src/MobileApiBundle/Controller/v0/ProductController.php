@@ -209,8 +209,8 @@ class ProductController extends BaseController
      */
     public function allCommentsAction(Request $request)
     {
-        $comments = $this->apiProductService->getProductCommentsById($request->get('id'), 0);
-    
+        $comments = $this->apiProductService->getProductCommentsById($request->get('id'), $navigation = 'Y', $request->get('count'), $request->get('page'));
+        
         return (new Response())->setData([
             'comments' => $comments
         ]);
@@ -230,11 +230,8 @@ class ProductController extends BaseController
      */
     public function addCommentAction(Request $request)
     {
-        echo '<pre>';
-        print_r($request);
-        echo '</pre>';
-        die;
-        $offer = $this->apiProductService->getOne($goodsItemRequest->getId());
+        $result = $this->apiProductService->addProductComment();
+        
         return (new Response())->setData([
             'goods' => $offer
         ]);

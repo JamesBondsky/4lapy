@@ -1,6 +1,6 @@
 <?php
 
-namespace Articul\Main\Orm;
+namespace FourPaws\Catalog\Table;
 
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;

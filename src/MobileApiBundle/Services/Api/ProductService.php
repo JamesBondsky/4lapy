@@ -70,7 +70,7 @@ use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
-use Articul\Main\Orm\CommentsTable;
+use FourPaws\Catalog\Table\CommentsTable;
 
 
 class ProductService
@@ -1237,15 +1237,27 @@ class ProductService
         return $stampCategories;
     }
     
-    public function getProductCommentsById($id, $limit = 2)
+    public function getProductCommentsById($id, $navigation = 'N', $limit = 2, $page = 0, $offset = 0)
     {
         try {
             Loader::includeModule('articul.main');
-
+    
+            if ($navigation == 'Y') {
+                $nav = new \Bitrix\Main\UI\PageNavigation('nav-comments');
+    
+                $nav->allowAllRecords(true)
+                    ->setPageSize($limit)
+                    ->setCurrentPage($page);
+                
+                $limit = $nav->getLimit();
+                $offset = $nav->getLimit();
+            }
+            
             $comments = CommentsTable::query()
                 ->setSelect(['stars' => 'UF_MARK', 'text' => 'UF_TEXT', 'date' => 'UF_DATE', 'images' => 'UF_PHOTOS', 'author' => 'UF_USER_ID'])
                 ->setFilter(['=UF_OBJECT_ID' => $id, '=UF_ACTIVE' => 1])
                 ->setLimit($limit)
+                ->setOffset($offset)
                 ->exec()
                 ->fetchAll();
 
@@ -1256,6 +1268,17 @@ class ProductService
         } catch (\Exception $e) {
             return [];
         }
+    }
+    
+    public function addProductComment()
+    {
+        $user = $this->userService->getCurrentUser();
+        
+        
+        echo '<pre>';
+        print_r('1111');
+        echo '</pre>';
+        die;
     }
     
     private function buildCommentsFieldResult($comments)
