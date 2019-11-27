@@ -212,7 +212,6 @@ class ChanceService
                 '>=DATE_INSERT' => self::PERIODS[$period]['from'],
                 '<=DATE_INSERT' => self::PERIODS[$period]['to'],
                 'STATUS_ID' => [
-                    OrderStatus::STATUS_ISSUING_POINT,
                     OrderStatus::STATUS_DELIVERED,
                     OrderStatus::STATUS_FINISHED,
                 ],
