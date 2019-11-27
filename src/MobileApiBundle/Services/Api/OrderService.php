@@ -935,7 +935,7 @@ class OrderService implements LoggerAwareInterface
         if ($dobrolapDelivery) {
             $result['dobrolap'] = [
                 'available' => $dobrolapDelivery->getAvailable(),
-                'description' => 'Ваш заказ будет доставлен в выбранный Вами приют для бездомных животных. После оплаты заказа вы получите сюрприз и памятный магнит.',
+                'description' => 'Ваш заказ будет доставлен в выбранный Вами приют для бездомных животных. После оплаты заказа вы получите памятный магнит.',
             ];
         }
 

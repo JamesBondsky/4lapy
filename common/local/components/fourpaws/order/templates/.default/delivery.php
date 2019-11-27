@@ -275,7 +275,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
 
                                     <div class="b-choice-recovery__tooltip-content" data-b-choice-recovery-tooltip="content">
                                         Ваш заказ будет доставлен в&nbsp;выбранный Вами приют для&nbsp;бездомных животных.
-                                        После оплаты заказа вы получите сюрприз и&nbsp;памятный магнит.
+                                        После оплаты заказа вы получите памятный магнит.
                                     </div>
                                 </div>
                             <?php } ?>
