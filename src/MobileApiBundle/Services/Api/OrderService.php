@@ -885,7 +885,7 @@ class OrderService implements LoggerAwareInterface
 
             $currentDate = new \DateTime();
 
-            $deliveryDate = $dostavista->getDeliveryDate();
+            $deliveryDate = $express->getDeliveryDate();
 
             $expressDelivery
                 ->setAvailable(true)
