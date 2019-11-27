@@ -921,7 +921,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     private function checkAndReplaceDobrolapMagnet(Basket $basket, User $user, CalculationResultInterface $selectedDelivery)
     {
-        return; // Отключены лишние запросы для проверки магнитиков
+        //return; // Отключены лишние запросы для проверки магнитиков
         $magnets = $this->basketService->getDobrolapMagnets();
         if(!$magnets){
             return;

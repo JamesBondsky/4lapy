@@ -61,4 +61,6 @@ class IblockCode
     public const HOME_IMAGES = 'home_images';
 
     public const HEADER_PROMO_BANNER = 'header_promo_banner';
+
+    public const NEW_YEAR = 'ny2020_questions';
 }
