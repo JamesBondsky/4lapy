@@ -1334,7 +1334,7 @@ class OrderService implements LoggerAwareInterface
                 'title' => 'СПАСИБО ЧТО ВЫ ТВОРИТЕ ДОБРО ВМЕСТЕ С НАМИ!',
                 'titleOrder' => 'Ваш заказ №' . $order->getField('ACCOUNT_NUMBER') . ' оформлен',
                 'description' => 'И будет доставлен в ' . ($this->shelterData ? $this->shelterData['name'] : ''),
-                'titleThank' => '',//'МЫ ГОВОРИМ ВАМ СПАСИБО!',
+                'titleThank' => 'Мы говорим Вам спасибо!',
                 //'descriptionFirstThank' => 'В знак благодарности мы подготовили небольшой сюрприз фанты "Добролап" с приятными презентами',
                 //'descriptionSecondThank' => 'Также мы вложим в Ваш следующий заказ подарок - памятный магнит.',
                 //'titleNow' => 'А СЕЙЧАС',
