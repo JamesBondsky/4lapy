@@ -79,8 +79,8 @@ $APPLICATION->SetTitle("Добролап");
                 </div>
             </div>
             <div class="row">
-                <? $APPLICATION->IncludeComponent("articul:dobrolap.necessary", "template1", Array(
-	
+                <? $APPLICATION->IncludeComponent("articul:dobrolap.necessary", "", Array(
+
 	),
 	false
 ); ?>
@@ -144,8 +144,8 @@ $APPLICATION->SetTitle("Добролап");
                 </div>
             </div>
             <div class="row">
-                <? $APPLICATION->IncludeComponent("articul:dobrolap.shelters", "template1", Array(
-	
+                <? $APPLICATION->IncludeComponent("articul:dobrolap.shelters", "", Array(
+
 	),
 	false
 ); ?>
