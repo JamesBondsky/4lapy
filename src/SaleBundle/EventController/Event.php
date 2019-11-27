@@ -1114,10 +1114,13 @@ class Event extends BaseServiceHandler
         }
     }
 
-    public function updateUserChances(): void
+    public function updateUserChances(BitrixEvent $event): void
     {
+        /** @var Order $order */
+        $order = $event->getParameter('ENTITY');
+
         /** @var ChanceService $chanceService */
         $chanceService = Application::getInstance()->getContainer()->get(ChanceService::class);
-        $chanceService->updateUserChance();
+        $chanceService->updateUserChance($order->getUserId());
     }
 }
