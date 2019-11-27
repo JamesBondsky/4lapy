@@ -1270,11 +1270,22 @@ class ProductService
         }
     }
     
-    public function addProductComment()
+    public function addProductComment($request)
     {
         $user = $this->userService->getCurrentUser();
         
-        
+        CommentsTable::add(
+            [
+                'UF_USER_ID' => $user->getId(),
+                'UF_TEXT' => $request->get('text'),
+                'UF_MARK' => $request->get('stars'),
+                'UF_ACTIVE' => 0,
+                'UF_OBJECT_ID' => $request->get('id'),
+                'UF_TYPE' => 'catalog',
+                // 'UF_DATE' => new DateTime(),
+             //   'UF_PHOTOS' => $user->getId(),
+            ]
+        );
         echo '<pre>';
         print_r('1111');
         echo '</pre>';

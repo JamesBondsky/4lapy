@@ -230,7 +230,7 @@ class ProductController extends BaseController
      */
     public function addCommentAction(Request $request)
     {
-        $result = $this->apiProductService->addProductComment();
+        $result = $this->apiProductService->addProductComment($request);
         
         return (new Response())->setData([
             'goods' => $offer
