@@ -13,6 +13,7 @@ use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
+use WebArch\BitrixCache\BitrixCache;
 
 class DatabaseStorageRepository extends StorageBaseRepository
 {
