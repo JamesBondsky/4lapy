@@ -10385,7 +10385,7 @@ body .b-page-wrapper.no-scroll {
   }
 
   #about-section .heading-section {
-      top: 20px;
+      top: 57px;
   }
 
   .pb-5, .py-5 {
@@ -10402,7 +10402,7 @@ body .b-page-wrapper.no-scroll {
   }
 
   #about-section {
-    padding: 25em 0;
+    padding: 30em 0;
     background: url(/dobrolap/images/main_bg_mob_3.jpg?v=2) center center no-repeat;
     background-size: cover;
     margin-top: 0;
@@ -10484,6 +10484,14 @@ body .b-page-wrapper.no-scroll {
   .harvest_icon {
     height: 40px;
     margin-top: -12px;
+  }
+
+  .animate-box .harvest_icon {
+    margin-top: 5px;
+  }
+
+  .animate-box .harvest_icon h5 {
+    line-height: 1rem;
   }
 
   .harvest_icon img{
