@@ -27,8 +27,6 @@ class BlackFridayActionUsers extends \CBitrixComponent
      */
     public function onPrepareComponentParams($params): array
     {
-        $this->iblockId = $this->getIblockId();
-        
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 360000;
         $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'Y';
         
@@ -47,6 +45,8 @@ class BlackFridayActionUsers extends \CBitrixComponent
         }
         
         if ($this->StartResultCache($this->arParams['CACHE_TIME'])) {
+            $this->iblockId = $this->getIblockId();
+            
             $this->arResult['ITEMS'] = $this->getItems();
             
             if (count($this->arResult['ITEMS']) <= 0) {

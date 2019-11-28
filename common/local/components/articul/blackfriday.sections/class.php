@@ -32,8 +32,6 @@ class BlackFridaySections extends \CBitrixComponent
      */
     public function onPrepareComponentParams($params): array
     {
-        $this->iblockId = $this->getIblockId();
-        
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 360000;
         $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'Y';
         
@@ -52,6 +50,8 @@ class BlackFridaySections extends \CBitrixComponent
         }
         
         if ($this->StartResultCache($this->arParams['CACHE_TIME'])) {
+            $this->iblockId = $this->getIblockId();
+            
             $this->arResult['SECTION_WITH_ELEMENTS'] = $this->getElements();
             $this->arResult['EMPTY_SECTIONS']        = $this->getSections();
             
