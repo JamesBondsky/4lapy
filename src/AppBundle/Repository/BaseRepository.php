@@ -250,6 +250,8 @@ class BaseRepository
             $query->setLimit($this->nav->getLimit());
             $query->countTotal(true);
         }
+        $query->setCacheTtl('36000');
+        $query->cacheJoins(true);
         $result = $query->exec();
 
         if ($this->nav instanceof PageNavigation) {

@@ -13,6 +13,7 @@ use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
+use WebArch\BitrixCache\BitrixCache;
 
 class DatabaseStorageRepository extends StorageBaseRepository
 {
@@ -77,7 +78,19 @@ class DatabaseStorageRepository extends StorageBaseRepository
      */
     public function findByFuser(int $fuserId): OrderStorage
     {
-        if ($data = Table::getByPrimary($fuserId)->fetch()) {
+        $data = (new BitrixCache())
+            ->withId(\sprintf(
+                'fuserId:%s',
+                $fuserId ?? '-1'
+            ))
+            ->withTime(864000)
+            ->resultOf(function () use ($fuserId) {
+                $data = Table::getByPrimary($fuserId)->fetch();
+                
+                return $data;
+            });
+        
+        if ($data) {
             $data = array_merge($data, (array)$data['UF_DATA']);
             unset($data['UF_DATA']);
             $data = $this->setInitialValues($data);
