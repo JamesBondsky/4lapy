@@ -78,19 +78,7 @@ class DatabaseStorageRepository extends StorageBaseRepository
      */
     public function findByFuser(int $fuserId): OrderStorage
     {
-        $data = (new BitrixCache())
-            ->withId(\sprintf(
-                'fuserId:%s',
-                $fuserId ?? '-1'
-            ))
-            ->withTime(864000)
-            ->resultOf(function () use ($fuserId) {
-                $data = Table::getByPrimary($fuserId)->fetch();
-                
-                return $data;
-            });
-        
-        if ($data) {
+        if ($data = Table::getByPrimary($fuserId)->fetch()) {
             $data = array_merge($data, (array)$data['UF_DATA']);
             unset($data['UF_DATA']);
             $data = $this->setInitialValues($data);
