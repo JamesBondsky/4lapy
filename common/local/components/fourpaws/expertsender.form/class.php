@@ -93,7 +93,7 @@ class FourPawsExpertsenderFormComponent extends CBitrixComponent implements Logg
                 try {
                     $stringData = (new BitrixCache())
                         ->withTime(600)
-                        ->withId('kek')
+                        ->withId($userId)
                         ->resultOf($getPets)['result'];
                 } catch (Exception $e) {
                     $stringData = '';
