@@ -5,14 +5,17 @@
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Context;
 use FourPaws\App\Application;
+use Symfony\Bundle\FrameworkBundle\Routing\Router;
 
 /** @noinspection AutoloadingIssuesInspection */
+
 class FourPawsCatalogSearchFormComponent extends \CBitrixComponent
 {
 
     /** {@inheritdoc} */
     public function onPrepareComponentParams($params): array
     {
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? getenv('GLOBAL_CACHE_TTL');
         return $params;
     }
 
@@ -20,24 +23,27 @@ class FourPawsCatalogSearchFormComponent extends \CBitrixComponent
     public function executeComponent()
     {
         try {
-            $this->prepareResult();
+            if ($this->startResultCache()) {
+                $this->prepareResult();
 
-            $this->includeComponentTemplate();
+                $this->includeComponentTemplate();
+            }
         } catch (\Exception $e) {
             try {
                 $logger = LoggerFactory::create('component');
                 $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-            } catch (\RuntimeException $e) {
+            } catch (RuntimeException $e) {
             }
         }
     }
 
     /**
      * @return $this
+     * @throws Exception
      */
-    protected function prepareResult()
+    protected function prepareResult(): self
     {
-        /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router */
+        /** @var Router */
         $router = Application::getInstance()->getContainer()->get('router');
         /** @var Symfony\Component\Routing\RouteCollection $routes */
         $routes = $router->getRouteCollection();
@@ -45,14 +51,14 @@ class FourPawsCatalogSearchFormComponent extends \CBitrixComponent
         $route = $routes->get('fourpaws_catalog_ajax_search_autocomplete');
         if (!$route) {
             $this->abortResultCache();
-            throw new Exception('Catalog autocomplete route not found');
+            throw new RuntimeException('Catalog autocomplete route not found');
         }
         $this->arResult['AUTOCOMPLETE_URL'] = $route->getPath();
 
         $route = $routes->get('fourpaws_catalog_catalog_search');
         if (!$route) {
             $this->abortResultCache();
-            throw new Exception('Catalog search route not found');
+            throw new RuntimeException('Catalog search route not found');
         }
         $this->arResult['SEARCH_URL'] = $route->getPath();
 

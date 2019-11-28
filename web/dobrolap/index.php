@@ -79,8 +79,8 @@ $APPLICATION->SetTitle("Добролап");
                 </div>
             </div>
             <div class="row">
-                <? $APPLICATION->IncludeComponent("articul:dobrolap.necessary", "", Array(
-
+                <? $APPLICATION->IncludeComponent("articul:dobrolap.necessary", "template1", Array(
+	
 	),
 	false
 ); ?>
@@ -144,8 +144,8 @@ $APPLICATION->SetTitle("Добролап");
                 </div>
             </div>
             <div class="row">
-                <? $APPLICATION->IncludeComponent("articul:dobrolap.shelters", "", Array(
-
+                <? $APPLICATION->IncludeComponent("articul:dobrolap.shelters", "template1", Array(
+	
 	),
 	false
 ); ?>
@@ -913,7 +913,7 @@ $APPLICATION->SetTitle("Добролап");
                 <div class="col-md-12 heading-section text-center ftco-animate">
                     <h2 class="">Добрые поездки</h2>
                     <hr/>
-                    <h5 class="mb-4">КАЖДУЮ НЕДЕЛЮ МЫ ОТПРАВЛЯЛИСЬ В ГОСТИ В ПРИЮТЫ К НАШИМ ЧЕТВЕРОЛАПЫМ ДРУЗЬЯМ, ЧТОБЫ ОТВЕЗТИ НУЖНЫЕ И ДОЛГОЖДАННЫЕ ПОДАРКИ.
+                    <h5 class="mb-4">КАЖДУЮ НЕДЕЛЮ В АВГУСТЕ МЫ ОТПРАВЛЯЛИСЬ В ГОСТИ В ПРИЮТЫ К НАШИМ ЧЕТВЕРОЛАПЫМ ДРУЗЬЯМ, ЧТОБЫ ОТВЕЗТИ НУЖНЫЕ И ДОЛГОЖДАННЫЕ ПОДАРКИ.
 ВМЕСТЕ МЫ СМОГЛИ БОЛЬШЕ!</h5>
                 </div>
             </div>
