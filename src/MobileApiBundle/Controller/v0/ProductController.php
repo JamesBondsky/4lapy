@@ -233,7 +233,8 @@ class ProductController extends BaseController
         $result = $this->apiProductService->addProductComment($request);
         
         return (new Response())->setData([
-            'goods' => $offer
+            'success' => 1,
+            'errors' => []
         ]);
     }
     

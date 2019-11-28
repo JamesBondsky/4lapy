@@ -1287,10 +1287,7 @@ class ProductService
         $user = $this->userService->getCurrentUser();
         
         $images = $this->getImagesFromBase64($request->get('images'));
-        echo '<pre>';
-        print_r($images);
-        echo '</pre>';
-        die;
+
         CommentsTable::add(
             [
                 'UF_USER_ID' => $user->getId(),
@@ -1303,10 +1300,6 @@ class ProductService
              //   'UF_PHOTOS' => $user->getId(),
             ]
         );
-        echo '<pre>';
-        print_r('1111');
-        echo '</pre>';
-        die;
     }
     
     private function buildCommentsFieldResult($comments)
