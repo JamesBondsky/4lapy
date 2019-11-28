@@ -1309,6 +1309,7 @@ class ProductService
 
             $paths = $this->getImagePaths($serializedId);
     
+            $comment['date'] = $comment['date']->format("d.m.Y");
             $comment['author'] = $this->getUserById($comment['author']);
             $comment['images'] = $this->getImagePaths($serializedId); //$this->codeImagesToBase64($paths);
         }

@@ -186,7 +186,7 @@ class FullProduct extends ShortProduct
      * @Serializer\SerializedName("total_stars")
      * @Serializer\SkipWhenEmpty()
      */
-    protected $totalStars;
+    protected $totalStars = 0;
     
     /**
      * Всего отзывов о товаре
@@ -195,7 +195,7 @@ class FullProduct extends ShortProduct
      * @Serializer\SerializedName("total_comments")
      * @Serializer\SkipWhenEmpty()
      */
-    protected $totalComments;
+    protected $totalComments = 0;
     
     /**
      * @return CatalogCategory
