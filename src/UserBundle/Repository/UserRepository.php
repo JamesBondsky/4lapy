@@ -158,7 +158,7 @@ class UserRepository
             ->setLimit($limit)
             ->setOffset($offset)
             ->setCacheTtl(getenv('GLOBAL_CACHE_TTL'))
-            ->cacheJoins(true)
+//            ->cacheJoins(true)
             ->exec();
 
         return $this->collectionFactory($result);
@@ -594,7 +594,7 @@ class UserRepository
             ->addSelect('GROUP.NAME', 'GROUP_NAME')
             ->addSelect('GROUP.ACTIVE', 'GROUP_ACTIVE')
             ->setCacheTtl(getenv('GLOBAL_CACHE_TTL'))
-            ->cacheJoins(true)
+//            ->cacheJoins(true)
             ->exec();
 
         $data = array_filter($res->fetchAll(), function ($group) {
