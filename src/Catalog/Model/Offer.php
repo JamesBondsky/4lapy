@@ -1756,7 +1756,6 @@ class Offer extends IblockElement
      */
     public function isShare($excludePseudo = false): bool
     {
-        return false; // todo black.friday
         $shareCollection = $this->getShare();
 
         // псевдоакции
