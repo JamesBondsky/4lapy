@@ -189,6 +189,24 @@ class ShortProduct
      * @Serializer\Exclude()
      */
     protected $usedStamps = 0;
+    
+    /**
+     * Средняя оценка товара
+     * @var integer
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("total_stars")
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $totalStars;
+    
+    /**
+     * Всего отзывов о товаре
+     * @var integer
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("total_comments")
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $totalComments;
 
 
     /**
@@ -553,5 +571,43 @@ class ShortProduct
     public function getUsedStamps(): int
     {
         return $this->usedStamps;
+    }
+    
+    /**
+     * @return integer
+     */
+    public function getTotalStars(): int
+    {
+        return $this->totalStars;
+    }
+    
+    /**
+     * @param integer
+     *
+     * @return ShortProduct
+     */
+    public function setTotalStars(int $totalStars): ShortProduct
+    {
+        $this->totalStars = $totalStars;
+        return $this;
+    }
+    
+    /**
+     * @return integer
+     */
+    public function getTotalComments(): int
+    {
+        return $this->totalComments;
+    }
+    
+    /**
+     * @param integer
+     *
+     * @return ShortProduct
+     */
+    public function setTotalComments(int $totalComments): ShortProduct
+    {
+        $this->totalComments = $totalComments;
+        return $this;
     }
 }

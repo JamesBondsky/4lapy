@@ -539,7 +539,7 @@ class FullProduct extends ShortProduct
     /**
      * @return integer
      */
-    public function getTotalStars(): int
+    public function getTotalStarsFull(): int
     {
         return $this->totalStars;
     }
@@ -549,7 +549,7 @@ class FullProduct extends ShortProduct
      *
      * @return FullProduct
      */
-    public function setTotalStars(int $totalStars): FullProduct
+    public function setTotalStarsFull(int $totalStars): FullProduct
     {
         $this->totalStars = $totalStars;
         return $this;
@@ -558,7 +558,7 @@ class FullProduct extends ShortProduct
     /**
      * @return integer
      */
-    public function getTotalComments(): int
+    public function getTotalCommentsFull(): int
     {
         return $this->totalComments;
     }
@@ -568,7 +568,7 @@ class FullProduct extends ShortProduct
      *
      * @return FullProduct
      */
-    public function setTotalComments(int $totalComments): FullProduct
+    public function setTotalCommentsFull(int $totalComments): FullProduct
     {
         $this->totalComments = $totalComments;
         return $this;

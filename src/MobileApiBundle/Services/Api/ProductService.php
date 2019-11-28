@@ -71,7 +71,7 @@ use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\Catalog\Table\CommentsTable;
-
+use Bitrix\Main\IO\File;
 
 class ProductService
 {
@@ -110,8 +110,8 @@ class ProductService
     /** @var StampService */
     private $stampService;
     
-    /** @var array */
-    private $productStars = [];
+    /** @var int */
+    private $productStars;
     
     /** @var int */
     private $totalComments;
@@ -445,18 +445,7 @@ class ProductService
             // ->setCrossSale($this->getCrossSale($offer))              // похожие товары
             ->setBundle($this->getBundle($offer));                       // с этим товаром покупают
             $fullProduct->setPictureList($this->getPictureList($product, $offer));           // картинки
-
-        $fullProduct->setComments($this->getProductCommentsById($product->getId()));
         
-        if ($this->productStars) {
-            $fullProduct->setTotalStars(array_sum($this->productStars)/2);
-        }
-        
-        if ($this->totalComments) {
-            $fullProduct->setTotalComments($this->totalComments);
-        }
-        
-
         if ($product->getNormsOfUse()->getText() || $product->getLayoutRecommendations()->getText()) {
             if ($product->getLayoutRecommendations()->getText() != '' && $product->getLayoutRecommendations()->getText() != null) {
                 $fullProduct->setNutritionRecommendations($product->getLayoutRecommendations()->getText());
@@ -571,8 +560,17 @@ class ProductService
             ->setXmlId($offer->getXmlId())
             ->setBrandName($product->getBrandName())
             ->setWebPage($offer->getCanonicalPageUrl())
-            ->setColor($offer->getColorProp())
-            ;
+            ->setColor($offer->getColorProp());
+
+        $this->getTotalStarsAndComments($product->getId());
+    
+        if ($this->productStars) {
+            $shortProduct->setTotalStars($this->productStars);
+        }
+        
+        if ($this->totalComments) {
+            $shortProduct->setTotalComments($this->totalComments);
+        }
 
         // большая картинка
         if ($images = $offer->getResizeImages(static::DETAIL_PICTURE_WIDTH, static::DETAIL_PICTURE_HEIGHT)) {
@@ -665,6 +663,7 @@ class ProductService
         $fullProduct
             ->setId($shortProduct->getId())
             ->setTitle($shortProduct->getTitle())
+            ->setComments($this->getProductCommentsById($product->getId()))
             ->setXmlId($shortProduct->getXmlId())
             ->setBrandName($shortProduct->getBrandName())
             ->setWebPage($shortProduct->getWebPage())
@@ -680,7 +679,17 @@ class ProductService
             ->setInPack($shortProduct->getInPack())
             ->setStampLevels($shortProduct->getStampLevels())
             ->setColor($shortProduct->getColor());
-
+    
+        $this->getTotalStarsAndComments($product->getId());
+        
+        if ($this->productStars) {
+            $fullProduct->setTotalStarsFull($this->productStars);
+        }
+    
+        if ($this->totalComments) {
+            $fullProduct->setTotalCommentsFull($this->totalComments);
+        }
+        
         if ($needPackingVariants) {
             if ($hasOnlyColourCombinations) {
                 $fullProduct->setColourVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // цвета
@@ -812,6 +821,10 @@ class ProductService
                 $offer->withAllStocks($stockService->getStocksByOffer($offer));
                 // end костыль
                 $fullProduct = $this->convertToFullProduct($product, $offer);
+    
+            $fullProduct->setComments([]);
+            $fullProduct->setTotalStars(0);
+            $fullProduct->setTotalComments(0);
             // }
             $packingVariants[] = $fullProduct;
         }
@@ -1262,8 +1275,7 @@ class ProductService
                 ->fetchAll();
 
             $result = $this->buildCommentsFieldResult($comments);
-
-            $this->totalComments = count($result);
+            
             return $result;
         } catch (\Exception $e) {
             return [];
@@ -1274,6 +1286,11 @@ class ProductService
     {
         $user = $this->userService->getCurrentUser();
         
+        $images = $this->getImagesFromBase64($request->get('images'));
+        echo '<pre>';
+        print_r($images);
+        echo '</pre>';
+        die;
         CommentsTable::add(
             [
                 'UF_USER_ID' => $user->getId(),
@@ -1282,7 +1299,7 @@ class ProductService
                 'UF_ACTIVE' => 0,
                 'UF_OBJECT_ID' => $request->get('id'),
                 'UF_TYPE' => 'catalog',
-                // 'UF_DATE' => new DateTime(),
+                'UF_DATE' => new \Bitrix\Main\Type\Date(),
              //   'UF_PHOTOS' => $user->getId(),
             ]
         );
@@ -1295,8 +1312,6 @@ class ProductService
     private function buildCommentsFieldResult($comments)
     {
         foreach ($comments as &$comment) {
-            $this->productStars[] = $comment['stars'];
-            
             $serializedId = unserialize($comment['images']);
 
             $paths = $this->getImagePaths($serializedId);
@@ -1343,5 +1358,45 @@ class ProductService
         $result = $user['NAME'] . ' ' . $user['LAST_NAME'];
         
         return $result;
+    }
+    
+    private function getImagesFromBase64($images)
+    {
+        $result = [];
+        
+        foreach ($images as $image) {
+            $pathToFile = \Bitrix\Main\Application::getDocumentRoot(). '/upload/comments_temp_files/image' . time() . '.jpeg';
+            $file = new File();
+    
+            $data = explode(',', $image);
+            $file->putContents($data[1]);
+    
+            $fileArray = \CFile::MakeFileArray($pathToFile);
+            $fileId    = \CFile::SaveFile($fileArray, '/comments_temp_files/');
+    
+            unlink($pathToFile);
+            
+            $result[] = $fileId;
+        }
+        
+        return $result;
+    }
+    
+    private function getTotalStarsAndComments($id)
+    {
+        $stars = CommentsTable::query()
+            ->setSelect(['UF_MARK'])
+            ->setFilter(['=UF_OBJECT_ID' => $id, '=UF_ACTIVE' => 1])
+            ->setCacheTtl('36000')
+            ->exec();
+
+        while ($star = $stars->fetch()['UF_MARK']) {
+            $elements[] = $star;
+        }
+        
+        $count = count($elements);
+
+        $this->totalComments = $count;
+        $this->productStars = (int) (array_sum($elements)/$count);
     }
 }
