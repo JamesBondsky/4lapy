@@ -75,38 +75,38 @@ use Bitrix\Main\IO\File;
 
 class ProductService
 {
-    const LIST_IMAGE_WIDTH = 200;
-    const LIST_IMAGE_HEIGHT = 250;
-    public const DETAIL_PICTURE_WIDTH = 2000;
+    const        LIST_IMAGE_WIDTH      = 200;
+    const        LIST_IMAGE_HEIGHT     = 250;
+    public const DETAIL_PICTURE_WIDTH  = 2000;
     public const DETAIL_PICTURE_HEIGHT = 2000;
-
+    
     /** @var UserService */
     private $userService;
-
+    
     /** @var LocationService */
     private $locationService;
-
+    
     /** @var DeliveryService */
     private $deliveryService;
-
+    
     /** @var CategoriesService */
     private $categoriesService;
-
+    
     /** @var FilterHelper */
     private $filterHelper;
-
+    
     /** @var SearchService */
     private $searchService;
-
+    
     /** @var SortService */
     private $sortService;
-
+    
     /** @var AppBasketService */
     private $appBasketService;
-
+    
     /** @var BasketRulesService */
     private $basketRulesService;
-
+    
     /** @var StampService */
     private $stampService;
     
@@ -115,14 +115,14 @@ class ProductService
     
     /** @var int */
     private $totalComments;
-
-
+    
+    
     /**
      * @var bool
      */
     private $forceAtLeastOnePackingVariant = false;
-
-
+    
+    
     public function __construct(
         CategoriesService $categoriesService,
         UserService $userService,
@@ -134,28 +134,27 @@ class ProductService
         AppBasketService $appBasketService,
         BasketRulesService $basketRulesService,
         StampService $stampService
-    )
-    {
-        $this->categoriesService = $categoriesService;
-        $this->userService = $userService;
-        $this->locationService = $locationService;
-        $this->deliveryService = $deliveryService;
-        $this->filterHelper = $filterHelper;
-        $this->sortService = $sortService;
-        $this->searchService = $searchService;
-        $this->appBasketService = $appBasketService;
+    ) {
+        $this->categoriesService  = $categoriesService;
+        $this->userService        = $userService;
+        $this->locationService    = $locationService;
+        $this->deliveryService    = $deliveryService;
+        $this->filterHelper       = $filterHelper;
+        $this->sortService        = $sortService;
+        $this->searchService      = $searchService;
+        $this->appBasketService   = $appBasketService;
         $this->basketRulesService = $basketRulesService;
-        $this->stampService = $stampService;
+        $this->stampService       = $stampService;
     }
-
+    
     /**
      * Список товаров в каталоге
      * @param Request $request
-     * @param int $categoryId
-     * @param string $sort
-     * @param int $count
-     * @param int $page
-     * @param string $searchQuery
+     * @param int     $categoryId
+     * @param string  $sort
+     * @param int     $count
+     * @param int     $page
+     * @param string  $searchQuery
      * @return ArrayCollection
      * @throws CategoryNotFoundException
      * @throws IblockNotFoundException
@@ -171,66 +170,64 @@ class ProductService
         int $page = 1,
         string $searchQuery = '',
         int $stockId = 0
-    ): ArrayCollection
-    {
+    ): ArrayCollection {
         $filters = new FilterCollection();
         if ($categoryId > 0) {
             $category = $this->categoriesService->getById($categoryId);
             $this->filterHelper->initCategoryFilters($category, $request);
             $filters = $category->getFilters();
         }
-
+        
         if ($stockId > 0) {
-            if(!$this->checkShareAccess($stockId)) {
+            if (!$this->checkShareAccess($stockId)) {
                 return (new ArrayCollection([
-                    'products' => [],
-                    'cdbResult' => new \CIBlockResult()
+                    'products'  => [],
+                    'cdbResult' => new \CIBlockResult(),
                 ]));
             }
             $searchQuery = $this->getProductIdsByShareId($stockId);
-
+            
             $category = new \FourPaws\Catalog\Model\Category();
             $this->filterHelper->initCategoryFilters($category, $request);
             $filters = $category->getFilters();
-
+            
             $filterArr = [];
             foreach ($filters as $filter) {
-                $filterCode = $filter->getFilterCode();
+                $filterCode   = $filter->getFilterCode();
                 $requestParam = $request->get($filterCode);
                 if ($requestParam) {
                     $filterArr[] = $filter;
                 }
             }
-
+            
             $filters = new FilterCollection($filterArr);
-        } else if ($searchQuery) {
+        } elseif ($searchQuery) {
             /** @see CatalogController::searchAction */
             $searchQuery = mb_strtolower($searchQuery);
             $searchQuery = IndexHelper::getAlias($searchQuery);
         }
-
+        
         $sort = $this->sortService->getSorts($sort, strlen($searchQuery) > 0)->getSelected();
-
+        
         $nav = (new Navigation())
             ->withPage($page)
-            ->withPageSize($count);
-        ;
-
+            ->withPageSize($count);;
+        
         $productSearchResult = $this->searchService->searchProducts($filters, $sort, $nav, $searchQuery);
         /** @var ProductCollection $productCollection */
         $productCollection = $productSearchResult->getProductCollection();
-
+        
         return (new ArrayCollection([
-            'products' => $productCollection
+            'products'  => $productCollection
                 ->map(\Closure::fromCallable([$this, 'mapProductForList']))
-                ->filter(function($value) {
+                ->filter(function ($value) {
                     return !is_null($value);
                 })
                 ->getValues(),
-            'cdbResult' => $productCollection->getCdbResult()
+            'cdbResult' => $productCollection->getCdbResult(),
         ]));
     }
-
+    
     /**
      * @param int[] $ids
      * @return ArrayCollection
@@ -243,28 +240,28 @@ class ProductService
     {
         $filters = new FilterCollection();
         $filters->add([
-            'ID' => $ids
+            'ID' => $ids,
         ]);
-
+        
         $sort = $this->sortService->getSorts('popular')->getSelected();
-
+        
         $productSearchResult = $this->searchService->searchProducts($filters, $sort, new Navigation());
         /** @var ProductCollection $productCollection */
         $productCollection = $productSearchResult->getProductCollection();
-
+        
         return (new ArrayCollection([
-            'products' => $productCollection
+            'products'  => $productCollection
                 ->map(\Closure::fromCallable([$this, 'mapProductForList']))
-                ->filter(function($value) {
+                ->filter(function ($value) {
                     return !is_null($value);
                 })
                 ->getValues(),
-            'cdbResult' => $productCollection->getCdbResult()
+            'cdbResult' => $productCollection->getCdbResult(),
         ]));
     }
-
+    
     /**
-     * @param int[] $ids
+     * @param int[]     $ids
      * @param bool|null $onlyPackingVariants
      * @return ArrayCollection
      * @throws ApplicationCreateException
@@ -273,53 +270,53 @@ class ProductService
     public function getListFromXmlIds(array $ids, ?bool $onlyPackingVariants = false): ArrayCollection
     {
         $filters = new FilterCollection();
-//        $filters->add([
-//            'ID' => $ids
-//        ]);
-
+        //        $filters->add([
+        //            'ID' => $ids
+        //        ]);
+        
         $sort = $this->sortService->getSorts('popular')->getSelected();
-
+        
         $productSearchResult = $this->searchService->searchProducts($filters, $sort, new Navigation(), $ids);
         /** @var ProductCollection $productCollection */
         $productCollection = $productSearchResult->getProductCollection();
-
+        
         $this->forceAtLeastOnePackingVariant = true;
-        $productList = $productCollection
+        $productList                         = $productCollection
             ->map(\Closure::fromCallable([$this, 'mapProductForList']))
-            ->map(static function(FullProduct $product) use ($ids, $onlyPackingVariants) {
+            ->map(static function (FullProduct $product) use ($ids, $onlyPackingVariants) {
                 $packingVariants = $product->getPackingVariants();
-                $packingVariants = array_filter($packingVariants, static function(FullProduct $product) use ($ids) {
+                $packingVariants = array_filter($packingVariants, static function (FullProduct $product) use ($ids) {
                     return in_array($product->getXmlId(), $ids, false);
                 });
                 if ($onlyPackingVariants) {
                     return array_values($packingVariants);
                 } else {
                     $product->setPackingVariants($packingVariants);
-
+                    
                     return $product;
                 }
             })
-            ->filter(static function($value) {
+            ->filter(static function ($value) {
                 return !is_null($value);
             })
             ->getValues();
         $this->forceAtLeastOnePackingVariant = false;
-
+        
         if ($onlyPackingVariants) {
-            $productList = array_reduce($productList, static function($carry, $productArray) {
+            $productList = array_reduce($productList, static function ($carry, $productArray) {
                 foreach ($productArray as $product) {
                     $carry[] = $product;
                 }
-
+                
                 return $carry;
             }, []);
         }
-
+        
         return new ArrayCollection([
-            $productList
+            $productList,
         ]);
     }
-
+    
     /**
      * Мэппинг полей товара для списка
      * @param Product $product
@@ -337,14 +334,14 @@ class ProductService
         if (!$currentOffer) {
             return null;
         }
-
+        
         foreach ($product->getOffers() as $itemOffer) {
             $itemOffer->setColor();
         }
-
+        
         $hasColours = (bool)$this->getColours($currentOffer)
             && (bool)$currentOffer->getColor();
-
+        
         $clothingSizes = [];
         foreach ($product->getOffers() as $itemOffer) {
             $clothingSize = $itemOffer->getClothingSize();
@@ -356,50 +353,50 @@ class ProductService
         if ($hasColours && count($clothingSizes) <= 1) { // есть деление по цветам, но нет деления по размерам
             $hasOnlyColourCombinations = true;
         }
-
-
+        
+        
         $fullProduct = $this->convertToFullProduct($product, $currentOffer, true, $this->forceAtLeastOnePackingVariant, $hasOnlyColourCombinations);
-
+        
         // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
         $fullProduct->setIsAvailable(true);
         return $fullProduct;
     }
-
+    
     /**
      * Текущее ТП для товара в списке
      * @param Product $product
      *
-     * @param array $offerFilter
+     * @param array   $offerFilter
      * @return mixed|null
      */
     protected function getCurrentOfferForList(Product $product, $offerFilter = [])
     {
         $product->getOffers(true, $offerFilter);
-        $offers = $product->getOffersSorted();
+        $offers               = $product->getOffersSorted();
         $foundOfferWithImages = false;
-        $currentOffer = $offers->last();
+        $currentOffer         = $offers->last();
         if (!$currentOffer) {
             return null;
         }
         /** @var Offer $offer */
         foreach ($offers as $offer) {
             $offer->setProduct($product);
-
+            
             if (!$foundOfferWithImages || $offer->getImagesIds()) {
                 $currentOffer = $offer;
             }
         }
-
+        
         // toDo рефакторинг
         // костыль потому что в allStocks вместо объекта StockCollection приходит просто массив с кодами магазинов...
         // взято из метода FourPaws\Catalog\Model\getAllStocks()
         $stockService = Application::getInstance()->getContainer()->get(StockService::class);
         $currentOffer->withAllStocks($stockService->getStocksByOffer($currentOffer));
         // end костыль
-
+        
         return $currentOffer;
     }
-
+    
     /**
      * Возвращает продукт для карточки товара
      * @param int $id
@@ -417,10 +414,10 @@ class ProductService
         if (!$offer) {
             throw new NotFoundProductException();
         }
-        $product = $offer->getProduct();
-        $colours = $this->getColours($offer);
+        $product    = $offer->getProduct();
+        $colours    = $this->getColours($offer);
         $hasColours = (bool)$colours;
-
+        
         $clothingSizes = [];
         foreach ($product->getOffers() as $itemOffer) {
             $clothingSize = $itemOffer->getClothingSize();
@@ -432,7 +429,7 @@ class ProductService
         if ($hasColours && count($clothingSizes) <= 1) { // есть деление по цветам, но нет деления по размерам
             $hasOnlyColourCombinations = true;
         }
-
+        
         $fullProduct = $this->convertToFullProduct($product, $offer, true, true, $hasOnlyColourCombinations);
         $fullProduct->setIsAvailable($offer->isAvailable()); // returns ShortProduct
         $fullProduct
@@ -444,7 +441,7 @@ class ProductService
             ->setPickup($this->getPickupText($offer))                   // товар под заказ
             // ->setCrossSale($this->getCrossSale($offer))              // похожие товары
             ->setBundle($this->getBundle($offer));                       // с этим товаром покупают
-            $fullProduct->setPictureList($this->getPictureList($product, $offer));           // картинки
+        $fullProduct->setPictureList($this->getPictureList($product, $offer));           // картинки
         
         if ($product->getNormsOfUse()->getText() || $product->getLayoutRecommendations()->getText()) {
             if ($product->getLayoutRecommendations()->getText() != '' && $product->getLayoutRecommendations()->getText() != null) {
@@ -453,7 +450,7 @@ class ProductService
                 $fullProduct->setNutritionRecommendations($product->getNormsOfUse()->getText());
             }
         }
-
+        
         if ($product->getComposition()->getText() || $product->getLayoutComposition()->getText()) {
             if ($product->getLayoutComposition()->getText() != '' && $product->getLayoutComposition()->getText() != null) {
                 $fullProduct->setNutritionFacts($product->getLayoutComposition()->getText());
@@ -461,15 +458,15 @@ class ProductService
                 $fullProduct->setNutritionFacts($product->getComposition()->getText());
             }
         }
-
+        
         return $fullProduct;
     }
-
+    
     public function getMyProducts()
     {
-
+    
     }
-
+    
     /**
      * @param Offer $offer
      * @return array<ShortProduct\Tag()>
@@ -486,9 +483,8 @@ class ProductService
             if ($share->hasLabel() && $tag = $this->getTagFromTitle($share->getPropertyLabel())) {
                 $tags[] = $tag;
             }
-
-            if (!$tags)
-            {
+            
+            if (!$tags) {
                 $tags[] = $this->getTagFromPng(MarkHelper::MARK_GIFT_IMAGE_SRC);
             }
         }
@@ -501,7 +497,7 @@ class ProductService
         }
         return $tags;
     }
-
+    
     /**
      * @param string $svg
      * @return Tag|false
@@ -517,7 +513,7 @@ class ProductService
         }
         return $this->getTagFromPng($png);
     }
-
+    
     /**
      * @param string $png
      *
@@ -527,7 +523,7 @@ class ProductService
     {
         return (new Tag())->setImg($png);
     }
-
+    
     /**
      * @param string $title
      *
@@ -537,12 +533,12 @@ class ProductService
     {
         return (new Tag())->setTitle($title);
     }
-
-
+    
+    
     /**
      * @param Product $product
-     * @param Offer $offer
-     * @param int $quantity
+     * @param Offer   $offer
+     * @param int     $quantity
      * @return ShortProduct
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -561,9 +557,9 @@ class ProductService
             ->setBrandName($product->getBrandName())
             ->setWebPage($offer->getCanonicalPageUrl())
             ->setColor($offer->getColorProp());
-
+        
         $this->getTotalStarsAndComments($product->getId());
-    
+        
         if ($this->productStars) {
             $shortProduct->setTotalStars($this->productStars);
         }
@@ -571,71 +567,71 @@ class ProductService
         if ($this->totalComments) {
             $shortProduct->setTotalComments($this->totalComments);
         }
-
+        
         // большая картинка
         if ($images = $offer->getResizeImages(static::DETAIL_PICTURE_WIDTH, static::DETAIL_PICTURE_HEIGHT)) {
             /** @var Image $picture */
             $shortProduct->setPicture($images->first());
         }
-
+        
         // картинка ресайз (возможно не используется, но это не точно)
         if ($resizeImages = $offer->getResizeImages(static::LIST_IMAGE_WIDTH, static::LIST_IMAGE_HEIGHT)) {
             $shortProduct->setPicturePreview($resizeImages->first());
         }
-
+        
         // цена
         $price = (new Price())
             ->setActual($offer->getPrice())
             ->setOld($offer->getOldPrice())
             ->setSubscribe($offer->getSubscribePrice());
         $shortProduct->setPrice($price);
-
-
+        
+        
         // ТПЗ
         $shortProduct
             ->setIsByRequest($offer->isByRequest())
             ->setIsAvailable($offer->isAvailable());
-
+        
         try {
             $shortProduct->setPickupOnly(!$offer->isDeliverable() && $product->isPickupAvailable() && $offer->isPickupAvailable());
         } catch (\Exception $e) {
             $shortProduct->setPickupOnly(false);
         }
-
+        
         // лейблы
         $shortProduct->setTag($this->getTags($offer));
-
+        
         // бонусы
         $shortProduct->setBonusAll($offer->getBonusCount(3, $quantity));
         $shortProduct->setBonusUser($offer->getBonusCount($this->userService->getDiscount(), $quantity));
-
+        
         //Округлить до упаковки
         $shortProduct->setInPack(intval($offer->getMultiplicity()));
-
+        
         if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
             // уровни скидок за марки
-            $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
+            $serializer         = Application::getInstance()->getContainer()->get(SerializerInterface::class);
             $currentStampsLevel = $this->stampService->getCurrentStampLevel();
-
+            
             $stampLevels = [];
-
+            
             foreach ($this->stampService->getExchangeRules($offer->getXmlId()) as $exchangeRule) {
                 $exchangeRule['isMaxLevel'] = ($exchangeRule['stamps'] === $currentStampsLevel);
-                $stampLevels[] = $serializer->fromArray($exchangeRule, StampLevel::class);
+                $stampLevels[]              = $serializer->fromArray($exchangeRule, StampLevel::class);
             }
-
+            
             ini_set('serialize_precision', -1); // костыль, чтобы не "портились" price в StampLevel при сериализации
-
+            
             $shortProduct->setStampLevels($stampLevels); //TODO get stampLevels from Manzana. If Manzana doesn't answer then set no levels
         }
-
+        
         return $shortProduct;
     }
-
+    
     /**
-     * @param Product $product
-     * @param Offer $offer
-     * @param bool $needPackingVariants
+     * @param Product   $product
+     * @param Offer     $offer
+     * @param bool      $needPackingVariants
      * @param bool|null $showVariantsIfOneVariant
      * @param bool|null $hasOnlyColourCombinations
      * @return FullProduct
@@ -651,14 +647,13 @@ class ProductService
     {
         $offer->setColor();
         $shortProduct = $this->convertToShortProduct($product, $offer);
-        $detailText = $product->getDetailText()->getText();
-        $detailText = ImageHelper::appendDomainToSrc($detailText);
-        $fullProduct = (new FullProduct())
+        $detailText   = $product->getDetailText()->getText();
+        $detailText   = ImageHelper::appendDomainToSrc($detailText);
+        $fullProduct  = (new FullProduct())
             ->setDetailsHtml($detailText)
             ->setWeight($offer->getPackageLabel(false, 0))
-            ->setHasSpecialOffer($offer->isShare())
-        ;
-
+            ->setHasSpecialOffer($offer->isShare());
+        
         // toDo: is there any better way to merge ShortProduct into FullProduct?
         $fullProduct
             ->setId($shortProduct->getId())
@@ -679,13 +674,13 @@ class ProductService
             ->setInPack($shortProduct->getInPack())
             ->setStampLevels($shortProduct->getStampLevels())
             ->setColor($shortProduct->getColor());
-    
+        
         $this->getTotalStarsAndComments($product->getId());
         
         if ($this->productStars) {
             $fullProduct->setTotalStarsFull($this->productStars);
         }
-    
+        
         if ($this->totalComments) {
             $fullProduct->setTotalCommentsFull($this->totalComments);
         }
@@ -698,10 +693,10 @@ class ProductService
                 $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // фасовки
             }
         }
-
+        
         return $fullProduct;
     }
-
+    
     /**
      * Возможные доставки
      * @param Offer $offer
@@ -716,10 +711,10 @@ class ProductService
     public function getDeliveries(Offer $offer)
     {
         $userLocationCode = $this->userService->getSelectedCity()['CODE'];
-
+        
         /** @var CalculationResultInterface[] $deliveries */
-        $allDeliveryCodes = array_merge(DeliveryService::DELIVERY_CODES, DeliveryService::PICKUP_CODES);
-        $deliveries = $this->deliveryService->getByLocation($userLocationCode, $allDeliveryCodes);
+        $allDeliveryCodes    = array_merge(DeliveryService::DELIVERY_CODES, DeliveryService::PICKUP_CODES);
+        $deliveries          = $this->deliveryService->getByLocation($userLocationCode, $allDeliveryCodes);
         $deliveriesWithStock = [];
         foreach ($deliveries as $delivery) {
             $delivery->setStockResult(
@@ -731,7 +726,7 @@ class ProductService
         }
         return $deliveriesWithStock;
     }
-
+    
     /**
      * Отформатированный текст о доставке
      * @param Offer $offer
@@ -752,7 +747,7 @@ class ProductService
         }
         return $deliveryResult->getTextForOffer($offer->getPrice(), $offer->isByRequest(), true);
     }
-
+    
     /**
      * Отформатированный текст о самовывозе
      * @param Offer $offer
@@ -774,14 +769,14 @@ class ProductService
         }
         return '';
     }
-
+    
     /**
      * Фасовки товара
      *
-     * @param Product $product
+     * @param Product     $product
      * @param FullProduct $currentFullProduct
-     * @param bool|null $showVariantsIfOneVariant
-     * @param bool|null $onlyCurrentOffer
+     * @param bool|null   $showVariantsIfOneVariant
+     * @param bool|null   $onlyCurrentOffer
      *
      * @return array
      * @throws ApplicationCreateException
@@ -803,7 +798,7 @@ class ProductService
         ) {
             return [];
         }
-
+        
         $packingVariants = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
@@ -811,17 +806,17 @@ class ProductService
                 continue;
             }
             // if ($offer->getId() === $currentFullProduct->getId()) {
-                // toDo если переиспользовать $currentFullProduct - в массиве $packingVariants в итоге попадает null вместо объекта
+            // toDo если переиспользовать $currentFullProduct - в массиве $packingVariants в итоге попадает null вместо объекта
             //    $fullProduct = clone $currentFullProduct;
             // } else {
-                // toDo рефакторинг костыля
-                // костыль потому что в allStocks вместо объекта StockCollection приходит просто массив с кодами магазинов...
-                // взято из метода FourPaws\Catalog\Model\getAllStocks()
-                $stockService = Application::getInstance()->getContainer()->get(StockService::class);
-                $offer->withAllStocks($stockService->getStocksByOffer($offer));
-                // end костыль
-                $fullProduct = $this->convertToFullProduct($product, $offer);
-    
+            // toDo рефакторинг костыля
+            // костыль потому что в allStocks вместо объекта StockCollection приходит просто массив с кодами магазинов...
+            // взято из метода FourPaws\Catalog\Model\getAllStocks()
+            $stockService = Application::getInstance()->getContainer()->get(StockService::class);
+            $offer->withAllStocks($stockService->getStocksByOffer($offer));
+            // end костыль
+            $fullProduct = $this->convertToFullProduct($product, $offer);
+            
             $fullProduct->setComments([]);
             $fullProduct->setTotalStars(0);
             $fullProduct->setTotalComments(0);
@@ -830,7 +825,7 @@ class ProductService
         }
         return $packingVariants;
     }
-
+    
     /**
      * Акция товара
      * @param Offer $offer
@@ -840,7 +835,7 @@ class ProductService
     {
         /** @var Share $specialOfferModel */
         $specialOfferModel = $offer->getShare()->current();
-        $specialOffer = (new FullProduct\SpecialOffer());
+        $specialOffer      = (new FullProduct\SpecialOffer());
         if (!$specialOfferModel) {
             return null;
         }
@@ -849,16 +844,16 @@ class ProductService
             ->setName($specialOfferModel->getName())
             ->setDescription(strip_tags(html_entity_decode($specialOfferModel->getPreviewText())));
         $specialOffer->setImage($specialOfferModel->getDetailPictureSrc());
-
+        
         if ($specialOfferModel->getDateActiveFrom() && $specialOfferModel->getDateActiveTo()) {
             $dateFrom = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveFrom()->format('d #n# Y'), DateHelper::GENITIVE);
-            $dateTo = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveTo()->format('d #n# Y'), DateHelper::GENITIVE);
+            $dateTo   = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveTo()->format('d #n# Y'), DateHelper::GENITIVE);
             $specialOffer->setDate($dateFrom . " - " . $dateTo);
         }
-
+        
         return $specialOffer;
     }
-
+    
     /**
      * Вкусы товара
      * @param Offer $offer
@@ -885,7 +880,7 @@ class ProductService
         }
         return [];
     }
-
+    
     /**
      * Цвета товара
      * @param Offer $offer
@@ -905,23 +900,23 @@ class ProductService
                     $unionOffersSorted[$unionOffer->getColorWithSize()] = $unionOffer;
                 }
                 $this->sortService->colorWithSizeSort($unionOffersSorted);
-
+                
                 $colours = [];
                 foreach ($unionOffersSorted as $unionOffer) {
-                    $color = $unionOffer->getColor();
+                    $color             = $unionOffer->getColor();
                     $fullProductColour = (new FullProduct\Colour())
                         ->setOfferId($unionOffer->getId())
                         ->setTitle($unionOffer->getColorWithSize());
                     if ($color) {
-                        $hexCode = $color->getColorCode();
+                        $hexCode  = $color->getColorCode();
                         $imageUrl = $color->getFilePath();
-
+                        
                         $fullProductColour
                             ->setHexCode($hexCode);
-
+                        
                         if ($imageUrl) {
                             $fullProductColour
-                            ->setImageUrl((new FullHrefDecorator($imageUrl))->getFullPublicPath());
+                                ->setImageUrl((new FullHrefDecorator($imageUrl))->getFullPublicPath());
                         }
                     }
                     $colours[] = $fullProductColour;
@@ -931,7 +926,7 @@ class ProductService
         }
         return [];
     }
-
+    
     /**
      * Похожие товары
      * @param Offer $offer
@@ -947,18 +942,17 @@ class ProductService
             $crossSale = [];
             foreach ($bundle->getProducts() as $bundleItem) {
                 $bundleItemOffer = $bundleItem->getOffer();
-                $crossSale[] = (new FullProduct\CrossSale())
+                $crossSale[]     = (new FullProduct\CrossSale())
                     ->setOfferId($bundleItemOffer->getId())
                     ->setTitle($bundleItemOffer->getName())
                     ->setPrice($bundleItemOffer->getPrice())
-                    ->setImage($bundleItemOffer->getImages()->current())
-                ;
+                    ->setImage($bundleItemOffer->getImages()->current());
             }
             return $crossSale;
         }
         return [];
     }
-
+    
     /**
      * С этим товаром часто берут
      * @param Offer $offer
@@ -970,26 +964,26 @@ class ProductService
      */
     public function getBundle(Offer $offer)
     {
-        $bundleItems = [];
+        $bundleItems   = [];
         $oldTotalPrice = 0;
-        $totalPrice = 0;
-        $bonusAmount = 0;
+        $totalPrice    = 0;
+        $bonusAmount   = 0;
         if (!$bundle = $offer->getBundle()) {
             return null;
         }
         $percent = $this->userService->getCurrentUserBonusPercent();
         /** @var BundleItem $bundleItem */
         foreach ($bundle->getProducts() as $bundleItem) {
-            $bundleItemOffer = $bundleItem->getOffer();
+            $bundleItemOffer   = $bundleItem->getOffer();
             $bundleItemProduct = $bundleItemOffer->getProduct();
-
+            
             $product = $this->convertToShortProduct($bundleItemProduct, $bundleItemOffer);
-
+            
             $bundleItems[] = $product;
-
-            $totalPrice += $bundleItemOffer->getCatalogPrice() * $bundleItem->getQuantity();
+            
+            $totalPrice    += $bundleItemOffer->getCatalogPrice() * $bundleItem->getQuantity();
             $oldTotalPrice += $bundleItemOffer->getCatalogOldPrice() * $bundleItem->getQuantity();
-            $bonusAmount += $bundleItemOffer->getBonusCount($percent, $bundleItem->getQuantity());
+            $bonusAmount   += $bundleItemOffer->getBonusCount($percent, $bundleItem->getQuantity());
         }
         return (new FullProduct\Bundle())
             ->setGoods($bundleItems)
@@ -1000,7 +994,7 @@ class ProductService
             )
             ->setBonusAmount($bonusAmount);
     }
-
+    
     /**
      * Возвращает строку "k товаров (n кг) на сумму m ₽"
      * Используется при чекауте
@@ -1015,11 +1009,12 @@ class ProductService
             return '';
         }
         return $quantity
-            . ' '  . WordHelper::declension($quantity, ['товар', 'товара', 'товаров'])
+            . ' ' . WordHelper::declension($quantity, ['товар', 'товара', 'товаров'])
             . ' (' . WordHelper::showWeight($weight, true) . ') '
-            . 'на сумму ' .  CurrencyHelper::formatPrice($price, false);
+            . 'на сумму ' . CurrencyHelper::formatPrice($price, false);
     }
-        /**
+    
+    /**
      * @param CalculationResultInterface[] $deliveries
      *
      * @return null|DeliveryResultInterface
@@ -1032,10 +1027,10 @@ class ProductService
                 return $this->deliveryService->isDelivery($delivery);
             }
         );
-
+        
         return reset($filtered) ?: null;
     }
-
+    
     /**
      * @param CalculationResultInterface[] $deliveries
      *
@@ -1049,10 +1044,10 @@ class ProductService
                 return $this->deliveryService->isPickup($delivery);
             }
         );
-
+        
         return reset($filtered) ?: null;
     }
-
+    
     /**
      * @param string $type
      * @param string $val
@@ -1061,7 +1056,7 @@ class ProductService
      */
     protected function getOffersByUnion(string $type, string $val): OfferCollection
     {
-        $unionOffers = [];
+        $unionOffers     = [];
         $offerCollection = null;
         switch ($type) {
             case 'color':
@@ -1076,21 +1071,21 @@ class ProductService
         if (null !== $offerCollection) {
             $unionOffers[$type][$val] = $offerCollection;
         }
-
-
+        
+        
         return $unionOffers[$type][$val];
     }
-
+    
     protected function getPictureList(Product $product, ?Offer $currentOffer)
     {
         $offers = $product->getOffersSorted();
         if (empty($offers)) {
             return [];
         }
-
-        $images = [];
+        
+        $images     = [];
         $addInStart = [];
-
+        
         /** @var Offer $offer */
         foreach ($offers as $offer) {
             if ($offerImages = $offer->getResizeImages(static::DETAIL_PICTURE_WIDTH, static::DETAIL_PICTURE_HEIGHT)) {
@@ -1103,18 +1098,18 @@ class ProductService
                 }
             }
         }
-
+        
         if (!empty($addInStart)) {
             $addInStart = array_unique($addInStart);
-
+            
             foreach ($addInStart as $addInStartItem) {
                 array_unshift($images, $addInStartItem);
             }
         }
-
+        
         return array_unique($images);
     }
-
+    
     /**
      * @param int $stockId
      * @return array
@@ -1126,28 +1121,28 @@ class ProductService
             ->withFilter(['ID' => $stockId])
             ->exec()
             ->first();
-
+        
         $xmlIds = [];
-
+        
         if ($share) {
             $xmlIds = $share->getPropertyProducts();
         }
-
+        
         return $xmlIds;
-
+        
         $query = new ProductQuery();
         $query->withFilter([
-            '=XML_ID'          => $xmlIds,
+            '=XML_ID'   => $xmlIds,
             'IBLOCK_ID' => [IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS), IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
         ])->withSelect(['ID']);
         $productCollection = $query->exec();
-        $productIds = [];
+        $productIds        = [];
         foreach ($productCollection as $product) {
             $productIds[] = $product->getId();
         }
         return $productIds;
-
-        $res = \CIBlockElement::GetProperty(IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES), $stockId, '', '',
+        
+        $res    = \CIBlockElement::GetProperty(IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES), $stockId, '', '',
             ['CODE' => 'PRODUCTS']);
         $xmlIds = [];
         while ($item = $res->Fetch()) {
@@ -1155,20 +1150,20 @@ class ProductService
                 $xmlIds[] = $item['VALUE'];
             }
         }
-
-        $query = new ProductQuery();
+        
+        $query             = new ProductQuery();
         $productCollection = $query->withFilter([
             '=XML_ID'          => $xmlIds,
             'ACTIVE'           => 'Y',
             '>CATALOG_PRICE_2' => 0,
         ])->withSelect(['ID'])->exec();
-        $productIds = [];
+        $productIds        = [];
         foreach ($productCollection as $product) {
             $productIds[] = $product->getId();
         }
         return $productIds;
     }
-
+    
     /**
      * @param $shareId
      * @return bool
@@ -1179,7 +1174,7 @@ class ProductService
     {
         return $this->basketRulesService->checkRegionAccess($shareId);
     }
-
+    
     /**
      * @return array
      * @throws ApplicationCreateException
@@ -1189,64 +1184,65 @@ class ProductService
     public function getStampsCategories()
     {
         $elementIblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::CATALOG_SLIDER_PRODUCTS);
-
+        
         // получаем id разделов и xml_id торговых предложений
         $sectionOffersXmlIds = []; // массив соответсвия раздела и его ТП
-        $offerXmlIds = []; // массив для дальнейшего получения ТП
-
-        $rsElement = \CIBlockElement::GetList(['SORT' => SORT_ASC], ['IBLOCK_ID' => $elementIblockId, '=ACTIVE' => BaseEntity::BITRIX_TRUE, '=SECTION_CODE' => 'stamps'], false, false, ['ID', 'IBLOCK_ID', 'NAME', 'PROPERTY_SECTION', 'PROPERTY_PRODUCTS']);
-
+        $offerXmlIds         = []; // массив для дальнейшего получения ТП
+        
+        $rsElement = \CIBlockElement::GetList(['SORT' => SORT_ASC], ['IBLOCK_ID' => $elementIblockId, '=ACTIVE' => BaseEntity::BITRIX_TRUE, '=SECTION_CODE' => 'stamps'], false, false,
+            ['ID', 'IBLOCK_ID', 'NAME', 'PROPERTY_SECTION', 'PROPERTY_PRODUCTS']);
+        
         $sections = [];
         while ($arElement = $rsElement->Fetch()) {
             if ($arElement['PROPERTY_SECTION_VALUE']) {
                 if (!isset($sectionOffersXmlIds[$arElement['PROPERTY_SECTION_VALUE']])) {
                     $sectionOffersXmlIds[$arElement['PROPERTY_SECTION_VALUE']] = [];
                 }
-
+                
                 if (!isset($sections[$arElement['PROPERTY_SECTION_VALUE']])) {
                     $sections[$arElement['PROPERTY_SECTION_VALUE']] = $arElement['NAME'];
                 }
-
-
+                
+                
                 if ($arElement['PROPERTY_PRODUCTS_VALUE']) {
                     $sectionOffersXmlIds[$arElement['PROPERTY_SECTION_VALUE']][] = $arElement['PROPERTY_PRODUCTS_VALUE'];
-                    $offerXmlIds[] = $arElement['PROPERTY_PRODUCTS_VALUE'];
+                    $offerXmlIds[]                                               = $arElement['PROPERTY_PRODUCTS_VALUE'];
                 }
             }
         }
-
+        
         // получаем торговые предложения
         $offers = [];
-
+        
         if (!empty($offerXmlIds)) {
             $offersListCollection = $this->getListFromXmlIds($offerXmlIds, true);
-            $offersList = $offersListCollection->get(0) ?? [];
-
+            $offersList           = $offersListCollection->get(0) ?? [];
+            
             /** @var Offer $offer */
             foreach ($offersList as $offer) {
                 $offers[$offer->getXmlId()] = $offer;
             }
         }
-
+        
         // заполняем итоговый массив
         $stampCategories = [];
-
+        
         foreach ($sectionOffersXmlIds as $sectionId => $offerXmlIds) {
             $goods = [];
-
+            
             foreach ($offerXmlIds as $offerXmlId) {
                 if (isset($offers[$offerXmlId])) {
                     $goods[] = $offers[$offerXmlId];
                 }
             }
-
+            
             $stampCategories[] = [
-                'id' => $sectionId,
+                'id'    => $sectionId,
                 'title' => $sections[$sectionId],
                 'goods' => $goods,
             ];
         }
-
+        
         return $stampCategories;
     }
     
@@ -1254,15 +1250,15 @@ class ProductService
     {
         try {
             Loader::includeModule('articul.main');
-    
+            
             if ($navigation == 'Y') {
                 $nav = new \Bitrix\Main\UI\PageNavigation('nav-comments');
-    
+                
                 $nav->allowAllRecords(true)
                     ->setPageSize($limit)
                     ->setCurrentPage($page);
                 
-                $limit = $nav->getLimit();
+                $limit  = $nav->getLimit();
                 $offset = $nav->getLimit();
             }
             
@@ -1273,7 +1269,7 @@ class ProductService
                 ->setOffset($offset)
                 ->exec()
                 ->fetchAll();
-
+            
             $result = $this->buildCommentsFieldResult($comments);
             
             return $result;
@@ -1284,20 +1280,19 @@ class ProductService
     
     public function addProductComment($request)
     {
-        $user = $this->userService->getCurrentUser();
+        $user   = $this->userService->getCurrentUser();
+        $images = $this->getImagesId($request->files->get('images'));
         
-        $images = $this->getImagesFromBase64($request->get('images'));
-
         CommentsTable::add(
             [
-                'UF_USER_ID' => $user->getId(),
-                'UF_TEXT' => $request->get('text'),
-                'UF_MARK' => $request->get('stars'),
-                'UF_ACTIVE' => 0,
+                'UF_USER_ID'   => $user->getId(),
+                'UF_TEXT'      => $request->get('text'),
+                'UF_MARK'      => $request->get('stars'),
+                'UF_ACTIVE'    => 0,
                 'UF_OBJECT_ID' => $request->get('id'),
-                'UF_TYPE' => 'catalog',
-                'UF_DATE' => new \Bitrix\Main\Type\Date(),
-             //   'UF_PHOTOS' => $user->getId(),
+                'UF_TYPE'      => 'catalog',
+                'UF_DATE'      => new \Bitrix\Main\Type\Date(),
+                'UF_PHOTOS' => $images,
             ]
         );
     }
@@ -1306,14 +1301,14 @@ class ProductService
     {
         foreach ($comments as &$comment) {
             $serializedId = unserialize($comment['images']);
-
+            
             $paths = $this->getImagePaths($serializedId);
-    
-            $comment['date'] = $comment['date']->format("d.m.Y");
+            
+            $comment['date']   = $comment['date']->format("d.m.Y");
             $comment['author'] = $this->getUserById($comment['author']);
             $comment['images'] = $this->getImagePaths($serializedId); //$this->codeImagesToBase64($paths);
         }
-    
+        
         return $comments;
     }
     
@@ -1331,10 +1326,10 @@ class ProductService
     private function codeImagesToBase64($paths)
     {
         $result = [];
-
+        
         foreach ($paths as $path) {
-            $type = pathinfo($path, PATHINFO_EXTENSION);
-            $data = file_get_contents($_SERVER['DOCUMENT_ROOT'] . $path);
+            $type     = pathinfo($path, PATHINFO_EXTENSION);
+            $data     = file_get_contents($_SERVER['DOCUMENT_ROOT'] . $path);
             $result[] = 'data:image/' . $type . ';base64,' . base64_encode($data);
         }
         
@@ -1354,23 +1349,17 @@ class ProductService
         return $result;
     }
     
-    private function getImagesFromBase64($images)
+    private function getImagesId($images)
     {
         $result = [];
-        
+
         foreach ($images as $image) {
-            $pathToFile = \Bitrix\Main\Application::getDocumentRoot(). '/upload/comments_temp_files/image' . time() . '.jpeg';
-            $file = new File();
+            $nameForUpdate = explode('.', $image->getClientOriginalName());
+            $nameForUpdate[0] = $nameForUpdate[0] . time();
+            $newName = implode('.', $nameForUpdate);
     
-            $data = explode(',', $image);
-            $file->putContents($data[1]);
-    
-            $fileArray = \CFile::MakeFileArray($pathToFile);
-            $fileId    = \CFile::SaveFile($fileArray, '/comments_temp_files/');
-    
-            unlink($pathToFile);
-            
-            $result[] = $fileId;
+            $fileArray = \CFile::MakeFileArray($image->getPathName());
+            $result[] = \CFile::SaveFile($fileArray, 'comments_temp_files');
         }
         
         return $result;
@@ -1383,14 +1372,14 @@ class ProductService
             ->setFilter(['=UF_OBJECT_ID' => $id, '=UF_ACTIVE' => 1])
             ->setCacheTtl('36000')
             ->exec();
-
+        
         while ($star = $stars->fetch()['UF_MARK']) {
             $elements[] = $star;
         }
         
         $count = count($elements);
-
+        
         $this->totalComments = $count;
-        $this->productStars = (int) (array_sum($elements)/$count);
+        $this->productStars  = (int)(array_sum($elements) / $count);
     }
 }

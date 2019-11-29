@@ -197,7 +197,7 @@ class ShortProduct
      * @Serializer\SerializedName("total_stars")
      * @Serializer\SkipWhenEmpty()
      */
-    protected $totalStars;
+    protected $totalStars = 0;
     
     /**
      * Всего отзывов о товаре
@@ -206,7 +206,7 @@ class ShortProduct
      * @Serializer\SerializedName("total_comments")
      * @Serializer\SkipWhenEmpty()
      */
-    protected $totalComments;
+    protected $totalComments = 0;
 
 
     /**
