@@ -30,7 +30,7 @@ class Dobrolap_delivery_20190717114111 extends SprintMigrationBase
 
     protected $dobrolapDelivery = [
         'NAME'        => 'Доставка в приют',
-        'DESCRIPTION' => 'Ваш заказ будет доставлен в выбранный Вами приют для бездомных животных. После оплаты заказа вы получите сюрприз и памятный магнит.',
+        'DESCRIPTION' => 'Ваш заказ будет доставлен в выбранный Вами приют для бездомных животных. После оплаты заказа вы получите памятный магнит.',
         'CLASS_NAME'  => DobrolapDeliveryHandler::class,
         'CONFIG'      => [
             'MAIN' => [

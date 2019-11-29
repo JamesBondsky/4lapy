@@ -41,8 +41,14 @@ class FlagmanService extends Controller implements LoggerAwareInterface
     public function getElementsBySectionTrainingId($id)
     {
         return TrainingsTable::query()
-            ->setSelect(['ID', 'NAME', 'FREE_SITS' => 'UTS.FREE_SITS', 'SITS' => 'UTS.SITS'])
+            ->setSelect(['ID', 'NAME', 'FREE_SITS' => 'UTS.FREE_SITS', 'SITS' => 'UTS.SITS', 'SECTION_NAME' => 'SECTION.NAME'])
             ->setFilter(['=IBLOCK_SECTION_ID' => $id, '=ACTIVE' => 'Y'])
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'SECTION',
+                    '\Bitrix\Iblock\SectionTable',
+                    ['=this.IBLOCK_SECTION_ID' => 'ref.ID']
+                ))
             ->exec()
             ->fetchAll();
     }

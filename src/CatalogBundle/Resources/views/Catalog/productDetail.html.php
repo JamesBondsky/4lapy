@@ -215,7 +215,7 @@ if (null === $offer) {
                                     </h2>
                                 </a>
                             </li>
-                            <?php if ($offer->isShare()) { ?>
+                            <?php /*if ($offer->isShare()) { ?> todo black.friday
                                 <li class="b-tab-title__item js-tab-item">
                                     <a class="b-tab-title__link js-tab-link"
                                        href="javascript:void(0);" title="Акция"
@@ -223,7 +223,7 @@ if (null === $offer) {
                                         <h2 class="b-tab-title__text">Акция</h2>
                                     </a>
                                 </li>
-                            <?php } ?>
+                            <?php } */?>
                         </ul>
                     </div>
                     <div class="b-tab-content">
@@ -297,7 +297,7 @@ if (null === $offer) {
                             false,
                             ['HIDE_ICONS' => 'Y']
                         ); ?>
-                        <?php if ($offer->isShare()) { ?>
+                        <?php if (false && $offer->isShare()) { // todo black.friday ?>
                             <div class="b-tab-content__container js-tab-content" data-tab-content="shares">
                                 <?php /** @var IblockElement $share */
                                 foreach ($offer->getShare() as $share) {

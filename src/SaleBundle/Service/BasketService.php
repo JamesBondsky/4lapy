@@ -109,8 +109,8 @@ class BasketService implements LoggerAwareInterface
     /** @var StockService $stockService */
     private $stockService;
 
-    public const GIFT_DOBROLAP_XML_ID = '3006635';
-    public const GIFT_DOBROLAP_XML_ID_ALT = '3006616';
+    public const GIFT_DOBROLAP_XML_ID = '3007113';
+    public const GIFT_DOBROLAP_XML_ID_ALT = '3007113';
     private $dobrolapMagnets;
 
     public const GIFT_NOVEMBER_NEWSPAPER_XML_ID = '3006893';
@@ -1146,8 +1146,9 @@ class BasketService implements LoggerAwareInterface
     {
         /**
          * @todo выпилить 1 октября 2018 года (коммент перенесен из метода isGiftProduct)
+         *       #магнит #магнитики #магнит цена корзина пипец #подарок магнит #что за жопа #magnet #fmagnet
          */
-        return (!\in_array($xmlId, ['3005425', '3005437', '3005424', '3005436'], true) && // @todo костыль для акции "добролап" (коммент перенесен из метода isGiftProduct)
+        return (!\in_array($xmlId, ['3005425', '3005437', '3005424', '3005436', '3007113'], true) && // @todo костыль для акции "добролап" (коммент перенесен из метода isGiftProduct)
             ($xmlId[0] === '3')) || ($extendedCheck && $xmlId[0] === '2');
     }
 
@@ -1790,6 +1791,7 @@ class BasketService implements LoggerAwareInterface
      */
     public function needShowAddressPopup(Request $request = null, $withDelivery = false): bool
     {
+        return false; //todo black.friday
         /** @var LocationService $locationService */
         $locationService = App::getInstance()->getContainer()->get('location.service');
         if ($locationService->getCurrentLocation() !== LocationService::LOCATION_CODE_MOSCOW) {

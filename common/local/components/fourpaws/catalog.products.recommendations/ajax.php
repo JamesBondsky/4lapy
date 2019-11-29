@@ -51,16 +51,16 @@ $parameters = unserialize(base64_decode($paramString), ['allowed_classes' => fal
 $parent = null;
 if (isset($parameters['PARENT_NAME'])) {
     $parent = new CBitrixComponent();
-    $parent->initComponent($parameters['PARENT_NAME'], $parameters['PARENT_TEMPLATE_NAME']);
-    $parent->initComponentTemplate($parameters['PARENT_TEMPLATE_PAGE']);
+//    $parent->initComponent($parameters['PARENT_NAME'], $parameters['PARENT_TEMPLATE_NAME']);
+//    $parent->initComponentTemplate($parameters['PARENT_TEMPLATE_PAGE']);
 }
 
 $APPLICATION->RestartBuffer();
-$APPLICATION->IncludeComponent(
-    'fourpaws:catalog.products.recommendations',
-    $template,
-    $parameters,
-    $parent
-);
+//$APPLICATION->IncludeComponent(
+//    'fourpaws:catalog.products.recommendations',
+//    $template,
+//    $parameters,
+//    $parent
+//);
 
 require_once $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php';
