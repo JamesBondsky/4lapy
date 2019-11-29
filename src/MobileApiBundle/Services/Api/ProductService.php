@@ -1283,33 +1283,18 @@ class ProductService
         $user   = $this->userService->getCurrentUser();
         $images = $this->getImagesId($request->files->get('images'));
         
-        $hlblock           = \Bitrix\Highloadblock\HighloadBlockTable::getById(37)->Fetch();
-        $entity            = \Bitrix\Highloadblock\HighloadBlockTable::compileEntity($hlblock);
-        $entity_data_class = $entity->getDataClass();
-        
-        $result = $entity_data_class::add([
-            'UF_USER_ID'   => $user->getId(),
+        CommentsTable::add(
+            [
+                'UF_USER_ID'   => $user->getId(),
                 'UF_TEXT'      => $request->get('text'),
                 'UF_MARK'      => $request->get('stars'),
                 'UF_ACTIVE'    => 0,
                 'UF_OBJECT_ID' => $request->get('id'),
                 'UF_TYPE'      => 'catalog',
                 'UF_DATE'      => new \Bitrix\Main\Type\Date(),
-                'UF_PHOTOS' => $images
+                'UF_PHOTOS' => serialize($images),
             ]
         );
-        // CommentsTable::add(
-        //     [
-        //         'UF_USER_ID'   => $user->getId(),
-        //         'UF_TEXT'      => $request->get('text'),
-        //         'UF_MARK'      => $request->get('stars'),
-        //         'UF_ACTIVE'    => 0,
-        //         'UF_OBJECT_ID' => $request->get('id'),
-        //         'UF_TYPE'      => 'catalog',
-        //         'UF_DATE'      => new \Bitrix\Main\Type\Date(),
-        //         'UF_PHOTOS' => $images,
-        //     ]
-        // );
     }
     
     private function buildCommentsFieldResult($comments)
@@ -1367,10 +1352,10 @@ class ProductService
     private function getImagesId($images)
     {
         $result = [];
-        
+
         foreach ($images as $image) {
             $fileArray = \CFile::MakeFileArray($image->getPathName());
-            $result[]  = \CFile::SaveFile($fileArray, 'comments_temp_files');
+            $result[] = \CFile::SaveFile($fileArray, 'comments_temp_files');
         }
         
         return $result;
