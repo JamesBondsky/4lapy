@@ -92,19 +92,19 @@ $chanceService = Application::getInstance()->getContainer()->get(ChanceService::
                       <span class="img">
                           <img src="/ny2020/img/prizes1.png" alt="">
                       </span>
-                      <span class="text">термокружка;</span>
+                      <span class="text">200 термокружек;</span>
                   </li>
                   <li>
                       <span class="img">
                           <img src="/ny2020/img/prizes2.png" alt="">
                       </span>
-                      <span class="text">iPhone 11 PRO;</span>
+                      <span class="text">4 iPhone 11 PRO;</span>
                   </li>
                   <li>
                       <span class="img">
                           <img src="/ny2020/img/prizes3.png" alt="">
                       </span>
-                      <span class="text">поездка в Великий Устюг!</span>
+                      <span class="text">поездку в Великий Устюг!</span>
                   </li>
               </ul>
           </div>
