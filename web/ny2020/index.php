@@ -77,22 +77,46 @@ $chanceService = Application::getInstance()->getContainer()->get(ChanceService::
           <button type="submit" class="participate-ny2020__btn">Отправить</button>
         </div>
       </form>
-
-      <div class="participate-ny2020__primary">
-        <p>Личные данные, вводимые при регистрации в&nbsp;акции, должны совпадать с&nbsp;личными данными, к&nbsp;которым привязана бонусная карта Четыре лапы, также используемая для&nbsp;регистрации в&nbsp;акции.</p>
-        <p>Участники, у&nbsp;которых указанная информация не&nbsp;совпадает, автоматически выбывают из&nbsp;общего списка зарегистрированных участников для начисления бонусов и&nbsp;розыгрыша призов.</p>
-      </div>
     </div>
     <?php } ?>
 
     <div class="response-form-participate-ny2020" data-response-form-participate-ny2020="true" style="display: <?= ($userChance === null) ? 'none' : 'block' ?>">
       <div class="response-form-participate-ny2020__title">Спасибо!</div>
       <div class="response-form-participate-ny2020__subtitle">За участие в акции</div>
-      <div class="response-form-participate-ny2020__info">
-        <div class="response-form-participate-ny2020__odds">Мои шансы</div>
-        <div class="response-form-participate-ny2020__count" data-odds-form-participate-ny2020="true"><?= $userChance ?? 0 ?></div>
-        <div class="response-form-participate-ny2020__icon"></div>
-      </div>
+
+      <?php if($userChance === NULL || $userChance === 0) {?>
+          <div class="response-form-participate-ny2020__descr" data-descr-response-form-participate-ny2020="true" style="display: <?= ($userChance === 0) ? 'block' : 'none' ?>">
+              <p>Совершайте покупки на&nbsp;500&nbsp;руб. и&nbsp;более, увеличивайте шансы выиграть:</p>
+              <ul class="response-form-participate-ny2020__prizes">
+                  <li>
+                      <span class="img">
+                          <img src="/ny2020/img/prizes1.png" alt="">
+                      </span>
+                      <span class="text">термокружка;</span>
+                  </li>
+                  <li>
+                      <span class="img">
+                          <img src="/ny2020/img/prizes2.png" alt="">
+                      </span>
+                      <span class="text">iPhone 11 PRO;</span>
+                  </li>
+                  <li>
+                      <span class="img">
+                          <img src="/ny2020/img/prizes3.png" alt="">
+                      </span>
+                      <span class="text">поездка в Великий Устюг!</span>
+                  </li>
+              </ul>
+          </div>
+      <?php } ?>
+      <?php if($userChance === NULL || $userChance !== 0) {?>
+          <div class="response-form-participate-ny2020__info" data-result-response-form-participate-ny2020="true">
+              <div class="response-form-participate-ny2020__odds">Мои шансы</div>
+              <div class="response-form-participate-ny2020__count" data-odds-form-participate-ny2020="true"><?= $userChance ?? 0 ?></div>
+              <div class="response-form-participate-ny2020__icon"></div>
+          </div>
+      <?php } ?>
+
     </div>
   </section>
 <?php } ?>

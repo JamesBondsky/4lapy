@@ -98,9 +98,9 @@ $markup = PawsApplication::markup();
 <header class="header-ny2020" data-header-landing="true">
     <div class="header-ny2020__container">
         <div class="header-ny2020__content">
-            <div class="header-ny2020__logo">
+            <a href="/" class="header-ny2020__logo">
                 <img src="/ny2020/img/logo.svg" alt="NY2020" title="NY2020"/>
-            </div>
+            </a>
             <div class="header-ny2020-menu" data-mobile-menu-landing="true">
                 <ul class="header-ny2020-menu__list" data-list-mobile-menu-landing="true">
                     <?/*<li  class="header-ny2020-menu__item">
