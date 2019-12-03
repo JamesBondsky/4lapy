@@ -69,7 +69,7 @@ if ($template->hasMainWrapper()) { ?>
                         </div>
                         <div class="item-card__title">Путешествие</div>
                         <div class="item-card__descr">
-                            В&nbsp;Великий устюг на&nbsp;родину <nobr>Деда Мороза</nobr><br />
+                            В&nbsp;Великий Устюг на&nbsp;родину <nobr>Деда Мороза</nobr><br />
                             1 приз на&nbsp;семью из&nbsp;4х человек<br />
                             <b>Розыгрыш 30 декабря</b>
                         </div>
