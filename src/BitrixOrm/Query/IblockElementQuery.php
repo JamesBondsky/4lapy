@@ -30,39 +30,13 @@ class IblockElementQuery extends IblockQueryBase
      */
     public function doExec(): \CDBResult
     {
-        $cacheKey = [$this->getOrder(),$this->getFilterWithBase(), $this->getGroup() ?: false, $this->getNav() ?: false, $this->getSelectWithBase()];
-        $cacheKey = array_filter($cacheKey, function ($item) {
-            return !empty($item);
-        });
-        $cacheKey = serialize($cacheKey);
-
-        $cache = (new BitrixCache())
-            ->withId(__METHOD__ . $cacheKey)
-            ->withTime(3600);
-
-        $res = $cache->resultOf(function () {
-            return \CIBlockElement::GetList(
-                $this->getOrder(),
-                $this->getFilterWithBase(),
-                $this->getGroup() ?: false,
-                $this->getNav() ?: false,
-                $this->getSelectWithBase()
-            );
-        });
-
-        if (isset($res['result'])) {
-            return $res['result'];
-        } else {
-            return $res;
-        }
-
-//        return \CIBlockElement::GetList(
-//            $this->getOrder(),
-//            $this->getFilterWithBase(),
-//            $this->getGroup() ?: false,
-//            $this->getNav() ?: false,
-//            $this->getSelectWithBase()
-//        );
+        return \CIBlockElement::GetList(
+            $this->getOrder(),
+            $this->getFilterWithBase(),
+            $this->getGroup() ?: false,
+            $this->getNav() ?: false,
+            $this->getSelectWithBase()
+        );
     }
 
     /**
