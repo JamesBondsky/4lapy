@@ -1262,7 +1262,7 @@ class ProductService
                     ->setCurrentPage($page);
                 
                 $limit  = $nav->getLimit();
-                $offset = $nav->getLimit();
+                $offset = $nav->getOffset();
             }
             
             $comments = CommentsTable::query()
