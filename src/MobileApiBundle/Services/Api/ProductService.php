@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Loader;
@@ -1252,6 +1253,8 @@ class ProductService
             Loader::includeModule('articul.main');
             
             if ($navigation == 'Y') {
+                $id = $this->getProductIdByOfferId($id);
+
                 $nav = new \Bitrix\Main\UI\PageNavigation('nav-comments');
                 
                 $nav->allowAllRecords(true)
@@ -1310,6 +1313,11 @@ class ProductService
         }
         
         return $comments;
+    }    
+    
+    private function getProductIdByOfferId($id)
+    {
+        return \CCatalogSku::GetProductInfo($id)['ID'];
     }
     
     private function getImagePaths($serializedId)
