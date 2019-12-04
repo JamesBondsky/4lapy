@@ -123,7 +123,7 @@ class SortService
                     //                        'offers.prices.PRICE' => [
                     //                            'order'         => 'asc',
                     //                            'mode'          => 'min',
-                    //                            'nested_path'   => 'ofcd fers.prices',
+                    //                            'nested_path'   => 'offers.prices',
                     //                            'nested_filter' => [
                     //                                'term' => ['offers.prices.REGION_ID' => $currentRegionCode],
                     //                            ],
