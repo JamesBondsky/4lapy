@@ -98,7 +98,7 @@ $chanceService = Application::getInstance()->getContainer()->get(ChanceService::
                       <span class="img">
                           <img src="/ny2020/img/prizes2.png" alt="">
                       </span>
-                      <span class="text">4 iPhone 11 PRO;</span>
+                      <span class="text">4 iPhone 11 Pro;</span>
                   </li>
                   <li>
                       <span class="img">
