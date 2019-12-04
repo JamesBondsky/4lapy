@@ -1303,6 +1303,7 @@ class ProductService
     {
         $user   = $this->userService->getCurrentUser();
         $images = $this->getImagesId($request->files->get('images'));
+        $id = \CCatalogSku::GetProductInfo($request->get('id'))['ID'];
         
         CommentsTable::add(
             [
@@ -1310,7 +1311,7 @@ class ProductService
                 'UF_TEXT'      => $request->get('text'),
                 'UF_MARK'      => $request->get('stars'),
                 'UF_ACTIVE'    => 0,
-                'UF_OBJECT_ID' => $request->get('id'),
+                'UF_OBJECT_ID' => $id,
                 'UF_TYPE'      => 'catalog',
                 'UF_DATE'      => new \Bitrix\Main\Type\Date(),
                 'UF_PHOTOS' => serialize($images),
