@@ -179,12 +179,12 @@ class ProductService
                     'cdbResult' => new \CIBlockResult()
                 ]));
             }
-            $searchQuery = $this->getProductIdsByShareId($stockId);
+            $searchQuery = $this->getProductXmlIdsByShareId($stockId);
 
             $category = new \FourPaws\Catalog\Model\Category();
             $this->filterHelper->initCategoryFilters($category, $request);
             $filters = $category->getFilters();
-
+            
             $filterArr = [];
             foreach ($filters as $filter) {
                 $filterCode = $filter->getFilterCode();
@@ -193,7 +193,7 @@ class ProductService
                     $filterArr[] = $filter;
                 }
             }
-
+            
             $filters = new FilterCollection($filterArr);
         } else if ($searchQuery) {
             /** @see CatalogController::searchAction */
@@ -1090,31 +1090,6 @@ class ProductService
      */
     public function getProductIdsByShareId(int $stockId)
     {
-        $share = (new ShareQuery())
-            ->withFilter(['ID' => $stockId])
-            ->exec()
-            ->first();
-
-        $xmlIds = [];
-
-        if ($share) {
-            $xmlIds = $share->getPropertyProducts();
-        }
-
-        return $xmlIds;
-
-        $query = new ProductQuery();
-        $query->withFilter([
-            '=XML_ID'          => $xmlIds,
-            'IBLOCK_ID' => [IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS), IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
-        ])->withSelect(['ID']);
-        $productCollection = $query->exec();
-        $productIds = [];
-        foreach ($productCollection as $product) {
-            $productIds[] = $product->getId();
-        }
-        return $productIds;
-
         $res = \CIBlockElement::GetProperty(IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES), $stockId, '', '',
             ['CODE' => 'PRODUCTS']);
         $xmlIds = [];
@@ -1134,7 +1109,29 @@ class ProductService
         foreach ($productCollection as $product) {
             $productIds[] = $product->getId();
         }
+        
         return $productIds;
+    }
+    
+    /**
+     * @param int $stockId
+     * @return array
+     * @throws IblockNotFoundException
+     */
+    public function getProductXmlIdsByShareId(int $stockId)
+    {
+        $share = (new ShareQuery())
+            ->withFilter(['ID' => $stockId])
+            ->exec()
+            ->first();
+        
+        $xmlIds = [];
+        
+        if ($share) {
+            $xmlIds = $share->getPropertyProducts();
+        }
+        
+        return $xmlIds;
     }
 
     /**
