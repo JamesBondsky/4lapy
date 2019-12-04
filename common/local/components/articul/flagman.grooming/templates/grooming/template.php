@@ -18,14 +18,27 @@
                     <div class="form-signup-grooming-flagship__top">
                         <div class="b-input-line">
                             <div class="b-input-line__label-wrapper">
+                                <span class="b-input-line__label">Клиника</span>
+                            </div>
+                            <div class="b-select">
+                                <select class="b-select__block" data-clinic-grooming-flagship="true">
+                                    <option value="" disabled="disabled" selected="selected">выберите</option>
+                                    <option value="key1" data-url="/flagman/get_days_by_clinic/key1/">Клиника 1</option>
+                                    <option value="key2" data-url="/flagman/get_days_by_clinic/key2/">Клиника 2</option>
+                                    <option value="key3" data-url="/flagman/get_days_by_clinic/key3/">Клиника 3</option>
+                                    <option value="key4" data-url="/flagman/get_days_by_clinic/key4/">Клиника 4</option>
+                                </select>
+                                <div class="b-error"><span class="js-message"></span></div>
+                            </div>
+                        </div>
+
+                        <div class="b-input-line">
+                            <div class="b-input-line__label-wrapper">
                                 <span class="b-input-line__label">Дата</span>
                             </div>
                             <div class="b-select">
                                 <select class="b-select__block" data-date-grooming-flagship="true">
                                     <option value="" disabled="disabled" selected="selected">выберите</option>
-                                    <?php foreach ($arResult['DAYS'] as $key => $day) : ?>
-                                            <option value="<?=$key?>" data-url="/flagman/getschedule/grooming/<?=$key?>/" data-date-option="<?=$day?>"><?=$day?></option>
-                                    <?php endforeach; ?>
                                 </select>
                                 <div class="b-error"><span class="js-message"></span></div>
                             </div>
