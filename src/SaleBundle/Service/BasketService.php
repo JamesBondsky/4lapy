@@ -1791,7 +1791,6 @@ class BasketService implements LoggerAwareInterface
      */
     public function needShowAddressPopup(Request $request = null, $withDelivery = false): bool
     {
-        return false; //todo black.friday
         /** @var LocationService $locationService */
         $locationService = App::getInstance()->getContainer()->get('location.service');
         if ($locationService->getCurrentLocation() !== LocationService::LOCATION_CODE_MOSCOW) {

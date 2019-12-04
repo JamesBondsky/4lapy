@@ -1776,48 +1776,33 @@ class Offer extends IblockElement
     public function getShare(): ShareCollection
     {
         if ($this->share === null) {
-            $cache = (new BitrixCache())
-                ->withId(__METHOD__ . $this->getXmlId() . $this->getRegionCode())
-                ->withTime(3600);
-
-            $xmlId = $this->getXmlId();
-            $regionCode = $this->getRegionCode();
-
-            $share = $cache->resultOf(function () use ($xmlId, $regionCode) {
-                return (new ShareQuery())
-                    ->withOrder([
-                        'SORT' => 'ASC',
-                        'ACTIVE_FROM' => 'DESC'
-                    ])
-                    ->withFilter([
-                        'ACTIVE' => 'Y',
-                        'ACTIVE_DATE' => 'Y',
-                        'PROPERTY_PRODUCTS' => $xmlId,
-                        "LOGIC" => "AND",
-                        [
-                            "LOGIC" => "OR",
-                            ['PROPERTY_REGION' => false],
-                            ['PROPERTY_REGION' => $regionCode],
-                        ]
-                    ])
-                    ->withSelect([
-                        'ID',
-                        'NAME',
-                        'IBLOCK_ID',
-                        'PREVIEW_PICTURE',
-                        'DETAIL_PICTURE',
-                        'PREVIEW_TEXT',
-                        'DATE_ACTIVE_FROM',
-                        'DATE_ACTIVE_TO',
-                    ])
-                    ->exec();
-            });
-
-            if (isset($share['result'])) {
-                $this->share = $share['result'];
-            } else {
-                $this->share = $share;
-            }
+            $this->share = (new ShareQuery())
+                ->withOrder([
+                    'SORT' => 'ASC',
+                    'ACTIVE_FROM' => 'DESC'
+                ])
+                ->withFilter([
+                    'ACTIVE'            => 'Y',
+                    'ACTIVE_DATE'       => 'Y',
+                    'PROPERTY_PRODUCTS' => $this->getXmlId(),
+                    "LOGIC" => "AND",
+                    [
+                        "LOGIC" => "OR",
+                        ['PROPERTY_REGION' => false],
+                        ['PROPERTY_REGION' => $this->getRegionCode()],
+                    ]
+                ])
+                ->withSelect([
+                    'ID',
+                    'NAME',
+                    'IBLOCK_ID',
+                    'PREVIEW_PICTURE',
+                    'DETAIL_PICTURE',
+                    'PREVIEW_TEXT',
+                    'DATE_ACTIVE_FROM',
+                    'DATE_ACTIVE_TO',
+                ])
+                ->exec();
         }
 
         return $this->share;

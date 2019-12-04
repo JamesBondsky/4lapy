@@ -236,9 +236,9 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         $this->setSeo($this->arResult['CURRENT_OFFER']);
 
         // bigdata
-//        $this->obtainCounterData();
+        $this->obtainCounterData();
         $this->sendCounters();
-//        $this->saveViewedProduct();
+        $this->saveViewedProduct();
 
         return $this->arResult['PRODUCT'];
     }
