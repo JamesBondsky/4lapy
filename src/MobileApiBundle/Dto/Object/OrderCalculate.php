@@ -70,6 +70,14 @@ class OrderCalculate
      * @var bool
      */
     protected $isPhoneCallAvailable = true;
+    
+    /**
+     * 90% от цены товара без учета доставки, которую можно заменить бонусами
+     * @Serializer\SerializedName("bonus_vulnerable_price")
+     * @Serializer\Type("integer")
+     * @var Price
+     */
+    protected $bonusVulnerablePrice;
 
     /**
      * @return Price
