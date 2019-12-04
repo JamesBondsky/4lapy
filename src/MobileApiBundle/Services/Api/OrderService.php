@@ -693,6 +693,8 @@ class OrderService implements LoggerAwareInterface
             $totalPrice->setCourierPrice($deliveryPrice);
         }
 
+        $bonusVulnerablePrice = (90 * $totalPrice->getActual()) / 100;
+        
         $stampsAdded = $this->manzana->getStampsToBeAdded();
         $stampService = $this->stampService;
         $stampsUsed = array_reduce($basketProducts->getValues(), static function($carry, $product) use ($stampService) {
@@ -758,7 +760,8 @@ class OrderService implements LoggerAwareInterface
                         ->setId('stamps_sub')
                         ->setTitle('Списано марок')
                         ->setValue($stampsUsed),
-                ]);
+                ])
+                ->setBonusVulnerablePrice($bonusVulnerablePrice);
         }
 
         return $orderCalculate;

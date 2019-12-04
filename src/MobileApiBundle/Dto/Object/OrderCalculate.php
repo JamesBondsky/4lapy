@@ -74,8 +74,8 @@ class OrderCalculate
     /**
      * 90% от цены товара без учета доставки, которую можно заменить бонусами
      * @Serializer\SerializedName("bonus_vulnerable_price")
-     * @Serializer\Type("integer")
-     * @var Price
+     * @Serializer\Type("int")
+     * @var int
      */
     protected $bonusVulnerablePrice;
 
@@ -236,6 +236,25 @@ class OrderCalculate
     public function setPromoCodeResult(string $promoCodeResult): OrderCalculate
     {
         $this->promoCodeResult = $promoCodeResult;
+        return $this;
+    }
+    
+    /**
+     * @return int
+     */
+    public function getBonusVulnerablePrice(): int
+    {
+        return $this->bonusVulnerablePrice;
+    }
+    
+    /**
+     * @param int $bonusVulnerablePrice
+     *
+     * @return OrderCalculate
+     */
+    public function setBonusVulnerablePrice(int $bonusVulnerablePrice): OrderCalculate
+    {
+        $this->bonusVulnerablePrice = $bonusVulnerablePrice;
         return $this;
     }
 }
