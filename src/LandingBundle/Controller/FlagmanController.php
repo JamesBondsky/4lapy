@@ -103,6 +103,38 @@ class FlagmanController extends Controller implements LoggerAwareInterface
     }
     
     /**
+     * @Route("/get_days_by_clinic/{id}/", methods={"GET"})
+     *
+     * @param Request $request
+     * @param string  $id
+     *
+     * @return JsonResponse
+     * @throws Exception
+     *
+     * @throws RuntimeException
+     */
+    public function getDaysByClinic(Request $request, $id): JsonResponse
+    {
+        $result = [];
+        
+        $flagmanService = new FlagmanService();
+        $result         = $flagmanService->getDaysByClinic($id);
+        
+        if ($result) {
+            return new JsonResponse([
+                'success' => 1,
+                'data'    => $result,
+                'errors'  => [],
+            ]);
+        }
+        
+        return new JsonResponse([
+            'success' => 0,
+            'errors'  => ['message' => 'Такой клиники нет =('],
+        ]);
+    }
+    
+    /**
      * @Route("/getschedule/{action}/{id}/", methods={"GET"})
      *
      * @param Request $request
@@ -126,7 +158,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             ->setFilter(['=ID' => $id])
             ->exec()
             ->fetch()['NAME'];
-
+        
         preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $sectionName, $sectionMatches);
         
         foreach ($elements as $key => $element) {
@@ -143,17 +175,17 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             
             $result[$key] = [
                 'timeId' => $element['ID'],
-                'time' => $element['NAME'],
+                'time'   => $element['NAME'],
             ];
         }
         
         usort($result, function ($a, $b) {
             preg_match('/^([0-9]{2})/', $a['time'], $matchesA);
             preg_match('/^([0-9]{2})/', $b['time'], $matchesB);
-
+            
             return ($matchesA[0] > $matchesB[0]) ? 1 : -1;
         });
-
+        
         if ($result) {
             return new JsonResponse([
                 'success' => 1,
@@ -194,22 +226,26 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'UF_PHONE'    => $request->get('phone'),
                 'UF_EVENT_ID' => (int)$request->get('id'),
                 'UF_EMAIL'    => $request->get('email'),
-                'UF_ANIMAL'    => $request->get('animal'),
+                'UF_ANIMAL'   => $request->get('animal'),
                 'UF_BREED'    => $request->get('breed'),
-                'UF_SERVICE'    => $request->get('service'),
+                'UF_SERVICE'  => $request->get('service'),
+                'UF_CLINIC'  => $request->get('clinic'),
+                'UF_DATE'  => $request->get('date'),
             ]);
             
             if ($successAdding) {
-                \CIBlockElement::SetPropertyValuesEx($request->get('id'), 0, ['FREE' => 'N']);
+                $cIblockElement = new \CIBlockElement;
+                $cIblockElement->Update($request->get('id'), ['ACTIVE' => 'N', 'PROPERTY_VALUES' => ['FREE' => 'N']]);
                 \CEvent::Send('GROOMING_SERVICE', 's1', [
-                    'NAME'  => $request->get('name'),
-                    'PHONE' => $request->get('phone'),
-                    'DATE'  => $request->get('date'),
-                    'TIME'  => $request->get('time'),
-                    'EMAIL' => $request->get('email'),
-                    'ANIMAL' => $request->get('animal'),
-                    'BREED' => $request->get('breed'),
+                    'NAME'    => $request->get('name'),
+                    'PHONE'   => $request->get('phone'),
+                    'DATE'    => $request->get('date'),
+                    'TIME'    => $request->get('time'),
+                    'EMAIL'   => $request->get('email'),
+                    'ANIMAL'  => $request->get('animal'),
+                    'BREED'   => $request->get('breed'),
                     'SERVICE' => $request->get('service'),
+                    'CLINIC' => $request->get('clinic'),
                 ]);
             }
         } catch (\Exception $e) {
@@ -245,13 +281,13 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         
         $flagmanService = new FlagmanService();
         $elements       = $flagmanService->getElementsBySectionTrainingId($id);
-
+        
         foreach ($elements as $key => $element) {
             if ($element['FREE_SITS'] <= 0) {
                 unset($elements[$key]);
                 continue;
             }
-
+            
             preg_match('/^[0-9]{2}/', $element['NAME'], $matches);
             preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $element['SECTION_NAME'], $matchesDate);
             if ($matches[0] <= date('H') && $matchesDate[0] == date('d.m.Y')) {
@@ -261,14 +297,14 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             
             $result[$key] = [
                 'timeId' => $element['ID'],
-                'time' => $element['NAME'],
+                'time'   => $element['NAME'],
             ];
         }
-    
+        
         usort($result, function ($a, $b) {
             preg_match('/^([0-9]{2})/', $a['time'], $matchesA);
             preg_match('/^([0-9]{2})/', $b['time'], $matchesB);
-        
+            
             return ($matchesA[0] > $matchesB[0]) ? 1 : -1;
         });
         
@@ -347,4 +383,6 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         
         return $response;
     }
+    
+    
 }

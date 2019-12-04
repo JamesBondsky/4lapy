@@ -23,10 +23,9 @@
                             <div class="b-select">
                                 <select class="b-select__block" data-clinic-grooming-flagship="true">
                                     <option value="" disabled="disabled" selected="selected">выберите</option>
-                                    <option value="key1" data-url="/flagman/get_days_by_clinic/key1/">Клиника 1</option>
-                                    <option value="key2" data-url="/flagman/get_days_by_clinic/key2/">Клиника 2</option>
-                                    <option value="key3" data-url="/flagman/get_days_by_clinic/key3/">Клиника 3</option>
-                                    <option value="key4" data-url="/flagman/get_days_by_clinic/key4/">Клиника 4</option>
+                                    <?php foreach ($arResult['CLINICS'] as $clinic) : ?>
+                                        <option value="<?=$clinic['ID']?>" data-url="/flagman/get_days_by_clinic/<?=$clinic['ID']?>/"><?=$clinic['NAME']?></option>
+                                    <?php endforeach; ?>
                                 </select>
                                 <div class="b-error"><span class="js-message"></span></div>
                             </div>
