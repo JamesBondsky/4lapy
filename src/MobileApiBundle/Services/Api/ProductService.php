@@ -1247,23 +1247,10 @@ class ProductService
         return $stampCategories;
     }
     
-    public function getProductCommentsById($id, $navigation = 'N', $limit = 2, $page = 0, $offset = 0)
+    public function getProductCommentsById($id, $limit = 2, $offset = 0)
     {
         try {
             Loader::includeModule('articul.main');
-            
-            if ($navigation == 'Y') {
-                $id = $this->getProductIdByOfferId($id);
-
-                $nav = new \Bitrix\Main\UI\PageNavigation('nav-comments');
-                
-                $nav->allowAllRecords(true)
-                    ->setPageSize($limit)
-                    ->setCurrentPage($page);
-                
-                $limit  = $nav->getLimit();
-                $offset = $nav->getOffset();
-            }
             
             $comments = CommentsTable::query()
                 ->setSelect(['stars' => 'UF_MARK', 'text' => 'UF_TEXT', 'date' => 'UF_DATE', 'images' => 'UF_PHOTOS', 'author' => 'UF_USER_ID'])
@@ -1273,6 +1260,37 @@ class ProductService
                 ->exec()
                 ->fetchAll();
             
+            $result = $this->buildCommentsFieldResult($comments);
+            
+            return $result;
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+    
+    public function getAllProductCommentsWithNav($id, $limit = 2, $page = 1)
+    {
+        try {
+            Loader::includeModule('articul.main');
+        
+            $nav = new \Bitrix\Main\UI\PageNavigation('nav-comments');
+        
+            $nav->allowAllRecords(true)
+                ->setPageSize($limit)
+                ->setCurrentPage($page);
+        
+            $limit  = $nav->getLimit();
+            $offset = $nav->getOffset();
+        
+            $comments = CommentsTable::query()
+                ->setSelect(['stars' => 'UF_MARK', 'text' => 'UF_TEXT', 'date' => 'UF_DATE', 'images' => 'UF_PHOTOS', 'author' => 'UF_USER_ID'])
+                ->setFilter(['=UF_OBJECT_ID' => $id, '=UF_ACTIVE' => 1])
+                ->setLimit($limit)
+                ->setOffset($offset)
+                ->setCacheTtl('36000')
+                ->exec()
+                ->fetchAll();
+        
             $result = $this->buildCommentsFieldResult($comments);
             
             return $result;
@@ -1313,11 +1331,6 @@ class ProductService
         }
         
         return $comments;
-    }    
-    
-    private function getProductIdByOfferId($id)
-    {
-        return \CCatalogSku::GetProductInfo($id)['ID'];
     }
     
     private function getImagePaths($serializedId)

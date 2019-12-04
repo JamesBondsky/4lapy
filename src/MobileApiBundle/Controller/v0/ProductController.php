@@ -14,6 +14,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Catalog\Table\CommentsTable;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -209,10 +210,25 @@ class ProductController extends BaseController
      */
     public function allCommentsAction(Request $request)
     {
-        $comments = $this->apiProductService->getProductCommentsById($request->get('id'), $navigation = 'Y', $request->get('count'), $request->get('page'));
+        $id = \CCatalogSku::GetProductInfo($request->get('id'))['ID'];
+        $count = $request->get('count');
+        
+        $comments = $this->apiProductService->getAllProductCommentsWithNav($id, $count, $request->get('page'));
+    
+        $total = CommentsTable::query()
+            ->setSelect(['ID'])
+            ->setFilter(['=UF_OBJECT_ID' => $id, '=UF_ACTIVE' => 1])
+            ->setCacheTtl('36000')
+            ->exec()
+            ->fetchAll();
+    
+        $totalItems = count($total);
+        $totalPages = ceil($totalItems/$count);
         
         return (new Response())->setData([
-            'comments' => $comments
+            'comments' => $comments,
+            'total_pages' => $totalPages,
+            'total_items' => $totalItems
         ]);
     }
     
@@ -233,8 +249,7 @@ class ProductController extends BaseController
         $result = $this->apiProductService->addProductComment($request);
         
         return (new Response())->setData([
-            'success' => 1,
-            'errors' => []
+            'success' => 1
         ]);
     }
     
