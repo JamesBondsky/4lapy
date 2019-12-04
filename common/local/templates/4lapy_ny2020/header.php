@@ -33,9 +33,9 @@ $markup = PawsApplication::markup();
     <meta name="format-detection" content="telephone=no">
     <meta name="yandex-verification" content="6266e34669b85ed6">
 
-    <meta property="og:title" content="Выиграйте главный приз: Путешествие на 4-х человек на родину Деда Мороза!"/>
-    <meta property="og:description" content="Зарегистрируйтесь и выигрывайте призы каждую неделю!"/>
-    <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/img/mealfeel-share.png'?>">
+    <meta property="og:title" content="Новогодний розыгрыш от компании Четыре Лапы"/>
+    <meta property="og:description" content="Зарегистрируйтесь для участия в акции и выигрывайте призы каждую неделю!"/>
+    <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/ny2020/img/ny2020-share.png'?>">
 
     <link href="https://fonts.googleapis.com/css?family=PT+Sans+Narrow|Roboto+Condensed&display=swap" rel="stylesheet">
 
@@ -182,7 +182,7 @@ $markup = PawsApplication::markup();
                         <div class="item-card__img-wrap">
                             <div class="item-card__img" style="background-image: url('/ny2020/img/prizes2.png')"></div>
                         </div>
-                        <div class="item-card__title">Iphone 11 PRO</div>
+                        <div class="item-card__title">Iphone 11 Pro</div>
                         <div class="item-card__descr">
                             Всего 4 приза<br />
                             Разыгрывается по&nbsp;1шт<br/>
@@ -206,6 +206,9 @@ $markup = PawsApplication::markup();
                 </div>
             </div>
         </div>
+        <div class="triangles-left-ny2020"></div>
+        <div class="triangles-right-ny2020"></div>
+        <div class="triangles-top-prizes-ny2020"></div>
     </section>
 
 </div>

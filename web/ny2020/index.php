@@ -8,9 +8,9 @@ use FourPaws\PersonalBundle\Service\ChanceService;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
-$APPLICATION->SetPageProperty('title', 'Выиграйте главный приз: Путешествие на 4-х человек на родину Деда Мороза!');
-$APPLICATION->SetPageProperty('description', 'Зарегистрируйтесь и выигрывайте призы каждую неделю!');
-$APPLICATION->SetTitle('Выиграйте главный приз: Путешествие на 4-х человек на родину Деда Мороза!');
+$APPLICATION->SetPageProperty('title', 'Новогодний розыгрыш от компании Четыре Лапы');
+$APPLICATION->SetPageProperty('description', 'ЗЗарегистрируйтесь для участия в акции и выигрывайте призы каждую неделю!');
+$APPLICATION->SetTitle('Новогодний розыгрыш от компании Четыре Лапы');
 
 $userChance = null;
 /** @var ChanceService $chaceService */

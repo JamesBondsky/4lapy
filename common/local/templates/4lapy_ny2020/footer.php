@@ -65,9 +65,6 @@ if ($template->hasMainWrapper()) { ?>
                 </div>
             <?}?>
         </div>
-        <div class="regulations-ny2020__triangles-top"></div>
-        <div class="regulations-ny2020__triangles-left"></div>
-        <div class="regulations-ny2020__triangles-right"></div>
         <div class="regulations-ny2020__spruce"></div>
     </section>
 
