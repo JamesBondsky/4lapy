@@ -50,7 +50,7 @@ Desktop.ini
 /local
 
 /common/local/resources/sypexgeo/SxGeoCity.dat
-90426.4lapy_db.dump.sql.gz
+lapy_db.dump.sql.gz
 web/500errors.txt
 web/dummy.postdata.log
 web/manzana_user.error.log
