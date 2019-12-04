@@ -30,53 +30,42 @@ if ($template->hasMainWrapper()) { ?>
 </div>
 
 <div class="bottom-landing">
-    <section data-id-section-landing="prizes" class="prizes-ny2020">
-        <div class="container-landing">
-            <div class="title-ny2020">Призы</div>
-            <div class="prizes-ny2020__list">
-                <div class="item">
-                    <div class="item-card">
-                        <div class="item-card__img-wrap">
-                            <div class="item-card__img" style="background-image: url('/ny2020/img/prizes1.png')"></div>
-                        </div>
-                        <div class="item-card__title">Термокружка</div>
-                        <div class="item-card__descr">
-                            Всего 200 призов<br />
-                            Разыгрываются по&nbsp;50шт<br />
-                            каждый понедельник<br />
-                            <b>9, 16, 23 и&nbsp;30 декабря.</b>
+    <section data-id-section-landing="regulations" class="regulations-ny2020">
+        <div class="regulations-ny2020__container">
+            <div class="title-ny2020">Как принять участие в&nbsp;акции</div>
+            <div class="regulations-ny2020__list">
+                <div class="step">
+                    <div class="step__inner">
+                        <div class="step__descr">Покупайте<br/> любые товары<br/> в&nbsp;зоомагазинах, в&nbsp;<nobr>интернет-магазине</nobr> и&nbsp;в&nbsp;мобильном<br/> приложении<br/> <b>&laquo;Четыре Лапы&raquo;.</b></div>
+                        <div class="step__icon">
+                            <img src="/ny2020/img/step1-regulations.png" alt="" title="" >
                         </div>
                     </div>
                 </div>
-                <div class="item">
-                    <div class="item-card">
-                        <div class="item-card__img-wrap">
-                            <div class="item-card__img" style="background-image: url('/ny2020/img/prizes2.png')"></div>
-                        </div>
-                        <div class="item-card__title">Iphone 11 PRO</div>
-                        <div class="item-card__descr">
-                            Всего 4 приза<br />
-                            Разыгрывается по&nbsp;1шт<br/>
-                            каждый понедельник<br />
-                            <b>9, 16, 23 и&nbsp;30 декабря</b>
+                <div class="step">
+                    <div class="step__inner">
+                        <div class="step__descr">Зарегистрируйтесь для<br/> участия в&nbsp;акции.<br/> Больше покупок кратных <b>500&nbsp;рублей</b>, больше шансов выиграть один из&nbsp;ценных<br/> призов.</div>
+                        <div class="step__icon">
+                            <img src="/ny2020/img/step2-regulations.png" alt="" title="" >
                         </div>
                     </div>
                 </div>
-                <div class="item">
-                    <div class="item-card">
-                        <div class="item-card__img-wrap">
-                            <div class="item-card__img" style="background-image: url('/ny2020/img/prizes3.png')"></div>
-                        </div>
-                        <div class="item-card__title">Путешествие</div>
-                        <div class="item-card__descr">
-                            В&nbsp;Великий устюг на&nbsp;родину <nobr>Деда Мороза</nobr><br />
-                            1 приз на&nbsp;семью из&nbsp;4х человек<br />
-                            <b>Розыгрыш 30 декабря</b>
+                <div class="step">
+                    <div class="step__inner">
+                        <div class="step__descr">Проверяйте<br/> результаты розыгрыша<br/> на&nbsp;этом сайте<br/> каждый понедельник<br/> <b>9, 16, 23 и&nbsp;30 декабря</b>.</div>
+                        <div class="step__icon">
+                            <img src="/ny2020/img/step3-regulations.png" alt="" title="" >
                         </div>
                     </div>
                 </div>
             </div>
+            <?if (!$USER->IsAuthorized()) {?>
+                <div class="regulations-ny2020__btn-wrap">
+                    <div class="regulations-ny2020__btn js-open-popup" data-popup-id="authorization">Принять участие</div>
+                </div>
+            <?}?>
         </div>
+        <div class="regulations-ny2020__spruce"></div>
     </section>
 
     <section data-id-section-landing="where-buy" class="where-buy-ny2020">

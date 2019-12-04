@@ -752,10 +752,6 @@ class OrderService
             throw new ManzanaNumberNotDefinedException('Order manzana id not defined');
         }
 
-        if ($order->getItems()->isEmpty()) {
-            throw new NoItemsException(\sprintf('No items in order %s', $order->getManzanaId()));
-        }
-
         if ($this->isManzanaOrderExists($order)) {
             throw new OrderAlreadyExistsException(\sprintf('Order %s already exists', $order->getManzanaId()));
         }

@@ -90,6 +90,7 @@
     "sypexgeo_local": "./common/local/resources/sypexgeo/SxGeoCity.dat"
   },
   "require": {
+    "4Lapy/bitrix": "dev-local",
     "adv/bitrix-tools": "^1.0",
     "adv/yandex-market-api": "^1.0",
     "andreyryabin/sprint.migration": "^2.3",
@@ -137,6 +138,10 @@
     "sensio/distribution-bundle": "^5.0"
   },
   "repositories": [
+    {
+      "type": "vcs",
+      "url": "git@gitea.articul.ru:4Lapy/bitrix.git"
+    },
     {
       "type": "vcs",
       "url": "git@bitbucket.org:articul/bitrix-tools.git"
