@@ -4,8 +4,28 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "b5a7af6a294644c87fc83a27d7ccf4dd",
+    "content-hash": "ac162b8f06ff07dfc8aa5bcdc6dd331f",
     "packages": [
+        {
+            "name": "4Lapy/bitrix",
+            "version": "dev-local",
+            "source": {
+                "type": "git",
+                "url": "git@gitea.articul.ru:4Lapy/bitrix.git",
+                "reference": "70b3eebd2b4ced4f689c95ada7d9ed1c22f6dd87"
+            },
+            "type": "library",
+            "license": [
+                "MIT"
+            ],
+            "description": "Bitrix core for 4lapy project",
+            "homepage": "http://articulmedia.ru/",
+            "keywords": [
+                "bitrix",
+                "core"
+            ],
+            "time": "2019-12-03T11:47:12+00:00"
+        },
         {
             "name": "adv/bitrix-tools",
             "version": "v1.0.20",
@@ -7638,6 +7658,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "4lapy/bitrix": 20,
         "duccio/apns-php": 15,
         "igi/sypexgeo": 20,
         "nelmio/api-doc-bundle": 10,
