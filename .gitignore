@@ -50,10 +50,14 @@ Desktop.ini
 /local
 
 /common/local/resources/sypexgeo/SxGeoCity.dat
-
-web/20190426.4lapy_db.dump.sql.gz
+90426.4lapy_db.dump.sql.gz
 web/500errors.txt
 web/dummy.postdata.log
 web/manzana_user.error.log
 web/manzana_user_numbers.error.log
 web/test.php
+
+### Docker
+/docker/
+Dockerfile
+docker-compose.yml
