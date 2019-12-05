@@ -15,32 +15,42 @@
 
             <div class="lectures-flagship-store">
                 <div class="lectures-flagship-store__list">
-                    <?php foreach ($arResult['ITEMS'] as $item) : ?>
-                        <div class="item">
-
-                            <div class="item__content">
+                    <?php foreach ($arResult['ITEMS'] as $key => $item) : ?>
+                        <div class="item" data-item-lectures-flagship-store="<?= $key ?>">
+                            <div class="item__img" style="background-image: url('<?= ($item['PICTURE']) ? ($item['PICTURE']): "/static/build/images/inhtml/no_image_flagship.jpg" ?>')"></div>
+                            <form class="item__content js-form-validation" data-form-signup-grooming-flagship="true">
                                 <div class="item__info">
-                                    <div class="item__title"><?=$item['NAME']?></div>
+                                    <div class="item__title" data-name-lectures-flagship="<?=$item['MAIN_SECTION_NAME']?>"><?=$item['MAIN_SECTION_NAME']?></div>
                                 </div>
                                 <div class="item__datetime">
                                     <div class="item__col-date">
                                         <div class="item__subtitle">Дата</div>
-                                        <div class="item__text"><?=$item['DATE']?></div>
+                                        <div class="item__text" data-date-lectures-flagship="<?=$item['SECTION_NAME']?>"><?=$item['SECTION_NAME']?></div>
                                     </div>
                                     <div class="item__col-time">
                                         <div class="item__subtitle">Время</div>
-                                        <div class="item__text"><?=$item['TIME']?></div>
+
+                                        <?php if ($item['AVAILABLE'] == 'Y') : ?>
+                                            <div class="b-select">
+                                                <select class="b-select__block" data-time-lectures-flagship="true">
+                                                    <option value="" disabled="disabled" selected="selected">выберите</option>
+                                                    <?php foreach ($item['DETAIL_INFO'] as $time) : ?>
+                                                        <option value="<?=$time['NAME']?>" data-eventid="<?=$time['ID']?>"><?=$time['NAME']?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                                <div class="b-error"><span class="js-message"></span></div>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                                 <div class="item__btn">
                                     <?php if ($item['AVAILABLE'] == 'Y') : ?>
-                                        <div class="b-button" data-popup-id="lectures-flagship-store" data-id-lectures-flagship-store="3" data-eventId="<?=$item['ID']?>">Записаться</div>
+                                        <button type="submit" class="b-button" data-popup-id="lectures-flagship-store" data-signup-lectures-flagship-store="true">Записаться</button>
                                     <?php else: ?>
-                                        <div class="b-button disabled" data-id-lectures-flagship-store="1">Запись окончена</div>
+                                        <div class="b-button disabled">Запись окончена</div>
                                     <?php endif; ?>
-
                                 </div>
-                            </div>
+                            </form>
                         </div>
                     <?php endforeach; ?>
                 </div>
