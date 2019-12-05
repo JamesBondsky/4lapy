@@ -84,7 +84,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 \CIBlockElement::SetPropertyValuesEx($request->get('id'), 0, ['FREE_SITS' => $newSits]);
             
                 $sectionId = LectionsTable::query()
-                    ->setSelect(['ID' => 'MAIN_SECTION.ID'])
+                    ->setSelect(['SECTION_ID' => 'SECTION.ID'])
                     ->setFilter(['=ID' => (int)$request->get('id')])
                     ->registerRuntimeField(new ReferenceField(
                         'SECTION',
@@ -92,7 +92,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                         ['=this.IBLOCK_SECTION_ID' => 'ref.ID']
                     ))
                     ->exec()
-                    ->fetch();
+                    ->fetch()['SECTION_ID'];
     
                 $stillHasTime = LectionsTable::query()
                     ->setSelect(['ID'])
