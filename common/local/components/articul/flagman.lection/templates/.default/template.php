@@ -30,15 +30,17 @@
                                     <div class="item__col-time">
                                         <div class="item__subtitle">Время</div>
 
-                                        <div class="b-select">
-                                            <select class="b-select__block" data-time-lectures-flagship="true">
-                                                <option value="" disabled="disabled" selected="selected">выберите</option>
-                                                <?php foreach ($item['DETAIL_INFO'] as $time) : ?>
-                                                    <option value="<?=$time['NAME']?>" data-eventid="111"><?=$time['NAME']?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                            <div class="b-error"><span class="js-message"></span></div>
-                                        </div>
+                                        <?php if ($item['AVAILABLE'] == 'Y') : ?>
+                                            <div class="b-select">
+                                                <select class="b-select__block" data-time-lectures-flagship="true">
+                                                    <option value="" disabled="disabled" selected="selected">выберите</option>
+                                                    <?php foreach ($item['DETAIL_INFO'] as $time) : ?>
+                                                        <option value="<?=$time['NAME']?>" data-eventid="111"><?=$time['NAME']?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                                <div class="b-error"><span class="js-message"></span></div>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                                 <div class="item__btn">

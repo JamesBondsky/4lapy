@@ -311,6 +311,9 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'UF_PHONE'    => $request->get('phone'),
                 'UF_EVENT_ID' => (int)$request->get('id'),
                 'UF_EMAIL'    => $request->get('email'),
+                'UF_DATE_CREATE'    => date('d-m-Y h:i:s'),
+                'UF_LECTION_NAME'    => $request->get('lection_name'),
+                'UF_LECTION_DATE'    => $request->get('lection_date'),
             ]);
             
             if ($successAdding) {
