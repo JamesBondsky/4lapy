@@ -1,5 +1,5 @@
 <?php
-if (empty($arResult['ITEMS'])) : ?>
+if (!empty($arResult['ITEMS'])) : ?>
 
     <section class="service-flagship-store" data-item-service-flagship-store="lectures">
         <div class="b-container">
