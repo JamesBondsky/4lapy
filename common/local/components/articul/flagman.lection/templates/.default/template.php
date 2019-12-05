@@ -29,9 +29,11 @@
                                     </div>
                                     <div class="item__col-time">
                                         <div class="item__subtitle">Время</div>
-                                        <?php foreach ($item['DETAIL_INFO'] as $time) : ?>
-                                            <div class="item__text"><?=$time['NAME']?></div>
-                                        <?php endforeach; ?>
+                                        <?php if ($item['AVAILABLE'] == 'Y') : ?>
+                                            <?php foreach ($item['DETAIL_INFO'] as $time) : ?>
+                                                <div class="item__text"><?=$time['NAME']?></div>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                                 <div class="item__btn">

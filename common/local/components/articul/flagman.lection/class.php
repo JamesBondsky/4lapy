@@ -20,7 +20,7 @@ class FlagmanLection extends \CBitrixComponent
         try {
             $iblockId = $this->getIblockId();
             $items    = $this->getItems($iblockId);
-            
+
             $this->groupItems($items);
             $this->sortItems();
         } catch (\Exception $e) {
@@ -56,7 +56,7 @@ class FlagmanLection extends \CBitrixComponent
                 'MAIN_SECTION_NAME' => 'MAIN_SECTION.NAME',
                 'MAIN_SECTION_SORT' => 'MAIN_SECTION.SORT',
             ])
-            ->setFilter(['=IBLOCK_ID' => $iblockId, '>UTS.FREE_SITS' => 0])
+            ->setFilter(['=IBLOCK_ID' => $iblockId, '=ACTIVE' => 'Y'])
             ->registerRuntimeField(new ReferenceField(
                 'SECTION',
                 'Bitrix\Iblock\SectionTable',
@@ -81,8 +81,20 @@ class FlagmanLection extends \CBitrixComponent
             $this->arResult['ITEMS'][$item['SECTION_ID']]['SECTION_NAME']              = $item['SECTION_NAME'];
             $this->arResult['ITEMS'][$item['SECTION_ID']]['MAIN_SECTION_NAME']         = $item['MAIN_SECTION_NAME'];
             $this->arResult['ITEMS'][$item['SECTION_ID']]['MAIN_SECTION_SORT']         = $item['MAIN_SECTION_SORT'];
+            if ($item['FREE_SITS'] <= 0) {
+                continue;
+            }
+    
             $this->arResult['ITEMS'][$item['SECTION_ID']]['DETAIL_INFO'][$key]['NAME'] = $item['NAME'];
             $this->arResult['ITEMS'][$item['SECTION_ID']]['DETAIL_INFO'][$key]['ID']   = $item['ID'];
+        }
+        
+        foreach ($this->arResult['ITEMS'] as &$element) {
+            $element['AVAILABLE'] = 'Y';
+            
+            if (!$element['DETAIL_INFO']) {
+                $element['AVAILABLE'] = 'N';
+            }
         }
     }
     
