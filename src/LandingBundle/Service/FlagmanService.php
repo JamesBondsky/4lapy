@@ -96,24 +96,23 @@ class FlagmanService extends Controller implements LoggerAwareInterface
                         continue;
                     }
     
-                    $result[$key] = [
+                    $result[$day['ID']] = [
                         'id' => $day['ID'],
                         'name' => $day['NAME'],
                     ];
-
-                    usort($result, function ($a, $b) {
-                        preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $a['name'], $matchesA);
-                        preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $b['name'], $matchesB);
-        
-                        return (strtotime($matchesA[0]) > strtotime($matchesB[0])) ? 1 : -1;
-                    });
-                    
                 }
             }
         } catch (\Exception $e) {
             echo $e->getMessage();
         }
-
+    
+        usort($result, function ($a, $b) {
+            preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $a['name'], $matchesA);
+            preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $b['name'], $matchesB);
+        
+            return (strtotime($matchesA[0]) > strtotime($matchesB[0])) ? 1 : -1;
+        });
+        
         return $result;
     }
     
