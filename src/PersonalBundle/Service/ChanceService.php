@@ -304,6 +304,7 @@ class ChanceService
     public function getExportHeader(): array
     {
         $result = [
+            'Дата регистрации',
             'ФИО',
             'Телефон',
             'Почта',
@@ -332,13 +333,14 @@ class ChanceService
 
         $userResults = [];
         $res = $this->getDataManager()::query()
-            ->setSelect(['UF_USER_ID', 'UF_DATA'])
+            ->setSelect(['UF_USER_ID', 'UF_DATA', 'UF_DATE_CREATE'])
             ->exec();
 
         while ($userResult = $res->fetch()) {
             $userResults[] = [
                 'userId' => $userResult['UF_USER_ID'],
                 'data' => unserialize($userResult['UF_DATA']),
+                'date' => $userResult['UF_DATE_CREATE'],
             ];
             $userIds[] = (int)$userResult['UF_USER_ID'];
         }
@@ -354,6 +356,7 @@ class ChanceService
             $user = $users[$userResult['userId']];
 
             $tmpResult = [];
+            $tmpResult[] = $userResult['date'];
             $tmpResult[] = $user->getFullName();
             $tmpResult[] = $user->getPersonalPhone();
             $tmpResult[] = $user->getEmail();
