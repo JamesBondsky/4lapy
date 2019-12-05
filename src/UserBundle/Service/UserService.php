@@ -160,6 +160,14 @@ class UserService implements
     }
 
     /**
+     * @return bool
+     */
+    public function isAdmin(): bool
+    {
+        return $this->bitrixUserService->IsAdmin();
+    }
+
+    /**
      * @param string $rawLogin
      * @param string $password
      *

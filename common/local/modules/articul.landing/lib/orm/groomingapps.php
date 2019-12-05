@@ -60,6 +60,12 @@ class GroomingAppsTable extends Main\Entity\DataManager
             'UF_SERVICE' => array(
                 'data_type' => 'string',
             ),
+            'UF_CLINIC' => array(
+                'data_type' => 'string',
+            ),
+            'UF_DATE' => array(
+                'data_type' => 'string',
+            ),
         );
     }
 }

@@ -143,6 +143,11 @@ class ExpertsenderService implements LoggerAwareInterface
     public const CATS_BIRTH_DAY = 8420;
     public const DOGS_BIRTH_DAY = 8421;
     public const OTHER_BIRTH_DAY = 8422;
+    
+    /**
+     * Flagman
+     */
+    public const GROOMING_SEND_EMAIL = 10130;
 
     public const BLACK_LIST_ERROR_CODE = 400;
     public const BLACK_LIST_ERROR_MESSAGE = 'Subscriber is blacklisted.';
@@ -1729,6 +1734,78 @@ class ExpertsenderService implements LoggerAwareInterface
             }
         }
 
+        return false;
+    }
+    
+    /**
+     * @param $name
+     * @param $phone
+     * @param $email
+     * @param $animal
+     * @param $breed
+     * @param $service
+     * @param $clinic
+     * @param $date
+     * @return bool
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceApiException
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceException
+     * @throws \LinguaLeo\ExpertSender\ExpertSenderException
+     */
+    public function sendGroomingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date): bool
+    {
+        if ($email) {
+            $transactionId = self::GROOMING_SEND_EMAIL;
+            
+            $snippets = [];
+            $snippets[] = new Snippet('subscriber_firstname', htmlspecialcharsbx($name));
+            $snippets[] = new Snippet('tel_number', htmlspecialcharsbx($phone));
+            $snippets[] = new Snippet('Animal', htmlspecialcharsbx($animal));
+            $snippets[] = new Snippet('Breed', htmlspecialcharsbx($breed));
+            $snippets[] = new Snippet('Service', htmlspecialcharsbx($service));
+            $snippets[] = new Snippet('EMAIL', htmlspecialcharsbx($email));
+            $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($clinic));
+            $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($date));
+            
+            $this->sendSystemTransactional($transactionId, $email, $snippets);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * @param $name
+     * @param $phone
+     * @param $email
+     * @param $animal
+     * @param $breed
+     * @param $service
+     * @param $clinic
+     * @param $date
+     * @return bool
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceApiException
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceException
+     * @throws \LinguaLeo\ExpertSender\ExpertSenderException
+     */
+    public function sendTrainingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date): bool
+    {
+        if ($email) {
+            $transactionId = self::GROOMING_SEND_EMAIL;
+            
+            $snippets = [];
+            $snippets[] = new Snippet('subscriber_firstname', htmlspecialcharsbx($name));
+            $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($phone));
+            $snippets[] = new Snippet('delivery_interval', htmlspecialcharsbx($animal));
+            $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($breed));
+            $snippets[] = new Snippet('tel_number', htmlspecialcharsbx($service));
+            $snippets[] = new Snippet('EMAIL', htmlspecialcharsbx($email));
+            $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($clinic));
+            $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($date));
+            
+            $this->sendSystemTransactional($transactionId, $email, $snippets);
+            return true;
+        }
+        
         return false;
     }
 }
