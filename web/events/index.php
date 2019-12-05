@@ -12,7 +12,7 @@ $APPLICATION->SetTitle('Запись на услуги');
         '',
         [
             'SHOW_GROOMING' => 'Y',
-            'SHOW_LECTION'  => 'Y',
+            'SHOW_LECTION'  => 'N',
             'SHOW_TRAINING' => 'Y',
         ],
         false
