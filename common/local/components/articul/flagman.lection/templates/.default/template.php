@@ -17,7 +17,7 @@
                 <div class="lectures-flagship-store__list">
                     <?php foreach ($arResult['ITEMS'] as $key => $item) : ?>
                         <div class="item" data-item-lectures-flagship-store="<?= $key ?>">
-                            <div class="item__img" style="background-image: url('<?= ($item['PREVIEW_PICTURE']) ? ($item['PREVIEW_PICTURE']): "/static/build/images/inhtml/no_image_flagship.jpg" ?>')"></div>
+                            <div class="item__img" style="background-image: url('<?= ($item['PICTURE']) ? ($item['PICTURE']): "/static/build/images/inhtml/no_image_flagship.jpg" ?>')"></div>
                             <form class="item__content js-form-validation" data-form-signup-grooming-flagship="true">
                                 <div class="item__info">
                                     <div class="item__title" data-name-lectures-flagship="<?=$item['MAIN_SECTION_NAME']?>"><?=$item['MAIN_SECTION_NAME']?></div>
@@ -35,7 +35,7 @@
                                                 <select class="b-select__block" data-time-lectures-flagship="true">
                                                     <option value="" disabled="disabled" selected="selected">выберите</option>
                                                     <?php foreach ($item['DETAIL_INFO'] as $time) : ?>
-                                                        <option value="<?=$time['NAME']?>" data-eventid="111"><?=$time['NAME']?></option>
+                                                        <option value="<?=$time['NAME']?>" data-eventid="<?=$time['ID']?>"><?=$time['NAME']?></option>
                                                     <?php endforeach; ?>
                                                 </select>
                                                 <div class="b-error"><span class="js-message"></span></div>
