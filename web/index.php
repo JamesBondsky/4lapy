@@ -144,7 +144,7 @@ $APPLICATION->IncludeComponent(
 ?>
 
 <?php
-	$APPLICATION->IncludeComponent('articul:modified.slider', '');
+$APPLICATION->IncludeComponent('articul:modified.slider', '', ['LOCATION' => $selectedCity['CODE']]);
 ?>
 
 <?php
