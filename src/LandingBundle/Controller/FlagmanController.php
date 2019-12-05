@@ -105,13 +105,13 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                     $lastDayTime = 1;
                 }
                 
-                // \CEvent::Send('TRAINING_SERVICE', 's1', [
-                //     'NAME'  => $request->get('name'),
-                //     'PHONE' => $request->get('phone'),
-                //     'DATE'  => $request->get('date'),
-                //     'TIME'  => $request->get('time'),
-                //     'EMAIL' => $request->get('email'),
-                // ]);
+                \CEvent::Send('LECTION_SERVICE', 's1', [
+                    'NAME'  => $request->get('name'),
+                    'PHONE' => $request->get('phone'),
+                    'DATE'  => $request->get('date'),
+                    'TIME'  => $request->get('time'),
+                    'EMAIL' => $request->get('email'),
+                ]);
                 
                 
                 $response = new JsonResponse([
@@ -436,6 +436,4 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         
         return $response;
     }
-    
-    
 }

@@ -22,6 +22,7 @@ use Articul\Landing\Orm\LectionsTable;
 use Articul\Landing\Orm\TrainingsTable;
 use Articul\Landing\Orm\LectionAppsTable;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Iblock\SectionTable;
 
 /**
  * Class FlagmanService
@@ -64,9 +65,56 @@ class FlagmanService extends Controller implements LoggerAwareInterface
                     ['=this.FREE' => 'ref.ID']
                 )
             )
-            ->setFilter(['=IBLOCK_SECTION_ID' => $id])
+            ->setFilter(['=IBLOCK_SECTION_ID' => $id, '=FREE_VALUE' => 'Y'])
             ->exec()
             ->fetchAll();
+    }
+    
+    public function getDaysByClinic($id)
+    {
+        $result = [];
+        
+        try {
+            $days = SectionTable::query()
+                ->setSelect(['ID', 'NAME', 'TIME' => 'TIMES.NAME', 'ACTIVE_TIME' => 'TIMES.ACTIVE'])
+                ->registerRuntimeField(
+                    new ReferenceField(
+                        'TIMES',
+                        'Bitrix\Iblock\ElementTable',
+                        ['=this.ID' => 'ref.IBLOCK_SECTION_ID']
+                    ))
+                ->setFilter(['=IBLOCK_SECTION_ID' => $id, '=ACTIVE' => 'Y', '=DEPTH_LEVEL' => 2])
+                ->setOrder(['SORT' => 'ASC'])
+                ->exec()
+                ->fetchAll();
+            
+            foreach ($days as $key => $day) {
+                if (!empty($day['TIME']) && $day['ACTIVE_TIME'] == 'Y') {
+                    preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $day['NAME'], $matches);
+            
+                    if (strtotime($matches[0]) < strtotime('today')) {
+                        continue;
+                    }
+    
+                    $result[$key] = [
+                        'id' => $day['ID'],
+                        'name' => $day['NAME'],
+                    ];
+
+                    usort($result, function ($a, $b) {
+                        preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $a['name'], $matchesA);
+                        preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $b['name'], $matchesB);
+        
+                        return (strtotime($matchesA[0]) > strtotime($matchesB[0])) ? 1 : -1;
+                    });
+                    
+                }
+            }
+        } catch (\Exception $e) {
+            echo $e->getMessage();
+        }
+
+        return $result;
     }
     
     public function bookTheTime($id)
