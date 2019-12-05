@@ -36,7 +36,7 @@ use FourPaws\Decorators\SvgDecorator;
                     <div class="nav-flagship-store__icon">
                         <?=new SvgDecorator('icon-flagship-lectures', 61, 61)?>
                     </div>
-                    <div class="nav-flagship-store__title">Лекции</div>
+                    <div class="nav-flagship-store__title">Лекторий</div>
                 </div>
             <?php endif; ?>
         </div>
