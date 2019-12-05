@@ -275,7 +275,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             ]);
             
             if ($successAdding) {
-                \CIBlockElement::Update($request->get('id'), ['ACTIVE' => 'N', 'PROPERTY_VALUES' => ['FREE' => 'N']]);
+                \CIBlockElement::SetPropertyValuesEx($request->get('id'), ['ACTIVE' => 'N', 'PROPERTY_VALUES' => ['FREE' => 'N']]);
                 $sender = App::getInstance()->getContainer()->get('expertsender.service');
                 $sender->sendGroomingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date);
                 
