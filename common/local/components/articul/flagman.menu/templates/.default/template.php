@@ -8,9 +8,6 @@ use FourPaws\Decorators\SvgDecorator;
     <div class="b-container">
         <div class="banner-flagship-store__title">Запись на услуги</div>
         <div class="banner-flagship-store__subtitle">
-                <span class="b-icon">
-                    <?=new SvgDecorator('icon-delivery-header', 24, 24)?>
-                </span>
         </div>
     </div>
 </section>
