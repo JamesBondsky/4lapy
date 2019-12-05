@@ -276,8 +276,6 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             
             if ($successAdding) {
                 \CIBlockElement::SetPropertyValuesEx($request->get('id'), 0, ['FREE' => 'N']);
-                $sender = App::getInstance()->getContainer()->get('expertsender.service');
-                $sender->sendGroomingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date);
                 
                 \CEvent::Send('GROOMING_SERVICE', 's1', [
                     'NAME'    => $name,
@@ -290,15 +288,16 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                     'SERVICE' => $service,
                     'CLINIC'  => $clinic,
                 ]);
+    
+                $sender = App::getInstance()->getContainer()->get('expertsender.service');
+                $sender->sendGroomingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date);
             }
         } catch (\Exception $e) {
-            return new JsonResponse([
-                'success' => 'N',
-                'errors'  => ['message' => $e->getMessage(),
-                    'trace' => $e->getTrace()
-                    ],
-            ]);
-            
+            // return new JsonResponse([
+            //     'success' => 'N',
+            //     'errors'  => ['message' => $e->getMessage()],
+            // ]);
+            //do nothing
         }
         
         $response = new JsonResponse([
