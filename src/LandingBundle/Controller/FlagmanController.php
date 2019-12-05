@@ -9,6 +9,7 @@ use Articul\Landing\Orm\TrainingAppsTable;
 use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\Loader;
 use Exception;
+use FourPaws\App\Application as App;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use Psr\Log\LoggerAwareInterface;
@@ -51,13 +52,13 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         try {
             $lastOurTime = 0;
             $lastDayTime = 0;
-        
+            
             $sits = LectionsTable::query()
                 ->setSelect(['SITS' => 'UTS.FREE_SITS'])
                 ->setFilter(['=ID' => (int)$request->get('id')])
                 ->exec()
                 ->fetch()['SITS'];
-        
+            
             if ($sits <= 0) {
                 return new JsonResponse([
                     'success' => 0,
@@ -67,7 +68,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             } elseif ($sits == 1) {
                 $lastOurTime = 1;
             }
-        
+            
             $successAdding = LectionAppsTable::add([
                 'UF_NAME'         => $request->get('name'),
                 'UF_PHONE'        => $request->get('phone'),
@@ -77,12 +78,12 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'UF_LECTION_NAME' => $request->get('lection_name'),
                 'UF_LECTION_DATE' => $request->get('lection_date'),
             ]);
-        
+            
             if ($successAdding) {
                 $newSits = (int)$sits - 1;
-            
+                
                 \CIBlockElement::SetPropertyValuesEx($request->get('id'), 0, ['FREE_SITS' => $newSits]);
-            
+                
                 $sectionId = LectionsTable::query()
                     ->setSelect(['SECTION_ID' => 'SECTION.ID'])
                     ->setFilter(['=ID' => (int)$request->get('id')])
@@ -93,13 +94,13 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                     ))
                     ->exec()
                     ->fetch()['SECTION_ID'];
-    
+                
                 $stillHasTime = LectionsTable::query()
                     ->setSelect(['ID'])
                     ->setFilter(['=IBLOCK_SECTION_ID' => $sectionId, '=ACTIVE' => 'Y', '>UTS.FREE_SITS' => 0])
                     ->exec()
                     ->fetchAll();
-
+                
                 if (!$stillHasTime) {
                     $lastDayTime = 1;
                 }
@@ -111,15 +112,15 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 //     'TIME'  => $request->get('time'),
                 //     'EMAIL' => $request->get('email'),
                 // ]);
-            
-            
+                
+                
                 $response = new JsonResponse([
-                    'success' => 1,
-                    'last_our_time'    => $lastOurTime,
-                    'last_day_time'    => $lastDayTime,
-                    'errors'  => [],
+                    'success'       => 1,
+                    'last_our_time' => $lastOurTime,
+                    'last_day_time' => $lastDayTime,
+                    'errors'        => [],
                 ]);
-            
+                
                 return $response;
             }
         } catch (\Exception $e) {
@@ -127,7 +128,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 'success' => 'N',
                 'errors'  => ['message' => $e->getMessage()],
             ]);
-        
+            
         }
     }
     
@@ -242,6 +243,17 @@ class FlagmanController extends Controller implements LoggerAwareInterface
      */
     public function bookTheTime(Request $request, $idType): JsonResponse
     {
+        $name    = $request->get('name');
+        $phone   = $request->get('phone');
+        $id      = $request->get('id');
+        $email   = $request->get('email');
+        $animal  = $request->get('animal');
+        $breed   = $request->get('breed');
+        $service = $request->get('service');
+        $clinic  = $request->get('clinic');
+        $date    = $request->get('date');
+        $time    = $request->get('time');
+        
         // $flagmanService = new FlagmanService();
         // $bookingResult = $flagmanService->bookTheTime($id);
         //@todo сори за жирный контроллер и дублирование
@@ -251,29 +263,32 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         
         try {
             $successAdding = GroomingAppsTable::add([
-                'UF_NAME'     => $request->get('name'),
-                'UF_PHONE'    => $request->get('phone'),
-                'UF_EVENT_ID' => (int)$request->get('id'),
-                'UF_EMAIL'    => $request->get('email'),
-                'UF_ANIMAL'   => $request->get('animal'),
-                'UF_BREED'    => $request->get('breed'),
-                'UF_SERVICE'  => $request->get('service'),
-                'UF_CLINIC'  => $request->get('clinic'),
-                'UF_DATE'  => $request->get('date'),
+                'UF_NAME'     => $name,
+                'UF_PHONE'    => $phone,
+                'UF_EVENT_ID' => (int)$id,
+                'UF_EMAIL'    => $email,
+                'UF_ANIMAL'   => $animal,
+                'UF_BREED'    => $breed,
+                'UF_SERVICE'  => $service,
+                'UF_CLINIC'   => $clinic,
+                'UF_DATE'     => $date,
             ]);
             
             if ($successAdding) {
                 \CIBlockElement::Update($request->get('id'), ['ACTIVE' => 'N', 'PROPERTY_VALUES' => ['FREE' => 'N']]);
+                $sender = App::getInstance()->getContainer()->get('expertsender.service');
+                $sender->sendGroomingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date);
+                
                 \CEvent::Send('GROOMING_SERVICE', 's1', [
-                    'NAME'    => $request->get('name'),
-                    'PHONE'   => $request->get('phone'),
-                    'DATE'    => $request->get('date'),
-                    'TIME'    => $request->get('time'),
-                    'EMAIL'   => $request->get('email'),
-                    'ANIMAL'  => $request->get('animal'),
-                    'BREED'   => $request->get('breed'),
-                    'SERVICE' => $request->get('service'),
-                    'CLINIC' => $request->get('clinic'),
+                    'NAME'    => $name,
+                    'PHONE'   => $phone,
+                    'DATE'    => $date,
+                    'TIME'    => $time,
+                    'EMAIL'   => $email,
+                    'ANIMAL'  => $animal,
+                    'BREED'   => $breed,
+                    'SERVICE' => $service,
+                    'CLINIC'  => $clinic,
                 ]);
             }
         } catch (\Exception $e) {
@@ -370,30 +385,40 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         }
         
         try {
+            $name = $request->get('name');
+            $phone = $request->get('phone');
+            $id = $request->get('id');
+            $email = $request->get('email');
+            $time = $request->get('time');
+            $date = $request->get('date');
+            
             $successAdding = TrainingAppsTable::add([
-                'UF_NAME'     => $request->get('name'),
-                'UF_PHONE'    => $request->get('phone'),
-                'UF_EVENT_ID' => (int)$request->get('id'),
-                'UF_EMAIL'    => $request->get('email'),
+                'UF_NAME'     => $name,
+                'UF_PHONE'    => $phone,
+                'UF_EVENT_ID' => (int)$id,
+                'UF_EMAIL'    => $email,
             ]);
             
             if ($successAdding) {
                 $sits = TrainingsTable::query()
                     ->setSelect(['SITS' => 'UTS.FREE_SITS'])
-                    ->setFilter(['=ID' => (int)$request->get('id')])
+                    ->setFilter(['=ID' => (int)$id])
                     ->exec()
                     ->fetch()['SITS'];
                 
                 $newSits = (int)$sits - 1;
                 
                 //@todo исправить как только реализуют метод update
-                \CIBlockElement::SetPropertyValuesEx($request->get('id'), 0, ['FREE_SITS' => $newSits]);
+                \CIBlockElement::SetPropertyValuesEx($id, 0, ['FREE_SITS' => $newSits]);
+    
+                // $sender = App::getInstance()->getContainer()->get('expertsender.service');
+                // $sender->sendTrainingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date);
                 \CEvent::Send('TRAINING_SERVICE', 's1', [
-                    'NAME'  => $request->get('name'),
-                    'PHONE' => $request->get('phone'),
-                    'DATE'  => $request->get('date'),
-                    'TIME'  => $request->get('time'),
-                    'EMAIL' => $request->get('email'),
+                    'NAME'  => $name,
+                    'PHONE' => $phone,
+                    'DATE'  => $date,
+                    'TIME'  => $time,
+                    'EMAIL' => $email,
                 ]);
             }
         } catch (\Exception $e) {
