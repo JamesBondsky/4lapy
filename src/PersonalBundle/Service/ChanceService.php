@@ -12,6 +12,7 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Sale\OrderTable;
 use DateTime;
 use Exception;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Exception\RuntimeException;
@@ -20,6 +21,7 @@ use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
+use WebArch\BitrixCache\BitrixCache;
 use function serialize;
 use function unserialize;
 
@@ -124,6 +126,8 @@ class ChanceService
         if (!$addResult->isSuccess()) {
             throw new RuntimeException('При регистрации произошла ошибка');
         }
+
+        TaggedCacheHelper::clearManagedCache(['ny2020:user.chances']);
 
         return (isset($currentPeriod)) ? $data[$currentPeriod] : 0;
     }
@@ -262,6 +266,36 @@ class ChanceService
     public function getPeriods(): array
     {
         return $this->periods;
+    }
+
+    /**
+     * Нужно, чтобы импорт заказов из манзаны работал только для пользователей акции
+     */
+    public function getAllUserIds(): array
+    {
+        $doGetAllVariants = function () {
+            $userIds = [];
+            $res = $this->getDataManager()::query()
+                ->setSelect(['UF_USER_ID'])
+                ->exec();
+
+            while ($userResult = $res->fetch()) {
+                $userIds[] = (int)$userResult['UF_USER_ID'];
+            }
+
+            return $userIds;
+        };
+
+        try {
+            return (new BitrixCache())
+                ->withId(__METHOD__ . 'chance.users')
+                ->withClearCache(true)
+                ->withTime(36000)
+                ->withTag('ny2020:user.chances')
+                ->resultOf($doGetAllVariants);
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     /**

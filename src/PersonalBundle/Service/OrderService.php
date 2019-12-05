@@ -34,6 +34,7 @@ use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Result;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
+use FourPaws\App\Application;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
@@ -247,7 +248,17 @@ class OrderService
 	 */
     public function importOrdersFromManzana(User $user): void
     {
-//        $contactId = $this->manzanaService->getContactByUser($user)->contactId;
+        /** @var ChanceService $chanceServie */
+        $chanceService = Application::getInstance()->getContainer()->get(ChanceService::class);
+
+        $userIds = $chanceService->getAllUserIds();
+
+        if (!in_array($user->getId(), $userIds, true)) {
+            return;
+        }
+
+        // todo удалить после новго года начало функции
+
         $contactId = $this->manzanaService->getContactIdByPhone($user->getManzanaNormalizePersonalPhone());
 
         $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
