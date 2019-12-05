@@ -100,7 +100,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                     ->exec()
                     ->fetchAll();
 
-                if ($stillHasTime) {
+                if (!$stillHasTime) {
                     $lastDayTime = 1;
                 }
                 
