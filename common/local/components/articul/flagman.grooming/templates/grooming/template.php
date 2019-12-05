@@ -18,7 +18,7 @@
                     <div class="form-signup-grooming-flagship__top">
                         <div class="b-input-line">
                             <div class="b-input-line__label-wrapper">
-                                <span class="b-input-line__label">Клиника</span>
+                                <span class="b-input-line__label">Ветеринарный центр</span>
                             </div>
                             <div class="b-select">
                                 <select class="b-select__block" data-clinic-grooming-flagship="true">
