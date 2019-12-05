@@ -54,6 +54,7 @@ class FlagmanLection extends \CBitrixComponent
                 'SECTION_NAME'      => 'SECTION.NAME',
                 'SECTION_ID'        => 'SECTION.ID',
                 'MAIN_SECTION_NAME' => 'MAIN_SECTION.NAME',
+                'MAIN_SECTION_SORT' => 'MAIN_SECTION.SORT',
             ])
             ->setFilter(['=IBLOCK_ID' => $iblockId, '>UTS.FREE_SITS' => 0])
             ->registerRuntimeField(new ReferenceField(
@@ -66,6 +67,7 @@ class FlagmanLection extends \CBitrixComponent
                 'Bitrix\Iblock\SectionTable',
                 ['=this.SECTION.IBLOCK_SECTION_ID' => 'ref.ID']
             ))
+            ->setOrder(['SORT' => 'ASC'])
             ->exec()
             ->fetchAll();
     }
@@ -78,6 +80,7 @@ class FlagmanLection extends \CBitrixComponent
         foreach ($items as $key => $item) {
             $this->arResult['ITEMS'][$item['SECTION_ID']]['SECTION_NAME']              = $item['SECTION_NAME'];
             $this->arResult['ITEMS'][$item['SECTION_ID']]['MAIN_SECTION_NAME']         = $item['MAIN_SECTION_NAME'];
+            $this->arResult['ITEMS'][$item['SECTION_ID']]['MAIN_SECTION_SORT']         = $item['MAIN_SECTION_SORT'];
             $this->arResult['ITEMS'][$item['SECTION_ID']]['DETAIL_INFO'][$key]['NAME'] = $item['NAME'];
             $this->arResult['ITEMS'][$item['SECTION_ID']]['DETAIL_INFO'][$key]['ID']   = $item['ID'];
         }
@@ -89,9 +92,13 @@ class FlagmanLection extends \CBitrixComponent
             uasort($item['DETAIL_INFO'], function ($a, $b) {
                 preg_match('/^([0-9]{2})/', $a['NAME'], $matchesA);
                 preg_match('/^([0-9]{2})/', $b['NAME'], $matchesB);
-
+                
                 return ($matchesA[0] > $matchesB[0]) ? 1 : -1;
             });
         }
+        
+        uasort($this->arResult['ITEMS'], function ($a, $b) {
+            return ($a > $b) ? -1 : 1;
+        });
     }
 }

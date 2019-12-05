@@ -32,12 +32,12 @@ $APPLICATION->SetTitle('Запись на услуги');
         false
     );
     
-    // $APPLICATION->IncludeComponent(
-    //     'articul:flagman.lection',
-    //     '',
-    //     [],
-    //     false
-    // );
+    $APPLICATION->IncludeComponent(
+        'articul:flagman.lection',
+        '',
+        [],
+        false
+    );
     ?>
 </div>
 

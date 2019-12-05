@@ -20,16 +20,18 @@
 
                             <div class="item__content">
                                 <div class="item__info">
-                                    <div class="item__title"><?=$item['NAME']?></div>
+                                    <div class="item__title"><?=$item['MAIN_SECTION_NAME']?></div>
                                 </div>
                                 <div class="item__datetime">
                                     <div class="item__col-date">
                                         <div class="item__subtitle">Дата</div>
-                                        <div class="item__text"><?=$item['DATE']?></div>
+                                        <div class="item__text"><?=$item['SECTION_NAME']?></div>
                                     </div>
                                     <div class="item__col-time">
                                         <div class="item__subtitle">Время</div>
-                                        <div class="item__text"><?=$item['TIME']?></div>
+                                        <?php foreach ($item['DETAIL_INFO'] as $time) : ?>
+                                            <div class="item__text"><?=$time['NAME']?></div>
+                                        <?php endforeach; ?>
                                     </div>
                                 </div>
                                 <div class="item__btn">
