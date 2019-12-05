@@ -299,6 +299,88 @@ class ChanceService
     }
 
     /**
+     * @return array
+     */
+    public function getExportHeader(): array
+    {
+        $result = [
+            'Дата регистрации',
+            'ФИО',
+            'Телефон',
+            'Почта',
+        ];
+
+        foreach ($this->periods as $periodId => $period) {
+            $result[] = sprintf('%s - %s', $period['from']->format('d.m.Y'), $period['to']->format('d.m.Y'));
+        }
+
+        $result[] = 'Всего';
+
+        return $result;
+    }
+
+    /**
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function getExportData(): array
+    {
+        $userIds = [];
+        /** @var User[] $users */
+        $users = [];
+
+        $userResults = [];
+        $res = $this->getDataManager()::query()
+            ->setSelect(['UF_USER_ID', 'UF_DATA', 'UF_DATE_CREATE'])
+            ->exec();
+
+        while ($userResult = $res->fetch()) {
+            $userResults[] = [
+                'userId' => $userResult['UF_USER_ID'],
+                'data' => unserialize($userResult['UF_DATA']),
+                'date' => $userResult['UF_DATE_CREATE'],
+            ];
+            $userIds[] = (int)$userResult['UF_USER_ID'];
+        }
+
+        /** @var User $user */
+        foreach ($this->userRepository->findBy(['=ID' => $userIds]) as $user) {
+            $users[$user->getId()] = $user;
+        }
+
+        $result = [];
+
+        foreach ($userResults as $userResult) {
+            $user = $users[$userResult['userId']];
+
+            $tmpResult = [];
+            $tmpResult[] = $userResult['date'];
+            $tmpResult[] = $user->getFullName();
+            $tmpResult[] = $user->getPersonalPhone();
+            $tmpResult[] = $user->getEmail();
+
+            $totalChances = 0;
+
+            foreach ($this->periods as $periodId => $period) {
+                if (isset($userResult['data'][$periodId])) {
+                    $tmpResult[] = $userResult['data'][$periodId];
+                    $totalChances += (int)$userResult['data'][$periodId];
+                } else {
+                    $tmpResult[] = '-';
+                }
+            }
+
+            $tmpResult[] = $totalChances;
+
+            $result[] = $tmpResult;
+        }
+
+        return $result;
+    }
+
+    /**
      * @return DataManager
      * @throws Exception
      */
