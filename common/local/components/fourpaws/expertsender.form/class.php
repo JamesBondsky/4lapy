@@ -15,6 +15,7 @@ use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use FourPaws\App\Application as App;
+use WebArch\BitrixCache\BitrixCache;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsExpertsenderFormComponent extends CBitrixComponent implements LoggerAwareInterface
@@ -74,14 +75,29 @@ class FourPawsExpertsenderFormComponent extends CBitrixComponent implements Logg
                 $this->arResult['CONFIRMED'] = $curUser->isEmailConfirmed();
                 $this->arResult['IS_SUBSCRIBED'] = $curUser->isEsSubscribed();
                 $name = $curUser->getName();
-                /** @var PetService $petService */
-                $petService = App::getInstance()->getContainer()->get('pet.service');
-                $petsTypes = $petService->getUserPetsTypesCodes($curUser->getId());
-                $stringData .= ', {name: "' . $name . '"';
-                foreach ($petsTypes as $key => $value) {
-                    $stringData .= ', ' . $key . ': true';
+                $userId = $curUser->getId();
+
+                $getPets = static function() use ($userId, $name) {
+                    $stringData = '';
+                    /** @var PetService $petService */
+                    $petService = App::getInstance()->getContainer()->get('pet.service');
+                    $petsTypes = $petService->getUserPetsTypesCodes($userId);
+                    $stringData .= ', {name: "' . $name . '"';
+                    foreach ($petsTypes as $key => $value) {
+                        $stringData .= ', ' . $key . ': true';
+                    }
+                    $stringData .= '}';
+                    return $stringData;
+                };
+
+                try {
+                    $stringData = (new BitrixCache())
+                        ->withTime(600)
+                        ->withId($userId)
+                        ->resultOf($getPets)['result'];
+                } catch (Exception $e) {
+                    $stringData = '';
                 }
-                $stringData .= '}';
             }
 
             $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'',

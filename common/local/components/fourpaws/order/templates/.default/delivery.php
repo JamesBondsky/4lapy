@@ -260,7 +260,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                             value="<?= $deliveryDobrolap->getDeliveryId() ?>"
                                             data-delivery="<?= $deliveryDobrolap->getPrice() ?>"
                                             data-full="<?= $deliveryDobrolap->getStockResult()->getOrderable()->getPrice() ?>"
-                                            data-check="js-list-orders-cont"/>
+                                            data-check="js-list-orders-static"/>
                                     <label class="b-choice-recovery__label b-choice-recovery__label--right b-choice-recovery__label--order-step b-choice-recovery__label--with-icon b-choice-recovery__label--mt js-open-popup" for="order-delivery-dobrolap" data-popup-id="popup-order-shelters">
                                         <img src="/static/build/images/content/dobrolap/dobrolap-logo.png" alt="" srcset="/static/build/images/content/dobrolap/dobrolap-logo@2x.png 2x, /static/build/images/content/dobrolap/dobrolap-logo@3x.png 3x" class="b-choice-recovery__label-icon"/>
                                         <div>
@@ -275,7 +275,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
 
                                     <div class="b-choice-recovery__tooltip-content" data-b-choice-recovery-tooltip="content">
                                         Ваш заказ будет доставлен в&nbsp;выбранный Вами приют для&nbsp;бездомных животных.
-                                        После оплаты заказа вы получите сюрприз и&nbsp;памятный магнит.
+                                        После оплаты заказа вы получите памятный магнит.
                                     </div>
                                 </div>
                             <?php } ?>

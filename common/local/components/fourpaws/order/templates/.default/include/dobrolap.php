@@ -61,6 +61,7 @@ if (count($arResult['SHELTERS'])) {
 
         <div class="b-input-line__label-wrapper">
             <span class="b-input-line__label">Приют для доставки</span>
+            <br><span class="b-input-line__label" style="color: #ff6927;">Доставка в приюты осуществляется раз в неделю</span>
         </div>
 
         <div class="b-input-line__text-line b-input-line__text-line--myself js-shelter-delivery-title">

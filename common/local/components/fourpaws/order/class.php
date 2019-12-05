@@ -575,6 +575,17 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
         }
 
+        $storageBonus = $storage->getBonus();
+        if ($storageBonus) {
+            $basketPrice = $basket->getOrderableItems()->getPrice();
+            $allowBonusCnt = floor($basketPrice * 0.9);
+
+            if ($storageBonus > $allowBonusCnt) {
+                $storage->setBonus($allowBonusCnt);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+            }
+        }
+
         $this->arResult['BASKET']             = $basket;
         $this->arResult['USER']               = $user;
         $this->arResult['PAYMENTS']           = $payments;
@@ -921,7 +932,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     private function checkAndReplaceDobrolapMagnet(Basket $basket, User $user, CalculationResultInterface $selectedDelivery)
     {
-        return; // Отключены лишние запросы для проверки магнитиков
+        //return; // Отключены лишние запросы для проверки магнитиков
         $magnets = $this->basketService->getDobrolapMagnets();
         if(!$magnets){
             return;
