@@ -294,7 +294,9 @@ class FlagmanController extends Controller implements LoggerAwareInterface
         } catch (\Exception $e) {
             return new JsonResponse([
                 'success' => 'N',
-                'errors'  => ['message' => $e->getMessage()],
+                'errors'  => ['message' => $e->getMessage(),
+                    'trace' => $e->getTrace()
+                    ],
             ]);
             
         }
