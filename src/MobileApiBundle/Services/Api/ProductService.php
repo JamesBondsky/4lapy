@@ -819,8 +819,8 @@ class ProductService
             $fullProduct = $this->convertToFullProduct($product, $offer);
             
             $fullProduct->setComments([]);
-            $fullProduct->setTotalStars(0);
-            $fullProduct->setTotalComments(0);
+            // $fullProduct->setTotalStars($this->productStars);
+            // $fullProduct->setTotalComments($this->totalComments);
             // }
             $packingVariants[] = $fullProduct;
         }
