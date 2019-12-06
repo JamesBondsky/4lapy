@@ -1377,6 +1377,10 @@ class ProductService
 
         foreach ($images as $image) {
             $fileArray = \CFile::MakeFileArray($image->getPathName());
+            
+            if (in_array($image->getClientOriginalExtension(), ['jpg', 'jpeg', 'gif', 'png']))
+            $fileArray['name'] .= '.' . $image->getClientOriginalExtension();
+
             $result[] = \CFile::SaveFile($fileArray, 'comments_temp_files');
         }
         

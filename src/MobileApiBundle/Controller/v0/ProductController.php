@@ -37,7 +37,8 @@ use FourPaws\UserBundle\Service\UserService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
-
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\MobileApiBundle\Dto\Error;
 
 class ProductController extends BaseController
 {
@@ -246,7 +247,21 @@ class ProductController extends BaseController
      */
     public function addCommentAction(Request $request)
     {
-        $result = $this->apiProductService->addProductComment($request);
+        if (!$request->get('stars')) {
+            $errors = new ArrayCollection([new Error(0, 'Нужно поставить оценку для отзыва')]);
+            
+            return (new Response())->setData([
+                'success' => 0
+            ])->setErrors($errors);
+        } elseif ($request->get('stars') > 5) {
+            $errors = new ArrayCollection([new Error(0, 'Нужно поставить корректную оценку для отзыва')]);
+            
+            return (new Response())->setData([
+                'success' => 0
+            ])->setErrors($errors);
+        }
+
+        $this->apiProductService->addProductComment($request);
         
         return (new Response())->setData([
             'success' => 1
