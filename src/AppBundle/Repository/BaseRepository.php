@@ -270,12 +270,22 @@ class BaseRepository
         } else {
             $allItems = $result->fetchAll();
         }
+
         if (\is_array($params) && !empty($params['entityClass'])) {
             $entityClass = $params['entityClass'];
         }
         if (empty($entityClass) && !empty($this->getEntityClass())) {
             $entityClass = $this->getEntityClass();
         }
+        
+        foreach ($allItems as &$item) {
+            $item['CAN_BE_CANCELED'] = 1;
+            
+            if ($item['DELIVERY_ID'] == getenv('EXPRESS_DELIVERY_ID')) {
+                $item['CAN_BE_CANCELED'] = 0;
+            }
+        }
+
         if (!empty($entityClass)) {
             $result = new ArrayCollection($this->arrayTransformer->fromArray(
                 $allItems,
@@ -285,7 +295,7 @@ class BaseRepository
         } else {
             $result = new ArrayCollection($allItems);
         }
-
+        
         return $result;
     }
 
