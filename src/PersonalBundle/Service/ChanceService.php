@@ -232,14 +232,16 @@ class ChanceService
         return (int)floor($sum / self::CHANCE_RATE);
     }
 
-    public function updateUserChance($userId): void
+    public function updateUserChance($userId, $currentPeriod = null): void
     {
         if (!$userId || empty($userId)) {
             return;
         }
 
         try {
-            $currentPeriod = $this->getCurrentPeriod();
+            if ($currentPeriod === null) {
+                $currentPeriod = $this->getCurrentPeriod();
+            }
 
             $userResult = $this->getDataManager()::query()
                 ->setFilter(['UF_USER_ID' => $userId])
@@ -252,7 +254,7 @@ class ChanceService
 
             $data = unserialize($userResult['UF_DATA']);
 
-            $data[$this->getCurrentPeriod()] = $this->getUserPeriodChance($userId, $currentPeriod);
+            $data[$currentPeriod] = $this->getUserPeriodChance($userId, $currentPeriod);
 
             $this->getDataManager()::update(
                 $userResult['ID'],
