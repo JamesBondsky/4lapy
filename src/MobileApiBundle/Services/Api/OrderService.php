@@ -693,7 +693,7 @@ class OrderService implements LoggerAwareInterface
             $totalPrice->setCourierPrice($deliveryPrice);
         }
 
-        $bonusVulnerablePrice = (90 * $totalPrice->getActual()) / 100;
+        $bonusVulnerablePrice = (90 * ($totalPrice->getActual() - $totalPrice->getCourierPrice())) / 100;
         
         $stampsAdded = $this->manzana->getStampsToBeAdded();
         $stampService = $this->stampService;
