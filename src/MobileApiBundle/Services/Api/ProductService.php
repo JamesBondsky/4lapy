@@ -1257,7 +1257,7 @@ class ProductService
                 ->setFilter(['=UF_OBJECT_ID' => $id, '=UF_ACTIVE' => 1])
                 ->setLimit($limit)
                 ->setOffset($offset)
-                ->setOrder(['date' => 'DESC'])
+                ->setOrder(['ID' => 'DESC'])
                 ->exec()
                 ->fetchAll();
             
@@ -1288,7 +1288,7 @@ class ProductService
                 ->setFilter(['=UF_OBJECT_ID' => $id, '=UF_ACTIVE' => 1])
                 ->setLimit($limit)
                 ->setOffset($offset)
-                ->setOrder(['date' => 'DESC'])
+                ->setOrder(['ID' => 'DESC'])
                 ->setCacheTtl('36000')
                 ->exec()
                 ->fetchAll();
