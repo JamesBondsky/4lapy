@@ -222,9 +222,14 @@ class ProductController extends BaseController
             ->setCacheTtl('36000')
             ->exec()
             ->fetchAll();
-    
-        $totalItems = count($total);
-        $totalPages = ceil($totalItems/$count);
+        
+        if (count($total)) {
+            $totalItems = count($total);
+            $totalPages = 1;
+            if ($count) {
+                $totalPages = ceil($totalItems/$count);
+            }
+        }
         
         return (new Response())->setData([
             'comments' => $comments,
