@@ -154,7 +154,7 @@ class ChanceService
 
         try {
             $userData = unserialize($userData['UF_DATA']);
-            return $userData[$this->getCurrentPeriod()];
+            return $userData[$this->getCurrentPeriod()] ?? 0;
         } catch (Exception $e) {
             return 0;
         }
