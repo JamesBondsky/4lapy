@@ -265,6 +265,21 @@ class ChanceService
         }
     }
 
+    /**
+     * @param null $currentPeriod
+     * @throws Exception
+     */
+    public function updateAllUserChance($currentPeriod = null): void
+    {
+        $res = $this->getDataManager()::query()
+            ->setSelect(['UF_USER_ID'])
+            ->exec();
+
+        while ($user = $res->fetch()) {
+            $this->updateUserChance($user['UF_USER_ID'], $currentPeriod);
+        }
+    }
+
     public function getPeriods(): array
     {
         return $this->periods;

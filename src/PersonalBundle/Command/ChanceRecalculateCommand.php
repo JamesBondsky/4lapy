@@ -4,6 +4,7 @@ namespace FourPaws\PersonalBundle\Command;
 
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Exception;
 use FourPaws\PersonalBundle\Service\ChanceService;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Console\Command\Command;
@@ -65,16 +66,17 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return bool
+     * @throws Exception
      */
     public function execute(InputInterface $input, OutputInterface $output): bool
     {
         $userId = $input->getOption(self::OPTION_USER);
+        $period = $input->getOption(self::OPTION_PERIOD);
 
         if (!$userId) {
-            return false;
+            $this->chanceService->updateAllUserChance($period);
+            return true;
         }
-
-        $period = $input->getOption(self::OPTION_PERIOD);
 
         $this->chanceService->updateUserChance($userId, $period);
 
