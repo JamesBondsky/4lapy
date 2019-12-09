@@ -24,6 +24,8 @@ use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Service\PetService as AppPetService;
 use FourPaws\PersonalBundle\Repository\PetRepository;
 use FourPaws\UserBundle\Service\UserService as UserBundleService;
+use Bitrix\Main\UserFieldTable;
+use FourPaws\Helpers\HighloadHelper;
 
 class PetService
 {
@@ -319,6 +321,30 @@ class PetService
             );
         }
         return $result;
+    }
+    
+    public function getUserPetSizes($opop)
+    {
+        $petSizes = [];
+        $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
+            [
+                'FIELD_NAME' => 'UF_SIZE',
+                'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
+            ]
+        )->exec()->fetch()['ID'];
+        $userFieldEnum = new \CUserFieldEnum();
+        $res = $userFieldEnum->GetList([], ['USER_FIELD_ID' => $userFieldId]);
+        while ($item = $res->Fetch()) {
+            if($item['XML_ID'] == 'n'){
+                continue;
+            }
+    
+            $petSizes[$item['XML_ID']] = $item;
+        }
+        echo '<pre>';
+        print_r($petSizes);
+        echo '</pre>';die;
+        return [];
     }
 
     protected function resizeUserPetPhoto(array $photo): array
