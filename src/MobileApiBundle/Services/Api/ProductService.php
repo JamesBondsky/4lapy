@@ -425,7 +425,7 @@ class ProductService
             $hasOnlyColourCombinations = true;
         }
 
-        $fullProduct = $this->convertToFullProduct($product, $offer, true, true, $hasOnlyColourCombinations);
+        $fullProduct = $this->convertToFullProduct($product, $offer, true, true, $hasOnlyColourCombinations, true);
         $fullProduct->setIsAvailable($offer->isAvailable()); // returns ShortProduct
         $fullProduct
             ->setSpecialOffer($this->getSpecialOffer($offer))           // акция
@@ -630,17 +630,14 @@ class ProductService
      * @throws \FourPaws\External\Manzana\Exception\ExecuteErrorException
      * @throws \FourPaws\External\Manzana\Exception\ExecuteException
      */
-    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true, ?bool $hasOnlyColourCombinations = false): FullProduct
+    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true, ?bool $hasOnlyColourCombinations = false, ?bool $detailInfo = false): FullProduct
     {
         $offer->setColor();
         $shortProduct = $this->convertToShortProduct($product, $offer);
-        $detailText = $product->getDetailText()->getText();
-        $detailText = ImageHelper::appendDomainToSrc($detailText);
+
         $fullProduct = (new FullProduct())
-            ->setDetailsHtml($detailText)
             ->setWeight($offer->getPackageLabel(false, 0))
-            ->setHasSpecialOffer($offer->isShare())
-        ;
+            ->setHasSpecialOffer($offer->isShare());
 
         // toDo: is there any better way to merge ShortProduct into FullProduct?
         $fullProduct
@@ -661,7 +658,14 @@ class ProductService
             ->setInPack($shortProduct->getInPack())
             ->setStampLevels($shortProduct->getStampLevels());
         $fullProduct->setColor($shortProduct->getColor());
-
+    
+        if ($detailInfo) {
+            $detailText = $product->getDetailText()->getText();
+            $detailText = ImageHelper::appendDomainToSrc($detailText);
+    
+            $fullProduct->setDetailsHtml($detailText);
+        }
+        
         if ($needPackingVariants) {
             if ($hasOnlyColourCombinations) {
                 $fullProduct->setColourVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // цвета
