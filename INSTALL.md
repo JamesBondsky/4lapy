@@ -30,7 +30,7 @@ chmod -R 777 var
 ## Файлы с настройками
 
 ```
-в папку vendor/4Lapy/bitrix/php_interface положить файл local.env.php
+в папку common/local/php_interface положить файл local.env.php
 в папку app/config положить файл parameters.yml
 
 Файлы взять с ddev
@@ -42,7 +42,12 @@ chmod -R 777 var
 в корне запустить 
 docker-compose build (длительная процедура)
 docker-compose up -d
+
+для mac os:
+выполнить sh docker/scripts/config.sh (если не Catalina, то заменить пути ссылка ниже)
+и при запуске docker-compose указывать флаг -f docker-compose.mac.yml
 ```
+* [nfs for docker for mac](https://vivait.co.uk/labs/docker-for-mac-performance-using-nfs)
 
 ## Индексация эластики
 

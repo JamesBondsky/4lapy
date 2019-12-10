@@ -9,7 +9,7 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - ./vendor/4Lapy/bitrix:/application/vendor/4Lapy/bitrix:ro
+      - ./vendor/4lapy/bitrix:/application/vendor/4Lapy/bitrix:ro
       - ./common/bitrix:/application/common/bitrix:ro
       - ./common/local:/application/common/local:ro
       - ./common/static/build:/application/common/static/build:ro
@@ -22,7 +22,7 @@ services:
       context: ./
       target: php
     volumes:
-      - ./:/application:rw,cached
+      - nfsmount:/application:rw,cached
       - ./var/logs:/adv/vhosts/4lapy/logs:rw
       - ./var/sap-exchange:/home/sap-exchange:rw
       - ./var/sap-exchange-prod:/home/sap-exchange-prod:rw
@@ -73,3 +73,9 @@ volumes:
   redis-data: {}
   elasticsearch-data: {}
   phpsocket: {}
+  nfsmount:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=host.docker.internal,rw,nolock,hard,nointr,nfsvers=3
+      device: ":/System/Volumes/Data/${PWD}"
