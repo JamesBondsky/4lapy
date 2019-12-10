@@ -48,6 +48,7 @@ Desktop.ini
 /common/local/logs/*
 /common/static
 /common/local/php_interface/dbconn.php
+/common/local/php_interface/local.env.php
 
 /local
 
