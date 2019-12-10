@@ -169,7 +169,34 @@ class FullProduct extends ShortProduct
      * @Serializer\SerializedName("color")
      */
     protected $color;
-
+    
+    /**
+     * Комментарии
+     * @var array
+     * @Serializer\Type("array")
+     * @Serializer\SerializedName("comments")
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $comments = [];
+    
+    /**
+     * Средняя оценка товара
+     * @var integer
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("total_stars")
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $totalStars = 0;
+    
+    /**
+     * Всего отзывов о товаре
+     * @var integer
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("total_comments")
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $totalComments = 0;
+    
     /**
      * @return CatalogCategory
      */
@@ -487,6 +514,63 @@ class FullProduct extends ShortProduct
     public function setHasSpecialOffer(bool $hasSpecialOffer): FullProduct
     {
         $this->hasSpecialOffer = $hasSpecialOffer;
+        return $this;
+    }
+    
+    /**
+     * @return array[]
+     */
+    public function getComments(): array
+    {
+        return $this->comments;
+    }
+    
+    /**
+     * @param array
+     *
+     * @return FullProduct
+     */
+    public function setComments(array $comments): FullProduct
+    {
+        $this->comments = $comments;
+        return $this;
+    }
+    
+    /**
+     * @return integer
+     */
+    public function getTotalStarsFull(): int
+    {
+        return $this->totalStars;
+    }
+    
+    /**
+     * @param integer
+     *
+     * @return FullProduct
+     */
+    public function setTotalStarsFull(int $totalStars): FullProduct
+    {
+        $this->totalStars = $totalStars;
+        return $this;
+    }
+    
+    /**
+     * @return integer
+     */
+    public function getTotalCommentsFull(): int
+    {
+        return $this->totalComments;
+    }
+    
+    /**
+     * @param integer
+     *
+     * @return FullProduct
+     */
+    public function setTotalCommentsFull(int $totalComments): FullProduct
+    {
+        $this->totalComments = $totalComments;
         return $this;
     }
 }
