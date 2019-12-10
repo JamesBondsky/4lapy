@@ -181,6 +181,14 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                 $amount = $this->salePaymentService->getFiscalTotal($fiscalization);
             }
 
+            $diff = $amount - $orderInfo->getAmount();
+
+            if ($diff > 0 && $diff < 1000) {
+                $amount = $orderInfo->getAmount();
+                $fiscal['fiscal']['orderBundle']['cartItems'] = $orderInfo->getOrderBundle();
+                $fiscal = $this->salePaymentService->fiscalToArray($fiscalization);
+            }
+
             $this->salePaymentService->depositPayment($order, $amount, $fiscal);
 
             $debit = (new OutDebit())
