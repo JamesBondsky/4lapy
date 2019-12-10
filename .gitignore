@@ -58,3 +58,5 @@ web/dummy.postdata.log
 web/manzana_user.error.log
 web/manzana_user_numbers.error.log
 web/test.php
+
+docker/ssl
