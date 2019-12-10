@@ -1,0 +1,81 @@
+version: '3.4'
+
+services:
+  nginx:
+    build:
+      context: ./
+      target: nginx
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./vendor/4Lapy/bitrix:/application/vendor/4Lapy/bitrix:ro
+      - ./common/bitrix:/application/common/bitrix:ro
+      - ./common/local:/application/common/local:ro
+      - ./common/static/build:/application/common/static/build:ro
+      - ./web:/application/web:ro
+      - ./public:/application/public:ro
+      - phpsocket:/socket
+
+  php:
+    build:
+      context: ./
+      target: php
+    volumes:
+      - ./:/application:rw,cached
+#      - nfsmount:/application:rw,cached for mac
+      - ./var/logs:/adv/vhosts/4lapy/logs:rw
+      - ./var/sap-exchange:/home/sap-exchange:rw
+      - phpsocket:/socket
+
+  memcached:
+    image: memcached:latest
+    ports:
+      - 11211:11211
+    command: ["-m", "2048m"]
+
+  elasticsearch:
+    build:
+      context: ./
+      target: elasticsearch
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data:rw
+    ports:
+      - 9200:9200
+      - 9300:9300
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      memlock:
+        soft: -1
+        hard: -1
+
+  rabbitmq:
+    build:
+      context: ./
+      target: rabbitmq
+    ports:
+      - 15672:15672
+      - 5672:5672
+
+  redis:
+    build:
+      context: ./
+      target: redis
+    volumes:
+      - redis-data:/data:rw
+    ports:
+      - 6379:6379
+    command: redis-server /usr/local/etc/redis/redis.conf
+
+volumes:
+  redis-data: {}
+  elasticsearch-data: {}
+  phpsocket: {}
+#  nfsmount: for mac
+#    driver: local
+#    driver_opts:
+#      type: nfs
+#      o: addr=host.docker.internal,rw,nolock,hard,nointr,nfsvers=3
+#      device: ":/System/Volumes/Data/${PWD}"
