@@ -26,6 +26,7 @@ services:
 #      - nfsmount:/application:rw,cached for mac
       - ./var/logs:/adv/vhosts/4lapy/logs:rw
       - ./var/sap-exchange:/home/sap-exchange:rw
+      - ./var/sap-exchange-prod:/home/sap-exchange-prod:rw
       - phpsocket:/socket
 
   memcached:
