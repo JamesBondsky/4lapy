@@ -50,6 +50,7 @@ use FourPaws\SapBundle\Exception\Payment\OrderZeroPriceException;
 use FourPaws\SapBundle\Service\SapOutFile;
 use FourPaws\SapBundle\Service\SapOutInterface;
 use FourPaws\UserBundle\Service\UserService;
+use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
@@ -86,6 +87,10 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @var SalePaymentService
      */
     private $salePaymentService;
+    /**
+     * @var ArrayTransformerInterface
+     */
+    protected $arrayTransformer;
 
     /**
      * PaymentService constructor.
@@ -103,12 +108,14 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         SerializerInterface $serializer,
         Filesystem $filesystem,
         SalePaymentService $salePaymentService,
-        UserService $userService
+        UserService $userService,
+        ArrayTransformerInterface $arrayTransformer
     )
     {
         $this->orderService = $orderService;
         $this->serializer = $serializer;
         $this->salePaymentService = $salePaymentService;
+        $this->arrayTransformer = $arrayTransformer;
         $this->setFilesystem($filesystem);
     }
 
@@ -185,8 +192,25 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
             if ($diff > 0 && $diff < 1000) {
                 $amount = $orderInfo->getAmount();
-                $fiscal['fiscal']['orderBundle']['cartItems'] = $orderInfo->getOrderBundle();
-                $fiscal = $this->salePaymentService->fiscalToArray($fiscalization);
+
+                $cartItems = [];
+                foreach ($orderInfo->getOrderBundle()->getCartItems()->getItems() as $cartItem) {
+                    $cartItems[] = [
+                        'positionId' => (string)$cartItem->getPositionId(),
+                        'name' => $cartItem->getName(),
+                        'quantity' => [
+                            'value' => $cartItem->getQuantity()->getValue(),
+                            'measure' => $cartItem->getQuantity()->getMeasure(),
+                        ],
+                        'itemAmount' => (string)$cartItem->getItemAmount(),
+                        'itemCode' => $cartItem->getItemCode(),
+                        'itemPrice' => (string)($cartItem->getItemAmount()/$cartItem->getQuantity()->getValue()),
+                        'tax' => [
+                            'taxType' => 6
+                        ],
+                    ];
+                }
+                $fiscal['fiscal']['orderBundle']['cartItems']['items'] = $cartItems;
             }
 
             $this->salePaymentService->depositPayment($order, $amount, $fiscal);
