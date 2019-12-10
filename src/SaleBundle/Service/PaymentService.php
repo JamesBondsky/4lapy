@@ -238,13 +238,15 @@ class PaymentService implements LoggerAwareInterface
 
         $approvedAmount = $orderInfo->getPaymentAmountInfo()->getApprovedAmount();
         if ($fiscalAmount > $approvedAmount) {
-            throw new FiscalAmountExceededException(
-                \sprintf(
-                    'Fiscal amount (%s) exceeds approved amount (%s)',
-                    $fiscalAmount,
-                    $approvedAmount
-                )
-            );
+            if ((string)$fiscalAmount != (string)$sumPaid) {
+                throw new FiscalAmountExceededException(
+                    \sprintf(
+                        'Fiscal amount (%s) exceeds approved amount (%s)',
+                        $fiscalAmount,
+                        $approvedAmount
+                    )
+                );
+            }
         }
 
         if (null !== $sumPaid && ($fiscalAmount) < $sumPaid) {
@@ -1513,17 +1515,19 @@ class PaymentService implements LoggerAwareInterface
                     $isDebit = false;
                     foreach ($xmlIdsItems as $xmlIdItem) {
                         foreach ($newItemArr[$xmlIdItem] as $productItem) {
-                            if ($productItemsPrices[$productItem->getId()] > 1) {
-                                $bonusAmount -= 1;
+//                            if ($bonusAmount > 0) {
+                                if ($productItemsPrices[$productItem->getId()] > 1) {
+                                    $bonusAmount -= 1;
 
-                                $debitBonus($productItem, 1);
-                                $isDebit = true;
-                            } else if ($productItem->getQuantity()*$productItemsPrices[$productItem->getId()] > 1) {
-                                $bonusAmount -= 1;
+                                    $debitBonus($productItem, 1);
+                                    $isDebit = true;
+                                } else if ($productItem->getQuantity() * $productItemsPrices[$productItem->getId()] > 1) {
+                                    $bonusAmount -= 1;
 
-                                $debitBonus($productItem, 1);
-                                $isDebit = true;
-                            }
+                                    $debitBonus($productItem, 1);
+                                    $isDebit = true;
+                                }
+//                            }
                         }
                     }
                     $nextStep = !$isDebit;
