@@ -50,7 +50,6 @@ use FourPaws\SapBundle\Exception\Payment\OrderZeroPriceException;
 use FourPaws\SapBundle\Service\SapOutFile;
 use FourPaws\SapBundle\Service\SapOutInterface;
 use FourPaws\UserBundle\Service\UserService;
-use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
@@ -87,10 +86,6 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @var SalePaymentService
      */
     private $salePaymentService;
-    /**
-     * @var ArrayTransformerInterface
-     */
-    protected $arrayTransformer;
 
     /**
      * PaymentService constructor.
@@ -108,14 +103,12 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         SerializerInterface $serializer,
         Filesystem $filesystem,
         SalePaymentService $salePaymentService,
-        UserService $userService,
-        ArrayTransformerInterface $arrayTransformer
+        UserService $userService
     )
     {
         $this->orderService = $orderService;
         $this->serializer = $serializer;
         $this->salePaymentService = $salePaymentService;
-        $this->arrayTransformer = $arrayTransformer;
         $this->setFilesystem($filesystem);
     }
 
