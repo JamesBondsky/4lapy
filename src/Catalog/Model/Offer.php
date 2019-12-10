@@ -18,6 +18,7 @@ use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\FileTable;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Order;
@@ -47,6 +48,7 @@ use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Service\BrandService;
 use FourPaws\CatalogBundle\Service\CatalogGroupService;
 use FourPaws\CatalogBundle\Service\SubscribeDiscountService;
+use FourPaws\CatalogBundle\Helper\MarkHelper;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -221,6 +223,13 @@ class Offer extends IblockElement
      * @var int[]
      */
     protected $PROPERTY_IMG = [];
+
+    /**
+     * @Type("int")
+     * @Groups({"elastic"})
+     * @var int
+     */
+    protected $PROPERTY_LABEL_IMAGE = 0;
 
     /**
      * @var string[]
@@ -685,6 +694,50 @@ class Offer extends IblockElement
     public function getColourXmlId(): string
     {
         return (string)$this->PROPERTY_COLOUR;
+    }
+
+    /**
+     * @return int
+     */
+    public function getLabelImage(): int
+    {
+        return $this->PROPERTY_LABEL_IMAGE ?? 0;
+    }
+
+    /**
+     * @return array
+     */
+    public function getPropertyImageFile($width = 0, $height = 0)
+    {
+        $file = $this->getLabelImage();
+        if ($file > 0) {
+            $resize = false;
+            if ($width > 0 || $height > 0) {
+                $resize = true;
+            }
+            $query = FileTable::query();
+            $query->setSelect(['ID', 'WIDTH', 'HEIGHT', 'CONTENT_TYPE', 'SRC']);
+            $file = $query->where('ID', $file)
+                ->registerRuntimeField(new ExpressionField('SRC', 'concat("/upload/",%s,"/",%s)', ['SUBDIR', 'FILE_NAME']))
+                ->exec()->fetch();
+            if ($resize && !\in_array($file['CONTENT_TYPE'], ['image/svg+xml', 'text/xml'], true)) {
+                $resizeFile = ResizeImageDecorator::createFromPrimary($file['ID']);
+                if($height > 0) {
+                    $resizeFile->setResizeHeight($height);
+                }
+                if($width > 0) {
+                    $resizeFile->setResizeWidth($width);
+                }
+                $file = [
+                    'ID'     => $file['ID'],
+                    'SRC'    => $resizeFile->getSrc(),
+                    'WIDTH'  => $resizeFile->getResizeWidth(),
+                    'HEIGHT' => $resizeFile->getResizeHeight(),
+                ];
+            }
+            return $file;
+        }
+        return [];
     }
 
     /**
@@ -1316,6 +1369,47 @@ class Offer extends IblockElement
     public function getCatalogOldPrice(): float
     {
         return \round($this->getOldPrice());
+    }
+
+    /**
+     * Маркер оффера
+     *
+     * @return string
+     */
+    public function getMarkOffer(): string
+    {
+        $src = '';
+        $src = (string) $this->getPropertyImageFile()["SRC"];
+
+        if ($this->isShare()) {
+            $share = null;
+
+            if($share === null) {
+                $share = $this->getShare()->first();
+            }
+
+            if($share->hasLabelImage()){
+                return $share->getPropertyLabelImageFileSrc();
+            }
+
+            return MarkHelper::STATIC_MARK_GIFT_IMAGE_SRC;
+        } else if($this->getLabelImage()>0 && $src!=''){
+            return $src;
+        }
+        if ($this->isSale() || $this->isSimpleSaleAction() || $this->isSimpleDiscountAction()) {
+            return MarkHelper::STATIC_MARK_SALE_IMAGE_SRC;
+        }
+        if ($this->isHit() || $this->isPopular()) {
+            return MarkHelper::STATIC_MARK_HIT_IMAGE_SRC;
+        }
+        if ($this->isNew()) {
+            return MarkHelper::STATIC_MARK_NEW_IMAGE_SRC;
+        }
+        if ($this->isRegionPrice()){
+            return MarkHelper::STATIC_MARK_REGION_PRICE_IMAGE_SRC;
+        }
+
+        return '';
     }
 
     /**
