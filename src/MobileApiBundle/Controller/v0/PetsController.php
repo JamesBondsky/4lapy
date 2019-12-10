@@ -61,13 +61,31 @@ class PetsController extends BaseController
      * @Rest\View()
      * @Security("has_role('REGISTERED_USERS')")
      *
+     * @return Response
+     */
+    public function getUserPetSizesAction()
+    {
+        return (new Response())->setData($this->apiPetService->getUserPetSizes());
+    }
+    
+    /**
+     * @Rest\Get("/calculate_size/")
+     * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
+     *
      * @param Request $request
      * @return Response
      * @throws \Bitrix\Main\ObjectPropertyException
      */
-    public function getUserPetSizesAction(Request $request)
+    public function calculateSizeAction(Request $request)
     {
-        return (new Response())->setData($this->apiPetService->getUserPetSizes($request));
+        $size = $this->apiPetService->calculateSize($request->get('back'), $request->get('neck'), $request->get('chest'));
+        
+        if (!$size) {
+            return (new Response())->setData(['size' => 'Скорее всего, у Вашего питомца нестандартный размер.']);
+        }
+        
+        return (new Response())->setData(['size' => $size]);
     }
     
     /**

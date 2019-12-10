@@ -152,13 +152,16 @@ class PetService
     public function addUserPet(UserPetAddRequest $addUserPetRequest)
     {
         $currentUser = $this->userBundleService->getCurrentUser();
-
+    
         $petEntity = (new \FourPaws\PersonalBundle\Entity\Pet())
             ->setType($addUserPetRequest->getCategoryId())
             ->setUserId($currentUser->getId())
             ->setBreed($addUserPetRequest->getBreedOther())
             ->setBreedId($addUserPetRequest->getBreedId())
-           ;
+            ->setSize($addUserPetRequest->getSize())
+            ->setBack($addUserPetRequest->getBack())
+            ->setNeck($addUserPetRequest->getNeck())
+            ->setChest($addUserPetRequest->getChest());
 
         if ($petName = $addUserPetRequest->getName()) {
             $petEntity->setName($petName);
@@ -201,7 +204,10 @@ class PetService
             ->setType($userPetUpdateRequest->getCategoryId())
             ->setBreed($userPetUpdateRequest->getBreedOther())
             ->setBreedId($userPetUpdateRequest->getBreedId())
-        ;
+            ->setSize($userPetUpdateRequest->getSize())
+            ->setBack($userPetUpdateRequest->getBack())
+            ->setNeck($userPetUpdateRequest->getNeck())
+            ->setChest($userPetUpdateRequest->getChest());
 
         if ($birthday = $userPetUpdateRequest->getBirthday()) {
             $petEntity->setBirthday((new Date($birthday->format('d.m.Y'))));
@@ -305,6 +311,10 @@ class PetService
                     ->setPreview($pet->getImgPath())
                     ->setSrc($pet->getResizePopupImgPath())
             )
+            ->setSize($pet->getSize())
+            ->setBack($pet->getBack())
+            ->setNeck($pet->getNeck())
+            ->setChest($pet->getChest())
             ->setIsAddNow(isset($this->prevIdAdd) ? ($this->prevIdAdd == $pet->getId()) : false);
 
         if ($pet->getBirthday()) {
@@ -323,7 +333,7 @@ class PetService
         return $result;
     }
     
-    public function getUserPetSizes($opop)
+    public function getUserPetSizes()
     {
         $petSizes = [];
         $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
@@ -334,17 +344,24 @@ class PetService
         )->exec()->fetch()['ID'];
         $userFieldEnum = new \CUserFieldEnum();
         $res = $userFieldEnum->GetList([], ['USER_FIELD_ID' => $userFieldId]);
+        
         while ($item = $res->Fetch()) {
-            if($item['XML_ID'] == 'n'){
-                continue;
+            if ($item['XML_ID'] == 'n') {
+                $item['VALUE'] = 'Не знаю';
             }
-    
-            $petSizes[$item['XML_ID']] = $item;
+            
+            $petSizes[$item['XML_ID']]['id'] = $item['ID'];
+            $petSizes[$item['XML_ID']]['name'] = $item['VALUE'];
         }
-        echo '<pre>';
-        print_r($petSizes);
-        echo '</pre>';die;
-        return [];
+        
+        return $petSizes;
+    }
+    
+    public function calculateSize($back, $neck, $chest)
+    {
+        $petSizeSercvice = new PetSizeService($back, $neck, $chest);
+        
+        return $petSizeSercvice->calculate();
     }
 
     protected function resizeUserPetPhoto(array $photo): array
@@ -372,5 +389,4 @@ class PetService
         }
         return $photo;
     }
-
 }
