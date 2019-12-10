@@ -159,6 +159,12 @@ class OrderService implements LoggerAwareInterface
 
     /** @var Manzana */
     private $manzana;
+    
+    /** @var OrderParameter */
+    private $orderParameter;
+    
+    /** @var orderCalculate */
+    private $orderCalculate;
 
     /** @var AddressService $addressService */
     private $addressService;
@@ -361,7 +367,10 @@ class OrderService implements LoggerAwareInterface
             $currentMinusMonthDate = (new \DateTime)->modify('-1 month');
             $orderDateUpdate = \DateTime::createFromFormat('d.m.Y H:i:s', $order->getDateUpdate()->toString());
             $isCompleted = $orderDateUpdate < $currentMinusMonthDate || in_array($order->getStatusId(), $closedOrderStatuses, true);
-
+    
+            $this->orderCalculate = $this->getOrderCalculate($basketProducts, false, 0, $order);
+            $this->orderParameter = $this->getOrderParameter($basketProducts, $order, $text, $icons);
+            
             $response
                 ->setId($order->getAccountNumber())
                 ->setDateFormat($dateInsert)
@@ -369,8 +378,8 @@ class OrderService implements LoggerAwareInterface
                 ->setStatus($status)
                 ->setCompleted($isCompleted)
                 ->setPaid($order->isPayed())
-                ->setCartParam($this->getOrderParameter($basketProducts, $order, $text, $icons))
-                ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
+                ->setCartParam($this->orderParameter)
+                ->setCartCalc($this->orderCalculate);
         }
 
         return $response;
@@ -568,7 +577,7 @@ class OrderService implements LoggerAwareInterface
             $orderParameter->setGoodsInfo($this->apiProductService::getGoodsTitleForCheckout(
                 $basketProducts->getTotalQuantity(),
                 $weight,
-                $basketProducts->getTotalPrice()->getActual()
+                $this->orderCalculate->getTotalPrice()->getActual()
             ));
 
         }
