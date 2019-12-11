@@ -765,7 +765,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @return array|CardByContractCards[]
      * @throws Exception
      */
-    public function getCardsByContactId($contactId): array
+    public function getCardsByContactId($contactId)
     {
         if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
             $result = $this->newExec(__METHOD__, func_get_args());
