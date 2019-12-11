@@ -115,7 +115,7 @@ class SortService
                     '_script' => $this->getAvaliabilitySort(),
                     'offers.price' => [
                         'order'       => $isAsc ? 'asc' : 'desc',
-                        'mode'        => 'max',
+                        'mode'        => 'min',
                         //ибо по умолчанию выбирается максимальная фасовка
                         'nested_path' => 'offers',
                     ],
