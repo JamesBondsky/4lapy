@@ -19,6 +19,7 @@ use FourPaws\MobileApiBundle\Dto\Request\PaginationRequest;
 use FourPaws\MobileApiBundle\Dto\Response\OrderInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\OrderListResponse;
 use FourPaws\MobileApiBundle\Dto\Response\OrderStatusHistoryResponse;
+use FourPaws\MobileApiBundle\Exception\OrderNotFoundException;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\SaleBundle\Exception\OrderCancelException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
@@ -29,6 +30,9 @@ use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\MobileApiBundle\Dto\Response;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\MobileApiBundle\Dto\Error;
+use FourPaws\MobileApiBundle\Services\Api\OrderService as MobileOrderService;
+use FourPaws\UserBundle\Service\UserService as AppUserService;
+use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 
 /**
  * Class PushController
@@ -117,11 +121,13 @@ class OrderController extends BaseController
      */
     public function orderCancelAction(Request $request)
     {
-        $serviceContainer = Application::getInstance()->getContainer();
-        $orderService     = $serviceContainer->get(OrderService::class);
+        $serviceContainer     = Application::getInstance()->getContainer();
+        $orderService         = $serviceContainer->get(OrderService::class);
+        $mobileOrderService   = $serviceContainer->get(MobileOrderService::class);
+        $number = $request->get('orderId');
         
-        $orderId = intval($request->get('orderId'));
-        
+        $orderId = $mobileOrderService->getOrderIdByNumber($number);
+
         try {
             $cancelResult = $orderService->cancelOrder($orderId);
         } catch (OrderCancelException | \FourPaws\SaleBundle\Exception\NotFoundException  $e) {
@@ -146,7 +152,9 @@ class OrderController extends BaseController
             ])->setErrors($errors);
         }
         
-        return new Response(['success' => 1]);
+        return new Response([
+            'order' => $mobileOrderService->getOneByNumberForCurrentUser($number),
+        ]);
     }
     
 }
