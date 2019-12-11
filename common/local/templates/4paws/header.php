@@ -68,7 +68,8 @@ if(KioskService::isKioskMode()) {
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="google" content="notranslate">
     <meta name="format-detection" content="telephone=no">
-    <meta name="yandex-verification" content="6266e34669b85ed6">
+    <meta name="yandex-verification" content="d69492b0ac6396cf" />
+    <meta name="google-site-verification" content="YhnMv-eup_rK_sqgNqgHc8UrWyWaZQ22m5z7xnokuNs" />
 
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/favicons.php'; ?>
 
