@@ -107,13 +107,10 @@ class ChanceService
         }
 
         $data = [];
-        foreach ($this->periods as $period) {
-            $data[$period] = 0;
-        }
-
         try {
-            $currentPeriod = $this->getCurrentPeriod();
-            $data[$currentPeriod] = $this->getUserPeriodChance($user->getId(), $currentPeriod);
+            foreach ($this->periods as $currentPeriod) {
+                $data[$currentPeriod] = $this->getUserPeriodChance($user->getId(), $currentPeriod);
+            }
         } catch (Exception $e) {
         }
 
@@ -129,7 +126,11 @@ class ChanceService
 
         TaggedCacheHelper::clearManagedCache(['ny2020:user.chances']);
 
-        return (isset($currentPeriod)) ? $data[$currentPeriod] : 0;
+        try {
+            return $data[$this->getCurrentPeriod()];
+        } catch (Exception $e) {
+            return 0;
+        }
     }
 
     /**
@@ -239,8 +240,6 @@ class ChanceService
         }
 
         try {
-            $currentPeriod = $this->getCurrentPeriod();
-
             $userResult = $this->getDataManager()::query()
                 ->setFilter(['UF_USER_ID' => $userId])
                 ->setSelect(['ID', 'UF_DATA'])
@@ -252,20 +251,16 @@ class ChanceService
 
             $data = unserialize($userResult['UF_DATA']);
 
-            $data[$this->getCurrentPeriod()] = $this->getUserPeriodChance($userId, $currentPeriod);
+            foreach ($this->periods as $currentPeriod) {
+                $data[$currentPeriod] = $this->getUserPeriodChance($userId, $currentPeriod);
+            }
 
             $this->getDataManager()::update(
                 $userResult['ID'],
                 ['UF_DATA' => serialize($data)]
             );
-
         } catch (Exception $e) {
         }
-    }
-
-    public function getPeriods(): array
-    {
-        return $this->periods;
     }
 
     /**
@@ -293,7 +288,7 @@ class ChanceService
                 ->withTime(36000)
                 ->withTag('ny2020:user.chances')
                 ->resultOf($doGetAllVariants);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [];
         }
     }
