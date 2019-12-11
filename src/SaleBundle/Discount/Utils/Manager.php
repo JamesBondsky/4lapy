@@ -109,7 +109,7 @@ class Manager
                 }
 
                 try {
-                    $manzana->calculate($order);
+//                    $manzana->calculate($order);
                     $isBitrixCoupon = (bool)DiscountCouponTable::getCount([
                         'COUPON' => $promoCode,
                         'USER_ID' => $order->getUserId(),
