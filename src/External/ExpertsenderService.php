@@ -148,6 +148,8 @@ class ExpertsenderService implements LoggerAwareInterface
      * Flagman
      */
     public const GROOMING_SEND_EMAIL = 10130;
+    public const TRAINING_SEND_EMAIL = 10135;
+    public const LECTION_SEND_EMAIL = 10159;
 
     public const BLACK_LIST_ERROR_CODE = 400;
     public const BLACK_LIST_ERROR_MESSAGE = 'Subscriber is blacklisted.';
@@ -1751,10 +1753,10 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws \FourPaws\External\Exception\ExpertsenderServiceException
      * @throws \LinguaLeo\ExpertSender\ExpertSenderException
      */
-    public function sendGroomingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date): bool
+    public function sendGroomingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date, $time): bool
     {
         if ($email) {
-            $transactionId = self::GROOMING_SEND_EMAIL;
+            $transactionId = self::TRAINING_SEND_EMAIL;
             
             $snippets = [];
             $snippets[] = new Snippet('subscriber_firstname', htmlspecialcharsbx($name));
@@ -1765,6 +1767,7 @@ class ExpertsenderService implements LoggerAwareInterface
             $snippets[] = new Snippet('EMAIL', htmlspecialcharsbx($email));
             $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($clinic));
             $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($date));
+            $snippets[] = new Snippet('delivery_interval', htmlspecialcharsbx($time));
             
             $this->sendSystemTransactional($transactionId, $email, $snippets);
             return true;
@@ -1787,20 +1790,49 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws \FourPaws\External\Exception\ExpertsenderServiceException
      * @throws \LinguaLeo\ExpertSender\ExpertSenderException
      */
-    public function sendTrainingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date): bool
+    public function sendTrainingEmail($name, $phone, $email, $date, $time): bool
     {
         if ($email) {
-            $transactionId = self::GROOMING_SEND_EMAIL;
+            $transactionId = self::TRAINING_SEND_EMAIL;
             
             $snippets = [];
             $snippets[] = new Snippet('subscriber_firstname', htmlspecialcharsbx($name));
-            $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($phone));
-            $snippets[] = new Snippet('delivery_interval', htmlspecialcharsbx($animal));
-            $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($breed));
-            $snippets[] = new Snippet('tel_number', htmlspecialcharsbx($service));
-            $snippets[] = new Snippet('EMAIL', htmlspecialcharsbx($email));
-            $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($clinic));
             $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($date));
+            $snippets[] = new Snippet('delivery_interval', htmlspecialcharsbx($time));
+            $snippets[] = new Snippet('tel_number', htmlspecialcharsbx($phone));
+            $snippets[] = new Snippet('EMAIL', htmlspecialcharsbx($email));
+            
+            $this->sendSystemTransactional($transactionId, $email, $snippets);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * @param $name
+     * @param $phone
+     * @param $email
+     * @param $lectionName
+     * @param $lectionDate
+     * @param $lectionTime
+     * @return bool
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceApiException
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceException
+     * @throws \LinguaLeo\ExpertSender\ExpertSenderException
+     */
+    public function sendLectionEmail($name, $phone, $email, $lectionName, $lectionDate, $lectionTime): bool
+    {
+        if ($email) {
+            $transactionId = self::LECTION_SEND_EMAIL;
+            
+            $snippets = [];
+            $snippets[] = new Snippet('subscriber_firstname', htmlspecialcharsbx($name));
+            $snippets[] = new Snippet('LECTION_NAME', htmlspecialcharsbx($lectionName));
+            $snippets[] = new Snippet('tel_number', htmlspecialcharsbx($phone));
+            $snippets[] = new Snippet('delivery_interval', htmlspecialcharsbx($lectionTime));
+            $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($lectionDate));
+            $snippets[] = new Snippet('EMAIL', htmlspecialcharsbx($email));
             
             $this->sendSystemTransactional($transactionId, $email, $snippets);
             return true;

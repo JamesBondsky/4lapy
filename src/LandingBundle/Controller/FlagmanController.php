@@ -53,9 +53,17 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             $lastOurTime = 0;
             $lastDayTime = 0;
             
+            $name = $request->get('name');
+            $phone = $request->get('phone');
+            $id = $request->get('id');
+            $email = $request->get('email');
+            $lectionName = $request->get('lection_name');
+            $lectionDate = $request->get('lection_date');
+            $lectionTime = $request->get('lection_time');
+            
             $sits = LectionsTable::query()
                 ->setSelect(['SITS' => 'UTS.FREE_SITS'])
-                ->setFilter(['=ID' => (int)$request->get('id')])
+                ->setFilter(['=ID' => (int)$id])
                 ->exec()
                 ->fetch()['SITS'];
             
@@ -70,23 +78,23 @@ class FlagmanController extends Controller implements LoggerAwareInterface
             }
             
             $successAdding = LectionAppsTable::add([
-                'UF_NAME'         => $request->get('name'),
-                'UF_PHONE'        => $request->get('phone'),
-                'UF_EVENT_ID'     => (int)$request->get('id'),
-                'UF_EMAIL'        => $request->get('email'),
+                'UF_NAME'         => $name,
+                'UF_PHONE'        => $phone,
+                'UF_EVENT_ID'     => (int)$id,
+                'UF_EMAIL'        => $email,
                 'UF_DATE_CREATE'  => date('d-m-Y h:i:s'),
-                'UF_LECTION_NAME' => $request->get('lection_name'),
-                'UF_LECTION_DATE' => $request->get('lection_date'),
+                'UF_LECTION_NAME' => $lectionName,
+                'UF_LECTION_DATE' => $lectionDate,
             ]);
             
             if ($successAdding) {
                 $newSits = (int)$sits - 1;
                 
-                \CIBlockElement::SetPropertyValuesEx($request->get('id'), 0, ['FREE_SITS' => $newSits]);
+                \CIBlockElement::SetPropertyValuesEx($id, 0, ['FREE_SITS' => $newSits]);
                 
                 $sectionId = LectionsTable::query()
                     ->setSelect(['SECTION_ID' => 'SECTION.ID'])
-                    ->setFilter(['=ID' => (int)$request->get('id')])
+                    ->setFilter(['=ID' => (int)$id])
                     ->registerRuntimeField(new ReferenceField(
                         'SECTION',
                         'Bitrix\Iblock\SectionTable',
@@ -106,13 +114,20 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 }
                 
                 \CEvent::Send('LECTION_SERVICE', 's1', [
-                    'NAME'  => $request->get('name'),
-                    'PHONE' => $request->get('phone'),
-                    'DATE'  => $request->get('date'),
-                    'TIME'  => $request->get('time'),
-                    'EMAIL' => $request->get('email'),
+                    'NAME'  => $name,
+                    'PHONE' => $phone,
+                    'LECTION_NAME'  => $lectionName,
+                    'DATE'  => $lectionDate,
+                    'TIME'  => $lectionTime,
+                    'EMAIL' => $email,
                 ]);
                 
+                try {
+                    $sender = App::getInstance()->getContainer()->get('expertsender.service');
+                    $sender->sendLectionEmail($name, $phone, $email, $lectionName, $lectionDate, $lectionTime);
+                } catch (\Exception $e) {
+                    //do nothing
+                }
                 
                 $response = new JsonResponse([
                     'success'       => 1,
@@ -290,7 +305,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 ]);
     
                 $sender = App::getInstance()->getContainer()->get('expertsender.service');
-                $sender->sendGroomingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date);
+                $sender->sendGroomingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date, $time);
             }
         } catch (\Exception $e) {
             // return new JsonResponse([
@@ -412,8 +427,13 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 //@todo исправить как только реализуют метод update
                 \CIBlockElement::SetPropertyValuesEx($id, 0, ['FREE_SITS' => $newSits]);
     
-                // $sender = App::getInstance()->getContainer()->get('expertsender.service');
-                // $sender->sendTrainingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date);
+                try {
+                    $sender = App::getInstance()->getContainer()->get('expertsender.service');
+                    $sender->sendTrainingEmail($name, $phone, $email, $date, $time);
+                } catch (\Exception $e) {
+                    //do nothing
+                }
+                
                 \CEvent::Send('TRAINING_SERVICE', 's1', [
                     'NAME'  => $name,
                     'PHONE' => $phone,
