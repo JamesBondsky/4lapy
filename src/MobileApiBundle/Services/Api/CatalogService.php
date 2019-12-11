@@ -80,7 +80,7 @@ class CatalogService
             if(!$this->productService->checkShareAccess($stockId)){
                 throw new AccessDeinedException('Access denied');
             }
-            $productIds = $this->productService->getProductIdsByShareId($stockId);
+            $productIds = $this->productService->getProductXmlIdsByShareId($stockId);
         }
 
         /** we have to search for products to calculate amount of products per each filter  */

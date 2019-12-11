@@ -779,8 +779,9 @@ class SearchService implements LoggerAwareInterface
         $searchQuery = new Query\FunctionScore();
 
         $queryBuilder = new QueryBuilder();
+
         $boolQuery = $queryBuilder->query()->bool();
-        $boolQuery->addMust(
+        $boolQuery->addFilter(
             $queryBuilder->query()->nested()
                 ->setPath('offers')
                 ->setQuery(
@@ -796,7 +797,7 @@ class SearchService implements LoggerAwareInterface
         }
 
         $this->addWeightFunctions($searchQuery);
-
+        
         return $searchQuery;
     }
 
