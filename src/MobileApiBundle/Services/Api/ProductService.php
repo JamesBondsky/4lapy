@@ -186,6 +186,7 @@ class ProductService
                     'cdbResult' => new \CIBlockResult(),
                 ]));
             }
+
             $searchQuery = $this->getProductXmlIdsByShareId($stockId);
 
             $category = new \FourPaws\Catalog\Model\Category();
@@ -431,7 +432,8 @@ class ProductService
             $hasOnlyColourCombinations = true;
         }
 
-        $fullProduct = $this->convertToFullProduct($product, $offer, true, true, $hasOnlyColourCombinations);
+        $fullProduct = $this->convertToFullProduct($product, $offer, true, true, $hasOnlyColourCombinations, true);
+
         $fullProduct->setIsAvailable($offer->isAvailable()); // returns ShortProduct
         $fullProduct
             ->setSpecialOffer($this->getSpecialOffer($offer))           // акция
@@ -644,14 +646,12 @@ class ProductService
      * @throws \FourPaws\External\Manzana\Exception\ExecuteErrorException
      * @throws \FourPaws\External\Manzana\Exception\ExecuteException
      */
-    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true, ?bool $hasOnlyColourCombinations = false): FullProduct
+    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true, ?bool $hasOnlyColourCombinations = false, ?bool $detailInfo = false): FullProduct
     {
         $offer->setColor();
         $shortProduct = $this->convertToShortProduct($product, $offer);
-        $detailText   = $product->getDetailText()->getText();
-        $detailText   = ImageHelper::appendDomainToSrc($detailText);
-        $fullProduct  = (new FullProduct())
-            ->setDetailsHtml($detailText)
+
+        $fullProduct = (new FullProduct())
             ->setWeight($offer->getPackageLabel(false, 0))
             ->setHasSpecialOffer($offer->isShare());
 
@@ -659,7 +659,6 @@ class ProductService
         $fullProduct
             ->setId($shortProduct->getId())
             ->setTitle($shortProduct->getTitle())
-            ->setComments($this->getProductCommentsById($product->getId()))
             ->setXmlId($shortProduct->getXmlId())
             ->setBrandName($shortProduct->getBrandName())
             ->setWebPage($shortProduct->getWebPage())
@@ -675,6 +674,15 @@ class ProductService
             ->setInPack($shortProduct->getInPack())
             ->setStampLevels($shortProduct->getStampLevels())
             ->setColor($shortProduct->getColor());
+
+        if ($detailInfo) {
+            $fullProduct->setComments($this->getProductCommentsById($product->getId()));
+
+            $detailText = $product->getDetailText()->getText();
+            $detailText = ImageHelper::appendDomainToSrc($detailText);
+
+            $fullProduct->setDetailsHtml($detailText);
+        }
 
         $this->getTotalStarsAndComments($product->getId());
 
@@ -1118,8 +1126,7 @@ class ProductService
      */
     public function getProductIdsByShareId(int $stockId)
     {
-        $res    = \CIBlockElement::GetProperty(IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES), $stockId, '', '',
-            ['CODE' => 'PRODUCTS']);
+        $res = \CIBlockElement::GetProperty(IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES), $stockId, '', '', ['CODE' => 'PRODUCTS']);
         $xmlIds = [];
         while ($item = $res->Fetch()) {
             if (!empty($item['VALUE']) && !\in_array($item['VALUE'], $xmlIds, true)) {
