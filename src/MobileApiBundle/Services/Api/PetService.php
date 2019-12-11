@@ -15,6 +15,7 @@ use FourPaws\CatalogBundle\Service\FilterService;
 use FourPaws\MobileApiBundle\Dto\Object\Pet;
 use FourPaws\MobileApiBundle\Dto\Object\PetGender;
 use FourPaws\MobileApiBundle\Dto\Object\PetPhoto;
+use FourPaws\MobileApiBundle\Dto\Object\PetSize;
 use FourPaws\MobileApiBundle\Dto\Request\UserPetAddRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserPetDeleteRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserPetPhotoAddRequest;
@@ -58,6 +59,16 @@ class PetService
      * @var UserBundleService
      */
     private $userBundleService;
+    
+    /**
+     * @var $fenteziSize array
+     */
+    private $fenteziSize = [];
+    
+    /**
+     * @var $petSizes array
+     */
+    private $petSizes = [];
 
     public function __construct(
         CategoriesService $categoriesService,
@@ -112,7 +123,12 @@ class PetService
                     ];
                 }
             }
+            
+            if ($type['UF_CODE'] === 'sobaki') {
+                $result[$type['ID']]['sizes'] = $this->getUserPetSizes();
+            }
         }
+        
         return array_values($result);
     }
 
@@ -122,6 +138,8 @@ class PetService
      */
     public function getUserPetAll()
     {
+        $this->petSizes = $sizes = $this->getUserPetSizes();
+        
         return $this->appPetService->getCurUserPets()->map(\Closure::fromCallable([$this, 'map']));
     }
 
@@ -298,6 +316,9 @@ class PetService
      */
     public function map($pet)
     {
+        
+        $petSize = $this->getPetSize($pet);
+        
         $result = (new Pet())
             ->setId($pet->getId())
             ->setName($pet->getName())
@@ -311,10 +332,7 @@ class PetService
                     ->setPreview($pet->getImgPath())
                     ->setSrc($pet->getResizePopupImgPath())
             )
-            ->setSize($pet->getSize())
-            ->setBack($pet->getBack())
-            ->setNeck($pet->getNeck())
-            ->setChest($pet->getChest())
+            ->setPetSize($petSize)
             ->setIsAddNow(isset($this->prevIdAdd) ? ($this->prevIdAdd == $pet->getId()) : false);
 
         if ($pet->getBirthday()) {
@@ -336,6 +354,8 @@ class PetService
     public function getUserPetSizes()
     {
         $petSizes = [];
+        $i = 0;
+        
         $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
             [
                 'FIELD_NAME' => 'UF_SIZE',
@@ -347,11 +367,16 @@ class PetService
         
         while ($item = $res->Fetch()) {
             if ($item['XML_ID'] == 'n') {
-                $item['VALUE'] = 'Не знаю';
+                $this->fenteziSize = [
+                    'id' => $item['ID'],
+                    'title' => $item['VALUE']
+                ];
+                continue;
             }
             
-            $petSizes[$item['XML_ID']]['id'] = $item['ID'];
-            $petSizes[$item['XML_ID']]['name'] = $item['VALUE'];
+            $petSizes[$i]['id'] = $item['ID'];
+            $petSizes[$i]['title'] = $item['VALUE'];
+            $i++;
         }
         
         return $petSizes;
@@ -361,7 +386,16 @@ class PetService
     {
         $petSizeSercvice = new PetSizeService($back, $neck, $chest);
         
-        return $petSizeSercvice->calculate();
+        $currentSize = $petSizeSercvice->calculate();
+        $sizes = $this->getUserPetSizes();
+        
+        foreach ($sizes as $size) {
+            if ($size['title'] == $currentSize) {
+                return $size;
+            }
+        }
+        
+        return $this->fenteziSize;
     }
 
     protected function resizeUserPetPhoto(array $photo): array
@@ -388,5 +422,24 @@ class PetService
             $photo['tmp_name'] = $tempName;
         }
         return $photo;
+    }
+    
+    protected function getPetSize($pet)
+    {
+        $petSize = new PetSize();
+        $petSize->setSize($pet->getSize());
+        $petSize->setBack($pet->getBack());
+        $petSize->setNeck($pet->getNeck());
+        $petSize->setChest($pet->getChest());
+        
+        foreach ($this->petSizes as $size) {
+            if ($size['id'] == $pet->getSize()) {
+                $petSize->setSizeTitle($size['title']);
+            } else {
+                $petSize->setSizeTitle($this->fenteziSize['title']);
+            }
+        }
+        
+        return $petSize;
     }
 }

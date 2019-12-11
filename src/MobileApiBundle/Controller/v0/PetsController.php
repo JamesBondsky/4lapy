@@ -65,7 +65,7 @@ class PetsController extends BaseController
      */
     public function getUserPetSizesAction()
     {
-        return (new Response())->setData($this->apiPetService->getUserPetSizes());
+        return (new Response())->setData(['pet_sizes' => $this->apiPetService->getUserPetSizes()]);
     }
     
     /**

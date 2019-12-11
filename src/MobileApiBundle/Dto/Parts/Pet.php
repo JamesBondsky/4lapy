@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Dto\Parts;
 
 use FourPaws\MobileApiBundle\Dto\Object\PetGender;
 use FourPaws\MobileApiBundle\Dto\Object\PetPhoto;
+use FourPaws\MobileApiBundle\Dto\Object\PetSize;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -87,36 +88,11 @@ trait Pet
     protected $isAddNow = false;
     
     /**
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("size")
-     * @Serializer\SkipWhenEmpty()
-     * @var int
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\PetSize")
+     * @Serializer\SerializedName("pet_size")
+     * @var PetSize
      */
-    protected $size = 0;
-    
-    /**
-     * @Serializer\Type("float")
-     * @Serializer\SerializedName("back")
-     * @Serializer\SkipWhenEmpty()
-     * @var float
-     */
-    protected $back = 0.0;
-    
-    /**
-     * @Serializer\Type("float")
-     * @Serializer\SerializedName("neck")
-     * @Serializer\SkipWhenEmpty()
-     * @var float
-     */
-    protected $neck = 0.0;
-    
-    /**
-     * @Serializer\Type("float")
-     * @Serializer\SerializedName("chest")
-     * @Serializer\SkipWhenEmpty()
-     * @var float
-     */
-    protected $chest = 0.0;
+    protected $petSize;
 
     /**
      * @return int
@@ -292,74 +268,20 @@ trait Pet
     }
     
     /**
-     * @return int
+     * @return PetSize
      */
-    public function getSize(): int
+    public function getPetSize(): ?PetSize
     {
-        return $this->size;
+        return $this->petSize;
     }
     
     /**
-     * @param int $size
+     * @param PetSize $petSize
      * @return $this
      */
-    public function setSize(int $size)
+    public function setPetSize($petSize)
     {
-        $this->size = $size;
-        return $this;
-    }
-    
-    /**
-     * @return float
-     */
-    public function getBack(): float
-    {
-        return $this->back;
-    }
-    
-    /**
-     * @param float $back
-     * @return $this
-     */
-    public function setBack(float $back)
-    {
-        $this->back = $back;
-        return $this;
-    }
-    
-    /**
-     * @return float
-     */
-    public function getNeck(): float
-    {
-        return $this->neck;
-    }
-    
-    /**
-     * @param float $neck
-     * @return $this
-     */
-    public function setNeck(float $neck)
-    {
-        $this->neck = $neck;
-        return $this;
-    }
-    
-    /**
-     * @return float
-     */
-    public function getChest(): float
-    {
-        return $this->chest;
-    }
-    
-    /**
-     * @param float $chest
-     * @return $this
-     */
-    public function setChest(float $chest)
-    {
-        $this->chest = $chest;
+        $this->petSize = $petSize;
         return $this;
     }
 }
