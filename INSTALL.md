@@ -45,7 +45,6 @@ docker-compose up -d
 
 для mac os:
 выполнить sh docker/scripts/config.sh (если не Catalina, то заменить пути ссылка ниже)
-и при запуске docker-compose указывать флаг -f docker-compose.mac.yml
 ```
 * [nfs for docker for mac](https://vivait.co.uk/labs/docker-for-mac-performance-using-nfs)
 
