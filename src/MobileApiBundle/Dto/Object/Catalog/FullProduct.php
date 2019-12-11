@@ -45,8 +45,9 @@ class FullProduct extends ShortProduct
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("details_html")
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $detailsHtml = [];
+    protected $detailsHtml;
 
     /**
      * @var FullProduct[]
