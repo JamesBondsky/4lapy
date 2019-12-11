@@ -475,11 +475,15 @@ class StampService implements LoggerAwareInterface
      */
     protected $nextDiscountStampsNeed;
 
+    /** @var UserRepository $userRepository */
+    protected $userRepository;
+
     public function __construct()
     {
         $container = Application::getInstance()->getContainer();
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
         $this->manzanaPosService = Application::getInstance()->getContainer()->get('manzana.pos.service');
+        $this->userRepository = Application::getInstance()->getContainer()->get(UserRepository::class);
         $this->fillExchangeRules();
     }
 
@@ -504,7 +508,9 @@ class StampService implements LoggerAwareInterface
             if (!$discountCardNumber) {
                 $this->activeStampsCount = 0;
                 $user->setActiveStamps($this->activeStampsCount);
-                Application::getInstance()->getContainer()->get(UserRepository::class)->update($user);
+                $this->userRepository->updateData($user->getId(), [
+                    'UF_ACTIVE_STAMPS' => $this->activeStampsCount
+                ]);
                 return $this->activeStampsCount;
             }
             try {
@@ -513,7 +519,9 @@ class StampService implements LoggerAwareInterface
                 if ($e->getCode() == 80241) { // Карта не найдена
                     $this->activeStampsCount = 0;
                     $user->setActiveStamps($this->activeStampsCount);
-                    Application::getInstance()->getContainer()->get(UserRepository::class)->update($user);
+                    $this->userRepository->updateData($user->getId(), [
+                        'UF_ACTIVE_STAMPS' => $this->activeStampsCount
+                    ]);
                     return $this->activeStampsCount;
                 } else {
                     throw new ExecuteErrorException($e->getMessage(), $e->getCode());
@@ -528,7 +536,9 @@ class StampService implements LoggerAwareInterface
                 $this->activeStampsCount = $balanceResponse->getCardStatusActiveBalance();
 
                 $user->setActiveStamps($this->activeStampsCount);
-                Application::getInstance()->getContainer()->get(UserRepository::class)->update($user);
+                $this->userRepository->updateData($user->getId(), [
+                    'UF_ACTIVE_STAMPS' => $this->activeStampsCount
+                ]);
             } else {
                 $this->log()->error(__METHOD__ . '. Не удалось получить balanceResponse по карте ' . $discountCardNumber . '. Ошибка: ' . $balanceResponse->getMessage());
                 $this->activeStampsCount = 0;
