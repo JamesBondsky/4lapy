@@ -126,7 +126,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                     $sender = App::getInstance()->getContainer()->get('expertsender.service');
                     $sender->sendLectionEmail($name, $phone, $email, $lectionName, $lectionDate, $lectionTime);
                 } catch (\Exception $e) {
-                    //do nothing
+                    $this->log()->warning('Произошла ошибка с ExpertSender ' . $e->getMessage());
                 }
                 
                 $response = new JsonResponse([
@@ -308,11 +308,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                 $sender->sendGroomingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date, $time);
             }
         } catch (\Exception $e) {
-            // return new JsonResponse([
-            //     'success' => 'N',
-            //     'errors'  => ['message' => $e->getMessage()],
-            // ]);
-            //do nothing
+            $this->log()->warning('Произошла ошибка с ExpertSender ' . $e->getMessage());
         }
         
         $response = new JsonResponse([
@@ -431,7 +427,7 @@ class FlagmanController extends Controller implements LoggerAwareInterface
                     $sender = App::getInstance()->getContainer()->get('expertsender.service');
                     $sender->sendTrainingEmail($name, $phone, $email, $date, $time);
                 } catch (\Exception $e) {
-                    //do nothing
+                    $this->log()->warning('Произошла ошибка с ExpertSender ' . $e->getMessage());
                 }
                 
                 \CEvent::Send('TRAINING_SERVICE', 's1', [
