@@ -26,6 +26,7 @@ services:
       - ./var/logs:/adv/vhosts/4lapy/logs:rw
       - ./var/sap-exchange:/home/sap-exchange:rw
       - ./var/sap-exchange-prod:/home/sap-exchange-prod:rw
+      - ./docker/php/remote-xdebug.ini:/usr/local/etc/php/conf.d/remote-xdebug.ini
       - phpsocket:/socket
 
   memcached:

@@ -180,6 +180,7 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
 
         // привязывать к заказу нужно для расчета скидок
         if (null === $order = $basket->getOrder()) {
+            $this->manzana->calculate($order);
             // в корзине надо всегда сбрасывать состояние подписки для пересчёта цен
             $storage = $this->orderStorageService->getStorage();
             if($storage->isSubscribe()){
