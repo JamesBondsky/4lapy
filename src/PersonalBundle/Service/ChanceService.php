@@ -127,7 +127,7 @@ class ChanceService
         TaggedCacheHelper::clearManagedCache(['ny2020:user.chances']);
 
         try {
-            return $data[$this->getCurrentPeriod()];
+            return $data[$this->getCurrentPeriod()] ?? 0;
         } catch (Exception $e) {
             return 0;
         }
