@@ -13,27 +13,27 @@ class FlagmanMenu extends \CBitrixComponent
      */
     public function executeComponent()
     {
-        $this->deactivateTrainingIfEmpty();
-        
-        $this->includeComponentTemplate();
+        if ($this->StartResultCache(36000)) {
+            $this->deactivateTrainingIfEmpty();
+    
+            $this->includeComponentTemplate();
+        }
     }
     
     private function deactivateTrainingIfEmpty()
     {
-        if ($this->StartResultCache(36000)) {
-            Loader::includeModule('iblock');
-            
-            $iblockTrainingId = $this->getIblockTrainingId();
-            $iblockLectionId = $this->getIblockLectionId();
-            $iblockGroomingId = $this->getIblockGroomingId();
-            
-            $groomingActivity = $this->setGroomingActivity($iblockGroomingId);
-            $trainingActivity = $this->setTrainingActivity($iblockTrainingId);
-            $lectionActivity = $this->setLectionActivity($iblockLectionId);
-            
-            if (!$groomingActivity && !$trainingActivity && !$lectionActivity) {
-                $this->abortResultCache();
-            }
+        Loader::includeModule('iblock');
+        
+        $iblockTrainingId = $this->getIblockTrainingId();
+        $iblockLectionId  = $this->getIblockLectionId();
+        $iblockGroomingId = $this->getIblockGroomingId();
+        
+        $groomingActivity = $this->setGroomingActivity($iblockGroomingId);
+        $trainingActivity = $this->setTrainingActivity($iblockTrainingId);
+        $lectionActivity = $this->setLectionActivity($iblockLectionId);
+    
+        if (!$groomingActivity && !$trainingActivity && !$lectionActivity) {
+            $this->abortResultCache();
         }
     }
     
@@ -71,10 +71,10 @@ class FlagmanMenu extends \CBitrixComponent
             ])
             ->exec()
             ->fetchAll();
-    
+        
         foreach ($items as $item) {
             preg_match('/^([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $item['NAME'], $matches);
-    
+            
             if (strtotime(date('d.m.Y')) < strtotime($matches[0])) {
                 $this->arParams['SHOW_GROOMING'] = 'Y';
                 
@@ -93,7 +93,7 @@ class FlagmanMenu extends \CBitrixComponent
             ])
             ->exec()
             ->fetchAll();
-
+        
         foreach ($items as $item) {
             preg_match('/^([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $item['NAME'], $matches);
             
@@ -110,9 +110,9 @@ class FlagmanMenu extends \CBitrixComponent
         $items = SectionTable::query()
             ->setSelect(['ID', 'NAME'])
             ->setFilter([
-                '=IBLOCK_ID' => $id,
-                '=ACTIVE'    => 'Y',
-                '=DEPTH_LEVEL' => 1
+                '=IBLOCK_ID'   => $id,
+                '=ACTIVE'      => 'Y',
+                '=DEPTH_LEVEL' => 1,
             ])
             ->exec()
             ->fetchAll();
