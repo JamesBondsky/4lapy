@@ -21,7 +21,6 @@ MAINTAINER Articul.ru <ps@articul.ru>
 WORKDIR /application
 
 COPY ./docker/php/custom.ini /usr/local/etc/php/conf.d/50-custom.ini
-COPY ./docker/php/remote-xdebug.ini /usr/local/etc/php/conf.d/remote-xdebug.ini
 COPY ./docker/php-fpm/dev.application.conf /usr/local/etc/php-fpm.d/dev.application.conf
 
 RUN set -ex \
