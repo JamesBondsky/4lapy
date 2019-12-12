@@ -166,6 +166,7 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                                 : $offerWithImages->getResizeImages(240, 240)->first();
 
                             $addAttr = ' data-price="' . $offer->getCatalogPrice() . '"';
+                            $addAttr = ' data-mark-src="' . $offer->getMarkOffer() . '"';
                             $addAttr .= ' data-subscribePrice="' . \round($offer->getSubscribePrice()) . '"';
                             $addAttr .= ' data-offerid="' . $offer->getId() . '"';
                             $addAttr .= ' data-image="' . $offerImage . '"';
@@ -203,6 +204,7 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                                class="b-weight-container__link js-price active-link"
                                data-oldprice="<?= ($currentOffer->getCatalogOldPrice()
                                                    !== $currentOffer->getCatalogPrice() ? $currentOffer->getCatalogOldPrice() : '') ?>"
+                               data-mark-src="<?= ($offer->getMarkOffer() ?: '') ?>"
                                data-subscribePrice="<?= \round($offer->getSubscribePrice()) ?>"
                                data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
                                data-onclick="<?= $getOnClick($currentOffer) ?>"
