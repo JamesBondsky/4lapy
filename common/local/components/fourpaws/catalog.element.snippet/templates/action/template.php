@@ -158,7 +158,6 @@ if (!$currentOffer->getImagesIds()) {
                                    === $offer->getId() ? ' active-link' : '' ?>"
                                    data-oldprice="<?= $offer->getCatalogOldPrice()
                                    !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '' ?>"
-                                   data-mark-src="<?= ($offer->getMarkOffer() ?: '') ?>"
                                    data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
                                    data-price="<?= $offer->getCatalogPrice() ?>"
                                    data-subscribePrice="<?= \round($offer->getSubscribePrice()) ?>"
@@ -182,7 +181,6 @@ if (!$currentOffer->getImagesIds()) {
                            class="b-weight-container__link js-price active-link"
                            data-oldprice="<?= $currentOffer->getOldPrice()
                            !== $currentOffer->getCatalogPrice() ? $currentOffer->getOldPrice() : '' ?>"
-                           data-mark-src="<?= ($currentOffer->getMarkOffer() ?: '') ?>"
                            data-price="<?= $currentOffer->getCatalogPrice() ?>"
                            data-subscribePrice="<?= \round($offer->getSubscribePrice()) ?>"
                            data-discount="<?= ($currentOffer->getDiscountPrice() ?: '') ?>"

@@ -18,13 +18,6 @@ final class MarkHelper
     public const MARK_HIT_IMAGE_SRC = '/upload/labels/hot.png';
     public const MARK_NEW_IMAGE_SRC = '/upload/labels/new.png';
 
-    /* static path's */
-    public const STATIC_MARK_SALE_IMAGE_SRC = '/static/build/images/inhtml/s-proc.svg';
-    public const STATIC_MARK_GIFT_IMAGE_SRC = '/static/build/images/inhtml/s-gift.svg';
-    public const STATIC_MARK_HIT_IMAGE_SRC = '/static/build/images/inhtml/s-fire.svg';
-    public const STATIC_MARK_NEW_IMAGE_SRC = '/static/build/images/inhtml/new.svg';
-    public const STATIC_MARK_REGION_PRICE_IMAGE_SRC = '/static/build/images/inhtml/label.svg';
-
     public const MARK_SALE_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-proc.svg" alt="" role="presentation"/>';
     public const MARK_GIFT_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-gift.svg" alt="" role="presentation"/>';
     public const MARK_HIT_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>';

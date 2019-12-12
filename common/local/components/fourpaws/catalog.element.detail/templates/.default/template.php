@@ -260,7 +260,6 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                             <a class="b-weight-container__link b-weight-container__link--product <? if ($colourCombination) { ?>b-weight-container__link--color<? } ?> js-offer-link-<?= $offer->getId() ?> js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
                                href="<?= $offer->getLink() ?>"
                                data-weight=" <?= $value ?>"
-                               data-mark-src="<?= ($offer->getMarkOffer() ?: '') ?>"
                                data-price=""
                                data-image="<?= $mainImageIndex[$offer->getId()] ?>"
                                data-url="<?= $offer->getLink() ?>"

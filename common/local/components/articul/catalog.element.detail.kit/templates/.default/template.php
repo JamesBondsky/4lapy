@@ -202,7 +202,6 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                                                             <a href="javascript:void(0)"
                                                                class="b-weight-container__link js-price active-link"
                                                                data-oldprice="<?= $currentOffer->getCatalogOldPrice() !== $currentOffer->getCatalogPrice() ? $currentOffer->getCatalogOldPrice() : '' ?>"
-                                                               data-mark-src="<?= ($currentOffer->getMarkOffer() ?: '') ?>"
                                                                data-discount="<?= ($currentOffer->getDiscountPrice() ?: '') ?>"
                                                                data-price="<?= $currentOffer->getCatalogPrice() ?>"
                                                                data-offerid="<?= $currentOffer->getId() ?>"
@@ -298,7 +297,6 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                                                     <li class="b-weight-container__item">
                                                         <a href="javascript:void(0)"
                                                            class="b-weight-container__link js-price active-link"
-                                                           data-mark-src="<?= ($currentOffer->getMarkOffer() ?: '') ?>"
                                                            data-oldprice="<?= $currentOffer->getCatalogOldPrice() !== $currentOffer->getCatalogPrice() ? $currentOffer->getCatalogOldPrice() : '' ?>"
                                                            data-discount="<?= ($currentOffer->getDiscountPrice() ?: '') ?>"
                                                            data-price="<?= $currentOffer->getCatalogPrice() ?>"
