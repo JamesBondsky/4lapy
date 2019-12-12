@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Bitrix\Main\Request;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\UI\FileInputUtility;
 use FourPaws\AppBundle\Entity\UserFieldEnumValue;
