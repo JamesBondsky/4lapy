@@ -121,6 +121,7 @@ class OrderController extends BaseController
      */
     public function orderCancelAction(Request $request)
     {
+        try {
         $serviceContainer     = Application::getInstance()->getContainer();
         $orderService         = $serviceContainer->get(OrderService::class);
         $mobileOrderService   = $serviceContainer->get(MobileOrderService::class);
@@ -128,7 +129,7 @@ class OrderController extends BaseController
         
         $orderId = $mobileOrderService->getOrderIdByNumber($number);
 
-        try {
+        
             $cancelResult = $orderService->cancelOrder($orderId);
         } catch (OrderCancelException | \FourPaws\SaleBundle\Exception\NotFoundException  $e) {
             $errors = new ArrayCollection([new Error(0, $e->getMessage())]);
@@ -137,7 +138,7 @@ class OrderController extends BaseController
                 'success' => 0,
             ])->setErrors($errors);
         } catch (\Exception $e) {
-            $errors = new ArrayCollection([new Error(0, 'При отмене заказа произошла ошибка')]);
+            $errors = new ArrayCollection([new Error(0, $e->getMessage())]);
             
             return (new Response())->setData([
                 'success' => 0,
