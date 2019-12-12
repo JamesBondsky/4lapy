@@ -141,12 +141,14 @@ class Offer
     protected $description;
 
     /**
-     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("sales_notes")
+     * @Serializer\XmlElement(cdata=true)
      * @Serializer\Type("string")
      *
      * @var string
      */
-    protected $salesNotes = null;
+    protected $salesNotes;
 
     /**
      * @Serializer\XmlElement(cdata=false)
@@ -608,11 +610,7 @@ class Offer
      */
     public function setSalesNotes(string $salesNotes): Offer
     {
-        if($salesNotes) {
-            $this->salesNotes = $salesNotes;
-        } else {
-            $this->salesNotes = null;
-        }
+        $this->salesNotes = $salesNotes;
 
         return $this;
     }

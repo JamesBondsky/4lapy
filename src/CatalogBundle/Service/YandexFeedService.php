@@ -5,12 +5,11 @@ namespace FourPaws\CatalogBundle\Service;
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use FourPaws\Helpers\Table\YandexFeedFieldsTable;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentException as BitrixArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Main\Entity\Base;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
@@ -133,10 +132,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     /** @var array $arSupplierStocks */
     private $arSupplierStocks = [233, 234, 247, 250, 251, 252, 263, 267, 268, 270, 271, 272, 273, 274, 275, 287, 311, 315, 319];
 
-    /** @var array $arSalesNotesSections */
-    private $arSalesNotesSections = [];
-
-
     /**
      * YandexFeedService constructor.
      *
@@ -248,28 +243,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         return $this;
     }
 
-
-    /**
-     * @return Bitrix\Main\ORM\Entity
-     * @throws Main\ArgumentException
-     * @throws Main\SystemException
-     */
-    protected function getPropertyHlIblockYaFeed()
-    {
-        $entityName = 'HL_PROPERTIES_YA_FEED';
-
-        $entity = Base::compileEntity(
-            $entityName,
-            [
-                'ID' => ['data_type' => 'integer'],
-                'VALUE' => ['data_type' => 'integer']
-            ],
-            ['table_name' => 'b_hlbd_yandexfeedfields_uf_groups']
-        );
-
-        return $entity;
-    }
-
     /**
      * @param Feed $feed
      * @param Configuration $configuration
@@ -322,31 +295,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     $offerCollection->getCdbResult()->NavRecordCount
                 )
             );
-
-        $propertiesHlBlockEntity = $this->getPropertyHlIblockYaFeed();
-        $rsYaFeed = YandexFeedFieldsTable::getList([
-            'order' => [
-                'UF_SORT' => 'ASC'
-            ],
-            'select' => [
-                'ID',
-                'UF_TEXT',
-                'UF_SORT',
-                'GROUP_ID' => 'PROPERTIES.VALUE'
-            ],
-            'runtime' => array(
-                'PROPERTIES' => [
-                    'data_type' => $propertiesHlBlockEntity->getDataClass(),
-                    'reference' => array(
-                        '=this.ID' => 'ref.ID'
-                    ),
-                    'join_type' => 'inner'
-                ]
-            ),
-        ]);
-        while ($arSalesNotesSectionRow = $rsYaFeed->fetch()) {
-            $this->arSalesNotesSections[$arSalesNotesSectionRow["GROUP_ID"]] = $arSalesNotesSectionRow["UF_TEXT"];
-        }
 
         foreach ($offerCollection as $k => $offer) {
             ++$offset;
@@ -424,7 +372,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $sectionId = $offer->getProduct()->getIblockSectionId();
         $this->categoriesInProducts[$sectionId] = $sectionId;
 
-
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
         $yandexOffer =
@@ -443,8 +390,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ->setDescription(\substr(\strip_tags($offer->getProduct()
                     ->getDetailText()
                     ->getText()), 0, 2990))
-                ->setSalesNotes(\substr(\strip_tags($offer->getProduct()
-                    ->getSalesNotes()), 0, 3990))
                 ->setManufacturerWarranty(true)
                 ->setAvailable((!empty($stockID) && $tpz) ? false : ($offer->isAvailable() && !$offer->isByRequest()) )
                 ->setCurrencyId('RUB')
@@ -456,11 +401,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     ->getBrandName())
                 ->setDeliveryOptions($deliveryInfo)
                 ->setVendorCode(\array_shift($offer->getBarcodes()) ?: '');
-
-        /** #tr-531 */
-        if($this->arSalesNotesSections[$sectionId]) {
-             $yandexOffer->setSalesNotes(\substr(\strip_tags($this->arSalesNotesSections[$sectionId]), 0, 3990));
-        }
 
         $country = $offer
             ->getProduct()
