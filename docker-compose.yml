@@ -12,7 +12,7 @@ services:
       - ./vendor/4Lapy/bitrix:/application/vendor/4Lapy/bitrix:ro
       - ./common/bitrix:/application/common/bitrix:ro
       - ./common/local:/application/common/local:ro
-      - ./common/static/build:/application/common/static/build:ro
+      - ./common/static/build:/application/common/static/build
       - ./web:/application/web:ro
       - ./public:/application/public:ro
       - phpsocket:/socket
