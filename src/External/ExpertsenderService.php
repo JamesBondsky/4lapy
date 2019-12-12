@@ -1756,7 +1756,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public function sendGroomingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date, $time): bool
     {
         if ($email) {
-            $transactionId = self::TRAINING_SEND_EMAIL;
+            $transactionId = self::GROOMING_SEND_EMAIL;
             
             $snippets = [];
             $snippets[] = new Snippet('subscriber_firstname', htmlspecialcharsbx($name));
