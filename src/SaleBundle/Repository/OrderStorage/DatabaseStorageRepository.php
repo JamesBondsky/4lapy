@@ -73,16 +73,17 @@ class DatabaseStorageRepository extends StorageBaseRepository
 
     /**
      * @param int $fuserId
+     * @param bool $isCreate
      * @return OrderStorage
      * @throws OrderStorageSaveException
      */
-    public function findByFuser(int $fuserId): OrderStorage
+    public function findByFuser(int $fuserId, $isCreate = true): OrderStorage
     {
         if ($data = Table::getByPrimary($fuserId)->fetch()) {
             $data = array_merge($data, (array)$data['UF_DATA']);
             unset($data['UF_DATA']);
             $data = $this->setInitialValues($data);
-        } else {
+        } else if ($isCreate) {
             $data = $this->setInitialValues([]);
             $this->create($data);
         }
