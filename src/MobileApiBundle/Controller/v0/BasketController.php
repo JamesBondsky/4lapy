@@ -213,11 +213,13 @@ class BasketController extends BaseController
     public function postUserCartAction(PostUserCartRequest $postUserCartRequest): UserCartResponse
     {
         try {
-            $this->logger->info('fuser', [
+            $this->logger->info('fuser req', [
                 $this->appUserService->getCurrentFUserId(),
                 $this->appUserService->getCurrentUserId()
             ]);
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+            $this->logger->info('fuser req', [$e->getMessage()]);
+        }
 
         $gifts = [];
         foreach ($postUserCartRequest->getGoods() as $productQuantity) {
@@ -252,11 +254,13 @@ class BasketController extends BaseController
         $res = $this->getUserCartAction(new UserCartRequest());
 
         try {
-            $this->logger->info('fuser', [
+            $this->logger->info('fuser req', [
                 $this->appUserService->getCurrentFUserId(),
                 $this->appUserService->getCurrentUserId()
             ]);
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+            $this->logger->info('fuser req', [$e->getMessage()]);
+        }
 
         return $res;
     }
