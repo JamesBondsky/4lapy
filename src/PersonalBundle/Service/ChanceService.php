@@ -154,7 +154,7 @@ class ChanceService
 
         try {
             $userData = unserialize($userData['UF_DATA']);
-            return $userData[$this->getCurrentPeriod()];
+            return $userData[$this->getCurrentPeriod()] ?? 0;
         } catch (Exception $e) {
             return 0;
         }
@@ -232,17 +232,13 @@ class ChanceService
         return (int)floor($sum / self::CHANCE_RATE);
     }
 
-    public function updateUserChance($userId, $currentPeriod = null): void
+    public function updateUserChance($userId): void
     {
         if (!$userId || empty($userId)) {
             return;
         }
 
         try {
-            if ($currentPeriod === null) {
-                $currentPeriod = $this->getCurrentPeriod();
-            }
-
             $userResult = $this->getDataManager()::query()
                 ->setFilter(['UF_USER_ID' => $userId])
                 ->setSelect(['ID', 'UF_DATA'])
@@ -254,7 +250,9 @@ class ChanceService
 
             $data = unserialize($userResult['UF_DATA']);
 
-            $data[$currentPeriod] = $this->getUserPeriodChance($userId, $currentPeriod);
+            foreach ($this->periods as $currentPeriod) {
+                $data[$currentPeriod] = $this->getUserPeriodChance($userId, $currentPeriod);
+            }
 
             $this->getDataManager()::update(
                 $userResult['ID'],
@@ -310,7 +308,7 @@ class ChanceService
                 ->withTime(36000)
                 ->withTag('ny2020:user.chances')
                 ->resultOf($doGetAllVariants);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [];
         }
     }
