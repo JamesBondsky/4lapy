@@ -153,7 +153,6 @@ class UserService
             'm.balezin@articul.ru',
             '9281448800',
             '9167750000',
-            '9191089240',
         ];
 
         try {
