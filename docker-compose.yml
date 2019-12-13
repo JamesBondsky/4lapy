@@ -22,6 +22,7 @@ services:
       context: ./
       target: php
     volumes:
+#      - nfsmount:/application:rw,cached
       - ./:/application:rw,cached
       - ./var/logs:/adv/vhosts/4lapy/logs:rw
       - ./var/sap-exchange:/home/sap-exchange:rw
@@ -74,3 +75,10 @@ volumes:
   redis-data: {}
   elasticsearch-data: {}
   phpsocket: {}
+#  nfsmount:
+#    driver: local
+#    driver_opts:
+#      type: nfs
+#      o: addr=host.docker.internal,rw,nolock,hard,nointr,nfsvers=3
+#      device: ":/System/Volumes/Data/${PWD}"
+
