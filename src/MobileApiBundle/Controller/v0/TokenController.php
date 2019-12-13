@@ -41,7 +41,7 @@ class TokenController extends BaseController
      * @return ApiResponse
      *
      */
-    public function getDisposableTokenAction(Request $request): ApiResponse
+    public function getDisposableTokenAction(): ApiResponse
     {
         $disposableToken = $this->apiUserService->getDisposableToken();
         
