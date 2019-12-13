@@ -21,7 +21,7 @@ class ActionLanding extends Controller
     public function __construct()
     {
         $request               = Context::getCurrent()->getRequest();
-        $this->disposableToken = $request->get("disposableToken");
+        $this->disposableToken = $request->get('disposableToken');
     }
     
     public function auth()
@@ -35,6 +35,8 @@ class ActionLanding extends Controller
                     ->setFilter(['=UF_DISPONSABLE_TOKEN' => $this->disposableToken])
                     ->exec()
                     ->fetch()['ID'];
+    
+                $USER->update($userId, ['UF_DISPONSABLE_TOKEN' => '']);
                 
                 $USER->Authorize($userId);
             } catch (\Exception $e) {
