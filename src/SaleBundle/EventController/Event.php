@@ -39,6 +39,7 @@ use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Exception\CouponNotFoundException;
 use FourPaws\PersonalBundle\Service\ChanceService;
 use FourPaws\PersonalBundle\Service\CouponService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
@@ -605,6 +606,10 @@ class Event extends BaseServiceHandler
                         )
                     );
             }
+        }
+
+        if (OrderService::$isSubscription || OrderSubscribeService::$isSubscription) {
+            $result = 'p' . $result;
         }
 
         return $result;
