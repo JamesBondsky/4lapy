@@ -1796,6 +1796,7 @@ class ExpertsenderService implements LoggerAwareInterface
             $transactionId = self::TRAINING_SEND_EMAIL;
             
             $snippets = [];
+            $snippets[] = new Snippet('delivery_address', 'г. Москва, пр-кт Вернадского, д. 6, ТЦ «Капитолий»');
             $snippets[] = new Snippet('subscriber_firstname', htmlspecialcharsbx($name));
             $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($date));
             $snippets[] = new Snippet('delivery_interval', htmlspecialcharsbx($time));
@@ -1827,6 +1828,7 @@ class ExpertsenderService implements LoggerAwareInterface
             $transactionId = self::LECTION_SEND_EMAIL;
             
             $snippets = [];
+            $snippets[] = new Snippet('delivery_address', 'г. Москва, пр-кт Вернадского, д. 6, ТЦ «Капитолий»');
             $snippets[] = new Snippet('subscriber_firstname', htmlspecialcharsbx($name));
             $snippets[] = new Snippet('LECTION_NAME', htmlspecialcharsbx($lectionName));
             $snippets[] = new Snippet('tel_number', htmlspecialcharsbx($phone));
