@@ -83,9 +83,11 @@ class DatabaseStorageRepository extends StorageBaseRepository
             $data = array_merge($data, (array)$data['UF_DATA']);
             unset($data['UF_DATA']);
             $data = $this->setInitialValues($data);
-        } else if ($isCreate) {
+        } else {
             $data = $this->setInitialValues([]);
-            $this->create($data);
+            if ($isCreate) {
+                $this->create($data);
+            }
         }
 
         return $this->arrayTransformer->fromArray(
