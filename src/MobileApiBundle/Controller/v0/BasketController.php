@@ -213,7 +213,7 @@ class BasketController extends BaseController
     public function postUserCartAction(PostUserCartRequest $postUserCartRequest): UserCartResponse
     {
         try {
-            $this->logger->info('fuser req', [
+            $this->logger->info('fuser req step1', [
                 $this->appUserService->getCurrentFUserId(),
                 $this->appUserService->getCurrentUserId()
             ]);
@@ -245,7 +245,26 @@ class BasketController extends BaseController
                     );
                 }
             }
+
+            try {
+                $this->logger->info('fuser req step2', [
+                    $this->appUserService->getCurrentFUserId(),
+                    $this->appUserService->getCurrentUserId()
+                ]);
+            } catch (Exception $e) {
+                $this->logger->info('fuser req', [$e->getMessage()]);
+            }
         }
+
+        try {
+            $this->logger->info('fuser req step3', [
+                $this->appUserService->getCurrentFUserId(),
+                $this->appUserService->getCurrentUserId()
+            ]);
+        } catch (Exception $e) {
+            $this->logger->info('fuser req', [$e->getMessage()]);
+        }
+
         if (!empty($gifts)) {
             /** @noinspection PhpUndefinedMethodInspection */
             $this->appBasketService->getAdder('gift')->selectGifts($gifts);
@@ -254,7 +273,7 @@ class BasketController extends BaseController
         $res = $this->getUserCartAction(new UserCartRequest());
 
         try {
-            $this->logger->info('fuser req', [
+            $this->logger->info('fuser req step4', [
                 $this->appUserService->getCurrentFUserId(),
                 $this->appUserService->getCurrentUserId()
             ]);
