@@ -12,6 +12,8 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Sale\OrderTable;
 use DateTime;
 use Exception;
+use FourPaws\App\Application;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
@@ -111,12 +113,6 @@ class ChanceService
             $data[$period] = 0;
         }
 
-        try {
-            $currentPeriod = $this->getCurrentPeriod();
-            $data[$currentPeriod] = $this->getUserPeriodChance($user->getId(), $currentPeriod);
-        } catch (Exception $e) {
-        }
-
         $addResult = $this->getDataManager()::add([
             'UF_USER_ID' => $user->getId(),
             'UF_DATA' => serialize($data),
@@ -129,7 +125,11 @@ class ChanceService
 
         TaggedCacheHelper::clearManagedCache(['ny2020:user.chances']);
 
-        return (isset($currentPeriod)) ? $data[$currentPeriod] : 0;
+        /** @var ManzanaService $manzanaService */
+        $manzanaService = Application::getInstance()->getContainer()->get(ManzanaService::class);
+        $manzanaService->importUserOrdersAsync($user);
+
+        return 0;
     }
 
     /**
