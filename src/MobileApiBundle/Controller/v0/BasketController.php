@@ -215,7 +215,8 @@ class BasketController extends BaseController
         try {
             $this->logger->info('fuser req step1', [
                 $this->appUserService->getCurrentFUserId(),
-                $this->appUserService->getCurrentUserId()
+                $this->appUserService->getCurrentUserId(),
+                $_SESSION
             ]);
         } catch (Exception $e) {
             $this->logger->info('fuser req', [$e->getMessage()]);
@@ -249,7 +250,8 @@ class BasketController extends BaseController
             try {
                 $this->logger->info('fuser req step2', [
                     $this->appUserService->getCurrentFUserId(),
-                    $this->appUserService->getCurrentUserId()
+                    $this->appUserService->getCurrentUserId(),
+                    $_SESSION
                 ]);
             } catch (Exception $e) {
                 $this->logger->info('fuser req', [$e->getMessage()]);
@@ -259,7 +261,8 @@ class BasketController extends BaseController
         try {
             $this->logger->info('fuser req step3', [
                 $this->appUserService->getCurrentFUserId(),
-                $this->appUserService->getCurrentUserId()
+                $this->appUserService->getCurrentUserId(),
+                $_SESSION
             ]);
         } catch (Exception $e) {
             $this->logger->info('fuser req', [$e->getMessage()]);
@@ -275,7 +278,8 @@ class BasketController extends BaseController
         try {
             $this->logger->info('fuser req step4', [
                 $this->appUserService->getCurrentFUserId(),
-                $this->appUserService->getCurrentUserId()
+                $this->appUserService->getCurrentUserId(),
+                $_SESSION
             ]);
         } catch (Exception $e) {
             $this->logger->info('fuser req', [$e->getMessage()]);
