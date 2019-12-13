@@ -172,6 +172,10 @@ services:
     class: FourPaws\PersonalBundle\Service\OrderSubscribeService
     public: true
 
+  order_subscribe_single.repository:
+    class: FourPaws\PersonalBundle\Repository\OrderSubscribeSingleRepository
+    public: true
+
   kkm.service:
     class: FourPaws\KkmBundle\Service\KkmService
 

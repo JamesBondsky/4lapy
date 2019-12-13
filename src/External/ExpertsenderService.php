@@ -14,6 +14,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
+use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -1001,16 +1002,19 @@ class ExpertsenderService implements LoggerAwareInterface
                 if (!$currentOffer) {
                     throw new ExpertSenderOfferNotFoundException(sprintf('Не найден товар %s', $basketItem->getCode()));
                 }
+
+
                 $link = ($currentOffer->getXmlId()[0] === '3') ? '' : new FullHrefDecorator($currentOffer->getDetailPageUrl());
-                $item = '';
-                $item .= '<Product>';
-                $item .= '<Name>' . $currentOffer->getName(). '</Name>';
-                $item .= '<PicUrl>' . new FullHrefDecorator((string)$currentOffer->getImages()->first()) . '</PicUrl>';
-                $item .= '<Link>' . $link . '</Link>';
-                $item .= '<Price1>' . $currentOffer->getOldPrice() . '</Price1>';
-                $item .= '<Price2>' . ($basketItem->getPrice() / 100) . '</Price2>';
-                $item .= '<Amount>' . $basketItem->getQuantity()->getValue() . '</Amount>';
-                $item .= '</Product>';
+
+                $params = [
+                    'name' => $currentOffer->getName(),
+                    'picurl' => new FullHrefDecorator((string)$currentOffer->getImages()->first()),
+                    'link' => $link,
+                    'price1' => $currentOffer->getOldPrice(),
+                    'price2' => ($basketItem->getPrice() / 100),
+                    'amount' => $basketItem->getQuantity()->getValue(),
+                ];
+                $item = $this->getProductFormatted($params);
                 $items[] = $item;
             }
         } catch (NotFoundException $e) {
@@ -1018,6 +1022,21 @@ class ExpertsenderService implements LoggerAwareInterface
         }
 
         return $items;
+    }
+
+    protected function getProductFormatted($params)
+    {
+        $item = '';
+        $item .= '<Product>';
+        $item .= '<Name>' . $params['name'] . '</Name>';
+        $item .= '<PicUrl>' . $params['picurl'] . '</PicUrl>';
+        $item .= '<Link>' . $params['link'] . '</Link>';
+        $item .= '<Price1>' . $params['price1'] . '</Price1>';
+        $item .= '<Price2>' . $params['price2'] . '</Price2>';
+        $item .= '<Amount>' . $params['amount'] . '</Amount>';
+        $item .= '</Product>';
+
+        return $item;
     }
 
     /**
@@ -1063,10 +1082,14 @@ class ExpertsenderService implements LoggerAwareInterface
         $frequencyList = $orderSubscribeService->getFrequencies();
         $curFrequency = current(array_filter($frequencyList, function($item) use ($frequency) { return $item['ID'] == $frequency; }));
         $saleBonus = $orderSubscribeService->countBasketPriceDiff($order->getBasket());
+        //$deliveryDate = $orderSubscribeHistoryService->getLastOrderDeliveryDate($orderSubscribe);
+        $deliveryDate = $orderSubscribe->getNearestDelivery();
+        $deliveryDate = $deliveryDate ? $deliveryDate->format('d.m.Y') : '';
 
         $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));
         $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($orderService->getOrderDeliveryAddress($order)));
-        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribeService->getPreviousDate($orderSubscribe)->format('d.m.Y')));
+        // $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribeService->getPreviousDate($orderSubscribe)->format('d.m.Y')));
+        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($deliveryDate));
         $snippets[] = new Snippet('tel_number', PhoneHelper::formatPhone($personalOrder->getPropValue('PHONE')));
         $snippets[] = new Snippet('total_bonuses', (int)$orderService->getOrderBonusSum($order));
         $snippets[] = new Snippet('delivery_cost', (float)$order->getShipmentCollection()->getPriceDelivery());
@@ -1074,7 +1097,9 @@ class ExpertsenderService implements LoggerAwareInterface
         $snippets[] = new Snippet('next_delivery_date', $orderSubscribe->getNextDate()->format('d.m.Y'));
         $snippets[] = new Snippet('sale_bonus', abs($saleBonus));
 
-        $items = $this->getAltProductsItems($order);
+        $basket = $orderSubscribeService->getBasketBySubscribeId($orderSubscribe->getId());
+        $items = $this->getAltProductsItemsByBasket($basket);
+
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 

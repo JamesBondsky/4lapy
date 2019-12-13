@@ -362,6 +362,61 @@ class OrderSubscribeHistoryService
         return $orders[0] ? $orders[0]['UF_DELIVERY_DATE'] : $orderSubscribe->getNextDate();
     }
 
+    /**
+     * Возвращает ID последнего активного заказа по подписке
+     *
+     * @param OrderSubscribe $orderSubscribe
+     * @return bool|mixed
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function getLastOrderId(OrderSubscribe $orderSubscribe)
+    {
+        $dbres = $this->findBy(
+            [
+                'select' => [
+                    'ID',
+                    'UF_NEW_ORDER_ID',
+                ],
+                'filter' => [
+                    '=ORDER.CANCELED' => 'N',
+                    '=UF_ORIGIN_ORDER_ID' => (int)$orderSubscribe->getOrderId(),
+                    '>=UF_DELIVERY_DATE' => new Date(),
+                ],
+                'runtime' => [
+                    new ReferenceField(
+                        'ORDER',
+                        \Bitrix\Sale\Internals\OrderTable::getEntity(),
+                        [
+                            '=this.UF_NEW_ORDER_ID' => 'ref.ID',
+                        ],
+                        [
+                            //'join_type' => 'inner'
+                        ]
+                    ),
+                ],
+                'order' => [
+                    'UF_NEW_ORDER_ID' => 'DESC',
+                ],
+            ]
+        );
+
+        if($row = $dbres->fetch()){
+            return $row['UF_NEW_ORDER_ID'];
+        }
+        return false;
+    }
+
+    /**
+     * Возвращает дату доставки последнего заказа по подписке
+     *
+     * @param OrderSubscribe $orderSubscribe
+     * @return DateTime|mixed|null
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
     public function getLastOrderDeliveryDate(OrderSubscribe $orderSubscribe)
     {
         $dbres = $this->findBy(
