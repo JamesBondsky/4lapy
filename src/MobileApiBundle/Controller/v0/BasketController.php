@@ -212,6 +212,13 @@ class BasketController extends BaseController
      */
     public function postUserCartAction(PostUserCartRequest $postUserCartRequest): UserCartResponse
     {
+        try {
+            $this->logger->info('fuser', [
+                $this->appUserService->getCurrentFUserId(),
+                $this->appUserService->getCurrentUserId()
+            ]);
+        } catch (Exception $e) {}
+
         $gifts = [];
         foreach ($postUserCartRequest->getGoods() as $productQuantity) {
             if ($productQuantity->getDiscountId()) {
@@ -241,7 +248,17 @@ class BasketController extends BaseController
             /** @noinspection PhpUndefinedMethodInspection */
             $this->appBasketService->getAdder('gift')->selectGifts($gifts);
         }
-        return $this->getUserCartAction(new UserCartRequest());
+
+        $res = $this->getUserCartAction(new UserCartRequest());
+
+        try {
+            $this->logger->info('fuser', [
+                $this->appUserService->getCurrentFUserId(),
+                $this->appUserService->getCurrentUserId()
+            ]);
+        } catch (Exception $e) {}
+
+        return $res;
     }
 
     /**
