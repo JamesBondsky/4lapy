@@ -73,7 +73,8 @@ class ApiTokenProvider implements AuthenticationProviderInterface
                 'session_user_id' => $session->getUserId(),
                 'user_id' => $user->getId(),
                 'fuser' => $session->getFUserId(),
-                'session' => $_SESSION
+                'session' => $_SESSION,
+                'auth_multisite' => \COption::GetOptionString("main", "auth_multisite", "N"),
             ]);
         } else {
             $this->logger->info('init new session', [
