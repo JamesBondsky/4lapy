@@ -730,7 +730,7 @@ class Event extends BaseServiceHandler
                     {
                         /** @var ManzanaService $manzanaService */
                         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-                        $manzanaService->importUserOrdersAsync($user);
+//                        $manzanaService->importUserOrdersAsync($user);
                     }
                 }
             } catch (\Exception $e) {
