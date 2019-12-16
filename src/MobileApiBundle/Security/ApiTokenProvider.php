@@ -51,10 +51,12 @@ class ApiTokenProvider implements AuthenticationProviderInterface
     {
         $session = $this->sessionRepository->findByToken($token->getToken());
 
-        $this->logger->info('session', [
-            'session' => print_r($session),
-            'token' => print_r($token)
-        ]);
+        try {
+            $this->logger->info('session', [
+                'session' => print_r($session, true),
+                'token' => print_r($token, true)
+            ]);
+        } catch (\Exception $e) {}
 
         if (!$session) {
             throw new InvalidTokenException('Invalid token provided');
