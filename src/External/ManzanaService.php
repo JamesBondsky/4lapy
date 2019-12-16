@@ -973,7 +973,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 
             try
             {
-                $manzanaOrdersImportUserRepository->addUser($userId);
+//                $manzanaOrdersImportUserRepository->addUser($userId);
             } catch (Exception $e)
             {
                 $this->logger->error(__METHOD__ . '. Не удалось добавить пользователя в manzanaOrdersImportUserRepository. userId: ' . $userId . '. Exception: ' . $e->getMessage());
