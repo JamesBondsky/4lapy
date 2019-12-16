@@ -40,13 +40,13 @@ $chanceService = Application::getInstance()->getContainer()->get(ChanceService::
         <input class="js-no-valid" type="hidden" name="<?= $token['field'] ?>" value="<?= $token['token'] ?>">
 
         <div class="form-group">
-          <input type="text" id="SURNAME_REG_CHECK_NY" class="js-small-input" name="lastname" value="<?= $arUser['LAST_NAME'] ?: '' ?>" placeholder="Фамилия">
+          <input type="isLetter" id="SURNAME_REG_CHECK_NY" name="lastname" value="<?= $arUser['LAST_NAME'] ?: '' ?>" placeholder="Фамилия">
           <div class="b-error">
             <span class="js-message"></span>
           </div>
         </div>
         <div class="form-group">
-          <input type="text" id="NAME_REG_CHECK_NY" class="js-small-input" name="name" value="<?= $arUser['NAME'] ?: '' ?>" placeholder="Имя">
+          <input type="isLetter" id="NAME_REG_CHECK_NY" name="name" value="<?= $arUser['NAME'] ?: '' ?>" placeholder="Имя">
           <div class="b-error">
             <span class="js-message"></span>
           </div>
