@@ -107,7 +107,7 @@ class ApiTokenProvider implements AuthenticationProviderInterface
     protected function initBySession(ApiUserSession $session)
     {
         if ($session->getUserId()) {
-            return $this->cUser->Authorize($session->getUserId());
+            return $this->cUser->Authorize($session->getUserId(), false, false);
         }
         return false;
     }
