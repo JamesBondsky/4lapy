@@ -126,9 +126,9 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'getUserOrdersFromManzana'], 'main');
 
         /** действия при авторизации(обновление группы оптовиков, обновление карты) */
-        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'refreshUserOnAuth'], 'main');
-        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'refreshUserOnAuth'], 'main');
-        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'refreshUserOnAuth'], 'main');
+//        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'refreshUserOnAuth'], 'main');
+//        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'refreshUserOnAuth'], 'main');
+//        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'refreshUserOnAuth'], 'main');
 
         /** деавторизация перед авторизацией - чтобы не мешали корзины с уже авторизованными юзерами */
         static::initHandlerCompatible('OnBeforeUserLogin', [self::class, 'logoutBeforeAuth'], 'main');
@@ -142,7 +142,7 @@ class Event extends BaseServiceHandler
             'socialservices');
 
         /** проставление группы правила работы с корзиной */
-//        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'updateBasketRuleGroup'], 'main');
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'updateBasketRuleGroup'], 'main');
 
         /** при смене города */
         static::initHandlerCompatible('OnCityChange', [self::class, 'updateBasketDiscountProperties'], 'main');
