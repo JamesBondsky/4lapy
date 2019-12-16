@@ -962,6 +962,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $userService = App::getInstance()->getContainer()->get(UserSearchInterface::class);
         $manzanaOrdersImportUserRepository = $userService->getManzanaOrdersImportUserRepository();
         $userId = $user->getId();
+        $this->logger->info('api manzana service ' . $userId, [
+            'hasUserId' => $manzanaOrdersImportUserRepository->hasUserId($userId)
+        ]);
         if (!$manzanaOrdersImportUserRepository->hasUserId($userId)) {
             /** @noinspection MissingService */
             /** @var Producer $producer */
