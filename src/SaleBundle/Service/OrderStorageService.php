@@ -136,18 +136,18 @@ class OrderStorageService
 
     /**
      * @param int|null $fuserId
-     *
+     * @param bool $isCreate
      * @return bool|OrderStorage
      * @throws OrderStorageSaveException
      */
-    public function getStorage(int $fuserId = null)
+    public function getStorage(int $fuserId = null, $isCreate = true)
     {
         if (!$fuserId) {
             $fuserId = $this->currentUserProvider->getCurrentFUserId();
         }
 
         try {
-            return $this->storageRepository->findByFuser($fuserId);
+            return $this->storageRepository->findByFuser($fuserId, $isCreate);
         } catch (NotFoundException $e) {
             return false;
         }
