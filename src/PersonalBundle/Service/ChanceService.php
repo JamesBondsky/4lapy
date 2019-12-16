@@ -107,13 +107,10 @@ class ChanceService
         }
 
         $data = [];
-        foreach ($this->periods as $period) {
-            $data[$period] = 0;
-        }
-
         try {
-            $currentPeriod = $this->getCurrentPeriod();
-            $data[$currentPeriod] = $this->getUserPeriodChance($user->getId(), $currentPeriod);
+            foreach ($this->periods as $currentPeriod) {
+                $data[$currentPeriod] = $this->getUserPeriodChance($user->getId(), $currentPeriod);
+            }
         } catch (Exception $e) {
         }
 
@@ -129,7 +126,11 @@ class ChanceService
 
         TaggedCacheHelper::clearManagedCache(['ny2020:user.chances']);
 
-        return (isset($currentPeriod)) ? $data[$currentPeriod] : 0;
+        try {
+            return $data[$this->getCurrentPeriod()];
+        } catch (Exception $e) {
+            return 0;
+        }
     }
 
     /**
@@ -154,7 +155,7 @@ class ChanceService
 
         try {
             $userData = unserialize($userData['UF_DATA']);
-            return $userData[$this->getCurrentPeriod()];
+            return $userData[$this->getCurrentPeriod()] ?? 0;
         } catch (Exception $e) {
             return 0;
         }
@@ -239,8 +240,6 @@ class ChanceService
         }
 
         try {
-            $currentPeriod = $this->getCurrentPeriod();
-
             $userResult = $this->getDataManager()::query()
                 ->setFilter(['UF_USER_ID' => $userId])
                 ->setSelect(['ID', 'UF_DATA'])
@@ -252,20 +251,16 @@ class ChanceService
 
             $data = unserialize($userResult['UF_DATA']);
 
-            $data[$this->getCurrentPeriod()] = $this->getUserPeriodChance($userId, $currentPeriod);
+            foreach ($this->periods as $currentPeriod) {
+                $data[$currentPeriod] = $this->getUserPeriodChance($userId, $currentPeriod);
+            }
 
             $this->getDataManager()::update(
                 $userResult['ID'],
                 ['UF_DATA' => serialize($data)]
             );
-
         } catch (Exception $e) {
         }
-    }
-
-    public function getPeriods(): array
-    {
-        return $this->periods;
     }
 
     /**
@@ -293,9 +288,91 @@ class ChanceService
                 ->withTime(36000)
                 ->withTag('ny2020:user.chances')
                 ->resultOf($doGetAllVariants);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [];
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function getExportHeader(): array
+    {
+        $result = [
+            'Дата регистрации',
+            'ФИО',
+            'Телефон',
+            'Почта',
+        ];
+
+        foreach ($this->periods as $periodId => $period) {
+            $result[] = sprintf('%s - %s', $period['from']->format('d.m.Y'), $period['to']->format('d.m.Y'));
+        }
+
+        $result[] = 'Всего';
+
+        return $result;
+    }
+
+    /**
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function getExportData(): array
+    {
+        $userIds = [];
+        /** @var User[] $users */
+        $users = [];
+
+        $userResults = [];
+        $res = $this->getDataManager()::query()
+            ->setSelect(['UF_USER_ID', 'UF_DATA', 'UF_DATE_CREATE'])
+            ->exec();
+
+        while ($userResult = $res->fetch()) {
+            $userResults[] = [
+                'userId' => $userResult['UF_USER_ID'],
+                'data' => unserialize($userResult['UF_DATA']),
+                'date' => $userResult['UF_DATE_CREATE'],
+            ];
+            $userIds[] = (int)$userResult['UF_USER_ID'];
+        }
+
+        /** @var User $user */
+        foreach ($this->userRepository->findBy(['=ID' => $userIds]) as $user) {
+            $users[$user->getId()] = $user;
+        }
+
+        $result = [];
+
+        foreach ($userResults as $userResult) {
+            $user = $users[$userResult['userId']];
+
+            $tmpResult = [];
+            $tmpResult[] = $userResult['date'];
+            $tmpResult[] = $user->getFullName();
+            $tmpResult[] = $user->getPersonalPhone();
+            $tmpResult[] = $user->getEmail();
+
+            $totalChances = 0;
+
+            foreach ($this->periods as $periodId => $period) {
+                if (isset($userResult['data'][$periodId])) {
+                    $tmpResult[] = $userResult['data'][$periodId];
+                    $totalChances += (int)$userResult['data'][$periodId];
+                } else {
+                    $tmpResult[] = '-';
+                }
+            }
+
+            $tmpResult[] = $totalChances;
+
+            $result[] = $tmpResult;
+        }
+
+        return $result;
     }
 
     /**

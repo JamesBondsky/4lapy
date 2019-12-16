@@ -810,7 +810,7 @@ class Event extends BaseServiceHandler
         $userService = $container->get(CurrentUserProviderInterface::class);
 
         try {
-            $storage = $orderStorageService->getStorage($userService->getCurrentFUserId());
+            $storage = $orderStorageService->getStorage($userService->getCurrentFUserId(), false);
         } catch (OrderStorageSaveException $e) {
             return;
         }

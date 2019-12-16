@@ -8,10 +8,6 @@ use FourPaws\Decorators\SvgDecorator;
     <div class="b-container">
         <div class="banner-flagship-store__title">Запись на услуги</div>
         <div class="banner-flagship-store__subtitle">
-                <span class="b-icon">
-                    <?=new SvgDecorator('icon-delivery-header', 24, 24)?>
-                </span>
-            <span>Адрес: г.&nbsp;Москва, <nobr>пр-кт Вернадского, д.&nbsp;6,</nobr> ТЦ&nbsp;&laquo;Капитолий&raquo;, <nobr>-1 этаж</nobr></span>
         </div>
     </div>
 </section>
@@ -35,14 +31,14 @@ use FourPaws\Decorators\SvgDecorator;
                     <div class="nav-flagship-store__title">Тренировочный клуб</div>
                 </div>
             <?php endif; ?>
-            <?php /*if ($arParams['SHOW_LECTION'] == 'Y') : ?>
+            <?php if ($arParams['SHOW_LECTION'] == 'Y') : ?>
                 <div class="nav-flagship-store__item" data-nav-flagship-store="lectures">
                     <div class="nav-flagship-store__icon">
                         <?=new SvgDecorator('icon-flagship-lectures', 61, 61)?>
                     </div>
-                    <div class="nav-flagship-store__title">Лекции</div>
+                    <div class="nav-flagship-store__title">Лекторий</div>
                 </div>
-            <?php endif; */?>
+            <?php endif; ?>
         </div>
     </div>
 </section>

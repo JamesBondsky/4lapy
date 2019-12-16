@@ -131,10 +131,10 @@ class Info
     /**
      * Список объектов ОбъектКаталога.КраткийТовар
      *
-     * @Serializer\Type("ArrayCollection<FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct>")
+     * @Serializer\Type("ArrayCollection<FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct>")
      * @Serializer\SerializedName("goods")
      *
-     * @var Collection|ShortProduct[]
+     * @var Collection|FullProduct[]
      */
     protected $goods;
 
@@ -377,7 +377,7 @@ class Info
     }
 
     /**
-     * @return Collection|ShortProduct[]
+     * @return Collection|FullProduct[]
      */
     public function getGoods()
     {
@@ -385,7 +385,7 @@ class Info
     }
 
     /**
-     * @param Collection|ShortProduct[] $goods
+     * @param Collection|FullProduct[] $goods
      *
      * @return Info
      */
