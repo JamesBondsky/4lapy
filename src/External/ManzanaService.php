@@ -969,7 +969,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             /** @noinspection MissingService */
             /** @var Producer $producer */
             $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_orders_import_producer');
-            $producer->publish($this->serializer->serialize(clone $user, 'json'));
+//            $producer->publish($this->serializer->serialize($user, 'json'));
+            $producer->publish(json_encode($user));
 
             try
             {
