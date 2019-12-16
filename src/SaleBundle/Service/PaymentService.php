@@ -238,13 +238,17 @@ class PaymentService implements LoggerAwareInterface
 
         $approvedAmount = $orderInfo->getPaymentAmountInfo()->getApprovedAmount();
         if ($fiscalAmount > $approvedAmount) {
-            throw new FiscalAmountExceededException(
-                \sprintf(
-                    'Fiscal amount (%s) exceeds approved amount (%s)',
-                    $fiscalAmount,
-                    $approvedAmount
-                )
-            );
+            $diff = $sumPaid - $fiscalAmount;
+            $diff = $diff < 0 ? (-1*$diff) : $diff;
+            if ($diff != 0 && $diff > 100) {
+                throw new FiscalAmountExceededException(
+                    \sprintf(
+                        'Fiscal amount (%s) exceeds approved amount (%s)',
+                        $fiscalAmount,
+                        $approvedAmount
+                    )
+                );
+            }
         }
 
         if (null !== $sumPaid && ($fiscalAmount) < $sumPaid) {
