@@ -107,6 +107,7 @@ class ApiTokenProvider implements AuthenticationProviderInterface
     protected function initBySession(ApiUserSession $session)
     {
         if ($session->getUserId()) {
+            \COption::SetOptionString("main", "auth_multisite", 'N');
             return $this->cUser->Authorize($session->getUserId());
         }
         return false;
