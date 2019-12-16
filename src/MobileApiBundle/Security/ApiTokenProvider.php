@@ -52,8 +52,8 @@ class ApiTokenProvider implements AuthenticationProviderInterface
         $session = $this->sessionRepository->findByToken($token->getToken());
 
         $this->logger->info('session', [
-            'session' => $session,
-            'token' => $token
+            'session' => print_r($session),
+            'token' => print_r($token)
         ]);
 
         if (!$session) {
