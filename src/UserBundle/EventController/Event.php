@@ -76,14 +76,14 @@ class Event extends BaseServiceHandler
         parent::initHandlers($eventManager);
 
         /** установка обязательного поля при регистрации через соц. сеть */
-//        static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'checkSocserviseRegisterHandler'], 'main');
+        static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'checkSocserviseRegisterHandler'], 'main');
 
         /** События форматирования телефона */
         static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'checkPhoneFormat'], 'main');
-//        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'checkPhoneFormat'], 'main');
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'checkPhoneFormat'], 'main');
 
         /** замена логина */
-//        static::initHandlerCompatible('OnBeforeUserLogon', [self::class, 'replaceLogin'], 'main');
+        static::initHandlerCompatible('OnBeforeUserLogon', [self::class, 'replaceLogin'], 'main');
 
         /** фикс базовой авторизации */
         static::initHandlerCompatible('onBeforeUserLoginByHttpAuth', [self::class, 'deleteBasicAuth'], 'main');
@@ -96,7 +96,7 @@ class Event extends BaseServiceHandler
 
         /** обновление данных в манзане */
 //        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'updateManzana'], 'main');
-//        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'updateManzana'], 'main');
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'updateManzana'], 'main');
 
         /** привязка купонов фестиваля после регистрации */
         //static::initHandlerCompatible('OnAfterUserRegister', [self::class, 'addFestivalCoupon'], 'main');
@@ -104,31 +104,31 @@ class Event extends BaseServiceHandler
         //static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'addFestivalCouponOnUpdate'], 'main');
 
         /** обновляем логин если он равняется телефону или email */
-//        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'replaceLoginOnUpdate'], 'main');
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'replaceLoginOnUpdate'], 'main');
 
         /** Работа с паролями некоторых групп пользователей (see FRONT_OFFICE_USERS)*/
-//        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'checkPasswordChange'], 'main');
-//        static::initHandlerCompatible('OnAfterUserAdd', [self::class, 'resetStoreUserPassword'], 'main');
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'checkPasswordChange'], 'main');
+        static::initHandlerCompatible('OnAfterUserAdd', [self::class, 'resetStoreUserPassword'], 'main');
 
         /** очистка кеша пользователя */
-//        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'clearUserCache'], 'main');
+        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'clearUserCache'], 'main');
         /** обновляем имя пользователя в order storage */
-//        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'updateOrderStorage'], 'main');
+        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'updateOrderStorage'], 'main');
 
         /** чистим кеш юзера при авторизации */
-//        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'clearUserCache'], 'main');
-//        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'clearUserCache'], 'main');
-//        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'clearUserCache'], 'main');
+        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'clearUserCache'], 'main');
+        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'clearUserCache'], 'main');
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'clearUserCache'], 'main');
 
         /** асинхронное получение заказов пользователя при авторизации */
-//        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'getUserOrdersFromManzana'], 'main');
-//        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'getUserOrdersFromManzana'], 'main');
-//        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'getUserOrdersFromManzana'], 'main');
+        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'getUserOrdersFromManzana'], 'main');
+        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'getUserOrdersFromManzana'], 'main');
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'getUserOrdersFromManzana'], 'main');
 
         /** действия при авторизации(обновление группы оптовиков, обновление карты) */
-//        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'refreshUserOnAuth'], 'main');
-//        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'refreshUserOnAuth'], 'main');
-//        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'refreshUserOnAuth'], 'main');
+        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'refreshUserOnAuth'], 'main');
+        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'refreshUserOnAuth'], 'main');
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'refreshUserOnAuth'], 'main');
 
         /** деавторизация перед авторизацией - чтобы не мешали корзины с уже авторизованными юзерами */
         static::initHandlerCompatible('OnBeforeUserLogin', [self::class, 'logoutBeforeAuth'], 'main');
@@ -142,7 +142,7 @@ class Event extends BaseServiceHandler
             'socialservices');
 
         /** проставление группы правила работы с корзиной */
-//        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'updateBasketRuleGroup'], 'main');
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'updateBasketRuleGroup'], 'main');
 
         /** при смене города */
         static::initHandlerCompatible('OnCityChange', [self::class, 'updateBasketDiscountProperties'], 'main');
