@@ -728,9 +728,9 @@ class Event extends BaseServiceHandler
                     $lastManzanaImportDateTime = $user->getManzanaImportDateTime();
                     if (!$lastManzanaImportDateTime || $DB->CompareDates($lastManzanaImportDateTime, (new DateTime())->add('- ' . $userImportTimeLimit)) < 0)
                     {
-//                        /** @var ManzanaService $manzanaService */
-//                        $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-//                        $manzanaService->importUserOrdersAsync($user);
+                        /** @var ManzanaService $manzanaService */
+                        $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+                        $manzanaService->importUserOrdersAsync($user);
                     }
                 }
             } catch (\Exception $e) {
