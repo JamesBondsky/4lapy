@@ -12,7 +12,7 @@ services:
       - ./vendor/4Lapy/bitrix:/application/vendor/4Lapy/bitrix:ro
       - ./common/bitrix:/application/common/bitrix:ro
       - ./common/local:/application/common/local:ro
-      - ./common/static/build:/application/common/static/build:ro
+      - ./common/static/build:/application/common/static/build
       - ./web:/application/web:ro
       - ./public:/application/public:ro
       - phpsocket:/socket
@@ -22,10 +22,12 @@ services:
       context: ./
       target: php
     volumes:
+#      - nfsmount:/application:rw,cached
       - ./:/application:rw,cached
       - ./var/logs:/adv/vhosts/4lapy/logs:rw
       - ./var/sap-exchange:/home/sap-exchange:rw
       - ./var/sap-exchange-prod:/home/sap-exchange-prod:rw
+      - ./docker/php/remote-xdebug.ini:/usr/local/etc/php/conf.d/remote-xdebug.ini
       - phpsocket:/socket
 
   memcached:
@@ -73,3 +75,10 @@ volumes:
   redis-data: {}
   elasticsearch-data: {}
   phpsocket: {}
+#  nfsmount:
+#    driver: local
+#    driver_opts:
+#      type: nfs
+#      o: addr=host.docker.internal,rw,nolock,hard,nointr,nfsvers=3
+#      device: ":/System/Volumes/Data/${PWD}"
+
