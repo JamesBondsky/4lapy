@@ -74,7 +74,7 @@ class ApiTokenProvider implements AuthenticationProviderInterface
                 'user_id' => $user->getId(),
                 'fuser' => $session->getFUserId(),
                 'session' => $_SESSION,
-                'auth_multisite' => \COption::GetOptionString("main", "auth_multisite", "N"),
+                'request' => $_REQUEST,
             ]);
         } else {
             $this->logger->info('init new session', [
@@ -107,9 +107,6 @@ class ApiTokenProvider implements AuthenticationProviderInterface
     protected function initBySession(ApiUserSession $session)
     {
         if ($session->getUserId()) {
-            global $USER;
-            return $USER->Authorize($session->getUserId());
-            return \CUser::Authorize($session->getUserId());
             return $this->cUser->Authorize($session->getUserId());
         }
         return false;
