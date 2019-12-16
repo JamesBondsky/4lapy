@@ -36,6 +36,8 @@ class StampService implements LoggerAwareInterface
     public const MARK_RATE = 500;
     public const MARKS_PER_RATE = 1;
 
+    // В МП акции с марками отдельно регулируются через разные флаги:
+    // \FourPaws\MobileApiBundle\Dto\Object\User::$stampsOfferActive и \FourPaws\MobileApiBundle\Dto\Object\User::$octoberStampsOfferActive
     public const IS_STAMPS_OFFER_ACTIVE = false;
 
     public const DISCOUNT_TYPE_PERCENTAGE = 'P';
