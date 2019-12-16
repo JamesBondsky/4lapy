@@ -1,24 +1,22 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
 $APPLICATION->SetTitle("Добролап");
-?>    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light site-navbar-target" id="ftco-navbar">
+?><nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light site-navbar-target" id="ftco-navbar">
         <div class="container">
-            <button class="navbar-toggler js-fh5co-nav-toggle fh5co-nav-toggle" type="button" data-toggle="collapse"
-                    data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false"
-                    aria-label="Toggle navigation">
+            <button class="navbar-toggler js-fh5co-nav-toggle fh5co-nav-toggle" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="oi oi-menu"></span>
             </button>
 
             <div class="collapse navbar-collapse" id="ftco-nav">
                 <ul class="navbar-nav nav ml-auto">
-                    <li class="nav-item"><a href="#needs" class="nav-link"><span>Помогаем вместе</span></a></li>
-                    <li class="nav-item"><a href="#shelter" class="nav-link"><span>Приюты-участники</span></a></li>
+                    <li class="nav-item"><a href="#needs" class="nav-link">Помогаем вместе</a></li>
+                    <li class="nav-item"><a href="#shelter" class="nav-link">Приюты-участники</a></li>
                     <!--<li class="nav-item"><a href="#how_get" class="nav-link"><span>Принять участие</span></a></li>
                     <li class="nav-item"><a href="#thanks" class="nav-link"><span>Добрые сюрпризы</span></a></li>
                     <li class="nav-item"><a href="#little" class="nav-link"><span>Маленькие друзья</span></a></li>
                     <li class="nav-item"><a href="#challenge" class="nav-link"><span>Челлендж</span></a></li>-->
-                    <li class="nav-item"><a href="#photos" class="nav-link"><span>Фотоотчеты</span></a></li>
-                    <li class="nav-item"><a href="#raise" class="nav-link"><span>Добрые поездки</span></a></li>
+                    <li class="nav-item"><a href="#photos" class="nav-link">Фотоотчеты</a></li>
+                    <li class="nav-item"><a href="#raise" class="nav-link">Добрые поездки</a></li>
                 </ul>
             </div>
         </div>
@@ -31,8 +29,7 @@ $APPLICATION->SetTitle("Добролап");
                 <div class="col-md-6 col-lg-5 d-flex">
                     <div class="img-about img d-flex align-items-stretch">
                         <div class="overlay"></div>
-                        <div class="img d-flex align-self-stretch align-items-center"
-                             style="background-image:url(dobrolap/images/dobrolap_logo.png); background-size: contain; background-position: center bottom;">
+                        <div class="img d-flex align-self-stretch align-items-center" style="background-image:url(dobrolap/images/dobrolap_logo.png); background-size: contain; background-position: center bottom;">
                         </div>
                     </div>
                 </div>
@@ -40,7 +37,7 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="row justify-content-start pb-3">
                         <div class="col-md-12 heading-section ftco-animate">
                             <span class="subheading">VI ЕЖЕГОДНАЯ БЛАГОТВОРИТЕЛЬНАЯ АКЦИЯ «ДОБРОЛАП»</span>
-                            <h1 class="mb-4 mt-3">На Рождество</span></h1>
+                            <h1 class="mb-4 mt-3">На Рождество</h1>
 <div class="harvest_icon">
                     <a href="https://4lapy.ru/shares/dobrolap-pomogi-pitomtsam-iz-priyuta.html" class="btn btn-primary py-3 px-4" target="_blank">КАК ПОМОЧЬ</a>
                 </div>
@@ -57,33 +54,33 @@ $APPLICATION->SetTitle("Добролап");
         <div class="container">
             <div class="row justify-content-center pb-5">
                 <div class="col-md-12 heading-section text-center ftco-animate">
-                    <h2 class="">ПОМОГАЕМ ВМЕСТЕ</h2>
+                    <h2>ПОМОГАЕМ ВМЕСТЕ</h2>
                     <h5 class="mb-4">Компания «Четыре Лапы» помогает временно бездомным животным.</h5>
-                    <hr/>
+                    <hr>
                     <div class="harvest_icon read_more_btn">
                         <a href="javascript:void(0);" class="btn btn-primary-filled py-3 px-4">УЗНАТЬ ПРО ДОБРОЛАП</a>
                     </div>
                     <div class="needs_note">
-                        <h5 class="mb-4">1 декабря стартовала VI ежегодная благотворительная акция «Добролап НА РОЖДЕСТВО» — ПОД ТАКИМ ЛОЗУНГОМ
-                            в зоомагазинах «Четыре Лапы» проводится акция помощи приютам для
-                            бездомных животных.<br/>
-                            Благотворительная инициатива «Добролап» уже в шестой раз проходит в сети
-                            «Четыре Лапы». Совместно с 27 благотворительными
-                            организациями в этом году «Четыре лапы» объединяет всех, кто не равнодушен
-                            к питомцам без семьи, с целью помочь животным
-                            найти родителей и поддержать временно бездомных друзей.</h5>
-                        <h5 class="mb-4">ПРИНЯТЬ УЧАСТИЕ МОЖНО НА САЙТЕ «ЧЕТЫРЕ ЛАПЫ» ИЛИ В ЛЮБОМ ЗООМАГАЗИНЕ «ЧЕТЫРЕ ЛАПЫ».<br/>
-                            ПРИСОЕДИНЯЙТЕСЬ К КОМАНДЕ «ДОБРОЛАП», УЗНАВАЙТЕ ПОДРОБНОСТИ НА САЙТЕ И СЛЕДИТЕ
-                            ЗА НОВОСТЯМИ В СОЦИАЛЬНЫХ СЕТЯХ.</h5>
+                        <h5 class="mb-4">1 декабря стартовала VI&nbsp;ежегодная благотворительная акция «Добролап НА РОЖДЕСТВО»&nbsp;— ПОД ТАКИМ ЛОЗУНГОМ
+                            в&nbsp;зоомагазинах «Четыре&nbsp;Лапы» проводится акция помощи приютам для
+                            бездомных животных.<br>
+                            Благотворительная инициатива «Добролап» уже в&nbsp;шестой раз проходит в&nbsp;сети
+                            «Четыре&nbsp;Лапы». Совместно с&nbsp;27 благотворительными
+                            организациями в&nbsp;этом году «Четыре&nbsp;лапы» объединяет всех, кто не&nbsp;равнодушен
+                            к&nbsp;питомцам без семьи, с&nbsp;целью помочь животным
+                            найти родителей и&nbsp;поддержать временно бездомных друзей.</h5>
+                        <h5 class="mb-4">ПРИНЯТЬ УЧАСТИЕ МОЖНО НА&nbsp;САЙТЕ «ЧЕТЫРЕ&nbsp;ЛАПЫ» ИЛИ В&nbsp;ЛЮБОМ ЗООМАГАЗИНЕ «ЧЕТЫРЕ&nbsp;ЛАПЫ».<br>
+                            ПРИСОЕДИНЯЙТЕСЬ К&nbsp;КОМАНДЕ «ДОБРОЛАП», УЗНАВАЙТЕ ПОДРОБНОСТИ НА&nbsp;САЙТЕ И&nbsp;СЛЕДИТЕ
+                            ЗА&nbsp;НОВОСТЯМИ В&nbsp;СОЦИАЛЬНЫХ СЕТЯХ.</h5>
                     </div>
                 </div>
             </div>
             <div class="row">
-                <? $APPLICATION->IncludeComponent("articul:dobrolap.necessary", "template1", Array(
-	
-	),
-	false
-); ?>
+                <?$APPLICATION->IncludeComponent(
+	"articul:dobrolap.necessary",
+	"template1",
+Array()
+);?>
                 <!--<div class="harvest_icon">
                     <a href="#how_get" class="btn btn-primary py-3 px-4" target="_blank">КАК ПОМОЧЬ</a>
                 </div>-->
@@ -95,15 +92,15 @@ $APPLICATION->SetTitle("Добролап");
         <div class="container">
 
             <div class="col-md-12 heading-section text-center ftco-animate">
-                <h2 class="">Мы помогаем</h2>
-                <hr/>
+                <h2>Мы помогаем</h2>
+                <hr>
             </div>
             <div class="row d-md-flex align-items-center">
                 <div class="col-md d-flex justify-content-center counter-wrap ftco-animate">
                     <div class="block-18">
                         <div class="text">
                             <strong class="number" data-number="14755">0</strong>
-                            <span>Питомцам</span>
+                            Питомцам
                         </div>
                     </div>
                 </div>
@@ -112,7 +109,7 @@ $APPLICATION->SetTitle("Добролап");
                         <div class="text">
                             <span class="free_place">из</span>
                             <strong class="number" data-number="27">0</strong>
-                            <span>приютов</span>
+                            приютов
                         </div>
                     </div>
                 </div>
@@ -121,12 +118,12 @@ $APPLICATION->SetTitle("Добролап");
                         <div class="text">
                             <span class="free_place">в</span>
                             <strong class="number" data-number="20">0</strong>
-                            <span>городах</span>
+                            городах
                         </div>
                     </div>
                 </div>
                 <div class="cat_dog">
-                    <img src="/dobrolap/images/help_bg_3.png" alt=""/>
+                    <img src="/dobrolap/images/help_bg_3.png" alt="">
                 </div>
                 <div class="harvest_icon">
                     <a href="https://4lapy.ru/shares/dobrolap-pomogi-pitomtsam-iz-priyuta.html" class="btn btn-primary py-3 px-4" target="_blank">КАК ПОМОЧЬ</a>
@@ -139,16 +136,16 @@ $APPLICATION->SetTitle("Добролап");
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-12 heading-section text-center ftco-animate">
-                    <h2 class="">Приюты участники</h2>
-                    <hr/>
+                    <h2>Приюты участники</h2>
+                    <hr>
                 </div>
             </div>
             <div class="row">
-                <? $APPLICATION->IncludeComponent("articul:dobrolap.shelters", "template1", Array(
-	
-	),
-	false
-); ?>
+                <?$APPLICATION->IncludeComponent(
+	"articul:dobrolap.shelters",
+	"template1",
+Array()
+);?>
             </div>
         </div>
         <div class="read_more">
@@ -482,22 +479,69 @@ $APPLICATION->SetTitle("Добролап");
         <div class="col-md-12">
             <div class="row justify-content-center">
                 <div class="col-md-12 heading-section text-center ftco-animate">
-                    <h2 class="">фотоотчеты</h2>
-                    <hr/>
+                    <h2>фотоотчеты</h2>
+                    <hr>
                 </div>
             </div>
         </div>
         <div class="b-container">
             <section class="b-common-section">
                 <div class="b-common-section__title-box b-common-section__title-box--sale">
-                    <h2 class="b-title b-title--sale"> </h2>
+                    <h2 class="b-title b-title--sale">&nbsp;</h2>
                 </div>
                 <div class="b-common-section__content b-common-section__content--sale b-common-section__content--main-sale js-popular-product">
+
+                	<div class="b-common-item">
+                        <a href="dobrolap/images/IMG_3864.JPG" data-lightbox="photos" class="photos__link" style="background-image: url('dobrolap/images/IMG_3864.JPG')" data-title="наша покупательница с добрым сердцем">
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">Наша покупательница с добрым сердцем</p></div>
+                    </div>
+
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/0209/1.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/0209/1.jpg')"
-                           data-title="Долгожданную помощь получил приют МУРЛЫКА, все его кошачие обитатели были очень довольны столь разнообразной и щедрой помощи">
+                        <a href="dobrolap/images/IMG_3865.JPG" data-lightbox="photos" class="photos__link" style="background-image: url('dobrolap/images/IMG_3865.JPG')" data-title="маленький подарок для большого друга из приюта">
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">Маленький подарок<br />для большого друга из приюта</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="dobrolap/images/IMG_3866.JPG" data-lightbox="photos" class="photos__link" style="background-image: url('dobrolap/images/IMG_3866.JPG')" data-title="подарки питомцам из приютов от наших покупателей">
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">Подарки питомцам<br />из приютов от наших покупателей</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="dobrolap/images/IMG_3868.JPG" data-lightbox="photos" class="photos__link" style="background-image: url('dobrolap/images/IMG_3868.JPG')" data-title="сотрудники магазина всегда участвуют в акции Добролап">
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">Сотрудники магазина<br />всегда участвуют в акции &laquo;Добролап&raquo;</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="dobrolap/images/IMG_3870.JPG" data-lightbox="photos" class="photos__link" style="background-image: url('dobrolap/images/IMG_3870.JPG')" data-title="питомцам из приютов ценна любая помощь и подарок">
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">Питомцам из приютов ценна любая помощь и подарок</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="dobrolap/images/IMG_3871.JPG" data-lightbox="photos" class="photos__link" style="background-image: url('dobrolap/images/IMG_3871.JPG')" data-title="добрый поступок, совершенный вместе с мамой">
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">Добрый поступок, совершенный вместе с мамой</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="dobrolap/images/IMG_3880.JPG" data-lightbox="photos" class="photos__link" style="background-image: url('dobrolap/images/IMG_3880.JPG')" data-title="котики будут очень рады подарку нашей покупательницы">
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">Котики будут очень рады подарку нашей покупательницы</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="dobrolap/images/IMG_3885.JPG" data-lightbox="photos" class="photos__link" style="background-image: url('dobrolap/images/IMG_3885.JPG')" data-title="добрые дела с улыбкой на устах">
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">Добрые дела с улыбкой на устах</p></div>
+                    </div>
+
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/0209/1.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/0209/1.jpg')" data-title="Долгожданную помощь получил приют МУРЛЫКА, все его кошачие обитатели были очень довольны столь разнообразной и щедрой помощи">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -507,10 +551,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/DSCN4338.JPG" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/2608/DSCN4338.JPG')"
-                           data-title="Корзинка «Добролап» никогда не бывает пустой">
+                        <a href="/dobrolap/images/report/2608/DSCN4338.JPG" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/2608/DSCN4338.JPG')" data-title="Корзинка «Добролап» никогда не бывает пустой">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -520,10 +561,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/0209/2.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/0209/2.jpg')"
-                           data-title="Маленький подарок для большого друга от юного участника Добролап Кости из Москвы">
+                        <a href="/dobrolap/images/report/0209/2.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/0209/2.jpg')" data-title="Маленький подарок для большого друга от юного участника Добролап Кости из Москвы">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -533,10 +571,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/IMG_7423-13-08-19-10-34.jpeg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/2608/IMG_7423-13-08-19-10-34.jpeg')"
-                           data-title="Каждый день питомцы из приютов получают долгожданные подарки">
+                        <a href="/dobrolap/images/report/2608/IMG_7423-13-08-19-10-34.jpeg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/2608/IMG_7423-13-08-19-10-34.jpeg')" data-title="Каждый день питомцы из приютов получают долгожданные подарки">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -546,10 +581,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/0209/3.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/0209/3.jpg')"
-                           data-title="Разнообразные подарки ПОЛУЧИЛ фонд «буду рядом», ВСЕ хвостики, обитатели фонда, ОЧЕНЬ рады.">
+                        <a href="/dobrolap/images/report/0209/3.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/0209/3.jpg')" data-title="Разнообразные подарки ПОЛУЧИЛ фонд «буду рядом», ВСЕ хвостики, обитатели фонда, ОЧЕНЬ рады.">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -559,10 +591,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/lyEQwzEt0aY.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/2608/lyEQwzEt0aY.jpg')"
-                           data-title="Вкусные лакомства теперь в обязательном рационе питомцев">
+                        <a href="/dobrolap/images/report/2608/lyEQwzEt0aY.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/2608/lyEQwzEt0aY.jpg')" data-title="Вкусные лакомства теперь в обязательном рационе питомцев">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -572,10 +601,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/0209/4.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/0209/4.jpg')"
-                           data-title="Спасибо всем участникам за полные корзины, в каждом магазине.">
+                        <a href="/dobrolap/images/report/0209/4.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/0209/4.jpg')" data-title="Спасибо всем участникам за полные корзины, в каждом магазине.">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -585,10 +611,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/IMG_9399.JPG" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/2608/IMG_9399.JPG')"
-                           data-title="Команда волонтеров растет с каждым днем">
+                        <a href="/dobrolap/images/report/2608/IMG_9399.JPG" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/2608/IMG_9399.JPG')" data-title="Команда волонтеров растет с каждым днем">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -598,10 +621,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/0209/5.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/0209/5.jpg')"
-                           data-title="Щедрость и отзывчивость участников добролап, не знает границ.">
+                        <a href="/dobrolap/images/report/0209/5.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/0209/5.jpg')" data-title="Щедрость и отзывчивость участников добролап, не знает границ.">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -611,10 +631,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/Skobelevskaja3.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/2608/Skobelevskaja3.jpg')"
-                           data-title="Больше всего маленьким питомцам нужны ветеринарные препараты и пеленки. Теперь все будет в порядке!">
+                        <a href="/dobrolap/images/report/2608/Skobelevskaja3.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/2608/Skobelevskaja3.jpg')" data-title="Больше всего маленьким питомцам нужны ветеринарные препараты и пеленки. Теперь все будет в порядке!">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -624,10 +641,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/0209/6.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/0209/6.jpg')"
-                           data-title="Вместе мы смогли больше!">
+                        <a href="/dobrolap/images/report/0209/6.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/0209/6.jpg')" data-title="Вместе мы смогли больше!">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -637,10 +651,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/IMG_9332.JPG" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/2608/IMG_9332.JPG')"
-                           data-title="В Центре «Собаки-поводыри» обучаются лабрадоры и ретриверы. Эти породы наиболее приспособлены для ответственной работы собаки-поводыря.">
+                        <a href="/dobrolap/images/report/2608/IMG_9332.JPG" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/2608/IMG_9332.JPG')" data-title="В Центре «Собаки-поводыри» обучаются лабрадоры и ретриверы. Эти породы наиболее приспособлены для ответственной работы собаки-поводыря.">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -650,10 +661,7 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/0209/7.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/0209/7.jpg')"
-                           data-title="Подарок для большого друга от юного участника Добролап Алины из Воронежа.">
+                        <a href="/dobrolap/images/report/0209/7.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/0209/7.jpg')" data-title="Подарок для большого друга от юного участника Добролап Алины из Воронежа.">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -663,20 +671,14 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/02.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/02.jpg')"
-                           data-title="Команда «Добролап» помогла найти Лайме и еще более 100 питомцам новую семью">
+                        <a href="/dobrolap/images/report/02.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/02.jpg')" data-title="Команда «Добролап» помогла найти Лайме и еще более 100 питомцам новую семью">
                         </a>
-                        <div class="carousel-note"><p class="mb-4">Команда «Добролап» помогла<br/>найти Лайме и еще
-                                более 100 питомцам<br/>новую семью</p></div>
+                        <div class="carousel-note"><p class="mb-4">Команда «Добролап» помогла<br>найти Лайме и еще
+                                более 100 питомцам<br>новую семью</p></div>
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/0209/8.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/0209/8.jpg')"
-                           data-title="Подарок для хвостиков от Нонны, 10 лет, из Московской области с искренними пожеланиями!!!">
+                        <a href="/dobrolap/images/report/0209/8.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/0209/8.jpg')" data-title="Подарок для хвостиков от Нонны, 10 лет, из Московской области с искренними пожеланиями!!!">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -686,20 +688,14 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/03.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/03.jpg')"
-                           data-title="Самые вкусные подарки привозят друзья «Добролап»">
+                        <a href="/dobrolap/images/report/03.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/03.jpg')" data-title="Самые вкусные подарки привозят друзья «Добролап»">
                         </a>
-                        <div class="carousel-note"><p class="mb-4">Самые вкусные подарки<br/>привозят друзья<br/>«Добролап»
+                        <div class="carousel-note"><p class="mb-4">Самые вкусные подарки<br>привозят друзья<br>«Добролап»
                             </p></div>
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/0209/9.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/0209/9.jpg')"
-                           data-title="Небольшой подарок, со всем самым необходимым еще от одного юного участника Добролап Кирилла, из Калуги">
+                        <a href="/dobrolap/images/report/0209/9.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/0209/9.jpg')" data-title="Небольшой подарок, со всем самым необходимым еще от одного юного участника Добролап Кирилла, из Калуги">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -709,20 +705,14 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/04.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/04.jpg')"
-                           data-title="Большая дружба начинается с малого: более 500 ребят стали участниками акции в 2018 году">
+                        <a href="/dobrolap/images/report/04.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/04.jpg')" data-title="Большая дружба начинается с малого: более 500 ребят стали участниками акции в 2018 году">
                         </a>
-                        <div class="carousel-note"><p class="mb-4">Большая дружба начинается<br/>с малого: более 500
-                                ребят стали<br/>участниками акции в 2018 году</p></div>
+                        <div class="carousel-note"><p class="mb-4">Большая дружба начинается<br>с малого: более 500
+                                ребят стали<br>участниками акции в 2018 году</p></div>
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/0209/10.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/0209/10.jpg')"
-                           data-title="Фонд «Собаки которые любят», очень рад очередным подаркам.">
+                        <a href="/dobrolap/images/report/0209/10.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/0209/10.jpg')" data-title="Фонд «Собаки которые любят», очень рад очередным подаркам.">
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -732,86 +722,11 @@ $APPLICATION->SetTitle("Добролап");
                     </div>
 
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/05.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/05.jpg')"
-                           data-title="Большая радость самому приехать к питомцам, которые очень тебя ждут">
+                        <a href="/dobrolap/images/report/05.jpg" data-lightbox="photos" class="photos__link" style="background-image: url('/dobrolap/images/report/05.jpg')" data-title="Большая радость самому приехать к питомцам, которые очень тебя ждут">
                         </a>
-                        <div class="carousel-note"><p class="mb-4">Большая радость самому<br/>приехать к питомцам,
-                                которые<br/>очень тебя ждут</p></div>
+                        <div class="carousel-note"><p class="mb-4">Большая радость самому<br>приехать к питомцам, которые<br>очень тебя ждут</p></div>
                     </div>
 
-                    <div class="b-common-item">
-                        <a href="/dobrolap/images/report/06.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/06.jpg')"
-                           data-title="Каждый день маленьких помощников ждут добрые дела">
-                        </a>
-                        <div class="carousel-note"><p class="mb-4">Каждый день маленьких помощников ждут добрые дела</p></div>
-                    </div>
-
-                    <div class="b-common-item">
-                        <a href="/dobrolap/images/report/07.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/07.jpg')"
-                           data-title="Вместе с мамой ребята собрали большую посылку с лакомствами для друзей">
-                        </a>
-                        <div class="carousel-note"><p class="mb-4">Вместе с мамой ребята собрали большую посылку с лакомствами для друзей</p></div>
-                    </div>
-
-                    <div class="b-common-item">
-                        <a href="/dobrolap/images/report/08.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/08.jpg')"
-                           data-title="Катя и Даша узнали про Добролап в Инстаграмм и привели родителей">
-                        </a>
-                        <div class="carousel-note"><p class="mb-4">Катя и Даша узнали про Добролап в Инстаграмм и привели родителей</p></div>
-                    </div>
-
-                    <div class="b-common-item">
-                        <a href="/dobrolap/images/report/09.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/09.jpg')"
-                           data-title="Много корма не бывает! ">
-                        </a>
-                        <div class="carousel-note"><p class="mb-4">Много корма не бывает!</p></div>
-                    </div>
-
-                    <div class="b-common-item">
-                        <a href="/dobrolap/images/report/10.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/10.jpg')"
-                           data-title="Маша с мамой выбирают по списку, чтобы не упустить ничего важного">
-                        </a>
-                        <div class="carousel-note"><p class="mb-4">Маша с мамой выбирают по списку, чтобы не упустить ничего важного</p></div>
-                    </div>
-
-                    <div class="b-common-item">
-                        <a href="/dobrolap/images/report/11.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/11.jpg')"
-                           data-title="В приют отправились три коробочки с вкуснятиной, запас корма на месяц и уютные лежаки">
-                        </a>
-                        <div class="carousel-note"><p class="mb-4">В приют отправились три коробочки с вкуснятиной, запас корма на месяц и уютные лежаки</p></div>
-                    </div>
-
-                    <div class="b-common-item">
-                        <a href="/dobrolap/images/report/12.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/12.jpg')"
-                           data-title="У Маргариты это уже третий магнитик Добролап!">
-                        </a>
-                        <div class="carousel-note"><p class="mb-4">У Маргариты это уже третий магнитик Добролап!</p></div>
-                    </div>
-
-                    <div class="b-common-item">
-                        <a href="/dobrolap/images/report/13.jpg" data-lightbox="photos"
-                           class="photos__link"
-                           style="background-image: url('/dobrolap/images/report/13.jpg')"
-                           data-title="Долгожданная помощь отправляется в приюты каждую неделю">
-                        </a>
-                        <div class="carousel-note"><p class="mb-4">Долгожданная помощь отправляется в приюты каждую неделю</p></div>
-                    </div>
                 </div>
             </section>
         </div>
@@ -821,8 +736,8 @@ $APPLICATION->SetTitle("Добролап");
         <div class="col-md-12">
             <div class="row justify-content-center">
                 <div class="col-md-12 heading-section text-center ftco-animate">
-                    <h2 class="">Вместе мы сможем больше</h2>
-                    <hr/>
+                    <h2>Вместе мы сможем больше</h2>
+                    <hr>
                 </div>
             </div>
         </div>
@@ -830,10 +745,9 @@ $APPLICATION->SetTitle("Добролап");
             <div class="slider-item ">
                 <div class="overlay"></div>
                 <div class="container">
-                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
-                         data-scrollax-parent="true">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
                         <div class="home-slider__img">
-                            <img src="/dobrolap/images/together-more/banner-together-more1.jpg?v=1" alt=""/>
+                            <img src="/dobrolap/images/together-more/banner-together-more1.jpg?v=1" alt="">
                         </div>
                     </div>
                 </div>
@@ -841,10 +755,9 @@ $APPLICATION->SetTitle("Добролап");
             <div class="slider-item ">
                 <div class="overlay"></div>
                 <div class="container">
-                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
-                         data-scrollax-parent="true">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
                         <div class="home-slider__img">
-                            <img src="/dobrolap/images/together-more/banner-together-more7.jpg?v=1" alt=""/>
+                            <img src="/dobrolap/images/together-more/banner-together-more7.jpg?v=1" alt="">
                         </div>
                     </div>
                 </div>
@@ -852,10 +765,9 @@ $APPLICATION->SetTitle("Добролап");
             <div class="slider-item ">
                 <div class="overlay"></div>
                 <div class="container">
-                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
-                         data-scrollax-parent="true">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
                         <div class="home-slider__img">
-                            <img src="/dobrolap/images/together-more/banner-together-more5.jpg?v=1" alt=""/>
+                            <img src="/dobrolap/images/together-more/banner-together-more5.jpg?v=1" alt="">
                         </div>
                     </div>
                 </div>
@@ -863,10 +775,9 @@ $APPLICATION->SetTitle("Добролап");
             <div class="slider-item ">
                 <div class="overlay"></div>
                 <div class="container">
-                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
-                         data-scrollax-parent="true">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
                         <div class="home-slider__img">
-                            <img src="/dobrolap/images/together-more/banner-together-more4.jpg?v=1" alt=""/>
+                            <img src="/dobrolap/images/together-more/banner-together-more4.jpg?v=1" alt="">
                         </div>
                     </div>
                 </div>
@@ -874,10 +785,9 @@ $APPLICATION->SetTitle("Добролап");
             <div class="slider-item ">
                 <div class="overlay"></div>
                 <div class="container">
-                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
-                         data-scrollax-parent="true">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
                         <div class="home-slider__img">
-                            <img src="/dobrolap/images/together-more/banner-together-more3.jpg?v=1" alt=""/>
+                            <img src="/dobrolap/images/together-more/banner-together-more3.jpg?v=1" alt="">
                         </div>
                     </div>
                 </div>
@@ -885,10 +795,9 @@ $APPLICATION->SetTitle("Добролап");
             <div class="slider-item ">
                 <div class="overlay"></div>
                 <div class="container">
-                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
-                         data-scrollax-parent="true">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
                         <div class="home-slider__img">
-                            <img src="/dobrolap/images/together-more/banner-together-more2.jpg?v=1" alt=""/>
+                            <img src="/dobrolap/images/together-more/banner-together-more2.jpg?v=1" alt="">
                         </div>
                     </div>
                 </div>
@@ -896,10 +805,9 @@ $APPLICATION->SetTitle("Добролап");
             <div class="slider-item ">
                 <div class="overlay"></div>
                 <div class="container">
-                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
-                         data-scrollax-parent="true">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
                         <div class="home-slider__img">
-                            <img src="/dobrolap/images/together-more/banner-together-more6.jpg?v=1" alt=""/>
+                            <img src="/dobrolap/images/together-more/banner-together-more6.jpg?v=1" alt="">
                         </div>
                     </div>
                 </div>
@@ -911,8 +819,8 @@ $APPLICATION->SetTitle("Добролап");
         <div class="col-md-12">
             <div class="row justify-content-center">
                 <div class="col-md-12 heading-section text-center ftco-animate">
-                    <h2 class="">Добрые поездки</h2>
-                    <hr/>
+                    <h2>Добрые поездки</h2>
+                    <hr>
                     <h5 class="mb-4">КАЖДУЮ НЕДЕЛЮ В АВГУСТЕ МЫ ОТПРАВЛЯЛИСЬ В ГОСТИ В ПРИЮТЫ К НАШИМ ЧЕТВЕРОЛАПЫМ ДРУЗЬЯМ, ЧТОБЫ ОТВЕЗТИ НУЖНЫЕ И ДОЛГОЖДАННЫЕ ПОДАРКИ.
 ВМЕСТЕ МЫ СМОГЛИ БОЛЬШЕ!</h5>
                 </div>
@@ -921,8 +829,7 @@ $APPLICATION->SetTitle("Добролап");
         <div class="home-slider  owl-carousel">
             <div class="slider-item">
                 <div class="container">
-                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
-                         data-scrollax-parent="true">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
                         <?/*<video controls poster="/dobrolap/images/08_24_4lapy_Cats_02_1.jpg">
                             <source src="/upload/dobrolap/08_24_4lapy_Cats_02_1.mp4">
                             <source src="/upload/dobrolap/08_24_4lapy_Cats_02_1.ogv" type="video/webm">
@@ -938,8 +845,7 @@ $APPLICATION->SetTitle("Добролап");
 
             <div class="slider-item">
                 <div class="container">
-                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
-                         data-scrollax-parent="true">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
                         <?/* <video controls poster="/dobrolap/images/raise-preview2.jpg">
                             <source src="/upload/dobrolap/4lapi_priut_14_08_2.mp4">
                             <source src="/upload/dobrolap/4lapi_priut_14_08_2.ogv" type="video/webm">
@@ -953,6 +859,4 @@ $APPLICATION->SetTitle("Добролап");
                 </div>
             </div>
         </div>
-    </section>
-
-<? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/footer.php"); ?>
+    </section><? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/footer.php"); ?>
