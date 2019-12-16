@@ -212,16 +212,6 @@ class BasketController extends BaseController
      */
     public function postUserCartAction(PostUserCartRequest $postUserCartRequest): UserCartResponse
     {
-        try {
-            $this->logger->info('fuser req step1', [
-                $this->appUserService->getCurrentFUserId(),
-                $this->appUserService->getCurrentUserId(),
-                $_SESSION
-            ]);
-        } catch (Exception $e) {
-            $this->logger->info('fuser req', [$e->getMessage()]);
-        }
-
         $gifts = [];
         foreach ($postUserCartRequest->getGoods() as $productQuantity) {
             if ($productQuantity->getDiscountId()) {
@@ -246,26 +236,6 @@ class BasketController extends BaseController
                     );
                 }
             }
-
-            try {
-                $this->logger->info('fuser req step2', [
-                    $this->appUserService->getCurrentFUserId(),
-                    $this->appUserService->getCurrentUserId(),
-                    $_SESSION
-                ]);
-            } catch (Exception $e) {
-                $this->logger->info('fuser req', [$e->getMessage()]);
-            }
-        }
-
-        try {
-            $this->logger->info('fuser req step3', [
-                $this->appUserService->getCurrentFUserId(),
-                $this->appUserService->getCurrentUserId(),
-                $_SESSION
-            ]);
-        } catch (Exception $e) {
-            $this->logger->info('fuser req', [$e->getMessage()]);
         }
 
         if (!empty($gifts)) {
@@ -274,16 +244,6 @@ class BasketController extends BaseController
         }
 
         $res = $this->getUserCartAction(new UserCartRequest());
-
-        try {
-            $this->logger->info('fuser req step4', [
-                $this->appUserService->getCurrentFUserId(),
-                $this->appUserService->getCurrentUserId(),
-                $_SESSION
-            ]);
-        } catch (Exception $e) {
-            $this->logger->info('fuser req', [$e->getMessage()]);
-        }
 
         return $res;
     }

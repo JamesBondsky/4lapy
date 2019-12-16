@@ -2,11 +2,9 @@
 
 namespace FourPaws\MobileApiBundle\Security;
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\MobileApiBundle\Entity\ApiUserSession;
 use FourPaws\MobileApiBundle\Exception\InvalidTokenException;
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
-use FourPaws\MobileApiBundle\Traits\MobileApiLoggerAwareTrait;
 use FourPaws\UserBundle\Security\BitrixUserProviderInterface;
 use Symfony\Component\Security\Core\Authentication\Provider\AuthenticationProviderInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -14,8 +12,6 @@ use Symfony\Component\Security\Core\Role\Role;
 
 class ApiTokenProvider implements AuthenticationProviderInterface
 {
-    use MobileApiLoggerAwareTrait;
-
     /**
      * @var ApiUserSessionRepository
      */
@@ -36,8 +32,6 @@ class ApiTokenProvider implements AuthenticationProviderInterface
         $this->sessionRepository = $sessionRepository;
         $this->cUser = new \CUser();
         $this->bitrixUserProvider = $bitrixUserProvider;
-
-        $this->setLogger(LoggerFactory::create('ApiTokenProvider', 'mobileApi'));
     }
 
     /**
@@ -51,13 +45,6 @@ class ApiTokenProvider implements AuthenticationProviderInterface
     {
         $session = $this->sessionRepository->findByToken($token->getToken());
 
-        try {
-            $this->logger->info('session', [
-                'session' => print_r($session, true),
-                'token' => print_r($token, true)
-            ]);
-        } catch (\Exception $e) {}
-
         if (!$session) {
             throw new InvalidTokenException('Invalid token provided');
         }
@@ -68,19 +55,7 @@ class ApiTokenProvider implements AuthenticationProviderInterface
         if ($this->initBySession($session) && $session->getUserId()) {
             $user = $this->bitrixUserProvider->loadUserById($session->getUserId());
             $user->getRolesCollection()->add(new Role('ROLE_API'));
-
-            $this->logger->info('find session', [
-                'session_user_id' => $session->getUserId(),
-                'user_id' => $user->getId(),
-                'fuser' => $session->getFUserId(),
-                'session' => $_SESSION,
-                'request' => $_REQUEST,
-            ]);
         } else {
-            $this->logger->info('init new session', [
-                'fuser' => $session->getFUserId(),
-                'user_id' => $session->getUserId()
-            ]);
             $this->initFUserIdByToken($session->getFUserId());
         }
 
