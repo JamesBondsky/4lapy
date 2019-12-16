@@ -142,12 +142,12 @@ class Event extends BaseServiceHandler
             'socialservices');
 
         /** проставление группы правила работы с корзиной */
-        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'updateBasketRuleGroup'], 'main');
+//        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'updateBasketRuleGroup'], 'main');
 
         /** при смене города */
         static::initHandlerCompatible('OnCityChange', [self::class, 'updateBasketDiscountProperties'], 'main');
 
-//        static::initHandler('OnUserLogin', [self::class,'updateSessionCounter'], 'main');
+        static::initHandler('OnUserLogin', [self::class,'updateSessionCounter'], 'main');
     }
 
     /**
