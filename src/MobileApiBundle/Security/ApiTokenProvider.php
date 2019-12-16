@@ -71,7 +71,9 @@ class ApiTokenProvider implements AuthenticationProviderInterface
 
             $this->logger->info('find session', [
                 'session_user_id' => $session->getUserId(),
-                'user_id' => $user->getId()
+                'user_id' => $user->getId(),
+                'fuser' => $session->getFUserId(),
+                'session' => $_SESSION
             ]);
         } else {
             $this->logger->info('init new session', [
