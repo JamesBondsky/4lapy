@@ -181,10 +181,6 @@ class Event extends BaseServiceHandler
         $module = 'sale';
         static::initHandler('OnOrderNewSendEmail', [self::class, 'cancelEventAddition'], $module);
         static::initHandler('OnOrderPaySendEmail', [self::class, 'cancelEventAddition'], $module);
-
-        /* Обновление шансов после оформления заказа */
-        static::initHandler('OnSaleOrderSaved', [self::class, 'updateUserChances'], $module);
-        static::initHandler('OnSaleStatusOrderChange', [self::class, 'updateUserChances'], $module);
     }
 
     /**
@@ -1108,19 +1104,9 @@ class Event extends BaseServiceHandler
 
     public function cancelEventAddition($orderId, string $eventName)
     {
-        if (in_array($eventName, ['SALE_NEW_ORDER' , 'SALE_ORDER_PAID'])) // проверка избыточна, но на всякий случай сделана, чтобы не заблочили другие события
+        if (in_array($eventName, ['SALE_NEW_ORDER', 'SALE_ORDER_PAID'])) // проверка избыточна, но на всякий случай сделана, чтобы не заблочили другие события
         {
             return false;
         }
-    }
-
-    public function updateUserChances(BitrixEvent $event): void
-    {
-        /** @var Order $order */
-        $order = $event->getParameter('ENTITY');
-
-        /** @var ChanceService $chanceService */
-        $chanceService = Application::getInstance()->getContainer()->get(ChanceService::class);
-        $chanceService->updateUserChance($order->getUserId());
     }
 }
