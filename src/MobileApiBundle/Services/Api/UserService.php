@@ -540,17 +540,17 @@ class UserService
             throw new SessionUnavailableException();
         }
     
-        $token = $this->createToken();
-        
         $currentUser = $this->userBundleService->getCurrentUser();
-        $currentUser->setDisposableToken($token);
         
+        $token = $this->createToken($currentUser->getId());
+        
+        $currentUser->setDisposableToken($token);
         $this->userBundleService->getUserRepository()->update($currentUser);
         
         return $token;
     }
     
-    private function createToken(): string
+    private function createToken($userId): string
     {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $randstring = '';
@@ -558,6 +558,8 @@ class UserService
         for ($i = 0; $i < 30; $i++) {
             $randstring .= $characters[rand(0, strlen($characters))];
         }
+        
+        $randstring .= $userId;
         
         return $randstring;
     }
