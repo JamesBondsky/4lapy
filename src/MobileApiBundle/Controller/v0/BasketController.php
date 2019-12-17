@@ -237,11 +237,15 @@ class BasketController extends BaseController
                 }
             }
         }
+
         if (!empty($gifts)) {
             /** @noinspection PhpUndefinedMethodInspection */
             $this->appBasketService->getAdder('gift')->selectGifts($gifts);
         }
-        return $this->getUserCartAction(new UserCartRequest());
+
+        $res = $this->getUserCartAction(new UserCartRequest());
+
+        return $res;
     }
 
     /**
