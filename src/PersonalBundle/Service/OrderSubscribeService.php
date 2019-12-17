@@ -871,15 +871,17 @@ class OrderSubscribeService implements LoggerAwareInterface
             $basket = $this->getBasketBySubscribeId($subscribe->getId());
 
             $locationId = $subscribe->getLocationId();
-            if ($locationId == \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
-                $address = $subscribe->getDeliveryPlace();
-                $okato = $this->locationService->getDadataLocationOkato($address);
-                $locations = $this->locationService->findLocationByExtService($this->locationService::OKATO_SERVICE_CODE, $okato);
+            if ($locationId == \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE && in_array($deliveryCode, [\FourPaws\DeliveryBundle\Service\DeliveryService::INNER_DELIVERY_CODE, \FourPaws\DeliveryBundle\Service\DeliveryService::EXPRESS_DELIVERY_CODE])) {
+                try {
+                    $address = $subscribe->getDeliveryPlace();
+                    $okato = $this->locationService->getDadataLocationOkato($address);
+                    $locations = $this->locationService->findLocationByExtService($this->locationService::OKATO_SERVICE_CODE, $okato);
 
-                if (count($locations)) {
-                    $location = current($locations);
-                    $locationId = $location['CODE'];
-                }
+                    if (count($locations)) {
+                        $location = current($locations);
+                        $locationId = $location['CODE'];
+                    }
+                } catch (\Exception $e) {}
             }
 
             $arCalculationResult = $deliveryService->getByBasket($basket, $locationId, [$deliveryCode]);
