@@ -2,6 +2,8 @@
 
 use Bitrix\Main\Loader;
 use Bitrix\Iblock\SectionTable;
+use FourPaws\Enum\IblockType;
+use FourPaws\Enum\IblockCode;
 
 /**
  * Class FlagmanMenu
@@ -24,9 +26,9 @@ class FlagmanMenu extends \CBitrixComponent
     {
         Loader::includeModule('iblock');
         
-        $iblockTrainingId = $this->getIblockTrainingId();
-        $iblockLectionId  = $this->getIblockLectionId();
-        $iblockGroomingId = $this->getIblockGroomingId();
+        $iblockTrainingId = $this->getIblockId(IblockCode::FLAGMAN_TRAINING);
+        $iblockLectionId  = $this->getIblockId(IblockCode::FLAGMAN_LECTIONS);
+        $iblockGroomingId = $this->getIblockId(IblockCode::FLAGMAN_GROOMING);
         
         $groomingActivity = $this->setGroomingActivity($iblockGroomingId);
         $trainingActivity = $this->setTrainingActivity($iblockTrainingId);
@@ -37,27 +39,11 @@ class FlagmanMenu extends \CBitrixComponent
         }
     }
     
-    private function getIblockTrainingId()
+    private function getIblockId($code)
     {
         return \CIBlock::GetList([], [
-            'TYPE' => 'grandin',
-            'CODE' => 'flagman_training',
-        ])->Fetch()['ID'];
-    }
-    
-    private function getIblockLectionId()
-    {
-        return \CIBlock::GetList([], [
-            'TYPE' => 'grandin',
-            'CODE' => 'flagman_lections',
-        ])->Fetch()['ID'];
-    }
-    
-    private function getIblockGroomingId()
-    {
-        return \CIBlock::GetList([], [
-            'TYPE' => 'grandin',
-            'CODE' => 'flagman_grooming',
+            'TYPE' => IblockType::GRANDIN,
+            'CODE' => $code,
         ])->Fetch()['ID'];
     }
     
