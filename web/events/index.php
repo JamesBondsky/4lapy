@@ -11,9 +11,9 @@ $APPLICATION->SetTitle('Запись на услуги');
         'articul:flagman.menu',
         '',
         [
-            'SHOW_GROOMING' => 'Y',
+            'SHOW_GROOMING' => 'N',
             'SHOW_LECTION'  => 'N',
-            'SHOW_TRAINING' => 'Y',
+            'SHOW_TRAINING' => 'N',
         ],
         false
     );

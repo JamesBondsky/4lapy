@@ -159,10 +159,10 @@ class OrderService implements LoggerAwareInterface
 
     /** @var Manzana */
     private $manzana;
-    
+
     /** @var OrderParameter */
     private $orderParameter;
-    
+
     /** @var orderCalculate */
     private $orderCalculate;
 
@@ -367,10 +367,10 @@ class OrderService implements LoggerAwareInterface
             $currentMinusMonthDate = (new \DateTime)->modify('-1 month');
             $orderDateUpdate = \DateTime::createFromFormat('d.m.Y H:i:s', $order->getDateUpdate()->toString());
             $isCompleted = $orderDateUpdate < $currentMinusMonthDate || in_array($order->getStatusId(), $closedOrderStatuses, true);
-    
+
             $this->orderCalculate = $this->getOrderCalculate($basketProducts, false, 0, $order);
             $this->orderParameter = $this->getOrderParameter($basketProducts, $order, $text, $icons);
-            
+
             $response
                 ->setId($order->getAccountNumber())
                 ->setDateFormat($dateInsert)
@@ -380,6 +380,10 @@ class OrderService implements LoggerAwareInterface
                 ->setPaid($order->isPayed())
                 ->setCartParam($this->orderParameter)
                 ->setCartCalc($this->orderCalculate);
+            
+            if ($order->getDeliveryId() == getenv('EXPRESS_DELIVERY_4LAPY_ID') || $order->getDeliveryId() == getenv('EXPRESS_DELIVERY_DOSTAVISTA_ID')) {
+                $response->setCanBeCanceled(0);
+            }
         }
 
         return $response;
@@ -703,7 +707,7 @@ class OrderService implements LoggerAwareInterface
         }
 
         $bonusVulnerablePrice = (90 * ($totalPrice->getActual() - $totalPrice->getCourierPrice())) / 100;
-        
+
         $stampsAdded = $this->manzana->getStampsToBeAdded();
         $stampService = $this->stampService;
         $stampsUsed = array_reduce($basketProducts->getValues(), static function($carry, $product) use ($stampService) {
@@ -1212,6 +1216,11 @@ class OrderService implements LoggerAwareInterface
             $itemData,
             $totalWeight,
         ];
+    }
+
+    public function getOrderIdByNumber($number)
+    {
+        return \CSaleOrder::GetList([], ['ACCOUNT_NUMBER' => $number], false, false, ['ID'])->fetch()['ID'];
     }
 
     /**

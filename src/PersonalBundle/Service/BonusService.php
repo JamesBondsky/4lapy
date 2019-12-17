@@ -316,7 +316,7 @@ class BonusService
                 $card->contactId
             );
 
-            if (!$newCard || !\in_array($newCard->status, [Card::STATUS_NEW, Card::STATUS_ACTIVE], true)) {
+            if (!$newCard || !\in_array($newCard->status, [Card::STATUS_NEW, Card::STATUS_ACTIVE], true) || $card->contactId) {
                 throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
             }
         } catch (CardNotFoundException $e) {
@@ -343,6 +343,11 @@ class BonusService
             /** @var ArrayCollection $cards */
             $oldCardId = '';
             $cards = $client->cards;
+
+            if (!isset($cards)) {
+                $cards = new ArrayCollection();
+            }
+
             if (!$cards->isEmpty()) {
                 foreach ($cards as $userCard) {
                     $card = $this->manzanaService->getCardInfo($userCard->cardNumber, $client->contactId);

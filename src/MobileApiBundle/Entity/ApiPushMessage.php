@@ -242,10 +242,10 @@ class ApiPushMessage
     }
 
     /**
-     * @param int $eventId
+     * @param string $eventId
      * @return ApiPushMessage
      */
-    public function setEventId(int $eventId): ApiPushMessage
+    public function setEventId(string $eventId): ApiPushMessage
     {
         $this->eventId = $eventId;
         return $this;

@@ -81,6 +81,10 @@ class KkmService implements LoggerAwareInterface
             'code'    => 205,
             'message' => 'Успешно, но товар закончился на складе'
         ],
+        'success_not_found' => [
+            'code'    => 206,
+            'message' => 'Успешно, но'
+        ],
         'syntax_error'   => [
             'code'    => 400,
             'message' => 'В запросе синтаксическая ошибка'
@@ -465,8 +469,8 @@ class KkmService implements LoggerAwareInterface
 
             if ($offers->count() == 0) {
                 throw new KkmException(
-                    static::RESPONSE_STATUSES['syntax_error']['message'] . ': не найдены товары',
-                    static::RESPONSE_STATUSES['syntax_error']['code']
+                    static::RESPONSE_STATUSES['success_not_found']['message'] . ': не найдены товары',
+                    static::RESPONSE_STATUSES['success_not_found']['code']
                 );
             }
 
@@ -573,7 +577,7 @@ class KkmService implements LoggerAwareInterface
             if (count($errorsOffers) > 0) {
                 $rc = false;
             }
-            
+
             $deliveryRules = [
                 'rc'      => $rc,
                 'courier' => [

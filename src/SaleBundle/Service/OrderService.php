@@ -135,6 +135,8 @@ class OrderService implements LoggerAwareInterface
      */
     public const STORE = 'DC01';
 
+    public static $isSubscription = false;
+
     /**
      * @var AddressService
      */
@@ -1264,6 +1266,8 @@ class OrderService implements LoggerAwareInterface
                 'SUBSCRIBE_ID',
                 $storage->getSubscribeId()
             );
+
+            self::$isSubscription = true;
         }
 
         $shipmentPlaceCode = $this->getOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE')->getValue();

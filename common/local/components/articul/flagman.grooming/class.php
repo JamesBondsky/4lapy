@@ -5,7 +5,8 @@ use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Query\Join;
-use \Bitrix\Main\Entity\Query;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Iblock\ElementTable;
 
 /**
  * Class FlagmanGrooming
@@ -38,14 +39,20 @@ class FlagmanGrooming extends \CBitrixComponent
             Loader::includeModule('iblock');
             $this->iblockId = $this->getIblockId();
     
-            $this->arResult['CLINICS'] = $this->getClinics();
-
-            $this->includeComponentTemplate();
-            
-            if (!$this->iblockId) {
+            $check = $this->checkElements();
+    
+            if (!$check) {
                 $this->abortResultCache();
             }
+            
+            if ($check) {
+                $this->arResult['CLINICS'] = $this->getClinics();
+        
+                $this->includeComponentTemplate();
+            }
         }
+    
+        return false;
     }
     
     /**
@@ -56,6 +63,9 @@ class FlagmanGrooming extends \CBitrixComponent
         return \CIBlock::GetList([], ['CODE' => $this->iblockCode])->Fetch()['ID'];
     }
     
+    /**
+     * @return array
+     */
     private function getClinics()
     {
         $result = [];
@@ -67,11 +77,38 @@ class FlagmanGrooming extends \CBitrixComponent
                 ->setOrder(['SORT' => 'ASC'])
                 ->exec()
                 ->fetchAll();
-        
+            
         } catch (\Exception $e) {
             echo $e->getMessage();
         }
         
         return $result;
+    }
+    
+    /**
+     * @return bool
+     */
+    private function checkElements()
+    {
+        try {
+            $items = SectionTable::query()
+                ->setSelect(['ID', 'NAME'])
+                ->setFilter(['=IBLOCK_ID' => $this->iblockId, '=ACTIVE' => 'Y', '=DEPTH_LEVEL' => 2])
+                ->setOrder(['SORT' => 'ASC'])
+                ->exec()
+                ->fetchAll();
+        } catch (\Exception $e) {
+            echo $e->getMessage();
+        }
+        
+        foreach ($items as $item) {
+            preg_match('/^([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $item['NAME'], $matches);
+            
+            if (strtotime(date('d.m.Y')) < strtotime($matches[0])) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 }
