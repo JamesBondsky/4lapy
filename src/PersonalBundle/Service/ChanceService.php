@@ -109,8 +109,8 @@ class ChanceService
         }
 
         $data = [];
-        foreach ($this->periods as $period) {
-            $data[$period] = 0;
+        foreach ($this->periods as $periodId => $period) {
+            $data[$periodId] = 0;
         }
 
         $addResult = $this->getDataManager()::add([
@@ -250,15 +250,14 @@ class ChanceService
 
             $data = unserialize($userResult['UF_DATA']);
 
-            foreach ($this->periods as $currentPeriod) {
-                $data[$currentPeriod] = $this->getUserPeriodChance($userId, $currentPeriod);
+            foreach ($this->periods as $periodId => $currentPeriod) {
+                $data[$periodId] = $this->getUserPeriodChance($userId, $periodId);
             }
 
             $this->getDataManager()::update(
                 $userResult['ID'],
                 ['UF_DATA' => serialize($data)]
             );
-
         } catch (Exception $e) {
         }
     }
