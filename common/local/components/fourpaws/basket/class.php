@@ -432,7 +432,8 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
         $this->arResult['OFFER_MIN_DELIVERY'] = [];
         $this->arResult['ONLY_PICKUP'] = [];
         $haveOrder = $basket->getOrder() instanceof Order;
-        $deliveries = $this->getDeliveryService()->getByBasket($basket);
+//        $deliveries = $this->getDeliveryService()->getByBasket($basket);
+        $deliveries = $this->getDeliveryService()->getByLocation();
 
         $availableExpress = false;
         foreach ($deliveries as $delivery) {
@@ -449,6 +450,11 @@ class BasketComponent extends CBitrixComponent implements LoggerAwareInterface
                 $delivery = $calculationResult;
                 break;
             }
+        }
+
+        if (!$this->getDeliveryService()->isExpressDelivery($delivery)) {
+            $this->arResult['HAS_DELIVERY'] = true;
+            $availableExpress = false;
         }
 
         /** @var BasketItem $basketItem */
