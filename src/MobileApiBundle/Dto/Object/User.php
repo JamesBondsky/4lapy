@@ -114,7 +114,7 @@ class User
      * @Serializer\SerializedName("stamps_october_active")
      * @var bool
      */
-    protected $octoberStampsOfferActive = true;
+    protected $octoberStampsOfferActive = false;
 
 
     /**
