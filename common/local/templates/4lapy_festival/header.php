@@ -28,7 +28,7 @@ $markup = PawsApplication::markup();
     <meta content="width=device-width, initial-scale=1" name="viewport"/>
     <meta content="" name="description"/>
     <meta content="" name="author"/>
-    <meta name="yandex-verification" content="6266e34669b85ed6">
+    <meta name="yandex-verification" content="d69492b0ac6396cf" />
 
     <?php /** @todo Mobe onto right place  */ ?>
     <script src="/static/build/js/jquery/jquery.min.js"></script>
