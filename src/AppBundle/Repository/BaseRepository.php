@@ -281,7 +281,7 @@ class BaseRepository
         foreach ($allItems as &$item) {
             $item['CAN_BE_CANCELED'] = 1;
             
-            if ($item['DELIVERY_ID'] == getenv('EXPRESS_DELIVERY_ID')) {
+            if ($item['DELIVERY_ID'] == getenv('EXPRESS_DELIVERY_4LAPY_ID') || $item['DELIVERY_ID'] == getenv('EXPRESS_DELIVERY_DOSTAVISTA_ID')) {
                 $item['CAN_BE_CANCELED'] = 0;
             }
         }

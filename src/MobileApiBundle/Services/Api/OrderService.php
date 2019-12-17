@@ -372,7 +372,7 @@ class OrderService implements LoggerAwareInterface
                 ->setCartParam($this->getOrderParameter($basketProducts, $order, $text, $icons))
                 ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
             
-            if ($order->getDeliveryId() == getenv('EXPRESS_DELIVERY_ID')) {
+            if ($order->getDeliveryId() == getenv('EXPRESS_DELIVERY_4LAPY_ID') || $order->getDeliveryId() == getenv('EXPRESS_DELIVERY_DOSTAVISTA_ID')) {
                 $response->setCanBeCanceled(0);
             }
         }
