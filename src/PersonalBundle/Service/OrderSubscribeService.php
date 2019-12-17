@@ -100,6 +100,8 @@ class OrderSubscribeService implements LoggerAwareInterface
     // при запуске из консоли SITE_ID определяется как 's2'
     const SITE_ID = 's1';
 
+    public static $isSubscription = false;
+
     /**
      * Интервалы доставки
      * @var array $frequencies
@@ -1344,6 +1346,8 @@ class OrderSubscribeService implements LoggerAwareInterface
                     'IS_SUBSCRIBE',
                     'Y'
                 );
+                self::$isSubscription = true;
+
                 $orderCopyHelper->setPropValueByCode(
                     'COPY_ORDER_ID',
                     $copyOrderId
