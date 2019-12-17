@@ -12,6 +12,8 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Sale\OrderTable;
 use DateTime;
 use Exception;
+use FourPaws\App\Application;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
@@ -107,11 +109,8 @@ class ChanceService
         }
 
         $data = [];
-        try {
-            foreach ($this->periods as $currentPeriod) {
-                $data[$currentPeriod] = $this->getUserPeriodChance($user->getId(), $currentPeriod);
-            }
-        } catch (Exception $e) {
+        foreach ($this->periods as $period) {
+            $data[$period] = 0;
         }
 
         $addResult = $this->getDataManager()::add([
@@ -126,11 +125,11 @@ class ChanceService
 
         TaggedCacheHelper::clearManagedCache(['ny2020:user.chances']);
 
-        try {
-            return $data[$this->getCurrentPeriod()] ?? 0;
-        } catch (Exception $e) {
-            return 0;
-        }
+        /** @var ManzanaService $manzanaService */
+        $manzanaService = Application::getInstance()->getContainer()->get(ManzanaService::class);
+        $manzanaService->importUserOrdersAsync($user);
+
+        return 0;
     }
 
     /**
@@ -259,8 +258,29 @@ class ChanceService
                 $userResult['ID'],
                 ['UF_DATA' => serialize($data)]
             );
+
         } catch (Exception $e) {
         }
+    }
+
+    /**
+     * @param null $currentPeriod
+     * @throws Exception
+     */
+    public function updateAllUserChance($currentPeriod = null): void
+    {
+        $res = $this->getDataManager()::query()
+            ->setSelect(['UF_USER_ID'])
+            ->exec();
+
+        while ($user = $res->fetch()) {
+            $this->updateUserChance($user['UF_USER_ID'], $currentPeriod);
+        }
+    }
+
+    public function getPeriods(): array
+    {
+        return $this->periods;
     }
 
     /**

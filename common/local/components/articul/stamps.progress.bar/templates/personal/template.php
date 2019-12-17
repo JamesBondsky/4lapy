@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Grid\Declension;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\PersonalBundle\Service\StampService;
 
 
@@ -90,7 +91,7 @@ $marksDeclension = new Declension('марка', 'марки', 'марок');
         </div>
 
         <div class="balance-comfortable-living__conditions-wrap">
-            <a href="/home/" target="_blank" class="balance-comfortable-living__conditions">Подробные условия</a>
+            <a href="/home/" <?php if (!KioskService::isKioskMode()) {?>target="_blank"<?php } ?> class="balance-comfortable-living__conditions">Подробные условия</a>
         </div>
     </div>
 </div>

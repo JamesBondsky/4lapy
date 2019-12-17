@@ -93,7 +93,7 @@ if (!$currentOffer->getImagesIds()) {
         if ($offers->count() > 0) {
 
             /** @noinspection PhpUnhandledExceptionInspection */
-            if ($currentOffer->getPackageLabelType() === Offer::PACKAGE_LABEL_TYPE_SIZE) {
+            if ($packageLabelType === Offer::PACKAGE_LABEL_TYPE_SIZE) {
                 ?>
                 <div class="b-common-item__variant">Размеры</div>
                 <?php
@@ -151,9 +151,8 @@ if (!$currentOffer->getImagesIds()) {
                                data-onmousedown="<?= $getOnMouseDown($offer) ?>"
                                data-image="<?= $offerImage ?>"
                                data-link="<?= $offer->getLink() ?>"
-                                <?php if ($image && !empty($image)) { ?>
-                               style="background-image: url(<?= $image ?>); background-color: <?= $hexColor ? '#' . $hexColor : '' ?>;"><?= $hexColor ? '' : $value ?>
-                                <?php } ?>
+                               style="background-image: url(<?= $image ?>); background-color: <?= $hexColor ? '#' . $hexColor : '' ?>;">
+                                <?= $hexColor ? '' : $value ?>
                             </a>
                         </li>
                         <?php
