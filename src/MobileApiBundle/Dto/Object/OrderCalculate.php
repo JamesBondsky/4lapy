@@ -70,6 +70,14 @@ class OrderCalculate
      * @var bool
      */
     protected $isPhoneCallAvailable = true;
+    
+    /**
+     * 90% от цены товара без учета доставки, которую можно заменить бонусами
+     * @Serializer\SerializedName("bonus_vulnerable_price")
+     * @Serializer\Type("float")
+     * @var float
+     */
+    protected $bonusVulnerablePrice;
 
     /**
      * @return Price
@@ -228,6 +236,25 @@ class OrderCalculate
     public function setPromoCodeResult(string $promoCodeResult): OrderCalculate
     {
         $this->promoCodeResult = $promoCodeResult;
+        return $this;
+    }
+    
+    /**
+     * @return int
+     */
+    public function getBonusVulnerablePrice(): float
+    {
+        return $this->bonusVulnerablePrice;
+    }
+    
+    /**
+     * @param float $bonusVulnerablePrice
+     *
+     * @return OrderCalculate
+     */
+    public function setBonusVulnerablePrice(float $bonusVulnerablePrice): OrderCalculate
+    {
+        $this->bonusVulnerablePrice = $bonusVulnerablePrice;
         return $this;
     }
 }

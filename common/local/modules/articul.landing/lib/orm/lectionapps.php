@@ -47,7 +47,19 @@ class LectionAppsTable extends Main\Entity\DataManager
             ),
             'UF_EVENT_ID' => array(
                 'data_type' => 'integer',
-            )
+            ),
+            'UF_EMAIL' => array(
+                'data_type' => 'string',
+            ),
+            'UF_DATE_CREATE' => array(
+                'data_type' => 'string',
+            ),
+            'UF_LECTION_NAME' => array(
+                'data_type' => 'string',
+            ),
+            'UF_LECTION_DATE' => array(
+                'data_type' => 'string',
+            ),
         );
     }
 }

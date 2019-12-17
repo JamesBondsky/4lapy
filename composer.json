@@ -90,7 +90,7 @@
     "sypexgeo_local": "./common/local/resources/sypexgeo/SxGeoCity.dat"
   },
   "require": {
-    "4Lapy/bitrix": "dev-local",
+    "4lapy/bitrix": "dev-prod",
     "adv/bitrix-tools": "^1.0",
     "adv/yandex-market-api": "^1.0",
     "andreyryabin/sprint.migration": "^2.3",

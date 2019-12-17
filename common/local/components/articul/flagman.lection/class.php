@@ -48,14 +48,15 @@ class FlagmanLection extends \CBitrixComponent
             ->setSelect([
                 'ID',
                 'NAME',
-                'PREVIEW_PICTURE',
                 'FREE_SITS'         => 'UTS.FREE_SITS',
                 'SITS'              => 'UTS.SITS',
                 'SECTION_NAME'      => 'SECTION.NAME',
                 'SECTION_ID'        => 'SECTION.ID',
                 'MAIN_SECTION_NAME' => 'MAIN_SECTION.NAME',
+                'MAIN_SECTION_SORT' => 'MAIN_SECTION.SORT',
+                'PICTURE'           => 'MAIN_SECTION.PICTURE',
             ])
-            ->setFilter(['=IBLOCK_ID' => $iblockId, '>UTS.FREE_SITS' => 0])
+            ->setFilter(['=IBLOCK_ID' => $iblockId, '=ACTIVE' => 'Y'])
             ->registerRuntimeField(new ReferenceField(
                 'SECTION',
                 'Bitrix\Iblock\SectionTable',
@@ -66,6 +67,7 @@ class FlagmanLection extends \CBitrixComponent
                 'Bitrix\Iblock\SectionTable',
                 ['=this.SECTION.IBLOCK_SECTION_ID' => 'ref.ID']
             ))
+            ->setOrder(['SORT' => 'ASC'])
             ->exec()
             ->fetchAll();
     }
@@ -76,10 +78,24 @@ class FlagmanLection extends \CBitrixComponent
     private function groupItems($items)
     {
         foreach ($items as $key => $item) {
-            $this->arResult['ITEMS'][$item['SECTION_ID']]['SECTION_NAME']              = $item['SECTION_NAME'];
-            $this->arResult['ITEMS'][$item['SECTION_ID']]['MAIN_SECTION_NAME']         = $item['MAIN_SECTION_NAME'];
+            $this->arResult['ITEMS'][$item['SECTION_ID']]['SECTION_NAME']      = $item['SECTION_NAME'];
+            $this->arResult['ITEMS'][$item['SECTION_ID']]['PICTURE']           = \CFile::GetPath($item['PICTURE']);
+            $this->arResult['ITEMS'][$item['SECTION_ID']]['MAIN_SECTION_NAME'] = $item['MAIN_SECTION_NAME'];
+            $this->arResult['ITEMS'][$item['SECTION_ID']]['MAIN_SECTION_SORT'] = $item['MAIN_SECTION_SORT'];
+            if ($item['FREE_SITS'] <= 0) {
+                continue;
+            }
+            
             $this->arResult['ITEMS'][$item['SECTION_ID']]['DETAIL_INFO'][$key]['NAME'] = $item['NAME'];
             $this->arResult['ITEMS'][$item['SECTION_ID']]['DETAIL_INFO'][$key]['ID']   = $item['ID'];
+        }
+        
+        foreach ($this->arResult['ITEMS'] as &$element) {
+            $element['AVAILABLE'] = 'Y';
+            
+            if (!$element['DETAIL_INFO']) {
+                $element['AVAILABLE'] = 'N';
+            }
         }
     }
     
@@ -89,9 +105,13 @@ class FlagmanLection extends \CBitrixComponent
             uasort($item['DETAIL_INFO'], function ($a, $b) {
                 preg_match('/^([0-9]{2})/', $a['NAME'], $matchesA);
                 preg_match('/^([0-9]{2})/', $b['NAME'], $matchesB);
-
+                
                 return ($matchesA[0] > $matchesB[0]) ? 1 : -1;
             });
         }
+        
+        uasort($this->arResult['ITEMS'], function ($a, $b) {
+            return ($a > $b) ? -1 : 1;
+        });
     }
 }
