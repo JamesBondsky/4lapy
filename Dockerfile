@@ -66,7 +66,6 @@ RUN chown -R www-data:www-data var
 
 COPY ./composer.json /application/composer.json
 COPY ./composer.lock /application/composer.lock
-COPY ./.php_cs /application/.php_cs
 
 RUN mkdir /root/.ssh/
 RUN touch /root/.ssh/known_hosts
@@ -82,6 +81,8 @@ RUN set -eux; \
 RUN cd /application/vendor/4lapy/bitrix && git pull && cd /application
 RUN chmod -R 777 /application/vendor/yandex-market-api
 RUN chown -R www-data:www-data /application/vendor/yandex-market-api
+
+RUN ls -s /application/vendor/4lapy/bitrix /application/common/bitrix
 
 CMD ["php-fpm"]
 
