@@ -25,6 +25,7 @@ services:
       - ./app:/application/app:rw,cached
       - ./bin:/application/bin:rw,cached
       - app-local-sync:/application/common/local:nocopy
+      - ./common/static/build:/application/common/static/build:ro
       - ./common/static/versions.json:/application/common/static/versions.json:ro
       - app-src-sync:/application/src:nocopy
       - app-web-sync:/application/web:nocopy
