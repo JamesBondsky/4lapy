@@ -1,4 +1,4 @@
-version: '3.4'
+version: '3.7'
 
 services:
   nginx:
@@ -22,8 +22,11 @@ services:
       context: ./
       target: php
     volumes:
-#      - nfsmount:/application:rw,cached
-      - ./:/application:rw,cached
+      - app-app-sync:/application/app:nocopy
+      - app-bin-sync:/application/bin:nocopy
+      - app-common-sync:/application/common:nocopy
+      - app-src-sync:/application/src:nocopy
+      - app-web-sync:/application/web:nocopy
       - ./var/logs:/adv/vhosts/4lapy/logs:rw
       - ./var/sap-exchange:/home/sap-exchange:rw
       - ./var/sap-exchange-prod:/home/sap-exchange-prod:rw
@@ -75,10 +78,14 @@ volumes:
   redis-data: {}
   elasticsearch-data: {}
   phpsocket: {}
-#  nfsmount:
-#    driver: local
-#    driver_opts:
-#      type: nfs
-#      o: addr=host.docker.internal,rw,nolock,hard,nointr,nfsvers=3
-#      device: ":/System/Volumes/Data/${PWD}"
+  app-app-sync:
+    external: true
+  app-bin-sync:
+    external: true
+  app-common-sync:
+    external: true
+  app-src-sync:
+    external: true
+  app-web-sync:
+    external: true
 

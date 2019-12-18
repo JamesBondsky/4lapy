@@ -25,6 +25,7 @@ COPY ./docker/php-fpm/dev.application.conf /usr/local/etc/php-fpm.d/dev.applicat
 
 RUN set -ex \
    && apt-get update && apt-get install -y \
+   git \
    libfreetype6-dev \
    libicu-dev \
    libjpeg-dev \
@@ -57,6 +58,27 @@ RUN set -ex \
    && apt-get clean
 
 VOLUME /var/log/php
+
+RUN mkdir var
+RUN mkdir var/cache
+RUN chmod -R 777 var
+
+COPY ./composer.json /application/composer.json
+COPY ./composer.lock /application/composer.lock
+COPY ./.php_cs /application/.php_cs
+
+RUN mkdir /root/.ssh/
+RUN touch /root/.ssh/known_hosts
+RUN ssh-keyscan gitea.articul.ru >> /root/.ssh/known_hosts
+RUN ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
+COPY ./docker/id_rsa /root/.ssh/id_rsa
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN set -eux; \
+	composer install --ignore-platform-reqs --prefer-dist --no-scripts --no-progress --no-suggest; \
+	composer clear-cache
+
+RUN cd /application/vendor/4lapy/bitrix && git pull && cd /application
 
 CMD ["php-fpm"]
 
