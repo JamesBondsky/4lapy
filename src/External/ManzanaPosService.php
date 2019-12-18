@@ -82,12 +82,14 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         /** @var BasketItem $item */
         foreach ($basketItems as $k => $item) {
             if ($basketService->isGiftProduct($item)) {
+                ++$iterator;
                 continue;
             }
 
             $xmlId = $basketService->getBasketItemXmlId($item);
 
             if (null === $xmlId) {
+                ++$iterator;
                 continue;
             }
 
