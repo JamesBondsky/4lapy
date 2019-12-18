@@ -22,9 +22,10 @@ services:
       context: ./
       target: php
     volumes:
-      - app-app-sync:/application/app:nocopy
-      - app-bin-sync:/application/bin:nocopy
-      - app-common-sync:/application/common:nocopy
+      - ./app:/application/app:rw,cached
+      - ./bin:/application/bin:rw,cached
+      - app-local-sync:/application/common/local:nocopy
+      - ./common/static/version.json:/application/common/static/version.json:ro
       - app-src-sync:/application/src:nocopy
       - app-web-sync:/application/web:nocopy
       - ./var/logs:/adv/vhosts/4lapy/logs:rw
@@ -78,11 +79,7 @@ volumes:
   redis-data: {}
   elasticsearch-data: {}
   phpsocket: {}
-  app-app-sync:
-    external: true
-  app-bin-sync:
-    external: true
-  app-common-sync:
+  app-local-sync:
     external: true
   app-src-sync:
     external: true

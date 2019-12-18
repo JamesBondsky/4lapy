@@ -4,12 +4,8 @@ options:
   compose-file-path: './docker-compose.yml'
   varbose: true
 syncs:
-  app-app-sync:
-    src: './app'
-  app-bin-sync:
-    src: './bin'
-  app-common-sync:
-    src: './common/'
+  app-local-sync:
+    src: './common/local'
   app-src-sync:
     src: './src'
   app-web-sync:
