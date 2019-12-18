@@ -14,127 +14,49 @@ class PetSize
      * @Serializer\SkipWhenEmpty()
      * @var string
      */
-    protected $sizeTitle = '';
+    protected $title = '';
     
     /**
      * @Serializer\Type("int")
-     * @Serializer\SerializedName("size")
+     * @Serializer\SerializedName("id")
      * @Serializer\SkipWhenEmpty()
      * @var int
      */
-    protected $size = 0;
-    
-    /**
-     * @Serializer\Type("float")
-     * @Serializer\SerializedName("back")
-     * @Serializer\SkipWhenEmpty()
-     * @var float
-     */
-    protected $back = 0.0;
-    
-    /**
-     * @Serializer\Type("float")
-     * @Serializer\SerializedName("neck")
-     * @Serializer\SkipWhenEmpty()
-     * @var float
-     */
-    protected $neck = 0.0;
-    
-    /**
-     * @Serializer\Type("float")
-     * @Serializer\SerializedName("chest")
-     * @Serializer\SkipWhenEmpty()
-     * @var float
-     */
-    protected $chest = 0.0;
-    
+    protected $id = 0;
+   
     /**
      * @return int
      */
-    public function getSize(): int
+    public function getId(): int
     {
-        return $this->size;
+        return $this->id;
     }
     
     /**
-     * @param int $size
+     * @param int $id
      * @return $this
      */
-    public function setSize(int $size)
+    public function setId(int $id)
     {
-        $this->size = $size;
-        return $this;
-    }
-    
-    /**
-     * @return float
-     */
-    public function getBack(): float
-    {
-        return $this->back;
-    }
-    
-    /**
-     * @param float $back
-     * @return $this
-     */
-    public function setBack(float $back)
-    {
-        $this->back = $back;
-        return $this;
-    }
-    
-    /**
-     * @return float
-     */
-    public function getNeck(): float
-    {
-        return $this->neck;
-    }
-    
-    /**
-     * @param float $neck
-     * @return $this
-     */
-    public function setNeck(float $neck)
-    {
-        $this->neck = $neck;
-        return $this;
-    }
-    
-    /**
-     * @return float
-     */
-    public function getChest(): float
-    {
-        return $this->chest;
-    }
-    
-    /**
-     * @param float $chest
-     * @return $this
-     */
-    public function setChest(float $chest)
-    {
-        $this->chest = $chest;
+        $this->id = $id;
         return $this;
     }
     
     /**
      * @return string
      */
-    public function getSizeTitle(): string
+    public function getTitle(): string
     {
-        return $this->sizeTitle;
+        return $this->title;
     }
     
     /**
-     * @param string $sizeTitle
+     * @param string $title
      * @return $this
      */
-    public function setSizeTitle(string $sizeTitle)
+    public function setTitle(string $title)
     {
-        $this->sizeTitle = $sizeTitle;
+        $this->title = $title;
         return $this;
     }
 }

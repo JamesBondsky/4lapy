@@ -16,6 +16,7 @@ use FourPaws\CatalogBundle\Service\FilterService;
 use FourPaws\MobileApiBundle\Dto\Object\Pet;
 use FourPaws\MobileApiBundle\Dto\Object\PetGender;
 use FourPaws\MobileApiBundle\Dto\Object\PetPhoto;
+use FourPaws\MobileApiBundle\Dto\Object\PetSizes;
 use FourPaws\MobileApiBundle\Dto\Object\PetSize;
 use FourPaws\MobileApiBundle\Dto\Request\UserPetAddRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserPetDeleteRequest;
@@ -317,7 +318,6 @@ class PetService
      */
     public function map($pet)
     {
-        
         $petSize = $this->getPetSize($pet);
         
         $result = (new Pet())
@@ -428,19 +428,26 @@ class PetService
     protected function getPetSize($pet)
     {
         $petSize = new PetSize();
-        $petSize->setSize($pet->getSize());
-        $petSize->setBack($pet->getBack());
-        $petSize->setNeck($pet->getNeck());
-        $petSize->setChest($pet->getChest());
+        $petSize->setId($pet->getSize());
+        
+        $petSizes = new PetSizes();
+        
+        $petSizes->setBack($pet->getBack());
+        $petSizes->setNeck($pet->getNeck());
+        $petSizes->setChest($pet->getChest());
         
         foreach ($this->petSizes as $size) {
             if ($size['id'] == $pet->getSize()) {
-                $petSize->setSizeTitle($size['title']);
-            } else {
-                $petSize->setSizeTitle($this->fenteziSize['title']);
+                $petSize->setTitle($size['title']);
             }
         }
+
+        if (!$petSize->getTitle()) {
+            $petSize->setTitle($this->fenteziSize['title']);
+        }
+
+        $petSizes->setSize($petSize);
         
-        return $petSize;
+        return $petSizes;
     }
 }
