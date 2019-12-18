@@ -25,7 +25,7 @@ services:
       - ./app:/application/app:rw,cached
       - ./bin:/application/bin:rw,cached
       - app-local-sync:/application/common/local:nocopy
-      - ./common/static/version.json:/application/common/static/version.json:ro
+      - ./common/static/versions.json:/application/common/static/versions.json:ro
       - app-src-sync:/application/src:nocopy
       - app-web-sync:/application/web:nocopy
       - ./var/logs:/adv/vhosts/4lapy/logs:rw
