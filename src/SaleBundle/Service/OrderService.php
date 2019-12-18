@@ -2578,7 +2578,10 @@ class OrderService implements LoggerAwareInterface
 
         $sendEmail = false;
         if (($statusId === OrderStatus::STATUS_IN_PROGRESS) || ($statusId === OrderStatus::STATUS_DELIVERING)) {
-            $sendEmail = true;
+            $user = \CUser::GetByID($userId)->Fetch();
+            \CEvent::Send('USER_WANNA_CANCEL_ORDER', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER'), 'NAME' => $user['NAME'], 'PHONE' => $user['PERSONAL_PHONE']]);
+        
+            throw new OrderCancelException('Ваш заказ уже передан в службу доставки. Мы передадим информацию об отмене заказа.');
         }
 
         // формируем новый статус в зависимости от службы доставки
