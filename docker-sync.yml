@@ -1,24 +1,16 @@
 version: 2
 
+options:
+  compose-file-path: './docker-compose.yml'
+  varbose: true
 syncs:
-  app-sync:
-    notify_terminal: true
-    src: './'
-    sync_excludes: [
-      '.dockerignore',
-      '.gitignore',
-      '.gitmodules',
-      '.php_cs',
-      'docker-compose.yml',
-      'docker-sync.yml',
-      'Dockerfile',
-      'INSTALL.md',
-      'phpunut.xml.dist',
-      'README.md',
-      'Vagrantfile',
-      'node_modules/',
-      '.git/',
-      'docker/',
-      '.idea/',
-      'common/static/src'
-    ]
+  app-app-sync:
+    src: './app'
+  app-bin-sync:
+    src: './bin'
+  app-common-sync:
+    src: './common/'
+  app-src-sync:
+    src: './src'
+  app-web-sync:
+    src: './web'

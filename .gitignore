@@ -61,4 +61,5 @@ web/manzana_user_numbers.error.log
 web/test.php
 
 docker/ssl
+docker/id_rsa
 .docker-sync
