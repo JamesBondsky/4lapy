@@ -5,16 +5,12 @@ use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\AppBundle\AjaxController\LandingController;
 use FourPaws\PersonalBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Service\ChanceService;
-use FourPaws\LandingBundle\Service\ActionLanding;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
 $APPLICATION->SetPageProperty('title', 'Новогодний розыгрыш от компании Четыре Лапы');
 $APPLICATION->SetPageProperty('description', 'ЗЗарегистрируйтесь для участия в акции и выигрывайте призы каждую неделю!');
 $APPLICATION->SetTitle('Новогодний розыгрыш от компании Четыре Лапы');
-
-$apiAuthAction = new ActionLanding;
-$apiAuthAction->auth();
 
 $userChance = null;
 /** @var ChanceService $chaceService */
