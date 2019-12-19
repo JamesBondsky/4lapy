@@ -2598,10 +2598,6 @@ class OrderService implements LoggerAwareInterface
             } else if ($this->deliveryService->isPickupCode($deliveryCode)) {
                 $newStatus = OrderStatus::STATUS_CANCEL_PICKUP;
             } else {
-            
-            }
-            
-            if (!$deliveryCode) {
                 throw new OrderCancelException('Не найдена служба доставки для заказа');
             }
         } catch (\Exception $e) {
@@ -2614,14 +2610,14 @@ class OrderService implements LoggerAwareInterface
 
         try {
             // отменяем заказ в Sap'е
-            // $orderNumber = $order->getField('ACCOUNT_NUMBER');
-            // $sapStatus = StatusService::STATUS_CANCELED;
-            // $setStatusResult = $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
-            //
-            // if (!$setStatusResult) {
-            //     $connection->rollbackTransaction();
-            //     return false;
-            // }
+            $orderNumber = $order->getField('ACCOUNT_NUMBER');
+            $sapStatus = StatusService::STATUS_CANCELED;
+            $setStatusResult = $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
+            
+            if (!$setStatusResult) {
+                $connection->rollbackTransaction();
+                return false;
+            }
 
             // отменяем заказ
             $cancelResult = (new \CSaleOrder)->cancelOrder($orderId, BaseEntity::BITRIX_TRUE, '');
