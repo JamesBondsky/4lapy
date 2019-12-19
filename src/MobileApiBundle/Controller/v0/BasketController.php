@@ -167,8 +167,14 @@ class BasketController extends BaseController
             $personalOffers = Application::getInstance()->getContainer()->get(PersonalOffersService::class);
             $coupons        = $personalOffers->getActiveUserCoupons($storage->getUserId())['coupons'];
         }
-
-        if ($coupons->count() > 0) {
+        
+        try {
+            $countCoupons = $coupons->count();
+        } catch (\Exception $e) {
+            $countCoupons = 0;
+        }
+        
+        if ($coupons && $countCoupons > 0) {
             $orderCalculate->setHasCoupons(true);
         }
 
