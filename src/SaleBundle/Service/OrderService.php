@@ -2616,7 +2616,7 @@ class OrderService implements LoggerAwareInterface
             
             if (!$setStatusResult) {
                 $connection->rollbackTransaction();
-                return false;
+                throw new OrderCancelException('Ваш заказ ещё не сформирован. Попробуйте отменить заказ через 30 мин.');
             }
 
             // отменяем заказ
