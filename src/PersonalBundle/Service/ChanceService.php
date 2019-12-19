@@ -12,6 +12,8 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Sale\OrderTable;
 use DateTime;
 use Exception;
+use FourPaws\App\Application;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
@@ -107,14 +109,8 @@ class ChanceService
         }
 
         $data = [];
-        foreach ($this->periods as $period) {
-            $data[$period] = 0;
-        }
-
-        try {
-            $currentPeriod = $this->getCurrentPeriod();
-            $data[$currentPeriod] = $this->getUserPeriodChance($user->getId(), $currentPeriod);
-        } catch (Exception $e) {
+        foreach ($this->periods as $periodId => $period) {
+            $data[$periodId] = 0;
         }
 
         $addResult = $this->getDataManager()::add([
@@ -129,7 +125,11 @@ class ChanceService
 
         TaggedCacheHelper::clearManagedCache(['ny2020:user.chances']);
 
-        return (isset($currentPeriod)) ? $data[$currentPeriod] : 0;
+        /** @var ManzanaService $manzanaService */
+        $manzanaService = Application::getInstance()->getContainer()->get(ManzanaService::class);
+        $manzanaService->importUserOrdersAsync($user);
+
+        return 0;
     }
 
     /**
@@ -154,7 +154,7 @@ class ChanceService
 
         try {
             $userData = unserialize($userData['UF_DATA']);
-            return $userData[$this->getCurrentPeriod()];
+            return $userData[$this->getCurrentPeriod()] ?? 0;
         } catch (Exception $e) {
             return 0;
         }
@@ -239,8 +239,6 @@ class ChanceService
         }
 
         try {
-            $currentPeriod = $this->getCurrentPeriod();
-
             $userResult = $this->getDataManager()::query()
                 ->setFilter(['UF_USER_ID' => $userId])
                 ->setSelect(['ID', 'UF_DATA'])
@@ -252,14 +250,30 @@ class ChanceService
 
             $data = unserialize($userResult['UF_DATA']);
 
-            $data[$this->getCurrentPeriod()] = $this->getUserPeriodChance($userId, $currentPeriod);
+            foreach ($this->periods as $periodId => $currentPeriod) {
+                $data[$periodId] = $this->getUserPeriodChance($userId, $periodId);
+            }
 
             $this->getDataManager()::update(
                 $userResult['ID'],
                 ['UF_DATA' => serialize($data)]
             );
-
         } catch (Exception $e) {
+        }
+    }
+
+    /**
+     * @param null $currentPeriod
+     * @throws Exception
+     */
+    public function updateAllUserChance($currentPeriod = null): void
+    {
+        $res = $this->getDataManager()::query()
+            ->setSelect(['UF_USER_ID'])
+            ->exec();
+
+        while ($user = $res->fetch()) {
+            $this->updateUserChance($user['UF_USER_ID'], $currentPeriod);
         }
     }
 
@@ -293,7 +307,7 @@ class ChanceService
                 ->withTime(36000)
                 ->withTag('ny2020:user.chances')
                 ->resultOf($doGetAllVariants);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [];
         }
     }

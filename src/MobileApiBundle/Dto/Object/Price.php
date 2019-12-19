@@ -96,6 +96,15 @@ class Price
         $this->courierPrice = $price;
         return $this;
     }
+    
+    /**
+     * @param float $price
+     * @return Price
+     */
+    public function getCourierPrice(): float
+    {
+        return $this->courierPrice;
+    }
 
     /**
      * @param float $subscribe

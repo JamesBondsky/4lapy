@@ -309,8 +309,14 @@ class OrderService
             ];
         }
 
+        $startDateTimestamp = (\DateTime::createFromFormat('d.m.Y H:i:s', '1.12.2019 00:00:00'))->getTimestamp();
+
         /** @var Cheque $cheque */
         foreach ($cheques as $cheque) {
+            if ($startDateTimestamp > $cheque->date->getTimestamp()) {
+                continue;
+            }
+
             if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
                 continue;
             }
@@ -387,6 +393,9 @@ class OrderService
         $user->setManzanaImportDateTime(new DateTime());
 
         App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
+
+        // todo убрать после новго года
+        App::getInstance()->getContainer()->get(ChanceService::class)->updateUserChance($user->getId());
     }
 
     /**

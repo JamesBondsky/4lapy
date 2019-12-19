@@ -765,7 +765,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @return array|CardByContractCards[]
      * @throws Exception
      */
-    public function getCardsByContactId($contactId): array
+    public function getCardsByContactId($contactId)
     {
         if (getenv('MANZANA_POS_SERVICE_ENABLE') == 'Y') {
             $result = $this->newExec(__METHOD__, func_get_args());
@@ -962,11 +962,15 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $userService = App::getInstance()->getContainer()->get(UserSearchInterface::class);
         $manzanaOrdersImportUserRepository = $userService->getManzanaOrdersImportUserRepository();
         $userId = $user->getId();
+        $this->logger->info('api manzana service ' . $userId, [
+            'hasUserId' => $manzanaOrdersImportUserRepository->hasUserId($userId)
+        ]);
         if (!$manzanaOrdersImportUserRepository->hasUserId($userId)) {
             /** @noinspection MissingService */
             /** @var Producer $producer */
             $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_orders_import_producer');
-            $producer->publish($this->serializer->serialize($user, 'json'));
+//            $producer->publish($this->serializer->serialize($user, 'json'));
+            $producer->publish(json_encode($user));
 
             try
             {

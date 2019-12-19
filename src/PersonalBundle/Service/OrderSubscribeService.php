@@ -26,6 +26,7 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Result;
 use Bitrix\Main\Security\SecurityException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserFieldTable;
 use Bitrix\Sale\Basket;
@@ -59,9 +60,11 @@ use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyResult;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeSingle;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeItemRepository;
+use FourPaws\PersonalBundle\Repository\OrderSubscribeSingleRepository;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
@@ -76,6 +79,8 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use http\Exception\InvalidArgumentException;
+use JMS\Serializer\ArrayTransformerInterface;
+use JMS\Serializer\SerializerInterface;
 use mysql_xdevapi\Exception;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -95,6 +100,8 @@ class OrderSubscribeService implements LoggerAwareInterface
     // при запуске из консоли SITE_ID определяется как 's2'
     const SITE_ID = 's1';
 
+    public static $isSubscription = false;
+
     /**
      * Интервалы доставки
      * @var array $frequencies
@@ -106,6 +113,12 @@ class OrderSubscribeService implements LoggerAwareInterface
 
     /** @var OrderSubscribeItemRepository $orderSubscribeRepository */
     private $orderSubscribeItemRepository;
+
+    /** @var OrderSubscribeSingleRepository $orderSubscribeSingleRepository */
+    private $orderSubscribeSingleRepository;
+
+    /** @var ArrayTransformerInterface $arrayTransformer */
+    private $arrayTransformer;
 
     /** @var CurrentUserProviderInterface $currentUser */
     private $currentUser;
@@ -168,16 +181,20 @@ class OrderSubscribeService implements LoggerAwareInterface
     public function __construct(
         OrderSubscribeRepository $orderSubscribeRepository,
         OrderSubscribeItemRepository $orderSubscribeItemRepository,
+        OrderSubscribeSingleRepository $orderSubscribeSingleRepository,
         CurrentUserProviderInterface $currentUserProvider,
         LocationService $locationService,
-        BasketService $basketService
+        BasketService $basketService,
+        SerializerInterface $arrayTransformer
     )
     {
         $this->orderSubscribeRepository = $orderSubscribeRepository;
         $this->orderSubscribeItemRepository = $orderSubscribeItemRepository;
+        $this->orderSubscribeSingleRepository = $orderSubscribeSingleRepository;
         $this->currentUser = $currentUserProvider;
         $this->locationService = $locationService;
         $this->basketService = $basketService;
+        $this->arrayTransformer = $arrayTransformer;
     }
 
 
@@ -399,6 +416,24 @@ class OrderSubscribeService implements LoggerAwareInterface
             case $freqs['WEEK_6']['ID']:
                 $nextDate->add("+6 week");
                 break;
+            case $freqs['WEEK_7']['ID']:
+                $nextDate->add("+7 week");
+                break;
+            case $freqs['WEEK_8']['ID']:
+                $nextDate->add("+8 week");
+                break;
+            case $freqs['WEEK_9']['ID']:
+                $nextDate->add("+9 week");
+                break;
+            case $freqs['WEEK_10']['ID']:
+                $nextDate->add("+10 week");
+                break;
+            case $freqs['WEEK_11']['ID']:
+                $nextDate->add("+11 week");
+                break;
+            case $freqs['WEEK_12']['ID']:
+                $nextDate->add("+12 week");
+                break;
             default:
                 throw new \Exception('Не найдена подходящая периодичность');
         }
@@ -438,6 +473,24 @@ class OrderSubscribeService implements LoggerAwareInterface
                 break;
             case $freqs['WEEK_6']['ID']:
                 $nextDate->add("-6 week");
+                break;
+            case $freqs['WEEK_7']['ID']:
+                $nextDate->add("-7 week");
+                break;
+            case $freqs['WEEK_8']['ID']:
+                $nextDate->add("-8 week");
+                break;
+            case $freqs['WEEK_9']['ID']:
+                $nextDate->add("-9 week");
+                break;
+            case $freqs['WEEK_10']['ID']:
+                $nextDate->add("-10 week");
+                break;
+            case $freqs['WEEK_11']['ID']:
+                $nextDate->add("-11 week");
+                break;
+            case $freqs['WEEK_12']['ID']:
+                $nextDate->add("-12 week");
                 break;
             default:
                 throw new Exception('Не найдена подходящая периодичность');
@@ -764,6 +817,14 @@ class OrderSubscribeService implements LoggerAwareInterface
     }
 
     /**
+     * @return OrderSubscribeSingleRepository
+     */
+    public function getOrderSubscribeSingleRepository(): OrderSubscribeSingleRepository
+    {
+        return $this->orderSubscribeSingleRepository;
+    }
+
+    /**
      * @param $periodValue
      * @param string $periodType
      * @return int
@@ -808,7 +869,22 @@ class OrderSubscribeService implements LoggerAwareInterface
 
             $deliveryCode = $deliveryService->getDeliveryCodeById($subscribe->getDeliveryId());
             $basket = $this->getBasketBySubscribeId($subscribe->getId());
-            $arCalculationResult = $deliveryService->getByBasket($basket, $subscribe->getLocationId(), [$deliveryCode]);
+
+            $locationId = $subscribe->getLocationId();
+            if ($locationId == \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE && in_array($deliveryCode, [\FourPaws\DeliveryBundle\Service\DeliveryService::INNER_DELIVERY_CODE, \FourPaws\DeliveryBundle\Service\DeliveryService::EXPRESS_DELIVERY_CODE])) {
+                try {
+                    $address = $subscribe->getDeliveryPlace();
+                    $okato = $this->locationService->getDadataLocationOkato($address);
+                    $locations = $this->locationService->findLocationByExtService($this->locationService::OKATO_SERVICE_CODE, $okato);
+
+                    if (count($locations)) {
+                        $location = current($locations);
+                        $locationId = $location['CODE'];
+                    }
+                } catch (\Exception $e) {}
+            }
+
+            $arCalculationResult = $deliveryService->getByBasket($basket, $locationId, [$deliveryCode]);
             $calculationResult = reset($arCalculationResult);
 
             if(!$calculationResult){
@@ -978,64 +1054,23 @@ class OrderSubscribeService implements LoggerAwareInterface
                 throw new OrderSubscribeException('Не найдено ни одного товара в подписке');
             }
 
-            $basket = Basket::create(self::SITE_ID);
             $items = [];
-            /** @var OrderSubscribeItem $item */
-            foreach($subscribeItems as $item){
-                $items[$item->getOfferId()] = [
-                    'OFFER_ID' => $item->getOfferId(),
-                    'QUANTITY' => $item->getQuantity(),
-                    'SUBSCRIBE_ITEM_ID' => $item->getId()
+            /** @var OrderSubscribeItem $subscribeItem */
+            foreach ($subscribeItems as $subscribeItem){
+                $items[] = [
+                    'productId' => $subscribeItem->getOfferId(),
+                    'quantity' => $subscribeItem->getQuantity(),
                 ];
             }
 
-            $offers = (new OfferQuery())
-                ->withFilter(["ID" => array_column($items, 'OFFER_ID')])
-                ->exec();
-
-            /** @var Offer $offer */
-            foreach($offers as $offer){
-                if($offer->getSubscribePrice() > 0){
-                    $items[$offer->getId()]['PRICE'] = $offer->getSubscribePrice();
-                    $items[$offer->getId()]['BASE_PRICE'] = $offer->getPrice();
-                    $items[$offer->getId()]['NAME'] = $offer->getName();
-                    $items[$offer->getId()]['WEIGHT'] = $offer->getCatalogProduct()->getWeight();
-                    $items[$offer->getId()]['DETAIL_PAGE_URL'] = $offer->getDetailPageUrl();
-                    $items[$offer->getId()]['PRODUCT_XML_ID'] = $offer->getXmlId();
-                } else {
-                    $this->deleteSubscribeItem($items[$offer->getId()]['SUBSCRIBE_ITEM_ID']);
-                }
-            }
-
-            foreach($items as $item){
-                $basketItem = BasketItem::create($basket, 'catalog', $item['OFFER_ID']);
-                $basketItem->setFields([
-                    'PRODUCT_ID'             => $item['OFFER_ID'],
-                    'PRICE'                  => $item['PRICE'],
-                    'BASE_PRICE'             => $item['BASE_PRICE'],
-                    'CUSTOM_PRICE'           => BitrixUtils::BX_BOOL_TRUE,
-                    'QUANTITY'               => $item['QUANTITY'],
-                    'CURRENCY'               => CurrencyManager::getBaseCurrency(),
-                    'NAME'                   => $item['NAME'],
-                    'WEIGHT'                 => $item['WEIGHT'],
-                    'DETAIL_PAGE_URL'        => $item['DETAIL_PAGE_URL'],
-                    'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
-                    'CATALOG_XML_ID'         => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
-                    'PRODUCT_XML_ID'         => $item['PRODUCT_XML_ID'],
-                    'CAN_BUY'                => "Y",
-                ]);
-
-                /** @noinspection PhpInternalEntityUsedInspection */
-                $basket->addItem($basketItem);
-            }
-
-            //$basket->save();
-
+            $basket = $this->basketService->createBasketFromItems($items);
             return $basket;
         } catch(\Exception $e) {
             throw new OrderSubscribeException($e->getMessage(), $e->getCode());
         }
     }
+
+
 
     public function getPaymentCodes()
     {
@@ -1313,6 +1348,8 @@ class OrderSubscribeService implements LoggerAwareInterface
                     'IS_SUBSCRIBE',
                     'Y'
                 );
+                self::$isSubscription = true;
+
                 $orderCopyHelper->setPropValueByCode(
                     'COPY_ORDER_ID',
                     $copyOrderId
@@ -1593,6 +1630,16 @@ class OrderSubscribeService implements LoggerAwareInterface
                     $result->addErrors(
                         $data['copyResult']->getErrors()
                     );
+                } else if(!$this->orderSubscribeSingleRepository->findBySubscribe($orderSubscribe->getId())->isEmpty()) {
+                    /** @var OrderSubscribeSingle $subscribeSingle */
+                    $subscribeSingle = $this->orderSubscribeSingleRepository->findBySubscribe($orderSubscribe->getId())->first();
+
+                    // восстановим оригинальную подписку
+                    if($this->updateBySingleSubscribe($subscribeSingle)){
+                        $this->orderSubscribeSingleRepository->delete($subscribeSingle->getId());
+                    } else {
+                        $this->log()->error(sprintf('Не удалось восстановить оригинальную подписку id = %s', $orderSubscribe->getId()));
+                    }
                 }
             } catch (\Throwable $exception) {
                 $result->addError(
@@ -2144,4 +2191,96 @@ class OrderSubscribeService implements LoggerAwareInterface
 
         return $result;
     }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function createSingleSubscribe(OrderSubscribe $orderSubscribe)
+    {
+        $singleSubscribeCollection = $this->orderSubscribeSingleRepository->findBySubscribe($orderSubscribe->getId(), false);
+        if(!$singleSubscribeCollection->isEmpty()){
+            $singleSubscribe = $singleSubscribeCollection->first();
+            $this->orderSubscribeSingleRepository->delete($singleSubscribe->getId());
+        }
+
+        // в оригинальной подписке хранится дата доставки через одну
+        $orderSubscribe->setNextDate($orderSubscribe->getPreviousDate());
+
+        $arOrderSubscribe = $this->arrayTransformer->toArray($orderSubscribe);
+        $arOrderSubscribeItems = [];
+
+        $items = $orderSubscribe->getItems();
+        /** @var OrderSubscribeItem $item */
+        foreach ($items as $item){
+            $arOrderSubscribeItems[$item->getOfferId()] = $item->getQuantity();
+        }
+
+        $singleSubscribe = (new OrderSubscribeSingle())
+            ->setSubscribeId($orderSubscribe->getId())
+            ->setData(serialize($arOrderSubscribe))
+            ->setItems(serialize($arOrderSubscribeItems))
+            ->setDateCreate(new DateTime())
+        ;
+
+        $result = $this->orderSubscribeSingleRepository->setEntity($singleSubscribe)->create();
+        return $result;
+    }
+
+    /**
+     * @param OrderSubscribeSingle $singleSubscribe
+     * @return mixed
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     * @throws \Exception
+     */
+    public function updateBySingleSubscribe(OrderSubscribeSingle $singleSubscribe)
+    {
+        /** @var OrderSubscribe $orderSubscribe */
+        $orderSubscribe = $this->arrayTransformer->fromArray($singleSubscribe->getSubscribe(), OrderSubscribe::class);
+        $orderSubscribeItems = $singleSubscribe->getItems();
+
+        if(!$this->getById($orderSubscribe->getId())) {
+            throw new \Exception(sprintf("Подписка на доставку ID=%s не найдена", $orderSubscribe->getId()));
+        }
+
+        $this->deleteAllItems($orderSubscribe->getId());
+        foreach ($orderSubscribeItems as $offerId => $quantity){
+            $subscribeItem = (new OrderSubscribeItem())
+                ->setOfferId($offerId)
+                ->setQuantity($quantity)
+                ->setSubscribeId($orderSubscribe->getId())
+            ;
+
+            $this->addSubscribeItem($orderSubscribe, $subscribeItem);
+        }
+
+        $orderSubscribe->countNextDate()
+            ->countDateCheck();
+
+        $result = $this->update($orderSubscribe);
+        return $result->isSuccess();
+    }
+
+
+    /**
+     * @param $orderSubscribeId
+     * @return OrderSubscribeSingle|false
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getSingleSubscribe($orderSubscribeId)
+    {
+        $orderSubscribeSingle = $this->orderSubscribeSingleRepository->findBySubscribe($orderSubscribeId)->first();
+        return $orderSubscribeSingle;
+    }
+
 }

@@ -2,17 +2,7 @@
 /**
  * @var string $phone
  * @var int $periodDays
+ * @var DateTime $deliveryDate
  */
 
-use FourPaws\Helpers\WordHelper;
-
-$periodDays = (int)$periodDays;
-
-$periodTxt = '';
-if ($periodDays === 0) {
-    $periodTxt = 'Завтра ';
-} else {
-    $periodTxt = 'Через '.$periodDays.' '.WordHelper::declension($periodDays, ['день', 'дня', 'дней']).' ';
-}
-
-echo $periodTxt.'Вам будет доставлен заказ по подписке. Подробности в личном кабинете';
+echo $deliveryDate->format('d.m.Y') . ' Вам будет доставлен заказ по подписке. Подробности в личном кабинете';

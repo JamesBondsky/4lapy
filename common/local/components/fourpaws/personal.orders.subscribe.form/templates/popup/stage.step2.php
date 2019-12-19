@@ -225,6 +225,8 @@ if($orderSubscribe){
                                 Списывать все доступные баллы на&nbsp;заказы по&nbsp;подписке
                             </label>
                         </div>
+
+                        <input type="hidden" name="changeNextDelivery" value="<?=($arResult['IS_SINGLE_SUBSCRIBE']) ? 1 : 0?>">
                     </form>
                 </article>
             </div>

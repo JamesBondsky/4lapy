@@ -17,7 +17,7 @@ final class RetailRocketService implements ScriptRenderedInterface
 {
     use InlineScriptRendererTrait;
 
-    public const METHOD_DETAIL_VIEW   = 'view';
+    public const METHOD_DETAIL_VIEW   = 'groupView';
     public const METHOD_CATEGORY_VIEW = 'categoryView';
     public const METHOD_EMAIL_SET     = 'setEmail';
     public const METHOD_ORDER         = 'order';

@@ -160,6 +160,12 @@ class OrderService implements LoggerAwareInterface
     /** @var Manzana */
     private $manzana;
 
+    /** @var OrderParameter */
+    private $orderParameter;
+
+    /** @var orderCalculate */
+    private $orderCalculate;
+
     /** @var AddressService $addressService */
     private $addressService;
 
@@ -362,6 +368,9 @@ class OrderService implements LoggerAwareInterface
             $orderDateUpdate = \DateTime::createFromFormat('d.m.Y H:i:s', $order->getDateUpdate()->toString());
             $isCompleted = $orderDateUpdate < $currentMinusMonthDate || in_array($order->getStatusId(), $closedOrderStatuses, true);
 
+            $this->orderCalculate = $this->getOrderCalculate($basketProducts, false, 0, $order);
+            $this->orderParameter = $this->getOrderParameter($basketProducts, $order, $text, $icons);
+
             $response
                 ->setId($order->getAccountNumber())
                 ->setDateFormat($dateInsert)
@@ -369,8 +378,12 @@ class OrderService implements LoggerAwareInterface
                 ->setStatus($status)
                 ->setCompleted($isCompleted)
                 ->setPaid($order->isPayed())
-                ->setCartParam($this->getOrderParameter($basketProducts, $order, $text, $icons))
-                ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
+                ->setCartParam($this->orderParameter)
+                ->setCartCalc($this->orderCalculate);
+            
+            if ($order->getDeliveryId() == getenv('EXPRESS_DELIVERY_4LAPY_ID') || $order->getDeliveryId() == getenv('EXPRESS_DELIVERY_DOSTAVISTA_ID')) {
+                $response->setCanBeCanceled(0);
+            }
         }
 
         return $response;
@@ -568,7 +581,7 @@ class OrderService implements LoggerAwareInterface
             $orderParameter->setGoodsInfo($this->apiProductService::getGoodsTitleForCheckout(
                 $basketProducts->getTotalQuantity(),
                 $weight,
-                $basketProducts->getTotalPrice()->getActual()
+                $this->orderCalculate->getTotalPrice()->getActual()
             ));
 
         }
@@ -693,6 +706,8 @@ class OrderService implements LoggerAwareInterface
             $totalPrice->setCourierPrice($deliveryPrice);
         }
 
+        $bonusVulnerablePrice = (90 * ($totalPrice->getActual() - $totalPrice->getCourierPrice())) / 100;
+
         $stampsAdded = $this->manzana->getStampsToBeAdded();
         $stampService = $this->stampService;
         $stampsUsed = array_reduce($basketProducts->getValues(), static function($carry, $product) use ($stampService) {
@@ -758,7 +773,8 @@ class OrderService implements LoggerAwareInterface
                         ->setId('stamps_sub')
                         ->setTitle('Списано марок')
                         ->setValue($stampsUsed),
-                ]);
+                ])
+                ->setBonusVulnerablePrice($bonusVulnerablePrice);
         }
 
         return $orderCalculate;
@@ -1200,6 +1216,11 @@ class OrderService implements LoggerAwareInterface
             $itemData,
             $totalWeight,
         ];
+    }
+
+    public function getOrderIdByNumber($number)
+    {
+        return \CSaleOrder::GetList([], ['ACCOUNT_NUMBER' => $number], false, false, ['ID'])->fetch()['ID'];
     }
 
     /**

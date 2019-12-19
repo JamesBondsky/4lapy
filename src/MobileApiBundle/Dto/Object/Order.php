@@ -18,7 +18,7 @@ class Order
      * @var string
      */
     protected $id;
-
+    
     /**
      * ОбъектПараметрЗаказа
      * @Serializer\SerializedName("cart_param")
@@ -26,7 +26,7 @@ class Order
      * @var OrderParameter
      */
     protected $cartParam;
-
+    
     /**
      * ОбъектРасчетЗаказа
      * @Serializer\SerializedName("cart_calc")
@@ -34,14 +34,14 @@ class Order
      * @var OrderCalculate
      */
     protected $cartCalc;
-
+    
     /**
      * Дата и время формирования
      * @Serializer\Exclude()
      * @var \DateTime
      */
     protected $dateFormat;
-
+    
     /**
      * @internal
      * @Serializer\Accessor(setter="setDate", getter="getDate")
@@ -50,7 +50,7 @@ class Order
      * @var string
      */
     protected $date = '';
-
+    
     /**
      * @internal
      * @Serializer\Accessor(setter="setTime", getter="getTime")
@@ -59,14 +59,14 @@ class Order
      * @var string
      */
     protected $time = '';
-
+    
     /**
      * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\OrderStatus")
      * @Serializer\SerializedName("status")
      * @var OrderStatus
      */
     protected $status;
-
+    
     /**
      * Признак того, что можно отправить отзыв.
      * @Serializer\SerializedName("review_enabled")
@@ -74,7 +74,7 @@ class Order
      * @var bool
      */
     protected $reviewEnabled = false;
-
+    
     /**
      * Признак того, что заказ уже завершён
      * @Serializer\SerializedName("completed")
@@ -82,7 +82,7 @@ class Order
      * @var bool
      */
     protected $completed = false;
-
+    
     /**
      * Признак того, что заказ уже оплачен
      * @Serializer\SerializedName("paid")
@@ -90,7 +90,7 @@ class Order
      * @var bool
      */
     protected $paid = false;
-
+    
     /**
      * Ссылка на эл.чек.
      * @Serializer\SerializedName("recipe_url")
@@ -98,12 +98,20 @@ class Order
      * @var string
      */
     protected $recipeUrl = '';
-
+    
+    /**
+     * Может ли заказ быть отменен
+     * @Serializer\SerializedName("canBeCanceled")
+     * @Serializer\Type("int")
+     * @var int
+     */
+    protected $canBeCanceled = 1;
+    
     public function __construct()
     {
         $this->dateFormat = new \DateTIme();
     }
-
+    
     /**
      * @return string
      */
@@ -111,7 +119,7 @@ class Order
     {
         return $this->id;
     }
-
+    
     /**
      * @param string $id
      * @return Order
@@ -121,7 +129,7 @@ class Order
         $this->id = $id;
         return $this;
     }
-
+    
     /**
      * @return OrderParameter
      */
@@ -129,7 +137,7 @@ class Order
     {
         return $this->cartParam;
     }
-
+    
     /**
      * @param OrderParameter $cartParam
      *
@@ -140,7 +148,7 @@ class Order
         $this->cartParam = $cartParam;
         return $this;
     }
-
+    
     /**
      * @return OrderCalculate
      */
@@ -148,7 +156,7 @@ class Order
     {
         return $this->cartCalc;
     }
-
+    
     /**
      * @param OrderCalculate $cartCalc
      *
@@ -159,7 +167,7 @@ class Order
         $this->cartCalc = $cartCalc;
         return $this;
     }
-
+    
     /**
      * @return \DateTime
      */
@@ -167,7 +175,7 @@ class Order
     {
         return $this->dateFormat;
     }
-
+    
     /**
      * @param \DateTime $dateFormat
      *
@@ -178,7 +186,7 @@ class Order
         $this->dateFormat = $dateFormat;
         return $this;
     }
-
+    
     /**
      * @return OrderStatus
      */
@@ -186,7 +194,7 @@ class Order
     {
         return $this->status;
     }
-
+    
     /**
      * @param OrderStatus $status
      *
@@ -197,7 +205,7 @@ class Order
         $this->status = $status;
         return $this;
     }
-
+    
     /**
      * @return bool
      */
@@ -205,7 +213,7 @@ class Order
     {
         return $this->reviewEnabled;
     }
-
+    
     /**
      * @param bool $reviewEnabled
      *
@@ -216,7 +224,7 @@ class Order
         $this->reviewEnabled = $reviewEnabled;
         return $this;
     }
-
+    
     /**
      * @return bool
      */
@@ -224,7 +232,7 @@ class Order
     {
         return $this->completed;
     }
-
+    
     /**
      * @param bool $completed
      *
@@ -235,7 +243,7 @@ class Order
         $this->completed = $completed;
         return $this;
     }
-
+    
     /**
      * @return bool
      */
@@ -243,7 +251,7 @@ class Order
     {
         return $this->paid;
     }
-
+    
     /**
      * @param bool $paid
      *
@@ -254,7 +262,7 @@ class Order
         $this->paid = $paid;
         return $this;
     }
-
+    
     /**
      * @return string
      */
@@ -262,7 +270,7 @@ class Order
     {
         return $this->recipeUrl;
     }
-
+    
     /**
      * @param string $recipeUrl
      *
@@ -273,22 +281,22 @@ class Order
         $this->recipeUrl = $recipeUrl;
         return $this;
     }
-
+    
     /**
-     * @internal
      * @return string
+     * @internal
      */
     public function getTime()
     {
         return $this->dateFormat ? $this->dateFormat->format('H:i') : '';
     }
-
+    
     /**
-     * @internal
-     *
      * @param string $time
      *
      * @return Order
+     * @internal
+     *
      */
     public function setTime(string $time = '00:00')
     {
@@ -296,22 +304,22 @@ class Order
         $this->dateFormat->setTime(... explode(':', $time));
         return $this;
     }
-
+    
     /**
-     * @internal
      * @return \DateTime|string
+     * @internal
      */
     public function getDate()
     {
         return $this->dateFormat ?? '';
     }
-
+    
     /**
-     * @internal
-     *
      * @param \DateTime $date
      *
      * @return Order
+     * @internal
+     *
      */
     public function setDate(\DateTime $date)
     {
@@ -321,6 +329,25 @@ class Order
             $date->format('n'),
             $date->format('j')
         );
+        return $this;
+    }
+    
+    /**
+     * @return int
+     */
+    public function getCanBeCanceled(): int
+    {
+        return $this->canBeCanceled;
+    }
+    
+    /**
+     * @param int $canBeCanceled
+     *
+     * @return Order
+     */
+    public function setCanBeCanceled(int $canBeCanceled): Order
+    {
+        $this->canBeCanceled = $canBeCanceled;
         return $this;
     }
 }

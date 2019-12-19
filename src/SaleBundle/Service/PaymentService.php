@@ -1513,16 +1513,18 @@ class PaymentService implements LoggerAwareInterface
                     $isDebit = false;
                     foreach ($xmlIdsItems as $xmlIdItem) {
                         foreach ($newItemArr[$xmlIdItem] as $productItem) {
-                            if ($productItemsPrices[$productItem->getId()] > 1) {
-                                $bonusAmount -= 1;
+                            if ($bonusAmount > 0) {
+                                if ($productItemsPrices[$productItem->getId()] > 1) {
+                                    $bonusAmount -= 1;
 
-                                $debitBonus($productItem, 1);
-                                $isDebit = true;
-                            } else if ($productItem->getQuantity()*$productItemsPrices[$productItem->getId()] > 1) {
-                                $bonusAmount -= 1;
+                                    $debitBonus($productItem, 1);
+                                    $isDebit = true;
+                                } else if ($productItem->getQuantity() * $productItemsPrices[$productItem->getId()] > 1) {
+                                    $bonusAmount -= 1;
 
-                                $debitBonus($productItem, 1);
-                                $isDebit = true;
+                                    $debitBonus($productItem, 1);
+                                    $isDebit = true;
+                                }
                             }
                         }
                     }
