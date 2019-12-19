@@ -2597,6 +2597,8 @@ class OrderService implements LoggerAwareInterface
                 $newStatus = OrderStatus::STATUS_CANCEL_COURIER;
             } else if ($this->deliveryService->isPickupCode($deliveryCode)) {
                 $newStatus = OrderStatus::STATUS_CANCEL_PICKUP;
+            } else if ($deliveryCode = DeliveryService::DELIVERY_DOSTAVISTA_CODE || $deliveryCode = DeliveryService::DOBROLAP_DELIVERY_CODE || $deliveryCode = DeliveryService::EXPRESS_DELIVERY_CODE) {
+                $newStatus = OrderStatus::STATUS_CANCEL_COURIER;
             } else {
                 throw new OrderCancelException('Не найдена служба доставки для заказа');
             }
