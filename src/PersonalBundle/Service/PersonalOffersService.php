@@ -1755,8 +1755,8 @@ class PersonalOffersService
         $couponsArray = [
             $promoCode => $promoCodeArray,
         ];
-        $logger = LoggerFactory::create(__CLASS__, '20-20');
-        $logger->info('link20thBasketOfferPromocode: ' . print_r($couponsArray, true));
+        $logger = LoggerFactory::create('PersonalOffersService', '20-20');
+        $logger->info('link20thBasketOfferPromocode', [$couponsArray]);
         $this->importOffers($this->get20thBasketOfferId(), $couponsArray);
     }
 
@@ -1780,8 +1780,8 @@ class PersonalOffersService
             $promoCode = $this->getFreeCouponFor20thBasket();
             if ($promoCode) { // Пользователь выиграл купон, далее делается привязка
                 BasketsDiscountOfferRepository::setPromocode($this->getPersonalOfferBasketId(), $promoCode);
-                $logger = LoggerFactory::create(__CLASS__, '20-20');
-                $logger->info('tryGet20thBasketOfferCoupon: ' . print_r($promoCode, true));
+                $logger = LoggerFactory::create('PersonalOffersService', '20-20');
+                $logger->info('tryGet20thBasketOfferCoupon. PromoCode: ' . print_r($promoCode, true));
 
                 $this->link20thBasketOfferPromocode($promoCode);
 

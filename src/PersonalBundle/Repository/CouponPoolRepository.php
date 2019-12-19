@@ -95,8 +95,8 @@ class CouponPoolRepository extends BaseHlRepository
             /** @var CouponPoolCoupon $coupon */
             $coupon = $result->get(0);
 
-            $logger = LoggerFactory::create(__CLASS__, '20-20');
-            $logger->info('getFreePromoCode: ' . print_r($coupon->getId(), true));
+            $logger = LoggerFactory::create('CouponPoolRepository', '20-20');
+            $logger->info('getFreePromoCode. Id: ' . print_r($coupon->getId(), true));
 
             $this->setEntity(
                 $coupon
