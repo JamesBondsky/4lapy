@@ -12,6 +12,9 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Sale\OrderTable;
 use DateTime;
 use Exception;
+use FourPaws\App\Application;
+use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Exception\RuntimeException;
@@ -20,6 +23,7 @@ use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
+use WebArch\BitrixCache\BitrixCache;
 use function serialize;
 use function unserialize;
 
@@ -105,14 +109,8 @@ class ChanceService
         }
 
         $data = [];
-        foreach ($this->periods as $period) {
-            $data[$period] = 0;
-        }
-
-        try {
-            $currentPeriod = $this->getCurrentPeriod();
-            $data[$currentPeriod] = $this->getUserPeriodChance($user->getId(), $currentPeriod);
-        } catch (Exception $e) {
+        foreach ($this->periods as $periodId => $period) {
+            $data[$periodId] = 0;
         }
 
         $addResult = $this->getDataManager()::add([
@@ -125,7 +123,13 @@ class ChanceService
             throw new RuntimeException('При регистрации произошла ошибка');
         }
 
-        return (isset($currentPeriod)) ? $data[$currentPeriod] : 0;
+        TaggedCacheHelper::clearManagedCache(['ny2020:user.chances']);
+
+        /** @var ManzanaService $manzanaService */
+        $manzanaService = Application::getInstance()->getContainer()->get(ManzanaService::class);
+        $manzanaService->importUserOrdersAsync($user);
+
+        return 0;
     }
 
     /**
@@ -150,7 +154,7 @@ class ChanceService
 
         try {
             $userData = unserialize($userData['UF_DATA']);
-            return $userData[$this->getCurrentPeriod()];
+            return $userData[$this->getCurrentPeriod()] ?? 0;
         } catch (Exception $e) {
             return 0;
         }
@@ -235,8 +239,6 @@ class ChanceService
         }
 
         try {
-            $currentPeriod = $this->getCurrentPeriod();
-
             $userResult = $this->getDataManager()::query()
                 ->setFilter(['UF_USER_ID' => $userId])
                 ->setSelect(['ID', 'UF_DATA'])
@@ -248,20 +250,148 @@ class ChanceService
 
             $data = unserialize($userResult['UF_DATA']);
 
-            $data[$this->getCurrentPeriod()] = $this->getUserPeriodChance($userId, $currentPeriod);
+            foreach ($this->periods as $periodId => $currentPeriod) {
+                $data[$periodId] = $this->getUserPeriodChance($userId, $periodId);
+            }
 
             $this->getDataManager()::update(
                 $userResult['ID'],
                 ['UF_DATA' => serialize($data)]
             );
-
         } catch (Exception $e) {
+        }
+    }
+
+    /**
+     * @param null $currentPeriod
+     * @throws Exception
+     */
+    public function updateAllUserChance($currentPeriod = null): void
+    {
+        $res = $this->getDataManager()::query()
+            ->setSelect(['UF_USER_ID'])
+            ->exec();
+
+        while ($user = $res->fetch()) {
+            $this->updateUserChance($user['UF_USER_ID'], $currentPeriod);
         }
     }
 
     public function getPeriods(): array
     {
         return $this->periods;
+    }
+
+    /**
+     * Нужно, чтобы импорт заказов из манзаны работал только для пользователей акции
+     */
+    public function getAllUserIds(): array
+    {
+        $doGetAllVariants = function () {
+            $userIds = [];
+            $res = $this->getDataManager()::query()
+                ->setSelect(['UF_USER_ID'])
+                ->exec();
+
+            while ($userResult = $res->fetch()) {
+                $userIds[] = (int)$userResult['UF_USER_ID'];
+            }
+
+            return $userIds;
+        };
+
+        try {
+            return (new BitrixCache())
+                ->withId(__METHOD__ . 'chance.users')
+                ->withClearCache(true)
+                ->withTime(36000)
+                ->withTag('ny2020:user.chances')
+                ->resultOf($doGetAllVariants);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function getExportHeader(): array
+    {
+        $result = [
+            'Дата регистрации',
+            'ФИО',
+            'Телефон',
+            'Почта',
+        ];
+
+        foreach ($this->periods as $periodId => $period) {
+            $result[] = sprintf('%s - %s', $period['from']->format('d.m.Y'), $period['to']->format('d.m.Y'));
+        }
+
+        $result[] = 'Всего';
+
+        return $result;
+    }
+
+    /**
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function getExportData(): array
+    {
+        $userIds = [];
+        /** @var User[] $users */
+        $users = [];
+
+        $userResults = [];
+        $res = $this->getDataManager()::query()
+            ->setSelect(['UF_USER_ID', 'UF_DATA', 'UF_DATE_CREATE'])
+            ->exec();
+
+        while ($userResult = $res->fetch()) {
+            $userResults[] = [
+                'userId' => $userResult['UF_USER_ID'],
+                'data' => unserialize($userResult['UF_DATA']),
+                'date' => $userResult['UF_DATE_CREATE'],
+            ];
+            $userIds[] = (int)$userResult['UF_USER_ID'];
+        }
+
+        /** @var User $user */
+        foreach ($this->userRepository->findBy(['=ID' => $userIds]) as $user) {
+            $users[$user->getId()] = $user;
+        }
+
+        $result = [];
+
+        foreach ($userResults as $userResult) {
+            $user = $users[$userResult['userId']];
+
+            $tmpResult = [];
+            $tmpResult[] = $userResult['date'];
+            $tmpResult[] = $user->getFullName();
+            $tmpResult[] = $user->getPersonalPhone();
+            $tmpResult[] = $user->getEmail();
+
+            $totalChances = 0;
+
+            foreach ($this->periods as $periodId => $period) {
+                if (isset($userResult['data'][$periodId])) {
+                    $tmpResult[] = $userResult['data'][$periodId];
+                    $totalChances += (int)$userResult['data'][$periodId];
+                } else {
+                    $tmpResult[] = '-';
+                }
+            }
+
+            $tmpResult[] = $totalChances;
+
+            $result[] = $tmpResult;
+        }
+
+        return $result;
     }
 
     /**

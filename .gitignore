@@ -14,6 +14,8 @@ node_modules/
 
 /app/config/parameters.yml
 
+/public
+
 /var/*
 !/var/cache
 /var/cache/*
@@ -46,6 +48,7 @@ Desktop.ini
 /common/local/logs/*
 /common/static
 /common/local/php_interface/dbconn.php
+/common/local/php_interface/local.env.php
 
 /local
 
@@ -57,7 +60,6 @@ web/manzana_user.error.log
 web/manzana_user_numbers.error.log
 web/test.php
 
-### Docker
-/docker/
-Dockerfile
-docker-compose.yml
+docker/ssl
+docker/id_rsa
+.docker-sync

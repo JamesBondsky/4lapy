@@ -1,0 +1,15 @@
+cluster.name: docker-cluster
+
+http.host: 0.0.0.0
+transport.host: 0.0.0.0
+
+discovery.zen.minimum_master_nodes: 1
+
+
+cluster.routing.allocation.same_shard.host: false
+cluster.routing.allocation.disk.watermark.low: 99%
+cluster.routing.allocation.disk.watermark.high: 99%
+
+discovery.zen.ping.unicast.hosts:
+  - elasticsearch
+  - elasticsearch2

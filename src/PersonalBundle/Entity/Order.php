@@ -153,6 +153,14 @@ class Order extends BaseEntity
      * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $dateCanceled;
+    
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("CAN_BE_CANCELED")
+     * @Serializer\Groups(groups={"read","update", "create"})
+     */
+    protected $canBeCanceled = 0;
 
     /** @var ArrayCollection */
     protected $items;
@@ -396,6 +404,25 @@ class Order extends BaseEntity
     {
         $this->statusId = $statusId;
 
+        return $this;
+    }
+    
+    /**
+     * @return int
+     */
+    public function getCanBeCanceled(): int
+    {
+        return $this->canBeCanceled;
+    }
+    
+    /**
+     * @param int $canBeCanceled
+     *
+     * @return Order
+     */
+    public function setCanBeCanceled(int $canBeCanceled): Order
+    {
+        $this->canBeCanceled = $canBeCanceled;
         return $this;
     }
 

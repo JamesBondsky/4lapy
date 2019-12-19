@@ -383,6 +383,7 @@ class OrderService implements LoggerAwareInterface
 
             if ($order->getDeliveryId() == getenv('EXPRESS_DELIVERY_4LAPY_ID') || $order->getDeliveryId() == getenv('EXPRESS_DELIVERY_DOSTAVISTA_ID') || $isCompleted) {
                 $response->setCanBeCanceled(false);
+
             }
         }
 

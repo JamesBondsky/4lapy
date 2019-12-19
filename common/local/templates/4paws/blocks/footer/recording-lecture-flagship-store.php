@@ -11,7 +11,10 @@ if ($USER->IsAuthorized()) {
         <div class="popup-service-flagship-store__title">Запись на лекцию</div>
 
         <form class="popup-service-flagship-store__form js-form-validation" data-url="/flagman/add/" method="post">
-            <input type="hidden" name="eventId" value="" data-id-lectures-flagship-store-popup="true">
+            <input type="hidden" name="id" value="" data-id-lectures-flagship-store-popup="true">
+            <input type="hidden" name="lection_name" value="" data-name-lectures-flagship-store-popup="true">
+            <input type="hidden" name="lection_time" value="" data-time-lectures-flagship-store-popup="true">
+            <input type="hidden" name="lection_date" value="" data-date-lectures-flagship-store-popup="true">
 
             <div class="b-input-line">
                 <div class="b-input-line__label-wrapper">

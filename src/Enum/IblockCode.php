@@ -63,4 +63,8 @@ class IblockCode
     public const HEADER_PROMO_BANNER = 'header_promo_banner';
 
     public const NEW_YEAR = 'ny2020_questions';
+    
+    public const FLAGMAN_TRAINING = 'flagman_training';
+    public const FLAGMAN_LECTIONS = 'flagman_lections';
+    public const FLAGMAN_GROOMING = 'flagman_grooming';
 }

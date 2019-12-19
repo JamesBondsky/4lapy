@@ -793,6 +793,7 @@ class NotificationService implements LoggerAwareInterface
                     $realDeliveryDate,
                     $copyParams->getCurrentDate()
                 );
+                $parameters['deliveryDate'] = $realDeliveryDate;
                 if ($parameters['periodDays'] >= 0) {
                     $copyOrder = $copyParams->getCopyOrder();
                     if ($copyOrder) {

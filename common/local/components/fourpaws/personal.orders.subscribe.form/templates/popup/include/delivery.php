@@ -55,20 +55,22 @@ $showNewAddressFormHeader = false;
         </div>
         <?php } ?>
     <div class="b-radio b-radio--tablet-big js-item-saved-delivery-address">
-        <input class="b-radio__input"
+        <input class="b-radio__input <?= $showNewAddressForm ? 'js-no-valid' : '' ?>"
                type="radio"
                name="addressId"
                id="order-address-another"
                data-radio="4"
             <?= $selectedAddressId === 0 ? 'checked="checked"' : '' ?>
                value="0">
-        <label class="b-radio__label b-radio__label--tablet-big js-order-address-another"
+        <label class="b-radio__label b-radio__label--tablet-big <?= $showNewAddressForm ? 'js-order-address-another' : '' ?>"
                for="order-address-another">
             <span class="b-radio__text-label">Доставить по другому адресу…</span>
         </label>
     </div>
 </div>
-<div class="b-radio-tab__new-address js-form-new-address js-hidden-valid-fields active" <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
+<div class="b-radio-tab__new-address js-form-new-address <?= $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId() ? 'js-hidden-valid-fields' : 'active' ?>"
+     data-address-order-delivery-update-subscribe="true"
+    <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
     <div class="b-input-line b-input-line--new-address">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--back-arrow">
             <?php if ($showNewAddressFormHeader) {

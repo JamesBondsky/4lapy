@@ -1,30 +1,25 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ac162b8f06ff07dfc8aa5bcdc6dd331f",
+    "content-hash": "7c86ee6333ffdf2f34f24fe98980e577",
     "packages": [
         {
-            "name": "4Lapy/bitrix",
-            "version": "dev-local",
+            "name": "4lapy/bitrix",
+            "version": "dev-prod",
             "source": {
                 "type": "git",
                 "url": "git@gitea.articul.ru:4Lapy/bitrix.git",
-                "reference": "70b3eebd2b4ced4f689c95ada7d9ed1c22f6dd87"
+                "reference": "2667ed8a94a32298fd5d65bc6c1a3290f2df3c33"
             },
             "type": "library",
             "license": [
                 "MIT"
             ],
-            "description": "Bitrix core for 4lapy project",
-            "homepage": "http://articulmedia.ru/",
-            "keywords": [
-                "bitrix",
-                "core"
-            ],
-            "time": "2019-12-03T11:47:12+00:00"
+            "description": "Bitrix for 4 lapy",
+            "time": "2019-12-10T12:51:17+00:00"
         },
         {
             "name": "adv/bitrix-tools",
@@ -3418,6 +3413,12 @@
                 "url": "https://github.com/Roave/SecurityAdvisories.git",
                 "reference": "7f9676e3d324ff0745cda4f4222b194993d37d57"
             },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Roave/SecurityAdvisories/zipball/7f9676e3d324ff0745cda4f4222b194993d37d57",
+                "reference": "7f9676e3d324ff0745cda4f4222b194993d37d57",
+                "shasum": ""
+            },
             "conflict": {
                 "3f/pygmentize": "<1.2",
                 "adodb/adodb-php": "<5.20.6",
@@ -5324,6 +5325,7 @@
                 "push",
                 "zf"
             ],
+            "abandoned": true,
             "time": "2019-02-07T18:01:00+00:00"
         },
         {

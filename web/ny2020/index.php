@@ -8,9 +8,9 @@ use FourPaws\PersonalBundle\Service\ChanceService;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
-$APPLICATION->SetPageProperty('title', 'Выиграйте главный приз: Путешествие на 4-х человек на родину Деда Мороза!');
-$APPLICATION->SetPageProperty('description', 'Зарегистрируйтесь и выигрывайте призы каждую неделю!');
-$APPLICATION->SetTitle('Выиграйте главный приз: Путешествие на 4-х человек на родину Деда Мороза!');
+$APPLICATION->SetPageProperty('title', 'Новогодний розыгрыш от компании Четыре Лапы');
+$APPLICATION->SetPageProperty('description', 'ЗЗарегистрируйтесь для участия в акции и выигрывайте призы каждую неделю!');
+$APPLICATION->SetTitle('Новогодний розыгрыш от компании Четыре Лапы');
 
 $userChance = null;
 /** @var ChanceService $chaceService */
@@ -38,28 +38,27 @@ $chanceService = Application::getInstance()->getContainer()->get(ChanceService::
         <?php $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD); ?>
 
         <input class="js-no-valid" type="hidden" name="<?= $token['field'] ?>" value="<?= $token['token'] ?>">
-        <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$mealfeelLanding ?>">
 
         <div class="form-group">
-          <input type="text" id="SURNAME_REG_CHECK_NY" class="js-small-input" name="lastname" value="<?= $arUser['LAST_NAME'] ?: '' ?>" placeholder="Фамилия" <?= (!empty($arUser['LAST_NAME'])) ? 'disabled="disabled"' : '' ?>>
+          <input type="isLetter" id="SURNAME_REG_CHECK_NY" name="lastname" value="<?= $arUser['LAST_NAME'] ?: '' ?>" placeholder="Фамилия">
           <div class="b-error">
             <span class="js-message"></span>
           </div>
         </div>
         <div class="form-group">
-          <input type="text" id="NAME_REG_CHECK_NY" class="js-small-input" name="name" value="<?= $arUser['NAME'] ?: '' ?>" placeholder="Имя" <?= (!empty($arUser['NAME'])) ? 'disabled="disabled"' : '' ?>>
+          <input type="isLetter" id="NAME_REG_CHECK_NY" name="name" value="<?= $arUser['NAME'] ?: '' ?>" placeholder="Имя">
           <div class="b-error">
             <span class="js-message"></span>
           </div>
         </div>
         <div class="form-group">
-          <input type="tel" id="PHONE_REG_CHECK_NY" name="phone" value="<?= $arUser['PERSONAL_PHONE'] ?: '' ?>" placeholder="Телефон" disabled="disabled" class="js-no-valid">
+          <input type="tel" id="PHONE_REG_CHECK_NY" name="phone" value="<?= $arUser['PERSONAL_PHONE'] ?: '' ?>" placeholder="Телефон" class="js-no-valid">
           <div class="b-error">
             <span class="js-message"></span>
           </div>
         </div>
         <div class="form-group">
-          <input type="emailLanding" id="EMAIL_REG_CHECK_NY" name="email" value="<?= $arUser['EMAIL'] ?: '' ?>" placeholder="E-mail" <?= (!empty($arUser['EMAIL'])) ? 'disabled="disabled"' : '' ?>>
+          <input type="emailLanding" id="EMAIL_REG_CHECK_NY" name="email" value="<?= $arUser['EMAIL'] ?: '' ?>" placeholder="E-mail">
           <div class="b-error">
             <span class="js-message"></span>
           </div>
@@ -77,22 +76,46 @@ $chanceService = Application::getInstance()->getContainer()->get(ChanceService::
           <button type="submit" class="participate-ny2020__btn">Отправить</button>
         </div>
       </form>
-
-      <div class="participate-ny2020__primary">
-        <p>Личные данные, вводимые при регистрации в&nbsp;акции, должны совпадать с&nbsp;личными данными, к&nbsp;которым привязана бонусная карта Четыре лапы, также используемая для&nbsp;регистрации в&nbsp;акции.</p>
-        <p>Участники, у&nbsp;которых указанная информация не&nbsp;совпадает, автоматически выбывают из&nbsp;общего списка зарегистрированных участников для начисления бонусов и&nbsp;розыгрыша призов.</p>
-      </div>
     </div>
     <?php } ?>
 
     <div class="response-form-participate-ny2020" data-response-form-participate-ny2020="true" style="display: <?= ($userChance === null) ? 'none' : 'block' ?>">
       <div class="response-form-participate-ny2020__title">Спасибо!</div>
       <div class="response-form-participate-ny2020__subtitle">За участие в акции</div>
-      <div class="response-form-participate-ny2020__info">
-        <div class="response-form-participate-ny2020__odds">Мои шансы</div>
-        <div class="response-form-participate-ny2020__count" data-odds-form-participate-ny2020="true"><?= $userChance ?? 0 ?></div>
-        <div class="response-form-participate-ny2020__icon"></div>
-      </div>
+
+      <?php if($userChance === NULL || $userChance === 0) {?>
+          <div class="response-form-participate-ny2020__descr" data-descr-response-form-participate-ny2020="true" style="display: <?= ($userChance === 0) ? 'block' : 'none' ?>">
+              <p>Совершайте покупки на&nbsp;500&nbsp;руб. и&nbsp;более, увеличивайте шансы выиграть:</p>
+              <ul class="response-form-participate-ny2020__prizes">
+                  <li>
+                      <span class="img">
+                          <img src="/ny2020/img/prizes1.png" alt="">
+                      </span>
+                      <span class="text">200 термокружек;</span>
+                  </li>
+                  <li>
+                      <span class="img">
+                          <img src="/ny2020/img/prizes2.png" alt="">
+                      </span>
+                      <span class="text">4 iPhone 11 Pro;</span>
+                  </li>
+                  <li>
+                      <span class="img">
+                          <img src="/ny2020/img/prizes3.png" alt="">
+                      </span>
+                      <span class="text">поездку в Великий Устюг!</span>
+                  </li>
+              </ul>
+          </div>
+      <?php } ?>
+      <?php if($userChance === NULL || $userChance !== 0) {?>
+          <div class="response-form-participate-ny2020__info" data-result-response-form-participate-ny2020="true">
+              <div class="response-form-participate-ny2020__odds">Мои шансы</div>
+              <div class="response-form-participate-ny2020__count" data-odds-form-participate-ny2020="true"><?= $userChance ?? 0 ?></div>
+              <div class="response-form-participate-ny2020__icon"></div>
+          </div>
+      <?php } ?>
+
     </div>
   </section>
 <?php } ?>

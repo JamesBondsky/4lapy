@@ -168,6 +168,48 @@ class HLBlockLectionAppsCreate20191105171256 extends SprintMigrationBase
                 'ru' => 'Дата создания',
             ],
         ],
+        [
+            'FIELD_NAME'        => 'UF_LECTION_NAME',
+            'USER_TYPE_ID'      => 'string',
+            'XML_ID'            => 'UF_LECTION_NAME',
+            'SORT'              => 20,
+            'MULTIPLE'          => 'N',
+            'MANDATORY'         => 'N',
+            'SHOW_FILTER'       => 'Y',
+            'SHOW_IN_LIST'      => 'Y',
+            'EDIT_IN_LIST'      => 'Y',
+            'IS_SEARCHABLE'     => 'N',
+            'EDIT_FORM_LABEL'   => [
+                'ru' => 'Email',
+            ],
+            'LIST_COLUMN_LABEL' => [
+                'ru' => 'Название лекции',
+            ],
+            'LIST_FILTER_LABEL' => [
+                'ru' => 'Название лекции',
+            ],
+        ],
+        [
+            'FIELD_NAME'        => 'UF_LECTION_DATE',
+            'USER_TYPE_ID'      => 'string',
+            'XML_ID'            => 'UF_LECTION_DATE',
+            'SORT'              => 20,
+            'MULTIPLE'          => 'N',
+            'MANDATORY'         => 'N',
+            'SHOW_FILTER'       => 'Y',
+            'SHOW_IN_LIST'      => 'Y',
+            'EDIT_IN_LIST'      => 'Y',
+            'IS_SEARCHABLE'     => 'N',
+            'EDIT_FORM_LABEL'   => [
+                'ru' => 'Email',
+            ],
+            'LIST_COLUMN_LABEL' => [
+                'ru' => 'Дата лекции',
+            ],
+            'LIST_FILTER_LABEL' => [
+                'ru' => 'Дата лекции',
+            ],
+        ],
     ];
     
     public function up()

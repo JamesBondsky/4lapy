@@ -28,7 +28,7 @@ use Psr\Log\LoggerAwareInterface;
 class InfoService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
-
+    
     /** @var ImageProcessor */
     private $imageProcessor;
 
@@ -43,7 +43,12 @@ class InfoService implements LoggerAwareInterface
 
     /** @var ShortProduct[]  */
     private static $cache = [];
-
+    
+    /**
+     * @var array
+     */
+    private $repeatedOffers = [];
+    
     public function __construct(ImageProcessor $imageProcessor, ProductService $productService)
     {
         $this->imageProcessor = $imageProcessor;
@@ -443,15 +448,22 @@ class InfoService implements LoggerAwareInterface
                 break;
             }
             $offerId = $property['VALUE'];
-
+            
             if (!array_key_exists($property['VALUE'], self::$cache)) {
                 $offer = (new OfferQuery())->withFilter(['=XML_ID' => $offerId])->exec()->current();
                 $product = $offer->getProduct();
-                self::$cache[$offerId] = $this->productService->convertToShortProduct($product, $offer);
+    
+                if (in_array($product->getId(), $this->repeatedOffers)) {
+                    continue;
+                }
+                
+                $this->repeatedOffers[] = $product->getId();
+                self::$cache[$offerId] = $this->productService->convertToFullProduct($product, $offer, true, false);
             }
-
+            
             $products->add(self::$cache[$offerId]);
         }
+
         return $products;
     }
 }

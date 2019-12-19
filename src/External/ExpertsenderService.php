@@ -14,6 +14,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
+use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -143,6 +144,13 @@ class ExpertsenderService implements LoggerAwareInterface
     public const CATS_BIRTH_DAY = 8420;
     public const DOGS_BIRTH_DAY = 8421;
     public const OTHER_BIRTH_DAY = 8422;
+    
+    /**
+     * Flagman
+     */
+    public const GROOMING_SEND_EMAIL = 10130;
+    public const TRAINING_SEND_EMAIL = 10135;
+    public const LECTION_SEND_EMAIL = 10159;
 
     public const BLACK_LIST_ERROR_CODE = 400;
     public const BLACK_LIST_ERROR_MESSAGE = 'Subscriber is blacklisted.';
@@ -996,16 +1004,19 @@ class ExpertsenderService implements LoggerAwareInterface
                 if (!$currentOffer) {
                     throw new ExpertSenderOfferNotFoundException(sprintf('Не найден товар %s', $basketItem->getCode()));
                 }
+
+
                 $link = ($currentOffer->getXmlId()[0] === '3') ? '' : new FullHrefDecorator($currentOffer->getDetailPageUrl());
-                $item = '';
-                $item .= '<Product>';
-                $item .= '<Name>' . $currentOffer->getName(). '</Name>';
-                $item .= '<PicUrl>' . new FullHrefDecorator((string)$currentOffer->getImages()->first()) . '</PicUrl>';
-                $item .= '<Link>' . $link . '</Link>';
-                $item .= '<Price1>' . $currentOffer->getOldPrice() . '</Price1>';
-                $item .= '<Price2>' . ($basketItem->getPrice() / 100) . '</Price2>';
-                $item .= '<Amount>' . $basketItem->getQuantity()->getValue() . '</Amount>';
-                $item .= '</Product>';
+
+                $params = [
+                    'name' => $currentOffer->getName(),
+                    'picurl' => new FullHrefDecorator((string)$currentOffer->getImages()->first()),
+                    'link' => $link,
+                    'price1' => $currentOffer->getOldPrice(),
+                    'price2' => ($basketItem->getPrice() / 100),
+                    'amount' => $basketItem->getQuantity()->getValue(),
+                ];
+                $item = $this->getProductFormatted($params);
                 $items[] = $item;
             }
         } catch (NotFoundException $e) {
@@ -1013,6 +1024,21 @@ class ExpertsenderService implements LoggerAwareInterface
         }
 
         return $items;
+    }
+
+    protected function getProductFormatted($params)
+    {
+        $item = '';
+        $item .= '<Product>';
+        $item .= '<Name>' . $params['name'] . '</Name>';
+        $item .= '<PicUrl>' . $params['picurl'] . '</PicUrl>';
+        $item .= '<Link>' . $params['link'] . '</Link>';
+        $item .= '<Price1>' . $params['price1'] . '</Price1>';
+        $item .= '<Price2>' . $params['price2'] . '</Price2>';
+        $item .= '<Amount>' . $params['amount'] . '</Amount>';
+        $item .= '</Product>';
+
+        return $item;
     }
 
     /**
@@ -1058,10 +1084,14 @@ class ExpertsenderService implements LoggerAwareInterface
         $frequencyList = $orderSubscribeService->getFrequencies();
         $curFrequency = current(array_filter($frequencyList, function($item) use ($frequency) { return $item['ID'] == $frequency; }));
         $saleBonus = $orderSubscribeService->countBasketPriceDiff($order->getBasket());
+        //$deliveryDate = $orderSubscribeHistoryService->getLastOrderDeliveryDate($orderSubscribe);
+        $deliveryDate = $orderSubscribe->getNearestDelivery();
+        $deliveryDate = $deliveryDate ? $deliveryDate->format('d.m.Y') : '';
 
         $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));
         $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($orderService->getOrderDeliveryAddress($order)));
-        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribeService->getPreviousDate($orderSubscribe)->format('d.m.Y')));
+        // $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribeService->getPreviousDate($orderSubscribe)->format('d.m.Y')));
+        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($deliveryDate));
         $snippets[] = new Snippet('tel_number', PhoneHelper::formatPhone($personalOrder->getPropValue('PHONE')));
         $snippets[] = new Snippet('total_bonuses', (int)$orderService->getOrderBonusSum($order));
         $snippets[] = new Snippet('delivery_cost', (float)$order->getShipmentCollection()->getPriceDelivery());
@@ -1069,7 +1099,9 @@ class ExpertsenderService implements LoggerAwareInterface
         $snippets[] = new Snippet('next_delivery_date', $orderSubscribe->getNextDate()->format('d.m.Y'));
         $snippets[] = new Snippet('sale_bonus', abs($saleBonus));
 
-        $items = $this->getAltProductsItems($order);
+        $basket = $orderSubscribeService->getBasketBySubscribeId($orderSubscribe->getId());
+        $items = $this->getAltProductsItemsByBasket($basket);
+
         $items = '<Products>' . implode('', $items) . '</Products>';
         $snippets[] = new Snippet('alt_products', $items, true);
 
@@ -1729,6 +1761,110 @@ class ExpertsenderService implements LoggerAwareInterface
             }
         }
 
+        return false;
+    }
+    
+    /**
+     * @param $name
+     * @param $phone
+     * @param $email
+     * @param $animal
+     * @param $breed
+     * @param $service
+     * @param $clinic
+     * @param $date
+     * @return bool
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceApiException
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceException
+     * @throws \LinguaLeo\ExpertSender\ExpertSenderException
+     */
+    public function sendGroomingEmail($name, $phone, $email, $animal, $breed, $service, $clinic, $date, $time): bool
+    {
+        if ($email) {
+            $transactionId = self::GROOMING_SEND_EMAIL;
+            
+            $snippets = [];
+            $snippets[] = new Snippet('subscriber_firstname', htmlspecialcharsbx($name));
+            $snippets[] = new Snippet('tel_number', htmlspecialcharsbx($phone));
+            $snippets[] = new Snippet('Animal', htmlspecialcharsbx($animal));
+            $snippets[] = new Snippet('Breed', htmlspecialcharsbx($breed));
+            $snippets[] = new Snippet('Service', htmlspecialcharsbx($service));
+            $snippets[] = new Snippet('EMAIL', htmlspecialcharsbx($email));
+            $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($clinic));
+            $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($date));
+            $snippets[] = new Snippet('delivery_interval', htmlspecialcharsbx($time));
+            
+            $this->sendSystemTransactional($transactionId, $email, $snippets);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * @param $name
+     * @param $phone
+     * @param $email
+     * @param $animal
+     * @param $breed
+     * @param $service
+     * @param $clinic
+     * @param $date
+     * @return bool
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceApiException
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceException
+     * @throws \LinguaLeo\ExpertSender\ExpertSenderException
+     */
+    public function sendTrainingEmail($name, $phone, $email, $date, $time): bool
+    {
+        if ($email) {
+            $transactionId = self::TRAINING_SEND_EMAIL;
+            
+            $snippets = [];
+            $snippets[] = new Snippet('delivery_address', 'г. Москва, пр-кт Вернадского, д. 6, ТЦ «Капитолий»');
+            $snippets[] = new Snippet('subscriber_firstname', htmlspecialcharsbx($name));
+            $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($date));
+            $snippets[] = new Snippet('delivery_interval', htmlspecialcharsbx($time));
+            $snippets[] = new Snippet('tel_number', htmlspecialcharsbx($phone));
+            $snippets[] = new Snippet('EMAIL', htmlspecialcharsbx($email));
+            
+            $this->sendSystemTransactional($transactionId, $email, $snippets);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * @param $name
+     * @param $phone
+     * @param $email
+     * @param $lectionName
+     * @param $lectionDate
+     * @param $lectionTime
+     * @return bool
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceApiException
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceException
+     * @throws \LinguaLeo\ExpertSender\ExpertSenderException
+     */
+    public function sendLectionEmail($name, $phone, $email, $lectionName, $lectionDate, $lectionTime): bool
+    {
+        if ($email) {
+            $transactionId = self::LECTION_SEND_EMAIL;
+            
+            $snippets = [];
+            $snippets[] = new Snippet('delivery_address', 'г. Москва, пр-кт Вернадского, д. 6, ТЦ «Капитолий»');
+            $snippets[] = new Snippet('subscriber_firstname', htmlspecialcharsbx($name));
+            $snippets[] = new Snippet('LECTION_NAME', htmlspecialcharsbx($lectionName));
+            $snippets[] = new Snippet('tel_number', htmlspecialcharsbx($phone));
+            $snippets[] = new Snippet('delivery_interval', htmlspecialcharsbx($lectionTime));
+            $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($lectionDate));
+            $snippets[] = new Snippet('EMAIL', htmlspecialcharsbx($email));
+            
+            $this->sendSystemTransactional($transactionId, $email, $snippets);
+            return true;
+        }
+        
         return false;
     }
 }

@@ -31,11 +31,12 @@ $markup = PawsApplication::markup();
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="google" content="notranslate">
     <meta name="format-detection" content="telephone=no">
-    <meta name="yandex-verification" content="6266e34669b85ed6">
+    <meta name="yandex-verification" content="d69492b0ac6396cf" />
+    <meta name="google-site-verification" content="YhnMv-eup_rK_sqgNqgHc8UrWyWaZQ22m5z7xnokuNs" />
 
-    <meta property="og:title" content="Выиграйте главный приз: Путешествие на 4-х человек на родину Деда Мороза!"/>
-    <meta property="og:description" content="Зарегистрируйтесь и выигрывайте призы каждую неделю!"/>
-    <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/img/mealfeel-share.png'?>">
+    <meta property="og:title" content="Новогодний розыгрыш от компании Четыре Лапы"/>
+    <meta property="og:description" content="Зарегистрируйтесь для участия в акции и выигрывайте призы каждую неделю!"/>
+    <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/ny2020/img/ny2020-share.png'?>">
 
     <link href="https://fonts.googleapis.com/css?family=PT+Sans+Narrow|Roboto+Condensed&display=swap" rel="stylesheet">
 
@@ -98,9 +99,9 @@ $markup = PawsApplication::markup();
 <header class="header-ny2020" data-header-landing="true">
     <div class="header-ny2020__container">
         <div class="header-ny2020__content">
-            <div class="header-ny2020__logo">
+            <a href="/" class="header-ny2020__logo">
                 <img src="/ny2020/img/logo.svg" alt="NY2020" title="NY2020"/>
-            </div>
+            </a>
             <div class="header-ny2020-menu" data-mobile-menu-landing="true">
                 <ul class="header-ny2020-menu__list" data-list-mobile-menu-landing="true">
                     <?/*<li  class="header-ny2020-menu__item">
@@ -138,8 +139,8 @@ $markup = PawsApplication::markup();
     <section class="main-banner-ny2020">
         <div class="main-banner-ny2020__container">
             <div class="main-banner-ny2020__main">
-                <div class="main-banner-ny2020__title">Выиграйте главный приз:</div>
-                <div class="main-banner-ny2020__subtitle">Путешествие на&nbsp;<nobr>4-х</nobr> человек на&nbsp;родину Деда Мороза!</div>
+                <div class="main-banner-ny2020__title">Выигрывай каждую неделю</div>
+                <div class="main-banner-ny2020__subtitle">4 iPhone 11 Pro</div>
                 <div class="main-banner-ny2020__prizes">
                     <div class="prizes-info">
                         <div class="prizes-info__title">
@@ -159,46 +160,58 @@ $markup = PawsApplication::markup();
         </div>
     </section>
 
-    <section data-id-section-landing="regulations" class="regulations-ny2020">
-        <div class="regulations-ny2020__container">
-            <div class="title-ny2020">Как принять участие в&nbsp;акции</div>
-            <div class="regulations-ny2020__list">
-                <div class="step">
-                    <div class="step__inner">
-                        <div class="step__descr">Покупайте<br/> любые товары<br/> в&nbsp;зоомагазинах, в&nbsp;<nobr>интернет-магазине</nobr> и&nbsp;в&nbsp;мобильном<br/> приложении<br/> <b>&laquo;Четыре Лапы&raquo;.</b></div>
-                        <div class="step__icon">
-                            <img src="/ny2020/img/step1-regulations.png" alt="" title="" >
+    <section data-id-section-landing="prizes" class="prizes-ny2020">
+        <div class="container-landing">
+            <div class="title-ny2020">Призы</div>
+            <div class="prizes-ny2020__list">
+                <div class="item">
+                    <div class="item-card">
+                        <div class="item-card__img-wrap">
+                            <div class="item-card__img" style="background-image: url('/ny2020/img/prizes1.png')"></div>
+                        </div>
+                        <div class="item-card__title">Термокружка</div>
+                        <div class="item-card__descr">
+                            Всего 200 призов<br />
+                            Разыгрываются по&nbsp;50шт<br />
+                            каждый понедельник<br />
+                            <b>9, 16, 23 и&nbsp;30 декабря</b>
                         </div>
                     </div>
                 </div>
-                <div class="step">
-                    <div class="step__inner">
-                        <div class="step__descr">Зарегистрируйтесь для<br/> участия в&nbsp;акции.<br/> Больше покупок кратных <b>500&nbsp;рублей</b>, больше шансов выиграть один из&nbsp;ценных<br/> призов.</div>
-                        <div class="step__icon">
-                            <img src="/ny2020/img/step2-regulations.png" alt="" title="" >
+                <div class="item">
+                    <div class="item-card">
+                        <div class="item-card__img-wrap">
+                            <div class="item-card__img" style="background-image: url('/ny2020/img/prizes2.png')"></div>
+                        </div>
+                        <div class="item-card__title">Iphone 11 Pro</div>
+                        <div class="item-card__descr">
+                            Всего 4 приза<br />
+                            Разыгрывается по&nbsp;1шт<br/>
+                            каждый понедельник<br />
+                            <b>9, 16, 23 и&nbsp;30 декабря</b>
                         </div>
                     </div>
                 </div>
-                <div class="step">
-                    <div class="step__inner">
-                        <div class="step__descr">Проверяйте<br/> результаты розыгрыша<br/> на&nbsp;этом сайте<br/> каждый понедельник<br/> <b>9, 16, 23 и&nbsp;30 декабря</b>.</div>
-                        <div class="step__icon">
-                            <img src="/ny2020/img/step3-regulations.png" alt="" title="" >
+                <div class="item">
+                    <div class="item-card">
+                        <div class="item-card__img-wrap">
+                            <div class="item-card__img" style="background-image: url('/ny2020/img/prizes3.png')"></div>
+                        </div>
+                        <div class="item-card__title">Путешествие</div>
+                        <div class="item-card__descr">
+                            В&nbsp;Великий Устюг на&nbsp;родину <nobr>Деда Мороза</nobr><br />
+                            1 приз на&nbsp;семью из&nbsp;4х человек<br />
+                            <b>Розыгрыш 30 декабря</b>
                         </div>
                     </div>
                 </div>
             </div>
-            <?if (!$USER->IsAuthorized()) {?>
-                <div class="regulations-ny2020__btn-wrap">
-                    <div class="regulations-ny2020__btn js-open-popup" data-popup-id="authorization">Принять участие</div>
-                </div>
-            <?}?>
         </div>
-        <div class="regulations-ny2020__triangles-top"></div>
-        <div class="regulations-ny2020__triangles-left"></div>
-        <div class="regulations-ny2020__triangles-right"></div>
-        <div class="regulations-ny2020__spruce"></div>
+        <div class="triangles-left-ny2020"></div>
+        <div class="triangles-right-ny2020"></div>
+        <div class="triangles-top-prizes-ny2020"></div>
     </section>
+
 </div>
 
 <div class="b-page-wrapper landing-page-wrapper <?= $template->getWrapperClass() ?> js-this-scroll">

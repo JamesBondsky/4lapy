@@ -5,7 +5,8 @@ use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Query\Join;
-use \Bitrix\Main\Entity\Query;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Iblock\ElementTable;
 
 /**
  * Class FlagmanGrooming
@@ -16,64 +17,64 @@ class FlagmanGrooming extends \CBitrixComponent
     private $iblockId;
     
     /**
-     * @param $arParams
+     * @param array $params
+     *
      * @return array
-     * @throws \Bitrix\Main\LoaderException
      */
-    public function onPrepareComponentParams($arParams)
+    public function onPrepareComponentParams($params): array
     {
-        Loader::includeModule('iblock');
-        $this->iblockId = $this->getIblockId();
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 360000;
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'Y';
         
-        return parent::onPrepareComponentParams($arParams);
+        return parent::onPrepareComponentParams($params);
     }
     
     /**
      * @return mixed|void
+     * @throws \Bitrix\Main\LoaderException
      */
     public function executeComponent()
     {
-        $result = $this->getDays();
-
-        foreach ($result as $item) {
-            if (!empty($item['TIME'])) {
-                preg_match('/([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $item['NAME'], $matches);
-
-                if (strtotime($matches[0]) < strtotime('today')) {
-                    continue;
-                }
+        if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
+            Loader::includeModule('iblock');
+            $this->iblockId = $this->getIblockId();
     
-                preg_match('/^[0-9]{2}/', $item['TIME'], $pregMTime);
-                if ($matches[0] == date('d.m.Y') && $pregMTime[0] <= date('H')) {
-                    continue;
-                }
-                
-                $this->arResult['DAYS'][$item['ID']] = $item['NAME'];
+            $check = $this->checkElements();
+    
+            if (!$check) {
+                $this->abortResultCache();
+            }
+            
+            if ($check) {
+                $this->arResult['CLINICS'] = $this->getClinics();
+        
+                $this->includeComponentTemplate();
             }
         }
-        
-        $this->sortDays();
-
-        $this->includeComponentTemplate();
+    
+        return false;
+    }
+    
+    /**
+     * @return mixed
+     */
+    private function getIblockId()
+    {
+        return \CIBlock::GetList([], ['CODE' => $this->iblockCode])->Fetch()['ID'];
     }
     
     /**
      * @return array
      */
-    private function getDays()
+    private function getClinics()
     {
         $result = [];
         
         try {
             $result = SectionTable::query()
-                ->setSelect(['ID', 'NAME', 'TIME' => 'TIMES.NAME'])
-                ->registerRuntimeField(
-                    new ReferenceField(
-                        'TIMES',
-                        'Bitrix\Iblock\ElementTable',
-                        ['=this.ID' => 'ref.IBLOCK_SECTION_ID']
-                    ))
-                ->setFilter(['=IBLOCK_ID' => $this->iblockId, '=ACTIVE' => 'Y'])
+                ->setSelect(['ID', 'NAME'])
+                ->setFilter(['=IBLOCK_ID' => $this->iblockId, '=ACTIVE' => 'Y', '=DEPTH_LEVEL' => 1])
+                ->setOrder(['SORT' => 'ASC'])
                 ->exec()
                 ->fetchAll();
             
@@ -85,15 +86,29 @@ class FlagmanGrooming extends \CBitrixComponent
     }
     
     /**
-     * @return mixed
+     * @return bool
      */
-    private function getIblockId()
+    private function checkElements()
     {
-        return \CIBlock::GetList([], ['CODE' => $this->iblockCode])->Fetch()['ID'];
-    }
-    
-    private function sortDays()
-    {
-        natsort($this->arResult['DAYS']);
+        try {
+            $items = SectionTable::query()
+                ->setSelect(['ID', 'NAME'])
+                ->setFilter(['=IBLOCK_ID' => $this->iblockId, '=ACTIVE' => 'Y', '=DEPTH_LEVEL' => 2])
+                ->setOrder(['SORT' => 'ASC'])
+                ->exec()
+                ->fetchAll();
+        } catch (\Exception $e) {
+            echo $e->getMessage();
+        }
+        
+        foreach ($items as $item) {
+            preg_match('/^([0-9]{2,4}).([0-9]{2,4}).([0-9]{2,4})/', $item['NAME'], $matches);
+            
+            if (strtotime(date('d.m.Y')) < strtotime($matches[0])) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 }
