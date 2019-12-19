@@ -134,7 +134,8 @@ class BasketController extends BaseController
     public function getUserCartAction(UserCartRequest $userCartRequest)
     {
         $promocodeForOldSupport = '';
-
+        $countCoupons = 0;
+        
         $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
 
         $storage = $this->orderStorageService->getStorage();
@@ -168,13 +169,15 @@ class BasketController extends BaseController
             $coupons        = $personalOffers->getActiveUserCoupons($storage->getUserId())['coupons'];
         }
         
-        try {
-            $countCoupons = $coupons->count();
-        } catch (\Exception $e) {
-            $countCoupons = 0;
+        if ($coupons) {
+            try {
+                $countCoupons = $coupons->count();
+            } catch (\Exception $e) {
+                $countCoupons = 0;
+            }
         }
         
-        if ($coupons && $countCoupons > 0) {
+        if ($countCoupons > 0) {
             $orderCalculate->setHasCoupons(true);
         }
 
