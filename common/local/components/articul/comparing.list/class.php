@@ -34,7 +34,8 @@ class ComparingListComponent extends \CBitrixComponent
     public const MARK_NEW_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/new.svg" alt="" role="presentation"/>';
 
     public const DEFAULT_TRANSPARENT_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:transparent;data-background:transparent;">%s</span>';
-    public const DEFAULT_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#da291c;data-background:#da291c;">%s</span>';
+//    public const DEFAULT_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#da291c;data-background:#da291c;">%s</span>';
+    public const DEFAULT_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="">%s</span>';
 //    public const YELLOW_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">%s</span>';
     public const YELLOW_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="">%s</span>';
     public const GREEN_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#44af2b;data-background:#44af2b;">%s</span>';
