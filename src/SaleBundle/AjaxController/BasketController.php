@@ -370,8 +370,8 @@ class BasketController extends Controller implements LoggerAwareInterface
             $personalOfferService->checkCoupon($promoCode);
 
             /** @var PiggyBankService $piggyBankService */
-            $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
-            $piggyBankService->checkPiggyBankCoupon($promoCode);
+//            $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
+//            $piggyBankService->checkPiggyBankCoupon($promoCode);
 
             $bitrixCoupon = DiscountCouponTable::query()
                 ->setFilter([

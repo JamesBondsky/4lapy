@@ -35,6 +35,7 @@ class ImportOffersConsumer extends ImportConsumerBase
             }
         }
 
+        //FIXME код дублирует (и уже расходится из-за этого) код, который добавляет купоны в \FourPaws\PersonalBundle\Service\PersonalOffersService::importOffers
         $couponId = $this->personalCouponManager::add([
             'UF_PROMO_CODE' => $importOffer->promoCode,
             'UF_OFFER' => $importOffer->offerId,
