@@ -21,6 +21,7 @@ class BasketsDiscountOfferTable20191218101902 extends \Adv\Bitrixtools\Migration
                 date_update datetime not null,
                 order_created bool default 0 not null,
                 promoCode varchar(30) null,
+                isFromMobile bool null,
                 primary key (id)
             );
         ');

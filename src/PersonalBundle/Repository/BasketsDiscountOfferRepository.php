@@ -13,11 +13,12 @@ class BasketsDiscountOfferRepository
     /**
      * @param int|null $fUserId
      * @param int|null $userId
+     * @param bool $isFromMobile
      * @return int
      * @throws RuntimeException
      * @throws \Bitrix\Main\ObjectException
      */
-    public static function addBasket(?int $fUserId, ?int $userId): int
+    public static function addBasket(?int $fUserId, ?int $userId, bool $isFromMobile): int
     {
         if (!$userId && !$fUserId) {
             throw new RuntimeException('Не удалось добавить корзину в таблицу по акции, т.к. не заданы $userId и $fUserId');
@@ -30,6 +31,7 @@ class BasketsDiscountOfferRepository
             'date_insert' => new DateTime(),
             'date_update' => new DateTime(),
             'order_created' => 0,
+            'isFromMobile' => $isFromMobile,
         ]);
         if (!$result->isSuccess()) {
             throw new RuntimeException('Не удалось добавить корзину в таблицу по акции. Errors: ' . implode('. ', $result->getErrorMessages()));
@@ -96,6 +98,7 @@ class BasketsDiscountOfferRepository
      * @param int $offerBasketId
      * @param string $promoCode
      * @throws \Bitrix\Main\ObjectException
+     * @throws \Exception
      */
     public static function setPromocode(int $offerBasketId, string $promoCode): void
     {

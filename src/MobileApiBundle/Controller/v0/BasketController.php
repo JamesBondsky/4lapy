@@ -140,7 +140,7 @@ class BasketController extends BaseController
         $storage = $this->orderStorageService->getStorage();
 
         $personalOffersService = Application::getInstance()->getContainer()->get(PersonalOffersService::class);
-        if (!$promoCode = $personalOffersService->tryGet20thBasketOfferCoupon()) {
+        if (!$promoCode = $personalOffersService->tryGet20thBasketOfferCoupon(true)) {
             $promoCode = $userCartRequest->getPromoCode();
 
             if (!$promoCode) {

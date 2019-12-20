@@ -19,6 +19,7 @@ use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
@@ -37,6 +38,7 @@ use FourPaws\App\Tools\StaticLoggerTrait;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Exception\CouponNotFoundException;
+use FourPaws\PersonalBundle\Repository\Table\BasketsDiscountOfferTable;
 use FourPaws\PersonalBundle\Service\ChanceService;
 use FourPaws\PersonalBundle\Service\CouponService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
@@ -673,6 +675,7 @@ class Event extends BaseServiceHandler
             $promocode = BxCollection::getOrderPropertyByCode($propertyCollection, 'PROMOCODE');
             if ($promocode && $promocodeValue = $promocode->getValue())
             {
+                // Деактивация купона в таблице Битрикса
                 $bitrixCouponId = DiscountCouponTable::query()
                     ->setFilter([
                         'COUPON' => $promocodeValue,
@@ -695,6 +698,14 @@ class Event extends BaseServiceHandler
                         );
                 }
 
+                // Отметка, что купон по акции "20-20" использован (запрос не через ORM - для избавления от лишнего селекта)
+                BitrixApplication::getConnection()->query('UPDATE ' . BasketsDiscountOfferTable::getTableName() . ' 
+                    SET order_created=1,
+                        date_update=\'' . (new DateTime())->format('Y-m-d H:i:s') . '\'
+                    WHERE promoCode=\'' . $promocodeValue .'\';'
+                );
+
+                // Деактивация купона в HL-блоках
                 $isPromoCodeProcessed = false;
                 try {
                     /** @var CouponService $couponService */

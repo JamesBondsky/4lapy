@@ -76,6 +76,10 @@ class BasketsDiscountOfferTable extends Main\Entity\DataManager
                 'validation' => [__CLASS__, 'validatePromocode'],
                 'title'      => Loc::getMessage('DISCOUNT_OFFER_ENTITY_PROMOCODE_FIELD'),
             ],
+            'isFromMobile'  => [
+                'data_type' => 'integer',
+                'title'     => Loc::getMessage('DISCOUNT_OFFER_ENTITY_ISFROMMOBILE_FIELD'),
+            ],
         ];
     }
 

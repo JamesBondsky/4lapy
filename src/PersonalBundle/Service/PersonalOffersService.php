@@ -1624,12 +1624,14 @@ class PersonalOffersService
      * Проверяет, является ли корзина пользователя 20-й корзиной на сайте за день
      * (проверяются только первые корзины пользователей. После сделанного заказа новая корзина снова считается первой)
      *
+     * @param bool $isFromMobile
+     * @return bool
      * @throws RuntimeException
-     * @throws \Bitrix\Main\ObjectException
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectException
      */
 
-    private function checkIfNew20thBasket()
+    private function checkIfNew20thBasket(bool $isFromMobile)
     {
         $userId = null;
         try {
@@ -1647,7 +1649,7 @@ class PersonalOffersService
             $personalOfferBasketId = $personalOfferBasket['id'];
         }
         if (!$personalOfferBasket) {
-            $personalOfferBasketId = BasketsDiscountOfferRepository::addBasket($fUserId, $userId);
+            $personalOfferBasketId = BasketsDiscountOfferRepository::addBasket($fUserId, $userId, $isFromMobile);
         }
 
         if (!isset($personalOfferBasketId)) {
@@ -1762,8 +1764,10 @@ class PersonalOffersService
 
     /**
      * Проверяет, является ли пользователь владельцем 20-й "первой" за день корзины (во время акции "20% скидка 20-му покупателю"),
-     * и, если да, выдает этому пользователю купон
+     * и, если да, выдает этому пользователю купон.
+     * Если пользователь подходит по условию, но уже получил на эту корзину купон, то метод возвращает false (как и в случае невыигрыша)
      *
+     * @param bool $isFromMobile
      * @return bool|string
      * @throws InvalidArgumentException
      * @throws RuntimeException
@@ -1774,9 +1778,9 @@ class PersonalOffersService
      * @throws \Bitrix\Main\ObjectException
      * @throws \Bitrix\Main\ObjectPropertyException
      */
-    public function tryGet20thBasketOfferCoupon()
+    public function tryGet20thBasketOfferCoupon(bool $isFromMobile)
     {
-        if ($this->is20thBasketOfferActive() && $this->checkIfNew20thBasket()) {
+        if ($this->is20thBasketOfferActive() && $this->checkIfNew20thBasket($isFromMobile)) {
             $promoCode = $this->getFreeCouponFor20thBasket();
             if ($promoCode) { // Пользователь выиграл купон, далее делается привязка
                 BasketsDiscountOfferRepository::setPromocode($this->getPersonalOfferBasketId(), $promoCode);

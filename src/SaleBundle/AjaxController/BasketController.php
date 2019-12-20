@@ -154,11 +154,20 @@ class BasketController extends Controller implements LoggerAwareInterface
             $basketItem = $this->basketService->addOfferToBasket($offerId, $quantity, [], true, null, true);
             // @todo костыль - иначе в миникорзине не будет картинки нового товара
             $this->basketService->getOfferCollection(true);
+
+            $promoCode = $this->getPersonalOffersService()->tryGet20thBasketOfferCoupon(false);
+
+            if ($promoCode) {
+                $this->couponStorage->clear();
+                $this->couponStorage->save($promoCode);
+            }
+
             $data = [
                 'remainQuantity' => 10,
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
                 'disableAdd' => false,
                 'show_address_popup' => $this->basketService->needShowAddressPopup(null, true),
+                'got_coupon' => (bool)$promoCode,
             ];
 
             $temporaryItem = clone $basketItem;
@@ -181,7 +190,11 @@ class BasketController extends Controller implements LoggerAwareInterface
 
             $data['warning'] = !$availableDelivery;
 
-            $message = ($availableDelivery) ? 'Товар добавлен в корзину' : 'Обратите внимание, что доставка в ваш регион не осуществляется.';
+            if ($promoCode) {
+                $message = 'Вы 20й в акции "Скидка 20% на каждый 20й заказ". Не забудьте оформить заказ сегодня! Скидка уже ждет вас в корзине.';
+            } else {
+                $message = ($availableDelivery) ? 'Товар добавлен в корзину' : 'Обратите внимание, что доставка в ваш регион не осуществляется.';
+            }
 
             $response = JsonSuccessResponse::createWithData(
                 $message,
