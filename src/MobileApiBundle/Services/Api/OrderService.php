@@ -98,7 +98,7 @@ use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use JMS\Serializer\Serializer;
-
+use FourPaws\SaleBundle\Enum\OrderStatus as Status;
 
 class OrderService implements LoggerAwareInterface
 {
@@ -381,7 +381,7 @@ class OrderService implements LoggerAwareInterface
                 ->setCartParam($this->orderParameter)
                 ->setCartCalc($this->orderCalculate);
 
-            if ($order->getDeliveryId() == getenv('EXPRESS_DELIVERY_4LAPY_ID') || $order->getDeliveryId() == getenv('EXPRESS_DELIVERY_DOSTAVISTA_ID') || $isCompleted) {
+            if ($isCompleted || $status->getCode() == Status::STATUS_CANCELING) {
                 $response->setCanBeCanceled(false);
             }
         }

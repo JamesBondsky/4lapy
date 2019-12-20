@@ -112,8 +112,8 @@ $(document).ready(function () {
                 if (json.success) {
                     msg = json.message;
 
-                    cancelOrderItem.find('.js-link-text').text('Отменен');
-                    $('.js-link-text').css("cursor", "default", "!important");
+                    cancelOrderItem.remove();
+                    // $('.js-link-text').css("cursor", "default", "!important");
 
                     cancelOrderItem.unbind();
                 } else {

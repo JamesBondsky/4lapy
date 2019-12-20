@@ -101,7 +101,9 @@ class OrderService
         'A', // Отменен
         'K', // Отменен
     ];
-
+    
+    public const STATUS_CANCELING = 'XX'; //Отменяется
+    
     protected const MANZANA_FINAL_STATUS = 'G';
 
     /**

@@ -122,14 +122,12 @@ class OrderController extends BaseController
     public function orderCancelAction(Request $request)
     {
         try {
-        $serviceContainer     = Application::getInstance()->getContainer();
-        $orderService         = $serviceContainer->get(OrderService::class);
-        $mobileOrderService   = $serviceContainer->get(MobileOrderService::class);
-        $number = $request->get('orderId');
-        
-        $orderId = $mobileOrderService->getOrderIdByNumber($number);
-
-        
+            $serviceContainer     = Application::getInstance()->getContainer();
+            $orderService         = $serviceContainer->get(OrderService::class);
+            $mobileOrderService   = $serviceContainer->get(MobileOrderService::class);
+            $number = $request->get('orderId');
+            
+            $orderId = $mobileOrderService->getOrderIdByNumber($number);
             $cancelResult = $orderService->cancelOrder($orderId);
         } catch (OrderCancelException | \FourPaws\SaleBundle\Exception\NotFoundException  $e) {
             $errors = new ArrayCollection([new Error(0, $e->getMessage())]);
@@ -153,9 +151,19 @@ class OrderController extends BaseController
             ])->setErrors($errors);
         }
         
-        return new Response([
-            'order' => $mobileOrderService->getOneByNumberForCurrentUser($number),
-        ]);
-    }
+        if ($cancelResult == 'canceling') {
+            $errors = new ArrayCollection([new Error(0, 'Ваш заказ уже передан в службу доставки. Мы передадим информацию об отмене заказа.')]);
+        
+            return (new Response([
+                'order' => $mobileOrderService->getOneByNumberForCurrentUser($number),
+            ]))->setErrors($errors);
+        }
     
+        //APPTEKA захотела читать текст попапа из errors)
+        $errors = new ArrayCollection([new Error(0, 'Ваш закакз отменён!')]);
+        
+        return (new Response([
+            'order' => $mobileOrderService->getOneByNumberForCurrentUser($number),
+        ]))->setErrors($errors);
+    }
 }

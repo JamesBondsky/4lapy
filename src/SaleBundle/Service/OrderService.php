@@ -2545,9 +2545,10 @@ class OrderService implements LoggerAwareInterface
      * @throws OrderCancelException
      * @throws SqlQueryException
      */
-    public function cancelOrder($orderId): bool
+    public function cancelOrder($orderId)
     {
         $sendEmail = true;
+        $newStatus = '';
         
         // ищем заказ
         try {
@@ -2577,12 +2578,13 @@ class OrderService implements LoggerAwareInterface
         if (!$statusId || in_array($statusId, PersonalOrderService::STATUS_FINAL, true) || (in_array($statusId, PersonalOrderService::STATUS_CANCEL, true))) {
             return false;
         }
-        
+
         if (($statusId === OrderStatus::STATUS_IN_PROGRESS) || ($statusId === OrderStatus::STATUS_DELIVERING)) {
             $user = \CUser::GetByID($userId)->Fetch();
             \CEvent::Send('USER_WANNA_CANCEL_ORDER', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER'), 'NAME' => $user['NAME'], 'PHONE' => $user['PERSONAL_PHONE']]);
-            $newStatus = OrderStatus::STATUS_CANCEL_COURIER;
-            $sendEmail = false;
+            \CSaleOrder::StatusOrder($orderId, OrderStatus::STATUS_CANCELING);
+
+            return 'canceling';
         }
 
         // формируем новый статус в зависимости от службы доставки
@@ -2606,14 +2608,14 @@ class OrderService implements LoggerAwareInterface
         } catch (\Exception $e) {
             throw new OrderCancelException('Не найдена служба доставки для заказа');
         }
-        
+
         $this->cancelBitrixOrder($order, $orderId, $newStatus);
         
         try {
             // отменяем заказ в Sap'е
-            $orderNumber = $order->getField('ACCOUNT_NUMBER');
-            $sapStatus = StatusService::STATUS_CANCELED;
-            $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
+            // $orderNumber = $order->getField('ACCOUNT_NUMBER');
+            // $sapStatus = StatusService::STATUS_CANCELED;
+            // $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
         } catch (\Exception $e) {
 
         }
@@ -2622,7 +2624,7 @@ class OrderService implements LoggerAwareInterface
             \CEvent::Send('ADMIN_EMAIL_AFTER_ORDER_CANCEL', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER')]);
         }
 
-        return true;
+        return 'cancel';
     }
 
     /**

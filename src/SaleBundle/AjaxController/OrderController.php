@@ -934,6 +934,10 @@ class OrderController extends Controller implements LoggerAwareInterface
             return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка. Повторите запрос позже.']]);
         }
 
+        if ($cancelResult === 'canceling') {
+            return JsonSuccessResponse::createWithData('Ваш заказ уже передан в службу доставки. Мы передадим информацию об отмене заказа.', []);
+        }
+        
         return JsonSuccessResponse::createWithData('Заказ успешно отменен', []);
     }
 
