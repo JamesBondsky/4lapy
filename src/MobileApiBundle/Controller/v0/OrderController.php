@@ -146,7 +146,7 @@ class OrderController extends BaseController
         }
         
         if (!$cancelResult) {
-            $errors = new ArrayCollection([new Error(0, 'При отмене заказа произошла ошибка')]);
+            $errors = new ArrayCollection([new Error(0, 'При отмене заказа произошла ошибка. Повторите запрос позже.')]);
             
             return (new Response())->setData([
                 'success' => 0,

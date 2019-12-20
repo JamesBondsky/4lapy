@@ -927,11 +927,11 @@ class OrderController extends Controller implements LoggerAwareInterface
         } catch (OrderCancelException | \FourPaws\SaleBundle\Exception\NotFoundException  $e) {
             return JsonErrorResponse::createWithData('', ['errors' => [$e->getMessage()]]);
         } catch (Exception $e) {
-            return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка']]);
+            return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка. Повторите запрос позже.']]);
         }
 
         if (!$cancelResult) {
-            return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка']]);
+            return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка. Повторите запрос позже.']]);
         }
 
         return JsonSuccessResponse::createWithData('Заказ успешно отменен', []);
