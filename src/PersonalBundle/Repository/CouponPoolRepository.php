@@ -79,7 +79,7 @@ class CouponPoolRepository extends BaseHlRepository
 
         $randNumber = random_int(2, 99999999);
 
-        $sql = 'UPDATE ' . self::HL_TABLE_NAME . ' SET UF_TAKEN=' . $randNumber . ' WHERE UF_TAKEN IS NULL LIMIT 1';
+        $sql = 'UPDATE ' . self::HL_TABLE_NAME . ' SET UF_TAKEN=' . $randNumber . ' WHERE UF_TAKEN=0 LIMIT 1';
         $updateResult = $connection->query($sql);
 
         if ($connection->getAffectedRowsCount()) {
