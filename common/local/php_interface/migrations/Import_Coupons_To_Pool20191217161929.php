@@ -36,6 +36,7 @@ class Import_Coupons_To_Pool20191217161929 extends \Adv\Bitrixtools\Migration\Sp
             [
                 'DISCOUNT' => 20,
                 'IS_UNRESTRICTED_ACTIVITY' => true,
+                'HIDE_FROM_ACCOUNT' => true,
             ]
         );
 
