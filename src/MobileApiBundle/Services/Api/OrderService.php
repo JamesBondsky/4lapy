@@ -773,8 +773,11 @@ class OrderService implements LoggerAwareInterface
                         ->setId('stamps_sub')
                         ->setTitle('Списано марок')
                         ->setValue($stampsUsed),
-                ])
-                ->setBonusVulnerablePrice($bonusVulnerablePrice);
+                ]);
+        }
+    
+        if ($bonusVulnerablePrice) {
+            $orderCalculate->setBonusVulnerablePrice($bonusVulnerablePrice);
         }
 
         return $orderCalculate;

@@ -82,12 +82,14 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         /** @var BasketItem $item */
         foreach ($basketItems as $k => $item) {
             if ($basketService->isGiftProduct($item)) {
+                ++$iterator;
                 continue;
             }
 
             $xmlId = $basketService->getBasketItemXmlId($item);
 
             if (null === $xmlId) {
+                ++$iterator;
                 continue;
             }
 
@@ -95,6 +97,13 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             $sumDiscounted += $item->getPrice() * $item->getQuantity();
 
             $item->getBasketCode(); // На всякий случай оставил, чтобы продолжали добавляться порядковые номера в базу
+
+            $chequeItemId = $item->getId();
+
+            if (!$chequeItemId) {
+                $chequeItemId = str_replace('n', '', $item->getBasketCode());
+                $chequeItemId = intval($chequeItemId);
+            }
 
             $chequePosition =
                 (new ChequePosition())->setChequeItemNumber(++$iterator)
@@ -107,7 +116,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                     ))
                     ->setSummDiscounted($item->getPrice() * $item->getQuantity())
                     ->setArticleId($xmlId)
-                    ->setChequeItemId($item->getId());
+                    ->setChequeItemId($chequeItemId);
 
             /**
              * @todo проверить может ли это прийти с предыдущего хита в неактуальном виде

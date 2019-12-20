@@ -34,11 +34,11 @@ class CatalogDetailBundle extends CBitrixComponent
 
     protected $userService;
 
-    public function onPrepareComponentParams($arParams)
-    {
-        $arParams['CACHE_TIME'] = $arParams['CACHE_TIME'] ?? getenv('GLOBAL_CACHE_TTL');
-        return parent::onPrepareComponentParams($arParams);
-    }
+//    public function onPrepareComponentParams($arParams)
+//    {
+//        $arParams['CACHE_TIME'] = $arParams['CACHE_TIME'] ?? getenv('GLOBAL_CACHE_TTL'); // !!! из-за этой строки при наличии переменной GLOBAL_CACHE_TTL перед <html> появляются закрывающие div`ы
+//        return parent::onPrepareComponentParams($arParams);
+//    }
 
     /**
      * GroupSet constructor.
