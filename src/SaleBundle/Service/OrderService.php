@@ -2547,6 +2547,8 @@ class OrderService implements LoggerAwareInterface
      */
     public function cancelOrder($orderId): bool
     {
+        $sendEmail = true;
+        
         // ищем заказ
         try {
             $order = $this->getOrderById($orderId);
@@ -2575,13 +2577,12 @@ class OrderService implements LoggerAwareInterface
         if (!$statusId || in_array($statusId, PersonalOrderService::STATUS_FINAL, true) || (in_array($statusId, PersonalOrderService::STATUS_CANCEL, true))) {
             return false;
         }
-
-        $sendEmail = false;
+        
         if (($statusId === OrderStatus::STATUS_IN_PROGRESS) || ($statusId === OrderStatus::STATUS_DELIVERING)) {
             $user = \CUser::GetByID($userId)->Fetch();
             \CEvent::Send('USER_WANNA_CANCEL_ORDER', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER'), 'NAME' => $user['NAME'], 'PHONE' => $user['PERSONAL_PHONE']]);
-        
-            throw new OrderCancelException('Ваш заказ уже передан в службу доставки. Мы передадим информацию об отмене заказа.');
+            $newStatus = OrderStatus::STATUS_CANCEL_COURIER;
+            $sendEmail = false;
         }
 
         // формируем новый статус в зависимости от службы доставки
@@ -2593,54 +2594,28 @@ class OrderService implements LoggerAwareInterface
 
         try {
             $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
-            if ($this->deliveryService->isDeliveryCode($deliveryCode)) {
+            if ($this->deliveryService->isDeliveryCode($deliveryCode) && !$newStatus) {
                 $newStatus = OrderStatus::STATUS_CANCEL_COURIER;
             } else if ($this->deliveryService->isPickupCode($deliveryCode)) {
                 $newStatus = OrderStatus::STATUS_CANCEL_PICKUP;
             } else if ($deliveryCode = DeliveryService::DELIVERY_DOSTAVISTA_CODE || $deliveryCode = DeliveryService::DOBROLAP_DELIVERY_CODE || $deliveryCode = DeliveryService::EXPRESS_DELIVERY_CODE) {
                 $newStatus = OrderStatus::STATUS_CANCEL_COURIER;
             } else {
-                throw new OrderCancelException('Не найдена служба доставки для заказа');
+
             }
         } catch (\Exception $e) {
             throw new OrderCancelException('Не найдена служба доставки для заказа');
         }
-
-        $connection = BitrixApplication::getConnection();
-
-        $connection->startTransaction();
-
+        
+        $this->cancelBitrixOrder($order, $orderId, $newStatus);
+        
         try {
             // отменяем заказ в Sap'е
             $orderNumber = $order->getField('ACCOUNT_NUMBER');
             $sapStatus = StatusService::STATUS_CANCELED;
-            $setStatusResult = $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
-            
-            if (!$setStatusResult) {
-                $connection->rollbackTransaction();
-                throw new OrderCancelException('Ваш заказ ещё не сформирован. Попробуйте отменить заказ через 30 мин.');
-            }
-
-            // отменяем заказ
-            $cancelResult = (new \CSaleOrder)->cancelOrder($orderId, BaseEntity::BITRIX_TRUE, '');
-
-            if ($cancelResult) {
-                $order->setField('STATUS_ID', $newStatus);
-                $saveResult = $order->save();
-            } else {
-                $connection->rollbackTransaction();
-                return false;
-            }
-
-            if (!$saveResult->isSuccess()) {
-                $connection->rollbackTransaction();
-                return false;
-            }
-
-            $connection->commitTransaction();
+            $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
         } catch (\Exception $e) {
-            $connection->rollbackTransaction();
-            return false;
+
         }
 
         if ($sendEmail) {
@@ -2747,5 +2722,37 @@ class OrderService implements LoggerAwareInterface
         $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
 
         return $propertyValue ? ($propertyValue->getValue() ?? '') : '';
+    }
+    
+    protected function cancelBitrixOrder($order, $orderId, $status)
+    {
+        $connection = BitrixApplication::getConnection();
+    
+        $connection->startTransaction();
+    
+        try {
+            // отменяем заказ
+            $cancelResult = (new \CSaleOrder)->cancelOrder($orderId, BaseEntity::BITRIX_TRUE, '');
+    
+            if ($cancelResult) {
+                $order->setField('STATUS_ID', $status);
+                $saveResult = $order->save();
+            } else {
+                $connection->rollbackTransaction();
+                return false;
+            }
+    
+            if (!$saveResult->isSuccess()) {
+                $connection->rollbackTransaction();
+                return false;
+            }
+    
+            $connection->commitTransaction();
+        } catch (\Exception $e) {
+            $connection->rollbackTransaction();
+            return false;
+        }
+      
+        return true;
     }
 }
