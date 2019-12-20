@@ -2,9 +2,9 @@
 
 namespace FourPaws\PersonalBundle\Command;
 
-
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Exception;
+use FourPaws\PersonalBundle\Service\Chance2Service;
 use FourPaws\PersonalBundle\Service\ChanceService;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Console\Command\Command;
@@ -20,8 +20,8 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
     protected const OPTION_USER = 'user';
     protected const OPTION_USER_SHORTCUT = 'u';
 
-    protected const OPTION_PERIOD = 'period';
-    protected const OPTION_PERIOD_SHORTCUT = 'p';
+    protected const OPTION_TYPE = 'type';
+    protected const OPTION_TYPE_SHORTCUT = 't';
 
     /**
      * @var ChanceService
@@ -29,11 +29,18 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
     protected $chanceService;
 
     /**
-     * @param ChanceService $chanceService
+     * @var Chance2Service
      */
-    public function __construct(ChanceService $chanceService)
+    protected $chance2Service;
+
+    /**
+     * @param ChanceService $chanceService
+     * @param Chance2Service $chance2Service
+     */
+    public function __construct(ChanceService $chanceService, Chance2Service $chance2Service)
     {
         $this->chanceService = $chanceService;
+        $this->chance2Service = $chance2Service;
 
         parent::__construct();
     }
@@ -53,11 +60,11 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
                 false
             )
             ->addOption(
-                self::OPTION_PERIOD,
-                self::OPTION_PERIOD_SHORTCUT,
+                self::OPTION_TYPE,
+                self::OPTION_TYPE_SHORTCUT,
                 InputOption::VALUE_OPTIONAL,
                 '',
-                false
+                'j'
             );
     }
 
@@ -71,14 +78,16 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
     public function execute(InputInterface $input, OutputInterface $output): bool
     {
         $userId = $input->getOption(self::OPTION_USER);
-        $period = $input->getOption(self::OPTION_PERIOD);
+        $type = $input->getOption(self::OPTION_TYPE);
+
+        $currentChanceService = ($type === 'j') ? $this->chance2Service : $this->chanceService;
 
         if (!$userId) {
-            $this->chanceService->updateAllUserChance($period);
+            $currentChanceService->updateAllUserChance();
             return true;
         }
 
-        $this->chanceService->updateUserChance($userId, $period);
+        $currentChanceService->updateUserChance($userId);
 
         return true;
     }
