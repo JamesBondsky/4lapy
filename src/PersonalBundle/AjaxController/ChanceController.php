@@ -63,7 +63,7 @@ class ChanceController extends Controller
     }
 
     /**
-     * @Route("/register-2/", methods={"POST"})
+     * @Route("/register-2/", methods={"GET"})
      *
      * @param Request $request
      *

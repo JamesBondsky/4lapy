@@ -106,9 +106,9 @@ class ChanceService
             throw new RuntimeException('Пользователь уже зарегистрирован');
         }
 
-//        if ($this->updateUserFields($request, $user) && !$this->userRepository->update($user)) {
-//            throw new RuntimeException('При регистрации произошла ошибка');
-//        }
+        if ($this->updateUserFields($request, $user) && !$this->userRepository->update($user)) {
+            throw new RuntimeException('При регистрации произошла ошибка');
+        }
 
         $data = [];
         foreach ($this->periods as $periodId => $period) {
@@ -128,7 +128,7 @@ class ChanceService
         TaggedCacheHelper::clearManagedCache([static::CACHE_TAG]);
 
         /** @var ManzanaService $manzanaService */
-        $manzanaService = Application::getInstance()->getContainer()->get(ManzanaService::class);
+        $manzanaService = Application::getInstance()->getContainer()->get('manzana.service');
         $manzanaService->importUserOrdersAsync($user);
 
         return 0;
