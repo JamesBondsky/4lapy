@@ -307,7 +307,6 @@ class ChanceService
         try {
             return (new BitrixCache())
                 ->withId(__METHOD__ . 'chance.users')
-                ->withClearCache(true)
                 ->withTime(36000)
                 ->withTag(static::CACHE_TAG)
                 ->resultOf($doGetAllVariants);

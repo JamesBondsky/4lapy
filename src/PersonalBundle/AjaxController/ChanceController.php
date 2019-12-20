@@ -63,7 +63,7 @@ class ChanceController extends Controller
     }
 
     /**
-     * @Route("/register-2/", methods={"GET"})
+     * @Route("/register-2/", methods={"POST"})
      *
      * @param Request $request
      *
@@ -103,7 +103,6 @@ class ChanceController extends Controller
     public function exportAction(): Response
     {
         return $this->exportActionHandler($this->chanceService);
-
     }
 
     /**
