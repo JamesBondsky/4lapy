@@ -282,10 +282,6 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
         if (!$statusId) {
             return;
         }
-    
-        echo '1234567<pre>';
-        print_r($statusId);
-        echo '</pre>';
         
         if ($statusId == PersonalOrderService::STATUS_CANCELING) {
             $this->arResult['CANCELING'] = true;
