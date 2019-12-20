@@ -160,7 +160,7 @@ class OrderController extends BaseController
         }
     
         //APPTEKA захотела читать текст попапа из errors)
-        $errors = new ArrayCollection([new Error(0, 'Ваш закакз отменён!')]);
+        $errors = new ArrayCollection([new Error(0, 'Ваш заказ отменён!')]);
         
         return (new Response([
             'order' => $mobileOrderService->getOneByNumberForCurrentUser($number),
