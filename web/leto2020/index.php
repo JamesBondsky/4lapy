@@ -4,18 +4,25 @@ use FourPaws\App\Application;
 use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\AppBundle\AjaxController\LandingController;
 use FourPaws\PersonalBundle\Exception\RuntimeException;
-use FourPaws\PersonalBundle\Service\ChanceService;
+use FourPaws\PersonalBundle\Service\Chance2Service;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
 $APPLICATION->SetPageProperty('title', '');
 $APPLICATION->SetPageProperty('description', '');
 $APPLICATION->SetTitle('');
+
+$userChance = null;
+/** @var ChanceService $chaceService */
+$chanceService = Application::getInstance()->getContainer()->get(Chance2Service::class);
 ?>
 
 <?php if ($USER->IsAuthorized()) { ?>
 
 	<section id="participate" data-id-section-landing="participate" class="participate-leto2020">
+        <?php try {
+            $userChance = $chanceService->getCurrentUserChances();
+        } catch (RuntimeException $e) { ?>
 		<div class="b-container" data-wrap-form-participate-leto2020="true">
             <?php $arUser = \CUser::GetById($USER->GetID())->Fetch(); ?>
 
@@ -27,7 +34,7 @@ $APPLICATION->SetTitle('');
                     <form data-form-participate-leto2020="true"
                           class="participate-leto2020__form js-form-validation"
                           method="post"
-                          action="/ajax/personal/chance/register/"
+                          action="/ajax/personal/chance/register-2/"
                           name=""
                           enctype="multipart/form-data">
                         <?php $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD); ?>
@@ -74,8 +81,10 @@ $APPLICATION->SetTitle('');
                 </div>
             </div>
         </div>
+        <?php } ?>
 
-        <div class="b-container" data-response-form-participate-leto2020="true" style="display: none;">
+        <?php if ($userChance === null || $userChance === 0) { ?>
+        <div class="b-container" data-response-form-participate-leto2020="true" style="display: <?= ($userChance === 0) ? 'block' : 'none' ?>">
             <div class="title-leto2020">Спасибо за&nbsp;регистрацию в&nbsp;розыгрыше!</div>
 
             <div class="participate-leto2020__inner-wrap">
@@ -83,8 +92,10 @@ $APPLICATION->SetTitle('');
                     <div class="response-form-participate-leto2020">
                         <span class="response-form-participate-leto2020__title">
                             Сейчас у Вас накоплено
-                            <span class="response-form-participate-leto2020__count" data-odds-form-participate-leto2020="true">0</span>
-                            шансов
+                            <nobr>
+                                <span class="response-form-participate-leto2020__count" data-odds-form-participate-leto2020="true">0</span>
+                                шансов
+                            </nobr>
                         </span>
                         <div class="response-form-participate-leto2020__footnote">Шансы будут начислены в&nbsp;течение <nobr>2-х</nobr> дней.</div>
 
@@ -116,6 +127,7 @@ $APPLICATION->SetTitle('');
                 </div>
             </div>
         </div>
+        <?php } ?>
     </section>
 
 <?php } ?>

@@ -97,7 +97,7 @@ $markup = PawsApplication::markup();
 <!-- /Yandex.Metrika counter -->
 
 <header class="header-leto2020" data-header-landing="true">
-    <div class="header-leto2020__container">
+    <div class="b-container">
         <div class="header-leto2020__content">
             <div class="header-leto2020__left">
                 <a href="/" class="header-leto2020__logo">
