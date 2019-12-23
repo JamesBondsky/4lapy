@@ -32,8 +32,8 @@ if ($template->hasMainWrapper()) { ?>
 <div class="bottom-landing">
 
     <section data-id-section-landing="where-buy" class="where-buy-leto2020">
-        <div class="where-buy-leto2020__top">
-            <div class="b-container">
+        <div class="b-container">
+            <div class="where-buy-leto2020__top">
                 <div class="title-leto2020">Где купить?</div>
             </div>
         </div>

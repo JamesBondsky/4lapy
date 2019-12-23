@@ -68,7 +68,7 @@ $APPLICATION->SetTitle('');
                         </div>
 
                         <div class="participate-leto2020__btn-form">
-                            <button type="submit" class="participate-leto2020__btn">Принять участие</button>
+                            <button type="submit" class="btn-leto2020">Принять участие</button>
                         </div>
                     </form>
                 </div>

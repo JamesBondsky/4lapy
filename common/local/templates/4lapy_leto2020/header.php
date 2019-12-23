@@ -99,21 +99,22 @@ $markup = PawsApplication::markup();
 <header class="header-leto2020" data-header-landing="true">
     <div class="header-leto2020__container">
         <div class="header-leto2020__content">
-            <a href="/" class="header-leto2020__logo">
-                <img src="/leto2020/img/logo.svg" alt="leto2020" title="leto2020"/>
-            </a>
+            <div class="header-leto2020__left">
+                <a href="/" class="header-leto2020__logo">
+                    <img src="/leto2020/img/logo.svg" alt="leto2020" title="leto2020"/>
+                </a>
+                <div class="header-leto2020__canin-logo">
+                    <img src="/leto2020/img/canin-logo.svg" alt="leto2020" title="leto2020"/>
+                </div>
+            </div>
             <div class="header-leto2020-menu" data-mobile-menu-landing="true">
                 <ul class="header-leto2020-menu__list" data-list-mobile-menu-landing="true">
                     <li  class="header-leto2020-menu__item">
-                        <a href="/" class="header-leto2020-menu__link" target="_blank">Правила акции</a>
+                        <a href="javascript:void(0);"  class="header-leto2020-menu__link" data-btn-scroll-landing="prizes">Призы</a>
                     </li>
 
                     <li class="header-leto2020-menu__item">
                         <a href="javascript:void(0);"  class="header-leto2020-menu__link" data-btn-scroll-landing="regulations">Принять участие</a>
-                    </li>
-
-                    <li  class="header-leto2020-menu__item">
-                        <a href="javascript:void(0);"  class="header-leto2020-menu__link" data-btn-scroll-landing="prizes">Призы</a>
                     </li>
 
                     <li  class="header-leto2020-menu__item" style="<?$APPLICATION->ShowViewContent('empty-winners');?>">
@@ -125,8 +126,12 @@ $markup = PawsApplication::markup();
                     </li>
 
                     <li  class="header-leto2020-menu__item">
-                        <a href="javascript:void(0);"  class="header-leto2020-menu__link" data-btn-scroll-landing="questions">Вопросы</a>
+                        <a href="javascript:void(0);"  class="header-leto2020-menu__link" data-btn-scroll-landing="questions">Вопросы и ответы</a>
                     </li>
+
+                    <?/*<li  class="header-leto2020-menu__item">
+                        <a href="/" class="header-leto2020-menu__link" target="_blank">Правила акции</a>
+                    </li>*/?>
                 </ul>
             </div>
             <div class="header-leto2020__toggle-mobile-menu" data-toggle-mobile-menu-landing="true"><span></span></div>
@@ -136,6 +141,139 @@ $markup = PawsApplication::markup();
 
 <div class="page-leto2020">
     <div class="top-landing" data-top-landing="true">
+        <section class="main-banner-leto2020">
+            <div class="b-container">
+                <div class="main-banner-leto2020__inner">
+                    <div class="main-banner-leto2020__title">
+                        Выиграй<br/> путешествие<br/> на&nbsp;<nobr>2-их</nobr> в&nbsp;Тайланд!
+                    </div>
+                    <div class="main-banner-leto2020__subtitle">
+                        <p>+20 смартфонов</p>
+                        <p>+200 power banks!</p>
+                    </div>
+
+                    <?if (!$USER->IsAuthorized()) {?>
+                        <div class="main-banner-leto2020__btn">
+                            <div class="btn-leto2020 js-open-popup" data-popup-id="authorization">Принять участие</div>
+                        </div>
+                    <?}?>
+                </div>
+            </div>
+        </section>
+
+        <section data-id-section-landing="prizes" class="prizes-leto2020">
+            <div class="b-container">
+                <h2 class="title-leto2020 title-leto2020_blue">Общий призовой фонд</h2>
+                <div class="prizes-leto2020__list">
+                    <div class="item">
+                        <div class="item-card">
+                            <div class="item-card__img-wrap">
+                                <div class="item-card__img" style="background-image: url('/leto2020/img/prizes1.png')"></div>
+                            </div>
+                            <div class="item-card__title">Мощные Power Banks</div>
+                            <div class="item-card__descr">
+                                Всего 200&nbsp;шт<br />
+                                Розыгрыш по&nbsp;50&nbsp;шт в&nbsp;неделю:<br />
+                                <b>13, 20, 27&nbsp;января и&nbsp;3&nbsp;февраля</b>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item">
+                        <div class="item-card">
+                            <div class="item-card__img-wrap">
+                                <div class="item-card__img" style="background-image: url('/leto2020/img/prizes2.png')"></div>
+                            </div>
+                            <div class="item-card__title">Современные смартфоны</div>
+                            <div class="item-card__descr">
+                                Всего 20&nbsp;шт<br />
+                                Розыгрыши по&nbsp;5&nbsp;шт в&nbsp;неделю:<br/>
+                                <b>13, 20, 27&nbsp;января и&nbsp;3&nbsp;февраля</b>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item">
+                        <div class="item-card">
+                            <div class="item-card__img-wrap">
+                                <div class="item-card__img" style="background-image: url('/leto2020/img/prizes3.png')"></div>
+                            </div>
+                            <div class="item-card__title">Главный приз</div>
+                            <div class="item-card__descr">
+                                Незабываемое путешествие<br />
+                                на&nbsp;<nobr>2-их</nobr> в&nbsp;Тайланд!<br />
+                                <b>Розыгрыш: 3&nbsp;февраля</b>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section data-id-section-landing="regulations" class="regulations-leto2020">
+            <div class="b-container">
+                <div class="title-leto2020">Как принять участие в розыгрыше призов</div>
+                <div class="regulations-leto2020__inner">
+                    <div class="regulations-leto2020__list">
+                        <div class="item">
+                            <div class="item__icon item__icon_pink"></div>
+                            <div class="item__descr">
+                                Совершай покупки от&nbsp;500&nbsp;руб. с&nbsp;1 по&nbsp;31 января в&nbsp;розничных магазинах,
+                                на&nbsp;сайте и&nbsp;в&nbsp;мобильном приложении &laquo;Четыре Лапы&raquo;.
+                                Больше покупок от&nbsp;500&nbsp;руб&nbsp;&mdash; больше шансов выиграть призы.
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item__icon item__icon_green"></div>
+                            <div class="item__descr">
+                                Регистрируйся на&nbsp;этом сайте с&nbsp;1 по&nbsp;31 января для участия в&nbsp;розыгрыше призов.
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item__icon item__icon_blue"></div>
+                            <div class="item__descr">
+                                Ищи себя в&nbsp;списках победителей на&nbsp;этом сайте каждый понедельник 13, 20, 27 января и&nbsp;3 февраля!
+                            </div>
+                        </div>
+                    </div>
+                    <?if (!$USER->IsAuthorized()) {?>
+                        <div class="regulations-leto2020__btn">
+                            <div class="btn-leto2020 btn-leto2020_blue js-open-popup" data-popup-id="authorization">Принять участие</div>
+                        </div>
+                    <?}?>
+                </div>
+            </div>
+        </section>
+
+        <section class="info-leto2020">
+            <div class="b-container">
+                <div class="title-leto2020 title-leto2020_blue">Получайте двойные и&nbsp;тройные шансы</div>
+                <div class="info-leto2020__list">
+                    <div class="item">
+                        <div class="item__count">
+                            <span>X</span>
+                            <span class="item__number">2</span>
+                        </div>
+                        <div class="item__info">
+                            <div class="item__title">шансы за&nbsp;покупки<br/> товаров брендов</div>
+                            <div class="item__subtitle">
+                                GRANDIN, ROYAL CANIN, MEALFEEL, HILL’S, WELLKISS, MONGE,
+                                АВВА, MURMIX, UNOCAT, YUMMY, CHATELL, CHEWELL, НАГРАДА
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item">
+                        <div class="item__count item__count_pink">
+                            <span>X</span>
+                            <span class="item__number">3</span>
+                        </div>
+                        <div class="item__info">
+                            <div class="item__title">шансы за&nbsp;покупки<br/> товаров из&nbsp;категории
+                            </div>
+                            <div class="item__subtitle">Одежда и&nbsp;обувь</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 
 <div class="b-page-wrapper landing-page-wrapper <?= $template->getWrapperClass() ?> js-this-scroll">
