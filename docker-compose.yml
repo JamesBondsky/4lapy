@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3.4'
 
 services:
   nginx:
@@ -9,7 +9,7 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - ./vendor/4Lapy/bitrix:/application/vendor/4Lapy/bitrix:ro
+      - ./vendor/4Lapy/bitrix:/application/vendor/4Lapy/bitrix
       - ./common/bitrix:/application/common/bitrix:ro
       - ./common/local:/application/common/local:ro
       - ./common/static/build:/application/common/static/build
@@ -25,8 +25,8 @@ services:
       - ./app:/application/app:rw,cached
       - ./bin:/application/bin:rw,cached
       - app-local-sync:/application/common/local:nocopy
-      - ./common/static/build:/application/common/static/build:ro
-      - ./common/static/versions.json:/application/common/static/versions.json:ro
+      - ./common/static/build:/application/common/static/build
+      - ./common/static/versions.json:/application/common/static/versions.json
       - app-src-sync:/application/src:nocopy
       - app-web-sync:/application/web:nocopy
       - ./var/logs:/adv/vhosts/4lapy/logs:rw
