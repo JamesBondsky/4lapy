@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3.4'
 
 services:
   nginx:
@@ -9,29 +9,31 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - ./vendor/4Lapy/bitrix:/application/vendor/4Lapy/bitrix:ro
+      - ./vendor/4Lapy/bitrix:/application/vendor/4Lapy/bitrix
       - ./common/bitrix:/application/common/bitrix:ro
       - ./common/local:/application/common/local:ro
       - ./common/static/build:/application/common/static/build
       - ./web:/application/web:ro
       - ./public:/application/public:ro
-      - phpsocket:/socket
 
   php:
     build:
       context: ./
       target: php
     volumes:
-      - app-app-sync:/application/app:nocopy
-      - app-bin-sync:/application/bin:nocopy
-      - app-common-sync:/application/common:nocopy
-      - app-src-sync:/application/src:nocopy
-      - app-web-sync:/application/web:nocopy
+      - ./composer.json:/application/composer.json:rw,cached
+      - ./composer.lock:/application/compoer.lock:rw,cached
+      - ./app:/application/app:rw,cached
+      - ./bin:/application/bin:rw,cached
+      - ./common/local:/application/common/local:rw,cached
+      - ./common/static/build:/application/common/static/build:rw,cached
+      - ./common/static/versions.json:/application/common/static/versions.json:rw,cached
+      - ./src:/application/src:rw,cached
+      - ./web:/application/web:rw,cached
       - ./var/logs:/adv/vhosts/4lapy/logs:rw
       - ./var/sap-exchange:/home/sap-exchange:rw
       - ./var/sap-exchange-prod:/home/sap-exchange-prod:rw
       - ./docker/php/remote-xdebug.ini:/usr/local/etc/php/conf.d/remote-xdebug.ini
-      - phpsocket:/socket
 
   memcached:
     image: memcached:latest
@@ -77,15 +79,3 @@ services:
 volumes:
   redis-data: {}
   elasticsearch-data: {}
-  phpsocket: {}
-  app-app-sync:
-    external: true
-  app-bin-sync:
-    external: true
-  app-common-sync:
-    external: true
-  app-src-sync:
-    external: true
-  app-web-sync:
-    external: true
-
