@@ -33,6 +33,8 @@ class ChanceService
 
     protected const HL_BLOCK_NAME = 'NewYearUserChance';
 
+    protected const CACHE_TAG = 'ny2020:user.chances';
+
     public const PERIODS = [
         [
             'from' => '01.12.2019 00:00:00',
@@ -70,7 +72,7 @@ class ChanceService
         $this->userService = $userService;
         $this->userRepository = $userRepository;
 
-        foreach (self::PERIODS as $period) {
+        foreach (static::PERIODS as $period) {
             $this->periods[] = [
                 'from' => DateTime::createFromFormat('d.m.Y H:i:s', $period['from']),
                 'to' => DateTime::createFromFormat('d.m.Y H:i:s', $period['to']),
@@ -123,10 +125,10 @@ class ChanceService
             throw new RuntimeException('При регистрации произошла ошибка');
         }
 
-        TaggedCacheHelper::clearManagedCache(['ny2020:user.chances']);
+        TaggedCacheHelper::clearManagedCache([static::CACHE_TAG]);
 
         /** @var ManzanaService $manzanaService */
-        $manzanaService = Application::getInstance()->getContainer()->get(ManzanaService::class);
+        $manzanaService = Application::getInstance()->getContainer()->get('manzana.service');
         $manzanaService->importUserOrdersAsync($user);
 
         return 0;
@@ -215,8 +217,8 @@ class ChanceService
         $res = OrderTable::query()
             ->setFilter([
                 'USER_ID' => $userId,
-                '>=DATE_INSERT' => self::PERIODS[$period]['from'],
-                '<=DATE_INSERT' => self::PERIODS[$period]['to'],
+                '>=DATE_INSERT' => static::PERIODS[$period]['from'],
+                '<=DATE_INSERT' => static::PERIODS[$period]['to'],
                 'STATUS_ID' => [
                     OrderStatus::STATUS_DELIVERED,
                     OrderStatus::STATUS_FINISHED,
@@ -229,7 +231,7 @@ class ChanceService
             $sum += (float)$order['PRICE'];
         }
 
-        return (int)floor($sum / self::CHANCE_RATE);
+        return (int)floor($sum / static::CHANCE_RATE);
     }
 
     public function updateUserChance($userId): void
@@ -263,17 +265,19 @@ class ChanceService
     }
 
     /**
-     * @param null $currentPeriod
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      * @throws Exception
      */
-    public function updateAllUserChance($currentPeriod = null): void
+    public function updateAllUserChance(): void
     {
         $res = $this->getDataManager()::query()
             ->setSelect(['UF_USER_ID'])
             ->exec();
 
         while ($user = $res->fetch()) {
-            $this->updateUserChance($user['UF_USER_ID'], $currentPeriod);
+            $this->updateUserChance($user['UF_USER_ID']);
         }
     }
 
@@ -303,9 +307,8 @@ class ChanceService
         try {
             return (new BitrixCache())
                 ->withId(__METHOD__ . 'chance.users')
-                ->withClearCache(true)
                 ->withTime(36000)
-                ->withTag('ny2020:user.chances')
+                ->withTag(static::CACHE_TAG)
                 ->resultOf($doGetAllVariants);
         } catch (Exception $e) {
             return [];
@@ -401,7 +404,7 @@ class ChanceService
     protected function getDataManager(): DataManager
     {
         if ($this->dataManager === null) {
-            $this->dataManager = HLBlockFactory::createTableObject(self::HL_BLOCK_NAME);
+            $this->dataManager = HLBlockFactory::createTableObject(static::HL_BLOCK_NAME);
         }
 
         return $this->dataManager;
