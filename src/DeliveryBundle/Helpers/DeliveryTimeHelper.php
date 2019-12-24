@@ -16,6 +16,11 @@ use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
 class DeliveryTimeHelper
 {
+    const  UNACTIVE_DATES = [
+        '2' => '01.01.2020',
+        '1' => '02.01.2020',
+    ];
+    
     /**
      * Время на сборку товара в магазине
      */
@@ -58,6 +63,12 @@ class DeliveryTimeHelper
      */
     public static function showByDate(\DateTime $date, $price = 0, array $options = []): string
     {
+        $nyDate = $date->format('d.m.Y');
+        
+        if (in_array($nyDate, self::UNACTIVE_DATES)) {
+            $date->add(\DateInterval::createfromdatestring('+' . array_search($nyDate, self::UNACTIVE_DATES). ' day'));
+        }
+
         $defaultOptions = [
             'SHOW_TIME' => false,
             'SHORT' => false,
