@@ -4,6 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\KioskBundle\Service\KioskService;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
+use WebArch\BitrixCache\BitrixCache;
 
 /**
  * @global               $APPLICATION
@@ -45,23 +47,32 @@ $elementId = $APPLICATION->IncludeComponent(
  * Распродажа
  */
 if (isset($arParams['SHOW_PRODUCTS_SALE']) && $arParams['SHOW_PRODUCTS_SALE'] === 'Y') {
-    $APPLICATION->IncludeComponent(
-        'fourpaws:products.by.prop',
-        '',
-        [
-            'IBLOCK_ID'     => $arParams['IBLOCK_ID'],
-            'ITEM_ID'       => $elementId,
-            'TITLE'         => '',
-            'COUNT_ON_PAGE' => 20,
-            'PROPERTY_CODE' => 'PRODUCTS',
-            'FILTER_FIELD'  => 'XML_ID',
-            'IS_SHARE'      => true
-        ],
-        $component,
-        [
-            'HIDE_ICONS' => 'Y',
-        ]
-    );
+    $cacheKey = 'share_' . $elementId . '_' . ($_REQUEST['page'] ?? 1);
+
+    $city = (new BitrixCache())
+        ->withId($cacheKey)
+        ->withTime(864000)
+        ->resultOf(function () use ($APPLICATION, $arParams, $elementId, $component) {
+            return $APPLICATION->IncludeComponent(
+                'fourpaws:products.by.prop',
+                '',
+                [
+                    'IBLOCK_ID'     => $arParams['IBLOCK_ID'],
+                    'ITEM_ID'       => $elementId,
+                    'TITLE'         => '',
+                    'COUNT_ON_PAGE' => 20,
+                    'PROPERTY_CODE' => 'PRODUCTS',
+                    'FILTER_FIELD'  => 'XML_ID',
+                    'IS_SHARE'      => true
+                ],
+                $component,
+                [
+                    'HIDE_ICONS' => 'Y',
+                ]
+            );
+        });
+
+    echo $city;
 }
 
 /**
