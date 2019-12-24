@@ -758,19 +758,23 @@ class PersonalOffersService
     {
         global $USER;
 
+        $fUserId = $this->userService->getCurrentFUserId();
+
         if (
             (!$USER->IsAuthorized() || !($userId = $USER->GetID()))
-                && !$fUserId = $this->userService->getCurrentFUserId()
+                && !$fUserId
         ) {
             return;
         }
 
         $arFilter = [
+            'LOGIC' => 'OR',
             //'UF_USED' => true,
         ];
         if ($userId) {
             $arFilter['=UF_USER_ID'] = $userId;
-        } elseif ($fUserId) {
+        }
+        if ($fUserId) {
             $arFilter['=UF_FUSER_ID'] = $fUserId;
         }
 
@@ -1629,9 +1633,10 @@ class PersonalOffersService
      * @throws RuntimeException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectException
+     * @throws SystemException
      */
 
-    private function checkIfNew20thBasket(bool $isFromMobile)
+    private function checkIfNew20thBasket(bool $isFromMobile): bool
     {
         $userId = null;
         try {
@@ -1769,37 +1774,77 @@ class PersonalOffersService
      *
      * @param bool $isFromMobile
      * @return bool|string
-     * @throws InvalidArgumentException
-     * @throws RuntimeException
-     * @throws SystemException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\Db\SqlQueryException
-     * @throws \Bitrix\Main\ObjectException
-     * @throws \Bitrix\Main\ObjectPropertyException
      */
     public function tryGet20thBasketOfferCoupon(bool $isFromMobile)
     {
-        if ($this->is20thBasketOfferActive() && $this->checkIfNew20thBasket($isFromMobile)) {
-            $promoCode = $this->getFreeCouponFor20thBasket();
-            if ($promoCode) { // Пользователь выиграл купон, далее делается привязка
-                BasketsDiscountOfferRepository::setPromocode($this->getPersonalOfferBasketId(), $promoCode);
-                $logger = LoggerFactory::create('PersonalOffersService', '20-20');
-                $logger->info('tryGet20thBasketOfferCoupon. PromoCode: ' . print_r($promoCode, true));
+        try {
+            if (self::is20thBasketOfferActive() && $this->checkIfNew20thBasket($isFromMobile)) {
+                $promoCode = $this->getFreeCouponFor20thBasket();
+                if ($promoCode) { // Пользователь выиграл купон, далее делается привязка
+                    BasketsDiscountOfferRepository::setPromocode($this->getPersonalOfferBasketId(), $promoCode);
+                    $logger = LoggerFactory::create('PersonalOffersService', '20-20');
+                    $logger->info('tryGet20thBasketOfferCoupon. PromoCode: ' . print_r($promoCode, true));
 
-                $this->link20thBasketOfferPromocode($promoCode);
+                    $this->link20thBasketOfferPromocode($promoCode);
 
-                return $promoCode;
+                    return $promoCode;
+                }
             }
+        } catch (\Throwable $e) {
+            $this->logger->emergency(__FUNCTION__ . '. ' . $e->getMessage(), [
+                array_map(static function($item) { return $item['class'] . '::' . $item['function'] . ' (' . $item['file'] . ':' . $item['line'] . ')'; }, $e->getTrace()),
+            ]);
         }
 
         return false;
     }
 
-    public function is20thBasketOfferActive(): bool
+    /**
+     * @return bool
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public static function is20thBasketOfferActive(): bool
     {
         return new DateTime() >= new DateTime(self::START_DATETIME_20TH_OFFER)
             && new DateTime() <= new DateTime(self::END_DATETIME_20TH_OFFER);
+    }
+
+    /**
+     * @param int $fromFUserId
+     * @param int $toFUserId
+     */
+    public function changeCouponFUserOwner(int $fromFUserId, int $toFUserId): void
+    {
+        try {
+            if ($fromFUserId <= 0 || $toFUserId <= 0) {
+                throw new RuntimeException(__METHOD__ . '. не удалось перенести промокод на другой fuser, т.к. не заполнены $fromFUserId, $toFUserId. $fromFUserId: ' . $fromFUserId . ', $toFUserId: ' . $toFUserId);
+            }
+
+            $promoCode = BasketsDiscountOfferRepository::changePromoCodeFUserOwner($fromFUserId, $toFUserId); // смена привязки в доп.таблице
+            // Смена привязки в основной таблице купонов
+            if ($promoCode) {
+                $linkId = $this->personalCouponManager::query()
+                    ->where('UF_PROMO_CODE', $promoCode)
+                    ->where('USER_LINK.UF_FUSER_ID', $fromFUserId)
+                    ->setSelect(['USER_LINK.ID'])
+                    ->registerRuntimeField(new ReferenceField(
+                        'USER_LINK', $this->personalCouponUsersManager::getEntity()->getDataClass(),
+                        Query\Join::on('this.ID', 'ref.UF_COUPON'),
+                        ['join_type' => 'INNER']
+                    ))
+                    ->setLimit(1)
+                    ->exec()
+                    ->fetch()['PERSONAL_COUPON_USER_LINK_ID'];
+
+                if ($linkId) {
+                    $this->personalCouponUsersManager::update($linkId, ['UF_FUSER_ID' => $toFUserId]);
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->logger->emergency(__FUNCTION__ . '. ' . $e->getMessage(), [
+                array_map(static function($item) { return $item['class'] . '::' . $item['function'] . ' (' . $item['file'] . ':' . $item['line'] . ')'; }, $e->getTrace()),
+            ]);
+        }
     }
 
     /**

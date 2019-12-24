@@ -2,6 +2,7 @@
 
 namespace FourPaws\PersonalBundle\Repository;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ORM\Data\AddResult;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Type\DateTime;
@@ -37,6 +38,9 @@ class BasketsDiscountOfferRepository
             throw new RuntimeException('Не удалось добавить корзину в таблицу по акции. Errors: ' . implode('. ', $result->getErrorMessages()));
         }
 
+        $logger = LoggerFactory::create('CouponPoolRepository', '20-20');
+        $logger->info(__METHOD__ . '. new row id: ' . $result->getId());
+
         return $result->getId();
     }
 
@@ -47,8 +51,9 @@ class BasketsDiscountOfferRepository
      * @throws RuntimeException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\SystemException
      */
-    public static function getRegisteredOfferBasket(?int $fUserId, ?int $userId)
+    public static function getRegisteredOfferBasket(?int $fUserId = null, ?int $userId = null)
     {
         if (!$userId && !$fUserId) {
             throw new RuntimeException('Не удалось проверить наличие зарегистрированной корзины в таблице по акции, т.к. не заданы $userId и $fUserId');
@@ -75,6 +80,7 @@ class BasketsDiscountOfferRepository
                 'fUserId',
                 'userId',
                 'promoCode',
+                'isFromMobile',
             ])
             ->setLimit(1)
             ->exec()
@@ -103,5 +109,51 @@ class BasketsDiscountOfferRepository
     public static function setPromocode(int $offerBasketId, string $promoCode): void
     {
         BasketsDiscountOfferTable::update($offerBasketId, ['promoCode' => $promoCode, 'date_update' => new DateTime()]);
+    }
+
+    /**
+     * @param int $fromFUserId
+     * @param int $toFUserId
+     * @return string|void
+     * @throws RuntimeException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public static function changePromoCodeFUserOwner(int $fromFUserId, int $toFUserId)
+    {
+        if ($fromFUserId <= 0 || $toFUserId <= 0) {
+            throw new RuntimeException(__METHOD__ . '. не удалось перенести промокод на другой fuser, т.к. не заполнены $fromFUserId, $toFUserId. $fromFUserId: ' . $fromFUserId . ', $toFUserId: ' . $toFUserId);
+        }
+        $fromUser = self::getRegisteredOfferBasket($fromFUserId);
+
+        if (!$fromUser || !$fromUser['promoCode']) {
+            return;
+        }
+
+        $toUser = BasketsDiscountOfferTable::query()
+            ->where('fUserId', $toFUserId)
+            ->where('date_insert', '>=', (new DateTime())->setTime(0, 0, 0))
+            ->setSelect([
+                'id',
+                'order_created',
+            ])
+            ->setOrder(['id' => 'desc'])
+            ->setLimit(1)
+            ->exec()
+            ->fetch();
+
+        $logger = LoggerFactory::create('CouponPoolRepository', '20-20');
+        $logger->info(__METHOD__ . '. $fromFUserId: ' . $fromFUserId . '. $toFUserId: ' . $toFUserId);
+
+        if (!$toUser || $toUser['order_created']) {
+            BasketsDiscountOfferTable::update($fromUser['id'], ['fUserId' => $toFUserId]);
+        } else {
+            BasketsDiscountOfferTable::update($fromUser['id'], ['promoCode' => null]);
+            BasketsDiscountOfferTable::update($toUser['id'], ['promoCode' => $fromUser['promoCode']]);
+        }
+
+        return $fromUser['promoCode'];
     }
 }
