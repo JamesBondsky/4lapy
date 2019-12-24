@@ -152,7 +152,11 @@ $markup = PawsApplication::markup();
                         <p>+200 power banks!</p>
                     </div>
 
-                    <?if (!$USER->IsAuthorized()) {?>
+                    <?if ($USER->IsAuthorized()) {?>
+                        <div class="main-banner-leto2020__btn">
+                            <div class="btn-leto2020" data-btn-scroll-landing="participate">Принять участие</div>
+                        </div>
+                    <?} else {?>
                         <div class="main-banner-leto2020__btn">
                             <div class="btn-leto2020 js-open-popup" data-popup-id="authorization">Принять участие</div>
                         </div>
@@ -234,7 +238,11 @@ $markup = PawsApplication::markup();
                             </div>
                         </div>
                     </div>
-                    <?if (!$USER->IsAuthorized()) {?>
+                    <?if ($USER->IsAuthorized()) {?>
+                        <div class="regulations-leto2020__btn">
+                            <div class="btn-leto2020 btn-leto2020_blue" data-btn-scroll-landing="participate">Принять участие</div>
+                        </div>
+                    <?} else {?>
                         <div class="regulations-leto2020__btn">
                             <div class="btn-leto2020 btn-leto2020_blue js-open-popup" data-popup-id="authorization">Принять участие</div>
                         </div>
