@@ -72,7 +72,7 @@ class PersonalOffersService
     public const INFINITE_COUPON_DATE_FORMATTED = '01.01.3000'; // Дата, с которой Manzana устанавливает дату окончания действия бесконечных купонов
 
     public const NTH_BASKET_OFFER_ID = '20-20';
-    public const START_DATETIME_20TH_OFFER = '25.12.2019 00:00:00';
+    public const START_DATETIME_20TH_OFFER = '24.12.2019 00:00:00'; //TODO set 25
     public const END_DATETIME_20TH_OFFER = '26.12.2019 23:59:59';
 
     /** @var DataManager */
@@ -1663,7 +1663,7 @@ class PersonalOffersService
 
         $this->setPersonalOfferBasketId($personalOfferBasketId);
 
-        return $personalOfferBasketId % 20 === 0;
+        return $personalOfferBasketId % 2 === 0; //TODO set %20
     }
 
     /**

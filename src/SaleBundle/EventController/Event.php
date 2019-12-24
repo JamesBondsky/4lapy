@@ -687,9 +687,9 @@ class Event extends BaseServiceHandler
                     ->setOrder(['id' => 'desc']);
 
                 if (isset($promocodeValue) && $promocodeValue) {
-                    $discountOfferQuery = $discountOfferQuery->where('promoCode', $promocodeValue);
+                    //$discountOfferQuery = $discountOfferQuery->where('promoCode', $promocodeValue);
                 } else {
-                    $discountOfferQuery = $discountOfferQuery->whereNull('promoCode');
+                    //$discountOfferQuery = $discountOfferQuery->whereNull('promoCode');
 
                     $userFilter = Query::filter()
                         ->logic('or');
@@ -704,18 +704,19 @@ class Event extends BaseServiceHandler
                     $discountOfferQuery = $discountOfferQuery->where($userFilter);
                 }
 
-                $basket20thOfferId = $discountOfferQuery
+                $baskets20thOffer = $discountOfferQuery
                     ->exec()
-                    ->fetch()['id'];
-                if ($basket20thOfferId) {
-                    BasketsDiscountOfferTable::update($basket20thOfferId, [
+                    ->fetchAll();
+                $baskets20thOfferIds = array_column($baskets20thOffer, 'id');
+
+                foreach ($baskets20thOfferIds as $baskets20thOfferId) {
+                    BasketsDiscountOfferTable::update($baskets20thOfferId, [
                         'order_created' => 1,
                         'date_update' => new DateTime(),
                     ]);
-
-                    $logger = LoggerFactory::create('CouponPoolRepository', '20-20');
-                    $logger->info(__FUNCTION__ . '. На основании корзины по акции 20-20 создан заказ. BasketId: ' . $basket20thOfferId . '. Купон: ' . ($promocodeValue ?? ''));
                 }
+                $logger = LoggerFactory::create('CouponPoolRepository', '20-20');
+                $logger->info(__FUNCTION__ . '. На основании корзины по акции 20-20 создан заказ. BasketIds: ' . implode(', ', $baskets20thOfferIds) . '. Купон: ' . ($promocodeValue ?? ''));
             }
 
             if (isset($promocodeValue) && $promocodeValue)
