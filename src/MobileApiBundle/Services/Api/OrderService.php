@@ -1180,8 +1180,16 @@ class OrderService implements LoggerAwareInterface
             $deliveryDate = $delivery->getDeliveryDate();
             $intervals = $delivery->getAvailableIntervals();
             $day = FormatDate('d.m.Y l', $delivery->getDeliveryDate()->getTimestamp());
+            
+            if (FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '01.01.2020' || FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '02.01.2020') {
+                continue;
+            }
+            
             if (!empty($intervals) && count($intervals)) {
                 foreach ($intervals as $deliveryIntervalIndex => $interval) {
+                    if (FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '31.12.2019' && (($interval->getTo() > 18) || ($interval->getTo() == 0))) {
+                        continue;
+                    }
                     /** @var Interval $interval */
                     $dates[] = (new DeliveryTime())
                         ->setTitle($day . ' ' . $interval)
