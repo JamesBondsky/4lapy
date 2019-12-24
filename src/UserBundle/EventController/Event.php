@@ -80,7 +80,7 @@ class Event extends BaseServiceHandler
 
         /** События форматирования телефона */
         static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'checkPhoneFormat'], 'main');
-        static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'updateManzana'], 'main');
+        //static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'updateManzana'], 'main');
         static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'checkPhoneFormat'], 'main');
 
         /** замена логина */
