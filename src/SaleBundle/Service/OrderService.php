@@ -1228,11 +1228,10 @@ class OrderService implements LoggerAwareInterface
 //                if (($card = $contact->getCards()->first()) instanceof Card) {
 //                    $storage->setDiscountCardNumber($card->cardNumber);
 //                }
-
                 $contactId = $this->manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
                 $cards = $this->manzanaService->getCardsByContactId($contactId);
                 foreach ($cards as $cardItem) {
-                    if ($cardItem->isActive()) {
+                    if (isset($cardItem) && $cardItem->isActive()) {
                         $storage->setDiscountCardNumber($cardItem->cardNumber);
                         break;
                     }
