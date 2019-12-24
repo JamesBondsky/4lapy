@@ -16,7 +16,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <div class="item-accordion__block js-dropdown-block" <?= ($key === 0) ? 'style="display: block;"' : '' ?>>
           <div class="item-accordion__block-content">
             <div class="item-accordion__block-text">
-              <?= ($key === 0) ? 'style="display: block;"' : '' ?>
+              <?= $element['text'] ?>
             </div>
           </div>
         </div>
