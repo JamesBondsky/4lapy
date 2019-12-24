@@ -98,7 +98,7 @@ use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use JMS\Serializer\Serializer;
-
+use FourPaws\SaleBundle\Enum\OrderStatus as Status;
 
 class OrderService implements LoggerAwareInterface
 {
@@ -380,9 +380,9 @@ class OrderService implements LoggerAwareInterface
                 ->setPaid($order->isPayed())
                 ->setCartParam($this->orderParameter)
                 ->setCartCalc($this->orderCalculate);
-            
-            if ($order->getDeliveryId() == getenv('EXPRESS_DELIVERY_4LAPY_ID') || $order->getDeliveryId() == getenv('EXPRESS_DELIVERY_DOSTAVISTA_ID')) {
-                $response->setCanBeCanceled(0);
+
+            if ($isCompleted || $status->getCode() == Status::STATUS_CANCELING) {
+                $response->setCanBeCanceled(false);
             }
         }
 
@@ -773,8 +773,11 @@ class OrderService implements LoggerAwareInterface
                         ->setId('stamps_sub')
                         ->setTitle('Списано марок')
                         ->setValue($stampsUsed),
-                ])
-                ->setBonusVulnerablePrice($bonusVulnerablePrice);
+                ]);
+        }
+    
+        if ($bonusVulnerablePrice) {
+            $orderCalculate->setBonusVulnerablePrice($bonusVulnerablePrice);
         }
 
         return $orderCalculate;
@@ -1176,8 +1179,16 @@ class OrderService implements LoggerAwareInterface
             $deliveryDate = $delivery->getDeliveryDate();
             $intervals = $delivery->getAvailableIntervals();
             $day = FormatDate('d.m.Y l', $delivery->getDeliveryDate()->getTimestamp());
+            
+            if (FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '01.01.2020' || FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '02.01.2020') {
+                continue;
+            }
+            
             if (!empty($intervals) && count($intervals)) {
                 foreach ($intervals as $deliveryIntervalIndex => $interval) {
+                    if (FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '31.12.2019' && (($interval->getTo() > 18) || ($interval->getTo() == 0))) {
+                        continue;
+                    }
                     /** @var Interval $interval */
                     $dates[] = (new DeliveryTime())
                         ->setTitle($day . ' ' . $interval)

@@ -49,6 +49,11 @@ class InfoService implements LoggerAwareInterface
      */
     private $repeatedOffers = [];
     
+    /**
+     * @var array
+     */
+    private $repeatedProducts = [];
+    
     public function __construct(ImageProcessor $imageProcessor, ProductService $productService)
     {
         $this->imageProcessor = $imageProcessor;
@@ -440,10 +445,12 @@ class InfoService implements LoggerAwareInterface
     {
         $this->isNeedLoad = false;
         $products = new ArrayCollection();
+        $limitProducts = new ArrayCollection();
         $iblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES);
         $rs = CIBlockElement::GetProperty($iblockId, $specialOfferId, [], ['CODE' => 'PRODUCTS', 'EMPTY' => 'N']);
+        
         while ($property = $rs->fetch()) {
-            if ($products->count() == $limit) {
+            if ($limitProducts->count() == $limit) {
                 $this->isNeedLoad = true;
                 break;
             }
@@ -453,15 +460,40 @@ class InfoService implements LoggerAwareInterface
                 $offer = (new OfferQuery())->withFilter(['=XML_ID' => $offerId])->exec()->current();
                 $product = $offer->getProduct();
     
-                if (in_array($product->getId(), $this->repeatedOffers)) {
+                $this->repeatedOffers[] = $offerId;
+                
+                if (in_array($product->getId(), $this->repeatedProducts)) {
                     continue;
                 }
                 
-                $this->repeatedOffers[] = $product->getId();
-                self::$cache[$offerId] = $this->productService->convertToFullProduct($product, $offer, true, false);
+                $this->repeatedProducts[] = $product->getId();
+                
+                $result = $this->productService->convertToFullProduct($product, $offer, true, false);
+
+                self::$cache[$offerId] = $result;
+            }
+
+            $limitProducts->add(self::$cache[$offerId]);
+        }
+
+        foreach (self::$cache as $cacheItem) {
+            $packingVariants = $cacheItem->getPackingVariants();
+            
+            if (count($packingVariants) == 1) {
+                $cacheItem->setPackingVariants([]);
+                $products->add($cacheItem);
+                continue;
+            }
+    
+            foreach ($packingVariants as $key => $packingVariant) {
+                if (!in_array($packingVariant->getXmlId(), $this->repeatedOffers)) {
+                    unset($packingVariants[$key]);
+                }
             }
             
-            $products->add(self::$cache[$offerId]);
+            $cacheItem->setPackingVariants($packingVariants);
+            
+            $products->add($cacheItem);
         }
 
         return $products;

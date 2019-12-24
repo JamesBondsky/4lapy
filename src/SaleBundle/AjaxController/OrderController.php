@@ -369,13 +369,19 @@ class OrderController extends Controller implements LoggerAwareInterface
 
                 /** Для зон 2 и 5 выключаем 31.12.2018 доставки после 18:00 */
                 if ((true)
-                    && ($delivery->getDeliveryDate()->format('d.m.Y') == '31.12.2018')
-                    && (in_array($delivery->getDeliveryZone(), ['ZONE_2', 'ZONE_5']))
+                    && ($delivery->getDeliveryDate()->format('d.m.Y') == '31.12.2019')
+                    //&& (in_array($delivery->getDeliveryZone(), ['ZONE_2', 'ZONE_5']))
                     && (($interval->getTo() > 18) || ($interval->getTo() == 0))
                 ) {
                     continue;
                 }
-
+    
+                if ((true)
+                    && ($delivery->getDeliveryDate()->format('d.m.Y') == '01.01.2020' || $delivery->getDeliveryDate()->format('d.m.Y') == '02.01.2020')
+                ) {
+                    continue;
+                }
+                
                 $result[] = [
                     'name'  => (string)$interval,
                     'value' => $i + 1,
@@ -927,14 +933,18 @@ class OrderController extends Controller implements LoggerAwareInterface
         } catch (OrderCancelException | \FourPaws\SaleBundle\Exception\NotFoundException  $e) {
             return JsonErrorResponse::createWithData('', ['errors' => [$e->getMessage()]]);
         } catch (Exception $e) {
-            return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка']]);
+            return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка. Повторите запрос позже.']]);
         }
 
         if (!$cancelResult) {
-            return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка']]);
+            return JsonErrorResponse::createWithData('', ['errors' => ['При отмене заказа произошла ошибка. Повторите запрос позже.']]);
         }
 
-        return JsonSuccessResponse::createWithData('Заказ успешно отменен', []);
+        if ($cancelResult === 'canceling') {
+            return JsonSuccessResponse::createWithData('Ваш заказ уже передан в службу доставки. Мы передадим информацию об отмене заказа.', ['status' => 'Отменяется']);
+        }
+        
+        return JsonSuccessResponse::createWithData('Заказ успешно отменен', ['status' => 'Отменен']);
     }
 
     /**

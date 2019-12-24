@@ -332,6 +332,7 @@ class ShopInfoService
                                 DeliveryTimeHelper::showTime(
                                     $available->isEmpty() ? $fullResult : $partialResult,
                                     [
+                                        'PICK_UP' => 'Y',
                                         'SHORT'     => false,
                                         'SHOW_TIME' => $showTime,
                                     ]
@@ -341,6 +342,7 @@ class ShopInfoService
                                 DeliveryTimeHelper::showTime(
                                     $fullResult,
                                     [
+                                        'PICK_UP' => 'Y',
                                         'SHORT'     => false,
                                         'SHOW_TIME' => $showTime,
                                     ]
@@ -350,6 +352,7 @@ class ShopInfoService
                                 DeliveryTimeHelper::showTime(
                                     $available->isEmpty() ? $fullResult : $partialResult,
                                     [
+                                        'PICK_UP' => 'Y',
                                         'SHORT'     => true,
                                         'SHOW_TIME' => $showTime,
                                     ]
@@ -359,6 +362,7 @@ class ShopInfoService
                                 DeliveryTimeHelper::showTime(
                                     $fullResult,
                                     [
+                                        'PICK_UP' => 'Y',
                                         'SHORT'     => true,
                                         'SHOW_TIME' => $showTime,
                                     ]
