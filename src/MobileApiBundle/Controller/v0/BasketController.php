@@ -139,22 +139,27 @@ class BasketController extends BaseController
 
         $storage = $this->orderStorageService->getStorage();
 
-        $promoCode = $userCartRequest->getPromoCode();
+        $personalOffersService = Application::getInstance()->getContainer()->get(PersonalOffersService::class);
+        if (!$promoCode = $personalOffersService->tryGet20thBasketOfferCoupon(true)) {
+            $promoCode = $userCartRequest->getPromoCode();
 
-        if (!$promoCode) {
-            $promoCode              = $couponStorage->getApplicableCoupon() ?: $storage->getPromoCode();
-            $promocodeForOldSupport = $promoCode;
+            if (!$promoCode) {
+                $promoCode = $couponStorage->getApplicableCoupon() ?: $storage->getPromoCode();
+                $promocodeForOldSupport = $promoCode;
+            }
         }
 
         if ($promoCode) {
             try {
+                $personalOffersService->checkCoupon($promoCode);
+
                 /** @see \FourPaws\SaleBundle\AjaxController\BasketController::applyPromoCodeAction */
                 $this->manzana->setPromocode($promoCode);
                 $this->manzana->calculate();
 
                 $storage->setPromoCode($promoCode);
                 $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
-            } catch (ManzanaPromocodeUnavailableException $e) {
+            } catch (ManzanaPromocodeUnavailableException|CouponIsNotAvailableForUseException $e) {
                 $promoCode = '';
             }
         }
@@ -164,8 +169,7 @@ class BasketController extends BaseController
         $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts);
 
         if ($storage->getUserId()) {
-            $personalOffers = Application::getInstance()->getContainer()->get(PersonalOffersService::class);
-            $coupons        = $personalOffers->getActiveUserCoupons($storage->getUserId())['coupons'];
+            $coupons = $personalOffersService->getActiveUserCoupons($storage->getUserId())['coupons'];
         }
 
         if ($coupons) {

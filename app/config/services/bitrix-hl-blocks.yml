@@ -94,6 +94,10 @@ services:
     arguments: ['PersonalCouponUsers']
     parent: bx.hlblock.base
 
+  bx.hlblock.couponpool:
+    arguments: ['CouponPool']
+    parent: bx.hlblock.base
+
   bx.hlblock.festivalusersdata:
     arguments: ['FestivalUsersData']
     parent: bx.hlblock.base
