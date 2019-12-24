@@ -245,7 +245,7 @@ $markup = PawsApplication::markup();
 
         <section class="info-leto2020">
             <div class="b-container">
-                <div class="title-leto2020 title-leto2020_blue">Получайте двойные и&nbsp;тройные шансы</div>
+                <div class="title-leto2020 title-leto2020_blue">Получай двойные и&nbsp;тройные шансы</div>
                 <div class="info-leto2020__list">
                     <div class="item">
                         <div class="item__count">
@@ -255,8 +255,8 @@ $markup = PawsApplication::markup();
                         <div class="item__info">
                             <div class="item__title">шансы за&nbsp;покупки<br/> товаров брендов</div>
                             <div class="item__subtitle">
-                                GRANDIN, ROYAL CANIN, MEALFEEL, HILL’S, WELLKISS, MONGE,
-                                АВВА, MURMIX, UNOCAT, YUMMY, CHATELL, CHEWELL, НАГРАДА
+                                GRANDIN, ROYAL CANIN, АВВА, MEALFEEL, FRESH STEP, MURMIX, EVER CLEAN, MONGE,
+                                UNOCAT, TREINER, WELLKISS, YUMMY, CHATELL, CHEWELL, MURMIX, НАГРАДА, ПАДОВАН
                             </div>
                         </div>
                     </div>
