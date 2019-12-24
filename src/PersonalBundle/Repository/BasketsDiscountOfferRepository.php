@@ -128,7 +128,7 @@ class BasketsDiscountOfferRepository
         }
         $fromUser = self::getRegisteredOfferBasket($fromFUserId);
 
-        if (!$fromUser || !$fromUser['promoCode']) {
+        if (!$fromUser) {
             return;
         }
 
@@ -138,6 +138,7 @@ class BasketsDiscountOfferRepository
             ->setSelect([
                 'id',
                 'order_created',
+                'promoCode',
             ])
             ->setOrder(['id' => 'desc'])
             ->setLimit(1)
@@ -151,7 +152,7 @@ class BasketsDiscountOfferRepository
             BasketsDiscountOfferTable::update($fromUser['id'], ['fUserId' => $toFUserId]);
         } else {
             BasketsDiscountOfferTable::update($fromUser['id'], ['promoCode' => null]);
-            BasketsDiscountOfferTable::update($toUser['id'], ['promoCode' => $fromUser['promoCode']]);
+            BasketsDiscountOfferTable::update($toUser['id'], ['promoCode' => $fromUser['promoCode'] ?: ($toUser['promoCode'] ?: null)]);
         }
 
         return $fromUser['promoCode'];

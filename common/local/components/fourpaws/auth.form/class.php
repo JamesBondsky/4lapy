@@ -326,7 +326,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
                         $personalOffersService = $container->get('personal_offers.service');
                         if ($personalOffersService::is20thBasketOfferActive()) {
-                            $personalOffersService->changeCouponFUserOwner($curBasket->getFUserId(), $fUserId);
+                            $personalOffersService->changeCouponBasketFUserOwner($curBasket->getFUserId(), $fUserId);
                         }
 
                         // привязывать к заказу нужно для расчета скидок

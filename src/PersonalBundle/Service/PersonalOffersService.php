@@ -72,7 +72,7 @@ class PersonalOffersService
     public const INFINITE_COUPON_DATE_FORMATTED = '01.01.3000'; // Дата, с которой Manzana устанавливает дату окончания действия бесконечных купонов
 
     public const NTH_BASKET_OFFER_ID = '20-20';
-    public const START_DATETIME_20TH_OFFER = '19.12.2019 00:00:00'; //TODO set 25.12 after task's ready
+    public const START_DATETIME_20TH_OFFER = '24.12.2019 00:00:00'; //TODO set 25.12 after task's ready
     public const END_DATETIME_20TH_OFFER = '26.12.2019 23:59:59';
 
     /** @var DataManager */
@@ -1663,7 +1663,7 @@ class PersonalOffersService
 
         $this->setPersonalOfferBasketId($personalOfferBasketId);
 
-        return $personalOfferBasketId % 1 === 0; //FIXME set % 20
+        return $personalOfferBasketId % 2 === 0; //FIXME set % 20
     }
 
     /**
@@ -1817,7 +1817,7 @@ class PersonalOffersService
      * @param int $fromFUserId
      * @param int $toFUserId
      */
-    public function changeCouponFUserOwner(int $fromFUserId, int $toFUserId): void
+    public function changeCouponBasketFUserOwner(int $fromFUserId, int $toFUserId): void
     {
         try {
             if ($fromFUserId <= 0 || $toFUserId <= 0) {
@@ -1826,23 +1826,22 @@ class PersonalOffersService
 
             $promoCode = BasketsDiscountOfferRepository::changePromoCodeFUserOwner($fromFUserId, $toFUserId); // смена привязки в доп.таблице
             // Смена привязки в основной таблице купонов
-            if ($promoCode) {
-                $linkId = $this->personalCouponManager::query()
-                    ->where('UF_PROMO_CODE', $promoCode)
-                    ->where('USER_LINK.UF_FUSER_ID', $fromFUserId)
-                    ->setSelect(['USER_LINK.ID'])
-                    ->registerRuntimeField(new ReferenceField(
-                        'USER_LINK', $this->personalCouponUsersManager::getEntity()->getDataClass(),
-                        Query\Join::on('this.ID', 'ref.UF_COUPON'),
-                        ['join_type' => 'INNER']
-                    ))
-                    ->setLimit(1)
-                    ->exec()
-                    ->fetch()['PERSONAL_COUPON_USER_LINK_ID'];
+            $promoCode = $promoCode ?: null;
+            $linkId = $this->personalCouponManager::query()
+                ->where('UF_PROMO_CODE', $promoCode)
+                ->where('USER_LINK.UF_FUSER_ID', $fromFUserId)
+                ->setSelect(['USER_LINK.ID'])
+                ->registerRuntimeField(new ReferenceField(
+                    'USER_LINK', $this->personalCouponUsersManager::getEntity()->getDataClass(),
+                    Query\Join::on('this.ID', 'ref.UF_COUPON'),
+                    ['join_type' => 'INNER']
+                ))
+                ->setLimit(1)
+                ->exec()
+                ->fetch()['PERSONAL_COUPON_USER_LINK_ID'];
 
-                if ($linkId) {
-                    $this->personalCouponUsersManager::update($linkId, ['UF_FUSER_ID' => $toFUserId]);
-                }
+            if ($linkId) {
+                $this->personalCouponUsersManager::update($linkId, ['UF_FUSER_ID' => $toFUserId]);
             }
         } catch (\Throwable $e) {
             $this->logger->emergency(__FUNCTION__ . '. ' . $e->getMessage(), [

@@ -11,6 +11,7 @@ use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\EventResult;
@@ -673,7 +674,48 @@ class Event extends BaseServiceHandler
             $order = $event->getParameter('ENTITY');
             $propertyCollection = $order->getPropertyCollection();
             $promocode = BxCollection::getOrderPropertyByCode($propertyCollection, 'PROMOCODE');
-            if ($promocode && $promocodeValue = $promocode->getValue())
+            if ($promocode) {
+                $promocodeValue = $promocode->getValue();
+            }
+
+            // Отметка, что корзина по акции "20-20" использована. Следующие заказы пользователя в этот день снова начнут участвовать в розыгрыше купонов
+            if (PersonalOffersService::is20thBasketOfferActive()) {
+                $discountOfferQuery = BasketsDiscountOfferTable::query()
+                    ->where('date_insert', '>=', (new DateTime())->setTime(0, 0, 0))
+                    ->setSelect(['id'])
+                    //->setLimit(1) // для сохранения логики возобновления участия в розыгрыше купонов нужно отметить флагом order_created все записи за этот день
+                    ->setOrder(['id' => 'desc']);
+
+                if (isset($promocodeValue) && $promocodeValue) {
+                    $discountOfferQuery = $discountOfferQuery->where('promoCode', $promocodeValue);
+                } else {
+                    $discountOfferQuery = $discountOfferQuery->whereNull('promoCode');
+
+                    $userFilter = Query::filter()
+                        ->logic('or');
+
+                    if ($fUserId = $order->getBasket()->getFUserId()) {
+                        $userFilter = $userFilter->where('fUserId', $fUserId);
+                    }
+                    if ($userId = $order->getUserId()) {
+                        $userFilter = $userFilter->where('userId', $userId);
+                    }
+
+                    $discountOfferQuery = $discountOfferQuery->where($userFilter);
+                }
+
+                $basket20thOfferId = $discountOfferQuery
+                    ->exec()
+                    ->fetch()['id'];
+                if ($basket20thOfferId) {
+                    BasketsDiscountOfferTable::update($basket20thOfferId, [
+                        'order_created' => 1,
+                        'date_update' => new DateTime(),
+                    ]);
+                }
+            }
+
+            if (isset($promocodeValue) && $promocodeValue)
             {
                 // Деактивация купона в таблице Битрикса
                 $bitrixCouponId = DiscountCouponTable::query()
@@ -697,13 +739,6 @@ class Event extends BaseServiceHandler
                             )
                         );
                 }
-
-                // Отметка, что купон по акции "20-20" использован (запрос не через ORM - для избавления от лишнего селекта)
-                BitrixApplication::getConnection()->query('UPDATE ' . BasketsDiscountOfferTable::getTableName() . ' 
-                    SET order_created=1,
-                        date_update=\'' . (new DateTime())->format('Y-m-d H:i:s') . '\'
-                    WHERE promoCode=\'' . $promocodeValue .'\';'
-                );
 
                 // Деактивация купона в HL-блоках
                 $isPromoCodeProcessed = false;
