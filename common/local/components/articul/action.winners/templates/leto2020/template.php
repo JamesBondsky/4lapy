@@ -30,7 +30,7 @@ if (!empty($arResult)): ?>
                     <div class="item__wrap">
                       <div class="item">
                         <div class="item__name" title="<?= $winner['NAME'] ?>">
-                          <div class="item__icon item__icon_phone"></div>
+                          <div class="item__icon item__icon_<?= $winner['CODE'] ?>></div>
                           <span>
                             <?= $winner['NAME'] ?>
                           </span>
