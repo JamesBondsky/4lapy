@@ -174,7 +174,7 @@ if ($orderSubscribe) {
                             );
                             echo '</span>';
                         } else {
-                            echo $order->getStatus();
+                            echo '<b id="status_changer">' . $order->getStatus() . '</b>';
                             echo ' ';
                             echo '<span>';
                             echo ' ';

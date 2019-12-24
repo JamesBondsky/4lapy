@@ -103,7 +103,6 @@ $(document).ready(function () {
             dataType: 'json',
             success: function (json) {
                 data = json.data;
-
                 orderCancelPopup.find('.js-info').css('display', 'none')
                 orderCancelPopup.find('.js-result').css('display', 'flex')
 
@@ -111,7 +110,7 @@ $(document).ready(function () {
 
                 if (json.success) {
                     msg = json.message;
-
+                    $('#status_changer').text(data.status);
                     cancelOrderItem.remove();
                     // $('.js-link-text').css("cursor", "default", "!important");
 

@@ -935,10 +935,10 @@ class OrderController extends Controller implements LoggerAwareInterface
         }
 
         if ($cancelResult === 'canceling') {
-            return JsonSuccessResponse::createWithData('Ваш заказ уже передан в службу доставки. Мы передадим информацию об отмене заказа.', []);
+            return JsonSuccessResponse::createWithData('Ваш заказ уже передан в службу доставки. Мы передадим информацию об отмене заказа.', ['status' => 'Отменяется']);
         }
         
-        return JsonSuccessResponse::createWithData('Заказ успешно отменен', []);
+        return JsonSuccessResponse::createWithData('Заказ успешно отменен', ['status' => 'Отменен']);
     }
 
     /**
