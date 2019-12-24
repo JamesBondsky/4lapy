@@ -2548,7 +2548,7 @@ class OrderService implements LoggerAwareInterface
     {
         $sendEmail = true;
         $newStatus = '';
-        
+
         // ищем заказ
         try {
             $order = $this->getOrderById($orderId);
@@ -2609,12 +2609,12 @@ class OrderService implements LoggerAwareInterface
         }
 
         $this->cancelBitrixOrder($order, $orderId, $newStatus);
-        
+
         try {
             // отменяем заказ в Sap'е
-            // $orderNumber = $order->getField('ACCOUNT_NUMBER');
-            // $sapStatus = StatusService::STATUS_CANCELED;
-            // $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
+             $orderNumber = $order->getField('ACCOUNT_NUMBER');
+             $sapStatus = StatusService::STATUS_CANCELED;
+             $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
         } catch (\Exception $e) {
 
         }
@@ -2724,17 +2724,17 @@ class OrderService implements LoggerAwareInterface
 
         return $propertyValue ? ($propertyValue->getValue() ?? '') : '';
     }
-    
+
     protected function cancelBitrixOrder($order, $orderId, $status)
     {
         $connection = BitrixApplication::getConnection();
-    
+
         $connection->startTransaction();
-    
+
         try {
             // отменяем заказ
             $cancelResult = (new \CSaleOrder)->cancelOrder($orderId, BaseEntity::BITRIX_TRUE, '');
-    
+
             if ($cancelResult) {
                 $order->setField('STATUS_ID', $status);
                 $saveResult = $order->save();
@@ -2742,18 +2742,18 @@ class OrderService implements LoggerAwareInterface
                 $connection->rollbackTransaction();
                 return false;
             }
-    
+
             if (!$saveResult->isSuccess()) {
                 $connection->rollbackTransaction();
                 return false;
             }
-    
+
             $connection->commitTransaction();
         } catch (\Exception $e) {
             $connection->rollbackTransaction();
             return false;
         }
-      
+
         return true;
     }
 }
