@@ -80,7 +80,7 @@ class Event extends BaseServiceHandler
 
         /** События форматирования телефона */
         static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'checkPhoneFormat'], 'main');
-        static::initHandlerCompatible('OnAfterUserAdd', [self::class, 'updateManzana'], 'main');
+        static::initHandlerCompatible('OnAfterUserAdd', [self::class, 'getCardInManzana'], 'main');
         static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'checkPhoneFormat'], 'main');
 
         /** замена логина */
@@ -374,6 +374,19 @@ class Event extends BaseServiceHandler
                 $manzanaService->updateContactAsync($client);
             }
         }
+
+        return true;
+    }
+
+    public static function getCardInManzana(&$fields): bool
+    {
+        $container = App::getInstance()->getContainer();
+
+        /** @var UserService $userService */
+        $userService = $container->get(CurrentUserProviderInterface::class);
+        $user = $userService->getUserRepository()->find((int)$fields['ID']);
+
+        $userService->refreshUserCard($user);
 
         return true;
     }
