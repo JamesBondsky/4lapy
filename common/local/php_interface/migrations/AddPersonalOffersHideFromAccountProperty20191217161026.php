@@ -6,7 +6,7 @@ namespace Sprint\Migration;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
-class AddPersonalOffersHideFromAccountProperty20191219173548 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
+class AddPersonalOffersHideFromAccountProperty20191217161026 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
 {
 
     protected $description = 'Добавляет свойство "Не показывать купоны в ЛК" в инфоблок "Персональные предложения"';
