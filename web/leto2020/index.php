@@ -8,9 +8,9 @@ use FourPaws\PersonalBundle\Service\Chance2Service;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
-$APPLICATION->SetPageProperty('title', '');
+$APPLICATION->SetPageProperty('title', 'Выиграй путешествие на 2-их в Тайланд!');
 $APPLICATION->SetPageProperty('description', '');
-$APPLICATION->SetTitle('');
+$APPLICATION->SetTitle('Выиграй путешествие на 2-их в Тайланд!');
 
 $userChance = null;
 /** @var ChanceService $chaceService */

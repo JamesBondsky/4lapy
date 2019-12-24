@@ -34,9 +34,9 @@ $markup = PawsApplication::markup();
     <meta name="yandex-verification" content="d69492b0ac6396cf" />
     <meta name="google-site-verification" content="YhnMv-eup_rK_sqgNqgHc8UrWyWaZQ22m5z7xnokuNs" />
 
-    <meta property="og:title" content=""/>
+    <meta property="og:title" content="Выиграй путешествие на 2-их в Тайланд!"/>
     <meta property="og:description" content=""/>
-    <?php /*<meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/leto2020/img/leto2020-share.png'?>">*/?>
+    <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/leto2020/img/leto2020-share.jpg'?>">
 
     <link href="https://fonts.googleapis.com/css?family=PT+Sans+Narrow|Roboto+Condensed&display=swap" rel="stylesheet">
 
