@@ -712,6 +712,9 @@ class Event extends BaseServiceHandler
                         'order_created' => 1,
                         'date_update' => new DateTime(),
                     ]);
+
+                    $logger = LoggerFactory::create('CouponPoolRepository', '20-20');
+                    $logger->info(__FUNCTION__ . '. На основании корзины по акции 20-20 создан заказ. BasketId: ' . $basket20thOfferId . '. Купон: ' . ($promocodeValue ?? ''));
                 }
             }
 

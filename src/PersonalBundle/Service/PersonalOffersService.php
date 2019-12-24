@@ -1787,7 +1787,7 @@ class PersonalOffersService
                 if ($promoCode) { // Пользователь выиграл купон, далее делается привязка
                     BasketsDiscountOfferRepository::setPromocode($this->getPersonalOfferBasketId(), $promoCode);
                     $logger = LoggerFactory::create('PersonalOffersService', '20-20');
-                    $logger->info('tryGet20thBasketOfferCoupon. PromoCode: ' . print_r($promoCode, true));
+                    $logger->info('tryGet20thBasketOfferCoupon. PromoCode set. BasketId: ' . $this->getPersonalOfferBasketId() . '. PromoCode: ' . print_r($promoCode, true));
 
                     $this->link20thBasketOfferPromocode($promoCode);
 
