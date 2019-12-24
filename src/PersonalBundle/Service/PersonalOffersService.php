@@ -2,6 +2,7 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Entity\Query;
@@ -19,6 +20,10 @@ use FourPaws\External\Import\Model\ImportOffer;
 use FourPaws\PersonalBundle\Exception\AlreadyExistsException;
 use FourPaws\PersonalBundle\Exception\BaseException;
 use FourPaws\PersonalBundle\Exception\CouponNotFoundException;
+use FourPaws\PersonalBundle\Exception\RuntimeException;
+use FourPaws\PersonalBundle\Repository\BasketsDiscountOfferRepository;
+use FourPaws\PersonalBundle\Repository\CouponPoolRepository;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\Serializer;
@@ -66,6 +71,10 @@ class PersonalOffersService
 
     public const INFINITE_COUPON_DATE_FORMATTED = '01.01.3000'; // Дата, с которой Manzana устанавливает дату окончания действия бесконечных купонов
 
+    public const NTH_BASKET_OFFER_ID = '20-20';
+    public const START_DATETIME_20TH_OFFER = '25.12.2019 00:00:00';
+    public const END_DATETIME_20TH_OFFER = '26.12.2019 23:59:59';
+
     /** @var DataManager */
     protected $personalCouponManager;
     /** @var DataManager */
@@ -84,6 +93,9 @@ class PersonalOffersService
 
     /** @var UserService */
     protected $userService;
+
+    /** @var int */
+    private $personalOfferBasketId;
 
     /**
      * PersonalOffersService constructor.
@@ -123,7 +135,7 @@ class PersonalOffersService
             throw new InvalidArgumentException('can\'t get user\'s coupons. userId: ' . $userId);
         }
 
-        list($offersCollection, $couponsCollection) = $this->getActiveCoupons($userId, $isNotShown, $withUnrestrictedCoupons);
+        [$offersCollection, $couponsCollection] = $this->getActiveCoupons($userId, $isNotShown, $withUnrestrictedCoupons);
         $result = [
             'coupons' => $couponsCollection,
             'offers'  => $offersCollection,
@@ -148,7 +160,7 @@ class PersonalOffersService
             throw new InvalidArgumentException('can\'t get user\'s coupons. userId: ' . $userId);
         }
 
-        list($offersCollection, $couponsCollection) = $this->getActiveCoupons($userId);
+        [$offersCollection, $couponsCollection] = $this->getActiveCoupons($userId);
 
         $result = [];
         foreach ($couponsCollection as $coupon) {
@@ -175,11 +187,13 @@ class PersonalOffersService
      * @param array     $filter
      *
      * @param bool|null $withUnrestrictedCoupons
+     * @param bool $ignoreHiddenFromAccount
      * @return ArrayCollection
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\LoaderException
+     * @throws SystemException
      */
-    public function getActiveOffers($filter = [], ?bool $withUnrestrictedCoupons = false): ArrayCollection
+    public function getActiveOffers($filter = [], ?bool $withUnrestrictedCoupons = false, $ignoreHiddenFromAccount = true): ArrayCollection
     {
         if (!Loader::includeModule('iblock')) {
             throw new SystemException('Module iblock is not installed');
@@ -188,6 +202,9 @@ class PersonalOffersService
         $arFilter = [
             '=IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS),
         ];
+        if ($ignoreHiddenFromAccount) {
+            $arFilter['!PROPERTY_HIDE_FROM_ACCOUNT'] = true;
+        }
         if ($withUnrestrictedCoupons) {
             $arFilter[] = [
                 'LOGIC'                             => 'OR',
@@ -315,11 +332,21 @@ class PersonalOffersService
                 $userIds = $couponData;
             } else {
                 $userIds = $couponData['users'];
+                if (!$userIds) {
+                    $fUserIds = $couponData['fUsers'];
+                }
             }
             $usersCouponsIds = [];
-            foreach ($userIds as $userId) {
-                $couponLinkId = $this->linkCouponToUser($couponId, $userId, $couponData['coupon'] ?? []);
-                $usersCouponsIds[$userId] = $couponLinkId;
+            if ($userIds) {
+                foreach ($userIds as $userId) {
+                    $couponLinkId = $this->linkCouponToUser($couponId, $userId, $couponData['coupon'] ?? []);
+                    $usersCouponsIds[$userId] = $couponLinkId;
+                }
+            } else {
+                foreach ($fUserIds as $fUserId) {
+                    $couponLinkId = $this->linkCouponToUser($couponId, null, $couponData['coupon'] ?? [], $fUserId);
+                    $usersCouponsIds[$fUserId] = $couponLinkId;
+                }
             }
 
             $result[$promoCode] = [
@@ -477,9 +504,7 @@ class PersonalOffersService
             }
 
             $container = App::getInstance()->getContainer();
-            /** @var PersonalOffersService $personalOffersService */
-            $personalOffersService = $container->get('personal_offers.service');
-            $discountId            = $personalOffersService->getUniqueOfferDiscountIdByDiscountValue($discountValue);
+            $discountId            = $this->getUniqueOfferDiscountIdByDiscountValue($discountValue);
 
             $promoCode = DiscountCouponTable::generateCoupon(true);
 
@@ -591,18 +616,20 @@ class PersonalOffersService
      * @param int   $couponId
      * @param int   $userId
      * @param array $coupon
+     * @param int|null $fUserId
      * @return int
      * @throws \Bitrix\Main\ObjectException
      * @throws InvalidArgumentException
      */
-    public function linkCouponToUser(int $couponId, int $userId, array $coupon = []): int
+    public function linkCouponToUser(int $couponId, ?int $userId = null, array $coupon = [], ?int $fUserId = null): int
     {
-        if ($couponId <= 0 || $userId <= 0) {
+        if ($couponId <= 0 || ($userId <= 0 && $fUserId <= 0)) {
             throw new InvalidArgumentException(__FUNCTION__ . '. Не удалось привязать купон к пользователю. $couponId: ' . $couponId . '. $userId: ' . $userId);
         }
 
         $addResult = $this->personalCouponUsersManager::add([
             'UF_USER_ID'          => $userId,
+            'UF_FUSER_ID'         => $fUserId,
             'UF_COUPON'           => $couponId,
             'UF_DATE_CREATED'     => new DateTime(),
             'UF_DATE_CHANGED'     => new DateTime(),
@@ -731,23 +758,36 @@ class PersonalOffersService
     {
         global $USER;
 
-        if (!$USER->IsAuthorized() || !($userId = $USER->GetID())) {
+        $fUserId = $this->userService->getCurrentFUserId();
+
+        if (
+            (!$USER->IsAuthorized() || !($userId = $USER->GetID()))
+                && !$fUserId
+        ) {
             return;
+        }
+
+        $arFilter = [
+            'LOGIC' => 'OR',
+            //'UF_USED' => true,
+        ];
+        if ($userId) {
+            $arFilter['=UF_USER_ID'] = $userId;
+        }
+        if ($fUserId) {
+            $arFilter['=UF_FUSER_ID'] = $fUserId;
         }
 
         $arPromoCode = $this->personalCouponUsersManager::query()
             ->setSelect([
-                //'ID',
+                'ID',
                 'UF_USED',
                 'UF_DATE_USED',
                 'USER_COUPONS.UF_OFFER',
                 'UF_DATE_ACTIVE_FROM',
                 'UF_DATE_ACTIVE_TO',
             ])
-            ->setFilter([
-                //'UF_USED' => true,
-                '=UF_USER_ID' => $userId,
-            ])
+            ->setFilter($arFilter)
             ->registerRuntimeField(
                 new ReferenceField(
                     'USER_COUPONS', $this->personalCouponManager::getEntity()->getDataClass(),
@@ -759,18 +799,22 @@ class PersonalOffersService
             ->exec()
             ->fetch();
 
-        $activeOffers    = $this->getActiveOffers([], true);
-        $activeOffersIds = $activeOffers->getKeys();
+        if (!$arPromoCode && $this->isLinkToUserNeeded($promoCode)) {
+            throw new CouponIsNotAvailableForUseException('Купон нельзя использовать, т.к. он еще не привязан ни к одному пользователю. Промокод: ' . $promoCode . '. User id: ' . $userId);
+        }
 
-        if ($arPromoCode
-            && ($arPromoCode['UF_USED']
+        if ($arPromoCode) {
+            $activeOffers = $this->getActiveOffers([], true, false);
+            $activeOffersIds = $activeOffers->getKeys();
+
+            if ($arPromoCode['UF_USED']
                 || $arPromoCode['UF_DATE_USED']
                 || ($activeOffersIds && !in_array($arPromoCode['PERSONAL_COUPON_USERS_USER_COUPONS_UF_OFFER'], $activeOffersIds, false))
                 || ($arPromoCode['UF_DATE_ACTIVE_FROM'] && new DateTime() < $arPromoCode['UF_DATE_ACTIVE_FROM'])
                 || ($arPromoCode['UF_DATE_ACTIVE_TO'] && new DateTime() > $arPromoCode['UF_DATE_ACTIVE_TO'])
-            )
-        ) {
-            throw new CouponIsNotAvailableForUseException('coupon is not available for use. Already used, deactivated or not active. Promo code: ' . $promoCode . '. User id: ' . $userId);
+            ) {
+                throw new CouponIsNotAvailableForUseException('coupon is not available for use. Already used, deactivated or not active. Promo code: ' . $promoCode . '. User id: ' . $userId);
+            }
         }
     }
 
@@ -1188,8 +1232,6 @@ class PersonalOffersService
             ];
         } elseif ($this->orderService->getOrderPropertyByCode($bitrixOrder, 'DOBROLAP_COUPON_ID')->getValue()) {
             $dobrolapCouponID = $this->orderService->getOrderPropertyByCode($bitrixOrder, 'DOBROLAP_COUPON_ID')->getValue();
-            /** @var PersonalOffersService $personalOffersService */
-            $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
             /** @var DataManager $personalCouponManager */
             $personalCouponManager = App::getInstance()->getContainer()->get('bx.hlblock.personalcoupon');
             $coupon                = $personalCouponManager::getById($dobrolapCouponID)->fetch();
@@ -1580,5 +1622,249 @@ class PersonalOffersService
             $text = 'Действует до ' . $text;
         }
         return $text;
+    }
+
+    /**
+     * Проверяет, является ли корзина пользователя 20-й корзиной на сайте за день
+     * (проверяются только первые корзины пользователей. После сделанного заказа новая корзина снова считается первой)
+     *
+     * @param bool $isFromMobile
+     * @return bool
+     * @throws RuntimeException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws SystemException
+     */
+
+    private function checkIfNew20thBasket(bool $isFromMobile): bool
+    {
+        $userId = null;
+        try {
+            $userId = $this->userService->getCurrentUserId();
+            $fUserId = $this->userService->getCurrentFUserId();
+        } catch (NotAuthorizedException $e) {
+            $fUserId = $this->userService->getCurrentFUserId();
+        }
+        if (!$userId && !$fUserId) {
+            throw new RuntimeException('Не удалось проверить номер корзины пользователя, т.к. не заданы $userId и $fUserId');
+        }
+
+        $personalOfferBasket = BasketsDiscountOfferRepository::getRegisteredOfferBasket($fUserId, $userId);
+        if ($personalOfferBasket && !$personalOfferBasket['promoCode']) {
+            $personalOfferBasketId = $personalOfferBasket['id'];
+        }
+        if (!$personalOfferBasket) {
+            $personalOfferBasketId = BasketsDiscountOfferRepository::addBasket($fUserId, $userId, $isFromMobile);
+        }
+
+        if (!isset($personalOfferBasketId)) {
+            return false;
+        }
+
+        $this->setPersonalOfferBasketId($personalOfferBasketId);
+
+        return $personalOfferBasketId % 20 === 0;
+    }
+
+    /**
+     * @return string|null
+     * @throws RuntimeException
+     * @throws SystemException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\Db\SqlQueryException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    private function getFreeCouponFor20thBasket(): ?string
+    {
+        $personalOfferId = ElementTable::query()
+            ->setFilter([
+                'CODE' => self::NTH_BASKET_OFFER_ID,
+                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS),
+            ])
+            ->setSelect(['ID', 'IBLOCK_ID'])
+            ->exec()
+            ->fetch()['ID'];
+
+        if ($personalOfferId) {
+            /** @var CouponPoolRepository $repository */
+            $repository = App::getInstance()->getContainer()->get('coupon_pool.repository');
+
+            return $repository->getFreePromoCode($personalOfferId);
+        }
+    }
+
+    /**
+     * @return int
+     * @throws RuntimeException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    public function get20thBasketOfferId(): int
+    {
+        $offerId = ElementTable::query()
+            ->where([
+                ['IBLOCK_ID', IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS)],
+                ['CODE', self::NTH_BASKET_OFFER_ID],
+            ])
+            ->setSelect(['ID'])
+            ->setLimit(1)
+            ->exec()
+            ->fetch()['ID'];
+
+        if ($offerId <= 0) {
+            throw new RuntimeException('Не удалось найти персональное предложение "20% скидка 20-му покупателю"');
+        }
+
+        return $offerId;
+    }
+
+    /**
+     * Проверяет, не запрещено ли применение указанного купона без предварительной привязки к юзеру
+     * @param $promoCode
+     * @return bool
+     */
+    public function isLinkToUserNeeded($promoCode): bool
+    {
+        return strpos($promoCode, 's20im') === 0;
+    }
+
+    /**
+     * Привязывает промокод акции "20% 20-му покупателю" к текущему пользователю по USER_ID или FUSER_ID
+     * @param string $promoCode
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ObjectException
+     */
+    private function link20thBasketOfferPromocode(string $promoCode): void
+    {
+        try {
+            $userId = $this->userService->getCurrentUserId();
+        } catch (NotAuthorizedException $e) {
+            $fUserId = $this->userService->getCurrentFUserId();
+        }
+        if (!$userId && !$fUserId) {
+            throw new RuntimeException('Не удалось выдать пользователю купон по акции 20-20, т.к. не заданы $userId и $fUserId');
+        }
+
+        $dateTimeActiveTo = (new DateTime())->setTime(23, 59, 59);
+        if (($dateTimeOfferEnds = new DateTime(self::END_DATETIME_20TH_OFFER)) < $dateTimeActiveTo) {
+            $dateTimeActiveTo = $dateTimeOfferEnds;
+        }
+        $promoCodeArray = [
+            'coupon' => [
+                'dateTimeActiveFrom' => new DateTime(),
+                'dateTimeActiveTo'   => $dateTimeActiveTo,
+            ],
+        ];
+        if ($userId) {
+            $promoCodeArray['users'] = [$userId];
+        } elseif ($fUserId) {
+            $promoCodeArray['fUsers'] = [$fUserId];
+        }
+
+        $couponsArray = [
+            $promoCode => $promoCodeArray,
+        ];
+        $logger = LoggerFactory::create('PersonalOffersService', '20-20');
+        $logger->info('link20thBasketOfferPromocode', [$couponsArray]);
+        $this->importOffers($this->get20thBasketOfferId(), $couponsArray);
+    }
+
+    /**
+     * Проверяет, является ли пользователь владельцем 20-й "первой" за день корзины (во время акции "20% скидка 20-му покупателю"),
+     * и, если да, выдает этому пользователю купон.
+     * Если пользователь подходит по условию, но уже получил на эту корзину купон, то метод возвращает false (как и в случае невыигрыша)
+     *
+     * @param bool $isFromMobile
+     * @return bool|string
+     */
+    public function tryGet20thBasketOfferCoupon(bool $isFromMobile)
+    {
+        try {
+            if (self::is20thBasketOfferActive() && $this->checkIfNew20thBasket($isFromMobile)) {
+                $promoCode = $this->getFreeCouponFor20thBasket();
+                if ($promoCode) { // Пользователь выиграл купон, далее делается привязка
+                    BasketsDiscountOfferRepository::setPromocode($this->getPersonalOfferBasketId(), $promoCode);
+                    $logger = LoggerFactory::create('PersonalOffersService', '20-20');
+                    $logger->info('tryGet20thBasketOfferCoupon. PromoCode set. BasketId: ' . $this->getPersonalOfferBasketId() . '. PromoCode: ' . print_r($promoCode, true));
+
+                    $this->link20thBasketOfferPromocode($promoCode);
+
+                    return $promoCode;
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->logger->emergency(__FUNCTION__ . '. ' . $e->getMessage(), [
+                array_map(static function($item) { return $item['class'] . '::' . $item['function'] . ' (' . $item['file'] . ':' . $item['line'] . ')'; }, $e->getTrace()),
+            ]);
+        }
+
+        return false;
+    }
+
+    /**
+     * @return bool
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public static function is20thBasketOfferActive(): bool
+    {
+        return new DateTime() >= new DateTime(self::START_DATETIME_20TH_OFFER)
+            && new DateTime() <= new DateTime(self::END_DATETIME_20TH_OFFER);
+    }
+
+    /**
+     * @param int $fromFUserId
+     * @param int $toFUserId
+     */
+    public function changeCouponBasketFUserOwner(int $fromFUserId, int $toFUserId): void
+    {
+        try {
+            if ($fromFUserId <= 0 || $toFUserId <= 0) {
+                throw new RuntimeException(__METHOD__ . '. не удалось перенести промокод на другой fuser, т.к. не заполнены $fromFUserId, $toFUserId. $fromFUserId: ' . $fromFUserId . ', $toFUserId: ' . $toFUserId);
+            }
+
+            $promoCode = BasketsDiscountOfferRepository::changePromoCodeFUserOwner($fromFUserId, $toFUserId); // смена привязки в доп.таблице
+            // Смена привязки в основной таблице купонов
+            $promoCode = $promoCode ?: null;
+            $linkId = $this->personalCouponManager::query()
+                ->where('UF_PROMO_CODE', $promoCode)
+                ->where('USER_LINK.UF_FUSER_ID', $fromFUserId)
+                ->setSelect(['USER_LINK.ID'])
+                ->registerRuntimeField(new ReferenceField(
+                    'USER_LINK', $this->personalCouponUsersManager::getEntity()->getDataClass(),
+                    Query\Join::on('this.ID', 'ref.UF_COUPON'),
+                    ['join_type' => 'INNER']
+                ))
+                ->setLimit(1)
+                ->exec()
+                ->fetch()['PERSONAL_COUPON_USER_LINK_ID'];
+
+            if ($linkId) {
+                $this->personalCouponUsersManager::update($linkId, ['UF_FUSER_ID' => $toFUserId]);
+            }
+        } catch (\Throwable $e) {
+            $this->logger->emergency(__FUNCTION__ . '. ' . $e->getMessage(), [
+                array_map(static function($item) { return $item['class'] . '::' . $item['function'] . ' (' . $item['file'] . ':' . $item['line'] . ')'; }, $e->getTrace()),
+            ]);
+        }
+    }
+
+    /**
+     * @return int
+     */
+    private function getPersonalOfferBasketId(): int
+    {
+        return $this->personalOfferBasketId;
+    }
+
+    /**
+     * @param int $personalOfferBasketId
+     * @return PersonalOffersService
+     */
+    private function setPersonalOfferBasketId(int $personalOfferBasketId): PersonalOffersService
+    {
+        $this->personalOfferBasketId = $personalOfferBasketId;
+        return $this;
     }
 }
