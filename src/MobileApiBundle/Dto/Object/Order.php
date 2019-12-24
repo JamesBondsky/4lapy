@@ -102,10 +102,10 @@ class Order
     /**
      * Может ли заказ быть отменен
      * @Serializer\SerializedName("canBeCanceled")
-     * @Serializer\Type("int")
-     * @var int
+     * @Serializer\Type("bool")
+     * @var bool
      */
-    protected $canBeCanceled = 1;
+    protected $canBeCanceled = true;
     
     public function __construct()
     {
@@ -333,19 +333,19 @@ class Order
     }
     
     /**
-     * @return int
+     * @return bool
      */
-    public function getCanBeCanceled(): int
+    public function getCanBeCanceled(): bool
     {
         return $this->canBeCanceled;
     }
     
     /**
-     * @param int $canBeCanceled
+     * @param bool $canBeCanceled
      *
      * @return Order
      */
-    public function setCanBeCanceled(int $canBeCanceled): Order
+    public function setCanBeCanceled(bool $canBeCanceled): Order
     {
         $this->canBeCanceled = $canBeCanceled;
         return $this;
