@@ -369,13 +369,19 @@ class OrderController extends Controller implements LoggerAwareInterface
 
                 /** Для зон 2 и 5 выключаем 31.12.2018 доставки после 18:00 */
                 if ((true)
-                    && ($delivery->getDeliveryDate()->format('d.m.Y') == '31.12.2018')
-                    && (in_array($delivery->getDeliveryZone(), ['ZONE_2', 'ZONE_5']))
+                    && ($delivery->getDeliveryDate()->format('d.m.Y') == '31.12.2019')
+                    //&& (in_array($delivery->getDeliveryZone(), ['ZONE_2', 'ZONE_5']))
                     && (($interval->getTo() > 18) || ($interval->getTo() == 0))
                 ) {
                     continue;
                 }
-
+    
+                if ((true)
+                    && ($delivery->getDeliveryDate()->format('d.m.Y') == '01.01.2020' || $delivery->getDeliveryDate()->format('d.m.Y') == '02.01.2020')
+                ) {
+                    continue;
+                }
+                
                 $result[] = [
                     'name'  => (string)$interval,
                     'value' => $i + 1,
