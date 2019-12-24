@@ -1747,10 +1747,14 @@ class PersonalOffersService
             throw new RuntimeException('Не удалось выдать пользователю купон по акции 20-20, т.к. не заданы $userId и $fUserId');
         }
 
+        $dateTimeActiveTo = (new DateTime())->setTime(23, 59, 59);
+        if (($dateTimeOfferEnds = new DateTime(self::END_DATETIME_20TH_OFFER)) < $dateTimeActiveTo) {
+            $dateTimeActiveTo = $dateTimeOfferEnds;
+        }
         $promoCodeArray = [
             'coupon' => [
                 'dateTimeActiveFrom' => new DateTime(),
-                'dateTimeActiveTo'   => new DateTime(self::END_DATETIME_20TH_OFFER),
+                'dateTimeActiveTo'   => $dateTimeActiveTo,
             ],
         ];
         if ($userId) {
