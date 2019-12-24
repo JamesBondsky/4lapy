@@ -32,6 +32,7 @@ use Bitrix\Sale\Order as BitrixOrder;
 use Bitrix\Sale\PaySystem\Service;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Result;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
@@ -82,6 +83,7 @@ use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use function in_array;
 
 /**
  * Class OrderService
@@ -198,7 +200,7 @@ class OrderService
                     continue;
                 }
 
-                if (\in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
+                if (in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
                     continue;
                 }
 
@@ -206,7 +208,7 @@ class OrderService
                     continue;
                 }
 
-                /** @var \DateTimeImmutable $date */
+                /** @var DateTimeImmutable $date */
                 $date = $cheque->date;
                 $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
                 $order = (new Order())
@@ -327,7 +329,7 @@ class OrderService
              * Прекращение обработки, если заказ уже был импортирован из Manzana (и старый вариант, когда
              * создавался дубликат заказа, и новый вариант, когда номер чека указывается в исходном заказе)
              */
-            if (\in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
+            if (in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
                 continue;
             }
 
@@ -356,7 +358,7 @@ class OrderService
             }
 
 
-            /** @var \DateTimeImmutable $date */
+            /** @var DateTimeImmutable $date */
             $date = $cheque->date;
             $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
             $currentDate = new DateTime();
@@ -398,6 +400,7 @@ class OrderService
 
         // todo убрать после новго года
         App::getInstance()->getContainer()->get(ChanceService::class)->updateUserChance($user->getId());
+        App::getInstance()->getContainer()->get(Chance2Service::class)->updateUserChance($user->getId());
     }
 
     /**
@@ -556,7 +559,7 @@ class OrderService
             } catch (NotFoundException $e) {
             }
             /** если самовывоз */
-            if (\in_array($deliveryCode, DeliveryService::PICKUP_CODES, true)) {
+            if (in_array($deliveryCode, DeliveryService::PICKUP_CODES, true)) {
                 $dpdTerminal = $props->get('DPD_TERMINAL_CODE');
                 $cityCode = $props->get('CITY_CODE');
                 if ($cityCode instanceof OrderProp && $dpdTerminal instanceof OrderProp && $dpdTerminal->getValue() && $cityCode->getValue()) {
@@ -592,7 +595,7 @@ class OrderService
                         return null;
                     }
                 }
-            } elseif (\in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true)) {
+            } elseif (in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true)) {
                 /** если не самовывоз значит доставка */
 
                 $store = new Store();
@@ -938,7 +941,7 @@ class OrderService
             $order->setFieldNoDemand('DATE_UPDATE', new DateTime());
 
             if ($baseOrderStatus !== BitrixUtils::BX_BOOL_TRUE) {
-                /** @var \DateTimeImmutable $date */
+                /** @var DateTimeImmutable $date */
                 $date = $cheque->date;
                 $paymentDate = DateTime::createFromTimestamp($date->getTimestamp());
 
