@@ -53,7 +53,9 @@ if (isset($arParams['SHOW_PRODUCTS_SALE']) && $arParams['SHOW_PRODUCTS_SALE'] ==
         ->withId($cacheKey)
         ->withTime(864000)
         ->resultOf(function () use ($APPLICATION, $arParams, $elementId, $component) {
-            return $APPLICATION->IncludeComponent(
+            ob_start();
+
+            $APPLICATION->IncludeComponent(
                 'fourpaws:products.by.prop',
                 '',
                 [
@@ -70,9 +72,15 @@ if (isset($arParams['SHOW_PRODUCTS_SALE']) && $arParams['SHOW_PRODUCTS_SALE'] ==
                     'HIDE_ICONS' => 'Y',
                 ]
             );
+
+            $content = ob_get_contents();
+
+            ob_end_clean();
+
+            return $content;
         });
 
-    echo $city;
+    echo $city['result'];
 }
 
 /**
