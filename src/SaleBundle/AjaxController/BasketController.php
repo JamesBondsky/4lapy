@@ -188,12 +188,13 @@ class BasketController extends Controller implements LoggerAwareInterface
                 }
             }
 
-            $data['warning'] = !$availableDelivery;
-
             if ($promoCode) {
                 $message = 'Вы 20й в акции "Скидка 20% на каждый 20й заказ". Не забудьте оформить заказ сегодня! Скидка уже ждет вас в корзине.';
+            } elseif($availableDelivery) {
+                $message = 'Товар добавлен в корзину';
             } else {
-                $message = ($availableDelivery) ? 'Товар добавлен в корзину' : 'Обратите внимание, что доставка в ваш регион не осуществляется.';
+                $data['warning'] = true;
+                $message = 'Обратите внимание, что доставка в ваш регион не осуществляется.';
             }
 
             $response = JsonSuccessResponse::createWithData(
