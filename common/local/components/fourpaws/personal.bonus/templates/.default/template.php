@@ -8,6 +8,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 /** @var UserBonus $bonus */
 $bonus = $arResult['BONUS'];
+
+$isReal = $bonus->getCard()->isReal();
+$cardId = $bonus->getCard()->getCardId();
+
+if (!$cardId && !$isReal && $bonus->getCard()->getCardNumber() != '0000000000000') {
+    $isReal = true;
+}
 ?>
 <div class="b-account-bonus">
     <div class="b-account-bonus-card">
@@ -34,7 +41,7 @@ $bonus = $arResult['BONUS'];
             <div class="b-account-bonus-card__number b-account-bonus-card__number--temporary"><?= $bonus->getTemporaryBonus() ?>
             </div>
         </div>
-        <?php if (!$bonus->getCard()->isReal()) { ?>
+        <?php if (!$isReal) { ?>
             <div class="b-account-bonus-card__form">
                 <div class="b-account-bonus-card__link">
                     <a class="b-link b-link--account-bonus js-open-card js-open-card--account-bonus js-open-card"
@@ -115,7 +122,7 @@ $bonus = $arResult['BONUS'];
                 <div class="b-account-bonus__text"><?= $bonus->getCredit() ?></div>
             </li>
         </ul>
-        <?php if (!$bonus->getCard()->isReal()) { ?>
+        <?php if (!$isReal) { ?>
             <div class="b-account-bonus__title b-account-bonus__title--bonus">
                 У&nbsp;Вас виртуальная бонусная карта!
             </div>
@@ -138,7 +145,7 @@ $bonus = $arResult['BONUS'];
                 </li>
             </ul>
         <?php }
-        if ($bonus->getCard()->isReal()) {?>
+        if ($isReal) {?>
             <div class="b-account-bonus__title b-account-bonus__title--bonus">Не забывайте!</div>
             <ul class="b-account-bonus__list-bonus">
                 <li class="b-account-bonus__item">1 бонус = 1 ₽</li>

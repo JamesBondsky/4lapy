@@ -174,7 +174,7 @@ if ($orderSubscribe) {
                             );
                             echo '</span>';
                         } else {
-                            echo $order->getStatus();
+                            echo '<b id="status_changer">' . $order->getStatus() . '</b>';
                             echo ' ';
                             echo '<span>';
                             echo ' ';
@@ -283,16 +283,12 @@ if ($orderSubscribe) {
                             </a>
                             <?php $isFirstButton = false; ?>
                         <?php } ?>
-                        <?php if ($USER->IsAdmin() && ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) && ($arResult['ORDER']->getDeliveryId() != getenv('EXPRESS_DELIVERY_4LAPY_ID') && $arResult['ORDER']->getDeliveryId() != getenv('EXPRESS_DELIVERY_DOSTAVISTA_ID'))) { ?>
+                        <?php if ($USER->IsAdmin() && ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) && !$arResult['CANCELING']) { ?>
                             <div class="b-link b-link__button
                     <?= ($arResult['CAN_CANCEL']) ? 'js-cancel-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?><?= ($arResult['CANCELED']) ? 'b-link__canceled' : '' ?>" data-order-id="<?= $order->getId() ?>">
                         <span class="b-link__text js-link-text">
                             <?php if ($arResult['CAN_CANCEL']) { ?>
                                 Отменить заказ
-                            <?php } else if ($arResult['CANCELED']) { ?>
-                                Отменен
-                            <?php } else if ($arResult['FINISHED']) { ?>
-                                Выполнен
                             <?php } ?>
                         </span>
                             </div>
@@ -365,16 +361,12 @@ if ($orderSubscribe) {
                     </a>
                     <?php $isFirstButton = false; ?>
                 <?php } ?>
-                <?php if ($USER->IsAdmin() && ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) && ($arResult['ORDER']->getDeliveryId() != getenv('EXPRESS_DELIVERY_4LAPY_ID') && $arResult['ORDER']->getDeliveryId() != getenv('EXPRESS_DELIVERY_DOSTAVISTA_ID'))) { ?>
+                <?php if ($USER->IsAdmin() && ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) && !$arResult['CANCELING']) { ?>
                     <div class="b-link b-link__button
                     <?= ($arResult['CAN_CANCEL']) ? 'js-cancel-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?><?= ($arResult['CANCELED']) ? 'b-link__canceled' : '' ?>" data-order-id="<?= $order->getId() ?>">
                         <span class="b-link__text js-link-text">
                             <?php if ($arResult['CAN_CANCEL']) { ?>
                                 Отменить заказ
-                            <?php } else if ($arResult['CANCELED']) { ?>
-                                Отменен
-                            <?php } else if ($arResult['FINISHED']) { ?>
-                                Выполнен
                             <?php } ?>
                         </span>
                     </div>

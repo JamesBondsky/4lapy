@@ -545,7 +545,7 @@ class Event extends BaseServiceHandler
              *  так же чекаем что это не страница заказа
              *  но для регистрации надо оставить
              */
-            if (!$template->hasUserAuth() && !$template->isAjaxRegister()) {
+            if (!$template->hasUserAuth() && !$template->isAjaxRegister() && !$template->isFrontOffice()) {
                 return;
             }
             $container = App::getInstance()->getContainer();

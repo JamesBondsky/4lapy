@@ -176,6 +176,10 @@ services:
     class: FourPaws\PersonalBundle\Repository\OrderSubscribeSingleRepository
     public: true
 
+  coupon_pool.repository:
+    class: FourPaws\PersonalBundle\Repository\CouponPoolRepository
+    public: true
+
   kkm.service:
     class: FourPaws\KkmBundle\Service\KkmService
 

@@ -144,7 +144,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const CATS_BIRTH_DAY = 8420;
     public const DOGS_BIRTH_DAY = 8421;
     public const OTHER_BIRTH_DAY = 8422;
-    
+
     /**
      * Flagman
      */
@@ -1085,7 +1085,7 @@ class ExpertsenderService implements LoggerAwareInterface
         $curFrequency = current(array_filter($frequencyList, function($item) use ($frequency) { return $item['ID'] == $frequency; }));
         $saleBonus = $orderSubscribeService->countBasketPriceDiff($order->getBasket());
         //$deliveryDate = $orderSubscribeHistoryService->getLastOrderDeliveryDate($orderSubscribe);
-        $deliveryDate = $orderSubscribe->getNearestDelivery();
+        $deliveryDate = $orderSubscribe->getNextDate();
         $deliveryDate = $deliveryDate ? $deliveryDate->format('d.m.Y') : '';
 
         $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));
@@ -1763,7 +1763,7 @@ class ExpertsenderService implements LoggerAwareInterface
 
         return false;
     }
-    
+
     /**
      * @param $name
      * @param $phone
@@ -1782,7 +1782,7 @@ class ExpertsenderService implements LoggerAwareInterface
     {
         if ($email) {
             $transactionId = self::GROOMING_SEND_EMAIL;
-            
+
             $snippets = [];
             $snippets[] = new Snippet('subscriber_firstname', htmlspecialcharsbx($name));
             $snippets[] = new Snippet('tel_number', htmlspecialcharsbx($phone));
@@ -1793,14 +1793,14 @@ class ExpertsenderService implements LoggerAwareInterface
             $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($clinic));
             $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($date));
             $snippets[] = new Snippet('delivery_interval', htmlspecialcharsbx($time));
-            
+
             $this->sendSystemTransactional($transactionId, $email, $snippets);
             return true;
         }
-        
+
         return false;
     }
-    
+
     /**
      * @param $name
      * @param $phone
@@ -1819,7 +1819,7 @@ class ExpertsenderService implements LoggerAwareInterface
     {
         if ($email) {
             $transactionId = self::TRAINING_SEND_EMAIL;
-            
+
             $snippets = [];
             $snippets[] = new Snippet('delivery_address', 'г. Москва, пр-кт Вернадского, д. 6, ТЦ «Капитолий»');
             $snippets[] = new Snippet('subscriber_firstname', htmlspecialcharsbx($name));
@@ -1827,14 +1827,14 @@ class ExpertsenderService implements LoggerAwareInterface
             $snippets[] = new Snippet('delivery_interval', htmlspecialcharsbx($time));
             $snippets[] = new Snippet('tel_number', htmlspecialcharsbx($phone));
             $snippets[] = new Snippet('EMAIL', htmlspecialcharsbx($email));
-            
+
             $this->sendSystemTransactional($transactionId, $email, $snippets);
             return true;
         }
-        
+
         return false;
     }
-    
+
     /**
      * @param $name
      * @param $phone
@@ -1851,7 +1851,7 @@ class ExpertsenderService implements LoggerAwareInterface
     {
         if ($email) {
             $transactionId = self::LECTION_SEND_EMAIL;
-            
+
             $snippets = [];
             $snippets[] = new Snippet('delivery_address', 'г. Москва, пр-кт Вернадского, д. 6, ТЦ «Капитолий»');
             $snippets[] = new Snippet('subscriber_firstname', htmlspecialcharsbx($name));
@@ -1860,11 +1860,11 @@ class ExpertsenderService implements LoggerAwareInterface
             $snippets[] = new Snippet('delivery_interval', htmlspecialcharsbx($lectionTime));
             $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($lectionDate));
             $snippets[] = new Snippet('EMAIL', htmlspecialcharsbx($email));
-            
+
             $this->sendSystemTransactional($transactionId, $email, $snippets);
             return true;
         }
-        
+
         return false;
     }
 }

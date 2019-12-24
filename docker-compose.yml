@@ -15,25 +15,25 @@ services:
       - ./common/static/build:/application/common/static/build
       - ./web:/application/web:ro
       - ./public:/application/public:ro
-      - phpsocket:/socket
 
   php:
     build:
       context: ./
       target: php
     volumes:
+      - ./composer.json:/application/composer.json:rw,cached
+      - ./composer.lock:/application/compoer.lock:rw,cached
       - ./app:/application/app:rw,cached
       - ./bin:/application/bin:rw,cached
-      - app-local-sync:/application/common/local:nocopy
-      - ./common/static/build:/application/common/static/build
-      - ./common/static/versions.json:/application/common/static/versions.json
-      - app-src-sync:/application/src:nocopy
-      - app-web-sync:/application/web:nocopy
+      - ./common/local:/application/common/local:rw,cached
+      - ./common/static/build:/application/common/static/build:rw,cached
+      - ./common/static/versions.json:/application/common/static/versions.json:rw,cached
+      - ./src:/application/src:rw,cached
+      - ./web:/application/web:rw,cached
       - ./var/logs:/adv/vhosts/4lapy/logs:rw
       - ./var/sap-exchange:/home/sap-exchange:rw
       - ./var/sap-exchange-prod:/home/sap-exchange-prod:rw
       - ./docker/php/remote-xdebug.ini:/usr/local/etc/php/conf.d/remote-xdebug.ini
-      - phpsocket:/socket
 
   memcached:
     image: memcached:latest
@@ -79,11 +79,3 @@ services:
 volumes:
   redis-data: {}
   elasticsearch-data: {}
-  phpsocket: {}
-  app-local-sync:
-    external: true
-  app-src-sync:
-    external: true
-  app-web-sync:
-    external: true
-

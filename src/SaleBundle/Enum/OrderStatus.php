@@ -71,4 +71,10 @@ class OrderStatus
      * Продление хранения
      */
     public const STATUS_PICKUP_EXTEND = 'X';
+    
+    /**
+     * Отменяется
+     */
+    public const STATUS_CANCELING = 'XX';
+    
 }

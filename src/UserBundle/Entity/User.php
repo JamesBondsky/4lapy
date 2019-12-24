@@ -401,7 +401,16 @@ class User implements UserInterface
      * @Serializer\Groups(groups={"dummy","create","read","update"})
      */
     protected $gotSecondOrderCoupon = false;
-
+    
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_DISPONSABLE_TOKEN")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $disposableToken = '';
+    
     public function __construct()
     {
         $this->roles = new ArrayCollection();
@@ -1525,6 +1534,26 @@ class User implements UserInterface
     {
         $this->giftDobrolap = $giftDobrolap;
 
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getDisposableToken(): string
+    {
+        return $this->disposableToken;
+    }
+    
+    /**
+     * @param string $disposableToken
+     *
+     * @return User
+     */
+    public function setDisposableToken(string $disposableToken): User
+    {
+        $this->disposableToken = $disposableToken;
+        
         return $this;
     }
 }

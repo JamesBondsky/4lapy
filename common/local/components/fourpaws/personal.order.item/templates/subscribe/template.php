@@ -48,7 +48,7 @@ $activeSubscribe = $orderSubscribe->isActive();
 
 $nearestDeliveryDate = null;
 if($activeSubscribe){
-    $nearestDeliveryDate = $orderSubscribe->getNearestDelivery();
+    $nearestDeliveryDate = $orderSubscribe->getNextDate();
     if($nearestDeliveryDate){
         $nearestDeliveryDate = (new \DateTime($nearestDeliveryDate))->format('d #n# Y');
     }
