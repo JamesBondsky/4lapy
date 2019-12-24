@@ -73,6 +73,7 @@ use Symfony\Component\HttpFoundation\Request;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\Catalog\Table\CommentsTable;
 use Bitrix\Main\IO\File;
+use WebArch\BitrixCache\BitrixCache;
 
 class ProductService
 {
@@ -1155,10 +1156,20 @@ class ProductService
      */
     public function getProductXmlIdsByShareId(int $stockId)
     {
-        $share = (new ShareQuery())
-            ->withFilter(['ID' => $stockId])
-            ->exec()
-            ->first();
+        $cacheKey = 'share_' . $stockId;
+        $shareCache = (new BitrixCache())
+            ->withId($cacheKey)
+            ->withTime(864000)
+            ->resultOf(function () use ($stockId) {
+                $share = (new ShareQuery())
+                    ->withFilter(['ID' => $stockId])
+                    ->exec()
+                    ->first();
+
+                return $share;
+            });
+
+        $share = $shareCache['result'];
 
         $xmlIds = [];
 
