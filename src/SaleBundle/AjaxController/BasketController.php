@@ -189,7 +189,7 @@ class BasketController extends Controller implements LoggerAwareInterface
             }
 
             if ($promoCode) {
-                $message = 'Вы 20й в акции "Скидка 20% на каждый 20й заказ". Не забудьте оформить заказ сегодня! Скидка уже ждет вас в корзине.';
+                $message = '<h3>Вы 20-й в акции<br>"Скидка 20% на каждый 20-й заказ"!</h3><br><br>Не забудьте оформить заказ сегодня.<br>Скидка уже ждет вас в корзине.</div>';
             } elseif($availableDelivery) {
                 $message = 'Товар добавлен в корзину';
             } else {
