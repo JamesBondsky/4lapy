@@ -190,25 +190,27 @@ class ProductService
 
             $searchQuery = $this->getProductXmlIdsByShareId($stockId);
 
-            $category = new \FourPaws\Catalog\Model\Category();
-            $this->filterHelper->initCategoryFilters($category, $request);
-            $filters = $category->getFilters();
+//            $category = new \FourPaws\Catalog\Model\Category();
+//            $this->filterHelper->initCategoryFilters($category, $request);
+//            $filters = $category->getFilters();
+//
+//            $filterArr = [];
+//            foreach ($filters as $filter) {
+//                $filterCode   = $filter->getFilterCode();
+//                $requestParam = $request->get($filterCode);
+//                if ($requestParam) {
+//                    $filterArr[] = $filter;
+//                }
+//            }
 
-            $filterArr = [];
-            foreach ($filters as $filter) {
-                $filterCode   = $filter->getFilterCode();
-                $requestParam = $request->get($filterCode);
-                if ($requestParam) {
-                    $filterArr[] = $filter;
-                }
-            }
-
-            $filters = new FilterCollection($filterArr);
+//            $filters = new FilterCollection($filterArr);
         } elseif ($searchQuery) {
             /** @see CatalogController::searchAction */
             $searchQuery = mb_strtolower($searchQuery);
             $searchQuery = IndexHelper::getAlias($searchQuery);
         }
+
+        $productCacheKey = implode('_', [$categoryId, $sort, $count, $page, md5(implode('_', $searchQuery)), $stockId]);
 
         $sort = $this->sortService->getSorts($sort, strlen($searchQuery) > 0)->getSelected();
 
@@ -216,17 +218,33 @@ class ProductService
             ->withPage($page)
             ->withPageSize($count);;
 
+
         $productSearchResult = $this->searchService->searchProducts($filters, $sort, $nav, $searchQuery);
+
         /** @var ProductCollection $productCollection */
         $productCollection = $productSearchResult->getProductCollection();
 
+        $callBack = \Closure::fromCallable([$this, 'mapProductForList']);
+
+        $productsCache = (new BitrixCache())
+            ->withId(md5($productCacheKey))
+            ->withTime(864000)
+            ->resultOf(function () use ($productCollection, $callBack) {
+//                return $callBack;
+                $products = $productCollection
+                    ->map($callBack)
+                    ->filter(function ($value) {
+                        return !is_null($value);
+                    })
+                    ->getValues();
+
+                return $products;
+            });
+
+        $products = $productsCache ?? [];
+
         return (new ArrayCollection([
-            'products'  => $productCollection
-                ->map(\Closure::fromCallable([$this, 'mapProductForList']))
-                ->filter(function ($value) {
-                    return !is_null($value);
-                })
-                ->getValues(),
+            'products'  => $products,
             'cdbResult' => $productCollection->getCdbResult(),
         ]));
     }
