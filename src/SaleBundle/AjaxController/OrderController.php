@@ -774,6 +774,11 @@ class OrderController extends Controller implements LoggerAwareInterface
         $deliveryDates = [];
         foreach ($nextDeliveries as $i => $nextDelivery) {
             $deliveryTimestamp = $nextDelivery->getDeliveryDate()->getTimestamp();
+    
+            //@todo убрать после НГ!!!!! Sorry for that
+            if (FormatDate('d.m.Y', $deliveryTimestamp) == '02.01.2020' || FormatDate('d.m.Y', $deliveryTimestamp) == '01.01.2020') {
+                continue;
+            }
             $deliveryDates[$i] = [
                 'value'     => FormatDate('l, Y-m-d', $deliveryTimestamp),
                 'text'     => FormatDate('l, d.m.Y', $deliveryTimestamp),
@@ -781,7 +786,7 @@ class OrderController extends Controller implements LoggerAwareInterface
                 'selected' => ($i === 0) ? 'selected' : ''
             ];
         }
-
+        
         return JsonSuccessResponse::createWithData(
             '',
             [
