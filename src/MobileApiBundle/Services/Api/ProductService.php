@@ -223,7 +223,7 @@ class ProductService
 
         /** @var ProductCollection $productCollection */
         $productCollection = $productSearchResult->getProductCollection();
-        
+
         $callBack = \Closure::fromCallable([$this, 'mapProductForList']);
 
         $productsCache = (new BitrixCache())
@@ -241,7 +241,7 @@ class ProductService
                 return $products;
             });
 
-        $products = $productsCache['result'] ?? [];
+        $products = $productsCache ?? [];
 
         return (new ArrayCollection([
             'products'  => $products,
