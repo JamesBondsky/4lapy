@@ -216,11 +216,14 @@ class ProductService
             ->withPage($page)
             ->withPageSize($count);;
 
+        $start = microtime(true);
         $productSearchResult = $this->searchService->searchProducts($filters, $sort, $nav, $searchQuery);
+        $time = microtime(true) - $start;
         /** @var ProductCollection $productCollection */
         $productCollection = $productSearchResult->getProductCollection();
 
         return (new ArrayCollection([
+            'time' => $time,
             'products'  => $productCollection
                 ->map(\Closure::fromCallable([$this, 'mapProductForList']))
                 ->filter(function ($value) {
