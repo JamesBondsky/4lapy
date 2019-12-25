@@ -210,13 +210,19 @@ class ProductService
             $searchQuery = IndexHelper::getAlias($searchQuery);
         }
 
+        $times = [];
+
+        $start = microtime(true);
         $sort = $this->sortService->getSorts($sort, strlen($searchQuery) > 0)->getSelected();
+        $time = microtime(true) - $start;
+        $times[] = [
+            'getSorts' => $time
+        ];
 
         $nav = (new Navigation())
             ->withPage($page)
             ->withPageSize($count);;
 
-        $times = [];
 
         $start = microtime(true);
         $productSearchResult = $this->searchService->searchProducts($filters, $sort, $nav, $searchQuery);
