@@ -30,6 +30,7 @@ use Sly\NotificationPusher\Model\Device;
 use Sly\NotificationPusher\Model\Message;
 use Sly\NotificationPusher\Model\Push;
 use tests\units\Sly\NotificationPusher\PushManager;
+use FourPaws\BitrixOrm\Table\EnumUserFieldTable;
 
 class PushEventService
 {
@@ -192,6 +193,9 @@ class PushEventService
     {
         // выбираем push сообщения за указанный период
         $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
+        
+        $typeCodes = $this->getTypeCodes();
+        
         $res = $hlBlockPushMessages->query()
             ->setFilter([
                 'UF_ACTIVE' => true,
@@ -205,6 +209,31 @@ class PushEventService
             ->exec();
 
         $dataFetch = $res->fetchAll();
+    
+        foreach ($dataFetch as &$prePushItem) {
+            if ($prePushItem['UF_USERS']) {
+                $usersNeededToBeDelete = [];
+                
+                $users = $this->userRepository
+                    ->findBy([
+                        '=ID' => $prePushItem['UF_USERS'],
+                    ]);
+    
+                $typeCode = $typeCodes[$prePushItem['UF_TYPE']];
+                
+                foreach ($users as $user) {
+                    if (!$this->shouldSendPushMessage($user, $typeCode)) {
+                        $usersNeededToBeDelete[] = $user->getId();
+                    }
+                }
+    
+                foreach ($prePushItem['UF_USERS'] as $pushUserKey => $pushUser) {
+                    if (in_array($pushUser, $usersNeededToBeDelete)) {
+                        unset($prePushItem['UF_USERS'][$pushUserKey]);
+                    }
+                }
+            }
+        }
 
         /** @var ApiPushMessage[] $pushMessages */
         $pushMessages = $this->transformer->fromArray(
@@ -595,7 +624,7 @@ class PushEventService
         $foundPhoneNumbers = [];
         /** @var User $user */
         foreach ($users as $user) {
-            if ($this->canSendPushMessage($user, $typeCode, true)) {
+            if ($this->canSendPushMessage($user, $typeCode, true) && $this->shouldSendPushMessage($user, $typeCode)) {
                 $foundPhoneNumbers[] = $user->getPersonalPhone();
                 $userIds[]           = $user->getId();
             }
@@ -657,5 +686,24 @@ class PushEventService
             || ($typeCode == 'order_review' && $user->isSendFeedbackMsg())
             || ($typeCode == 'message')
         );
+    }
+    
+    protected function getTypeCodes()
+    {
+        try {
+            $types = EnumUserFieldTable::query()
+                ->setSelect(['ID', 'XML_ID'])
+                ->setFilter(['=USER_FIELD_ID' => 643])
+                ->setCacheTtl('36000')
+                ->exec();
+            
+            while ($type = $types->fetch()) {
+                $result[$type['ID']] = $type['XML_ID'];
+            }
+            
+            return $result;
+        } catch (\Exception $e) {
+        
+        }
     }
 }
