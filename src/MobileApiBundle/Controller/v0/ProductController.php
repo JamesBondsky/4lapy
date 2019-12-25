@@ -168,10 +168,12 @@ class ProductController extends BaseController
         $page = $goodsListRequest->getPage();
         $count = $goodsListRequest->getCount();
 
+        $start = microtime(true);
         $productsList = $this->apiProductService->getList($request, $categoryId, $sort, $count, $page, '', $stockId);
+        $time = microtime(true) - $start;
         /** @var \CIBlockResult $cdbResult */
         $cdbResult = $productsList->get('cdbResult');
-        die(json_encode($productsList->get('time')));
+        die(json_encode([$productsList->get('time'), $time]));
         return (new Response\ProductListResponse())
             ->setProductList($productsList->get('products'))
             ->setTotalPages($cdbResult->NavPageCount ?: 0)
