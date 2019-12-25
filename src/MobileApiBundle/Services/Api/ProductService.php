@@ -210,7 +210,7 @@ class ProductService
             $searchQuery = IndexHelper::getAlias($searchQuery);
         }
 
-        $productCacheKey = implode('_', [$categoryId, $sort, $count, $page, $searchQuery, $stockId]);
+        $productCacheKey = implode('_', [$categoryId, $sort, $count, $page, md5(implode('_', $searchQuery)), $stockId]);
 
         $sort = $this->sortService->getSorts($sort, strlen($searchQuery) > 0)->getSelected();
 
@@ -224,17 +224,16 @@ class ProductService
         /** @var ProductCollection $productCollection */
         $productCollection = $productSearchResult->getProductCollection();
 
-
         $productsCache = (new BitrixCache())
             ->withId($productCacheKey)
             ->withTime(3600)
             ->resultOf(function () use ($productCollection) {
-                $products = $productCollection
-                    ->map(\Closure::fromCallable([$this, 'mapProductForList']))
-                    ->filter(function ($value) {
-                        return !is_null($value);
-                    })
-                    ->getValues();
+                $products = $productCollection->map(
+                    function ($p) {
+                        $this->mapProductForList($p);
+                    })->filter(function ($value) {
+                    return !is_null($value);
+                });
 
                 return $products;
             });
@@ -242,7 +241,7 @@ class ProductService
         $products = $productsCache['result'];
 
         return (new ArrayCollection([
-            'products'  => $products,
+            'products'  => $products->getValues(),
             'cdbResult' => $productCollection->getCdbResult(),
         ]));
     }
