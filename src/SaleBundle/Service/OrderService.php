@@ -2614,10 +2614,14 @@ class OrderService implements LoggerAwareInterface
             // отменяем заказ в Sap'е
              $orderNumber = $order->getField('ACCOUNT_NUMBER');
              $sapStatus = StatusService::STATUS_CANCELED;
-             $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
+             $result = $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
+             
+             if (!$result) {
+                 $this->sendSapFailMail($userId, $order);
+             }
+             
         } catch (\Exception $e) {
-            $user = \CUser::GetByID($userId)->Fetch();
-            \CEvent::Send('USER_WANNA_CANCEL_ORDER', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER'), 'NAME' => $user['NAME'], 'PHONE' => $user['PERSONAL_PHONE']]);
+            $this->sendSapFailMail($userId, $order);
         }
 
         return 'cancel';
@@ -2752,5 +2756,11 @@ class OrderService implements LoggerAwareInterface
         }
 
         return true;
+    }
+    
+    protected function sendSapFailMail($userId, $order)
+    {
+        $user = \CUser::GetByID($userId)->Fetch();
+        \CEvent::Send('USER_WANNA_CANCEL_ORDER', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER'), 'NAME' => $user['NAME'], 'PHONE' => $user['PERSONAL_PHONE']]);
     }
 }
