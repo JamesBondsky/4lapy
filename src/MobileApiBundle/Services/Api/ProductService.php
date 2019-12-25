@@ -239,7 +239,8 @@ class ProductService
             'getProductCollection' => $time
         ];
 
-        return (new ArrayCollection([
+        $start = microtime(true);
+        $res = (new ArrayCollection([
             'time' => $times,
             'products'  => $productCollection
                 ->map(\Closure::fromCallable([$this, 'mapProductForList']))
@@ -249,6 +250,12 @@ class ProductService
                 ->getValues(),
             'cdbResult' => $productCollection->getCdbResult(),
         ]));
+        $time = microtime(true) - $start;
+        $times[] = [
+            'res' => $time
+        ];
+
+        return $res;
     }
 
     /**
