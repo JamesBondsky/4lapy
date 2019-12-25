@@ -210,49 +210,37 @@ class ProductService
             $searchQuery = IndexHelper::getAlias($searchQuery);
         }
 
-        $times = [];
-
-        $start = microtime(true);
         $sort = $this->sortService->getSorts($sort, strlen($searchQuery) > 0)->getSelected();
-        $time = microtime(true) - $start;
-        $times[] = [
-            'getSorts' => $time
-        ];
 
         $nav = (new Navigation())
             ->withPage($page)
             ->withPageSize($count);;
 
 
-        $start = microtime(true);
         $productSearchResult = $this->searchService->searchProducts($filters, $sort, $nav, $searchQuery);
-        $time = microtime(true) - $start;
-        $times[] = [
-            'searchProducts' => $time
-        ];
 
-        $start = microtime(true);
         /** @var ProductCollection $productCollection */
         $productCollection = $productSearchResult->getProductCollection();
-        $time = microtime(true) - $start;
-        $times[] = [
-            'getProductCollection' => $time
-        ];
 
-        $start = microtime(true);
-        $products = $productCollection
-            ->map(\Closure::fromCallable([$this, 'mapProductForList']))
-            ->filter(function ($value) {
-                return !is_null($value);
-            })
-            ->getValues();
-        $time = microtime(true) - $start;
-        $times[] = [
-            '$products' => $time
-        ];
+        $productCacheKey = implode('_', [$categoryId, $sort, $count, $page, $searchQuery, $stockId]);
+
+        $productsCache = (new BitrixCache())
+            ->withId($productCacheKey)
+            ->withTime(3600)
+            ->resultOf(function () use ($productCollection) {
+                $products = $productCollection
+                    ->map(\Closure::fromCallable([$this, 'mapProductForList']))
+                    ->filter(function ($value) {
+                        return !is_null($value);
+                    })
+                    ->getValues();
+
+                return $products;
+            });
+
+        $products = $productsCache['result'];
 
         return (new ArrayCollection([
-            'time' => $times,
             'products'  => $products,
             'cdbResult' => $productCollection->getCdbResult(),
         ]));
