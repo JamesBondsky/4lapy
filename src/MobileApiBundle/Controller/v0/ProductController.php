@@ -171,7 +171,6 @@ class ProductController extends BaseController
         $productsList = $this->apiProductService->getList($request, $categoryId, $sort, $count, $page, '', $stockId);
         /** @var \CIBlockResult $cdbResult */
         $cdbResult = $productsList->get('cdbResult');
-        die(json_encode($productsList));
         return (new Response\ProductListResponse())
             ->setProductList($productsList->get('products'))
             ->setTotalPages($cdbResult->NavPageCount ?: 0)

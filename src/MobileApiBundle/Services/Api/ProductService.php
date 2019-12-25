@@ -223,25 +223,28 @@ class ProductService
 
         /** @var ProductCollection $productCollection */
         $productCollection = $productSearchResult->getProductCollection();
+        
+        $callBack = \Closure::fromCallable([$this, 'mapProductForList']);
 
         $productsCache = (new BitrixCache())
-            ->withId($productCacheKey)
-            ->withTime(3600)
-            ->resultOf(function () use ($productCollection) {
-                $products = $productCollection->map(
-                    function ($p) {
-                        $this->mapProductForList($p);
-                    })->filter(function ($value) {
-                    return !is_null($value);
-                });
+            ->withId(md5($productCacheKey))
+            ->withTime(864000)
+            ->resultOf(function () use ($productCollection, $callBack) {
+//                return $callBack;
+                $products = $productCollection
+                    ->map($callBack)
+                    ->filter(function ($value) {
+                        return !is_null($value);
+                    })
+                    ->getValues();
 
                 return $products;
             });
 
-        $products = $productsCache['result'];
+        $products = $productsCache['result'] ?? [];
 
         return (new ArrayCollection([
-            'products'  => $products->getValues(),
+            'products'  => $products,
             'cdbResult' => $productCollection->getCdbResult(),
         ]));
     }
