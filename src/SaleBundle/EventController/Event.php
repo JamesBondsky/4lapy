@@ -686,37 +686,38 @@ class Event extends BaseServiceHandler
                     //->setLimit(1) // для сохранения логики возобновления участия в розыгрыше купонов нужно отметить флагом order_created все записи за этот день
                     ->setOrder(['id' => 'desc']);
 
-                if (isset($promocodeValue) && $promocodeValue) {
+                //if (isset($promocodeValue) && $promocodeValue) {
                     //$discountOfferQuery = $discountOfferQuery->where('promoCode', $promocodeValue);
-                } else {
+                //} else {
                     //$discountOfferQuery = $discountOfferQuery->whereNull('promoCode');
+                //}
 
-                    $userFilter = Query::filter()
-                        ->logic('or');
+                $userFilter = Query::filter()
+                    ->logic('or');
 
-                    if ($fUserId = $order->getBasket()->getFUserId()) {
-                        $userFilter = $userFilter->where('fUserId', $fUserId);
-                    }
-                    if ($userId = $order->getUserId()) {
-                        $userFilter = $userFilter->where('userId', $userId);
-                    }
-
+                if ($fUserId = $order->getBasket()->getFUserId()) {
+                    $userFilter = $userFilter->where('fUserId', $fUserId);
+                }
+                if ($userId = $order->getUserId()) {
+                    $userFilter = $userFilter->where('userId', $userId);
+                }
+                if ($fUserId || $userId) {
                     $discountOfferQuery = $discountOfferQuery->where($userFilter);
-                }
 
-                $baskets20thOffer = $discountOfferQuery
-                    ->exec()
-                    ->fetchAll();
-                $baskets20thOfferIds = array_column($baskets20thOffer, 'id');
+                    $baskets20thOffer = $discountOfferQuery
+                        ->exec()
+                        ->fetchAll();
+                    $baskets20thOfferIds = array_column($baskets20thOffer, 'id');
 
-                foreach ($baskets20thOfferIds as $baskets20thOfferId) {
-                    BasketsDiscountOfferTable::update($baskets20thOfferId, [
-                        'order_created' => 1,
-                        'date_update' => new DateTime(),
-                    ]);
+                    foreach ($baskets20thOfferIds as $baskets20thOfferId) {
+                        BasketsDiscountOfferTable::update($baskets20thOfferId, [
+                            'order_created' => 1,
+                            'date_update'   => new DateTime(),
+                        ]);
+                    }
+                    $logger = LoggerFactory::create('CouponPoolRepository', '20-20');
+                    $logger->info(__FUNCTION__ . '. На основании корзины по акции 20-20 создан заказ. BasketIds: ' . implode(', ', $baskets20thOfferIds) . '. Купон: ' . ($promocodeValue ?? ''));
                 }
-                $logger = LoggerFactory::create('CouponPoolRepository', '20-20');
-                $logger->info(__FUNCTION__ . '. На основании корзины по акции 20-20 создан заказ. BasketIds: ' . implode(', ', $baskets20thOfferIds) . '. Купон: ' . ($promocodeValue ?? ''));
             }
 
             if (isset($promocodeValue) && $promocodeValue)
