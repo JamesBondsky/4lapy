@@ -210,6 +210,8 @@ class ProductService
             $searchQuery = IndexHelper::getAlias($searchQuery);
         }
 
+        $productCacheKey = implode('_', [$categoryId, $sort, $count, $page, $searchQuery, $stockId]);
+
         $sort = $this->sortService->getSorts($sort, strlen($searchQuery) > 0)->getSelected();
 
         $nav = (new Navigation())
@@ -222,7 +224,6 @@ class ProductService
         /** @var ProductCollection $productCollection */
         $productCollection = $productSearchResult->getProductCollection();
 
-        $productCacheKey = implode('_', [$categoryId, $sort, $count, $page, $searchQuery, $stockId]);
 
         $productsCache = (new BitrixCache())
             ->withId($productCacheKey)
