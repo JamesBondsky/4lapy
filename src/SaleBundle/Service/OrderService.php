@@ -2616,11 +2616,8 @@ class OrderService implements LoggerAwareInterface
              $sapStatus = StatusService::STATUS_CANCELED;
              $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
         } catch (\Exception $e) {
-
-        }
-
-        if ($sendEmail) {
-            \CEvent::Send('ADMIN_EMAIL_AFTER_ORDER_CANCEL', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER')]);
+            $user = \CUser::GetByID($userId)->Fetch();
+            \CEvent::Send('USER_WANNA_CANCEL_ORDER', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER'), 'NAME' => $user['NAME'], 'PHONE' => $user['PERSONAL_PHONE']]);
         }
 
         return 'cancel';
