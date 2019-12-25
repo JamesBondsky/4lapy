@@ -240,22 +240,22 @@ class ProductService
         ];
 
         $start = microtime(true);
-        $res = (new ArrayCollection([
-            'time' => $times,
-            'products'  => $productCollection
-                ->map(\Closure::fromCallable([$this, 'mapProductForList']))
-                ->filter(function ($value) {
-                    return !is_null($value);
-                })
-                ->getValues(),
-            'cdbResult' => $productCollection->getCdbResult(),
-        ]));
+        $products = $productCollection
+            ->map(\Closure::fromCallable([$this, 'mapProductForList']))
+            ->filter(function ($value) {
+                return !is_null($value);
+            })
+            ->getValues();
         $time = microtime(true) - $start;
         $times[] = [
-            'res' => $time
+            '$products' => $time
         ];
 
-        return $res;
+        return (new ArrayCollection([
+            'time' => $times,
+            'products'  => $products,
+            'cdbResult' => $productCollection->getCdbResult(),
+        ]));
     }
 
     /**
