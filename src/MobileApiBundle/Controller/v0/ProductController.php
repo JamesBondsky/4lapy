@@ -171,6 +171,7 @@ class ProductController extends BaseController
         $productsList = $this->apiProductService->getList($request, $categoryId, $sort, $count, $page, '', $stockId);
         /** @var \CIBlockResult $cdbResult */
         $cdbResult = $productsList->get('cdbResult');
+        die($productsList->get('time'));
         return (new Response\ProductListResponse())
             ->setProductList($productsList->get('products'))
             ->setTotalPages($cdbResult->NavPageCount ?: 0)
@@ -196,7 +197,7 @@ class ProductController extends BaseController
             'goods' => $offer
         ]);
     }
-    
+
     /**
      * @Rest\Get("/all_comments/")
      * @Rest\View(serializerGroups={"Default", "product"})
@@ -213,16 +214,16 @@ class ProductController extends BaseController
     {
         $id = \CCatalogSku::GetProductInfo($request->get('id'))['ID'];
         $count = $request->get('count');
-        
+
         $comments = $this->apiProductService->getAllProductCommentsWithNav($id, $count, $request->get('page'));
-    
+
         $total = CommentsTable::query()
             ->setSelect(['ID'])
             ->setFilter(['=UF_OBJECT_ID' => $id, '=UF_ACTIVE' => 1])
             ->setCacheTtl('36000')
             ->exec()
             ->fetchAll();
-        
+
         if (count($total)) {
             $totalItems = count($total);
             $totalPages = 1;
@@ -230,14 +231,14 @@ class ProductController extends BaseController
                 $totalPages = ceil($totalItems/$count);
             }
         }
-        
+
         return (new Response())->setData([
             'comments' => $comments,
             'total_pages' => $totalPages,
             'total_items' => $totalItems
         ]);
     }
-    
+
     /**
      * @Rest\Post("/add_comment/")
      * @Rest\View(serializerGroups={"Default", "product"})
@@ -254,25 +255,25 @@ class ProductController extends BaseController
     {
         if (!$request->get('stars')) {
             $errors = new ArrayCollection([new Error(0, 'Нужно поставить оценку для отзыва')]);
-            
+
             return (new Response())->setData([
                 'success' => 0
             ])->setErrors($errors);
         } elseif ($request->get('stars') > 5) {
             $errors = new ArrayCollection([new Error(0, 'Нужно поставить корректную оценку для отзыва')]);
-            
+
             return (new Response())->setData([
                 'success' => 0
             ])->setErrors($errors);
         }
 
         $this->apiProductService->addProductComment($request);
-        
+
         return (new Response())->setData([
             'success' => 1
         ]);
     }
-    
+
     /**
      * @Rest\Get("/goods_search/")
      * @Rest\View(serializerGroups={"Default", "productsList"})
