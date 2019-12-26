@@ -833,7 +833,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     BitrixApplication::getConnection()->commitTransaction();
                     $subscribeId = $orderSubscribe->getId();
                     if ($subscribeId >= 0) {
-                        $orderSubscribeService->sendOrders(1, '', true, [$subscribeId]); //TODO вынести в очередь RabbitMQ
+                        $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.order_subscription_creating_producer');
+                        $producer->publish($subscribeId);
                     }
                 } else{
                     BitrixApplication::getConnection()->rollbackTransaction();

@@ -39,6 +39,7 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console rabbitmq:consumer push_processing #обработка обычных пушей
 - ./bin/symfony_console rabbitmq:consumer push_file_processing #обработка пушей из файла
 - ./bin/symfony_console rabbitmq:consumer push_send_ios #отправка ios пушей
+- ./bin/symfony_console rabbitmq:consumer order_subscription_creating # срочное создание заказов по отдельным подпискам 
 ```
 
 ## Перезапуск консьюмеров манзаны по расписанию
