@@ -1656,7 +1656,7 @@ class BasketService implements LoggerAwareInterface
             $tItems[$offer->getId()]['WEIGHT'] = $offer->getCatalogProduct()->getWeight();
             $tItems[$offer->getId()]['DETAIL_PAGE_URL'] = $offer->getDetailPageUrl();
             $tItems[$offer->getId()]['PRODUCT_XML_ID'] = $offer->getXmlId();
-            if($tItems[$offer->getId()]['QUANTITY'] > $offer->getQuantity()){
+            if($tItems[$offer->getId()]['QUANTITY'] > $offer->getQuantity() && $offer->getQuantity()){
                 $tItems[$offer->getId()]['QUANTITY'] = $offer->getQuantity();
             }
         }
