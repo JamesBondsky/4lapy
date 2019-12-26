@@ -831,6 +831,10 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
                 if (empty($this->arResult['ERROR'])) {
                     BitrixApplication::getConnection()->commitTransaction();
+                    $subscribeId = $orderSubscribe->getId();
+                    if ($subscribeId >= 0) {
+                        $orderSubscribeService->sendOrders(1, '', true, [$subscribeId]); //TODO вынести в очередь RabbitMQ
+                    }
                 } else{
                     BitrixApplication::getConnection()->rollbackTransaction();
                     $this->log()->error(__METHOD__.' ошибка выполнения: '.$this->getExecErrors());
