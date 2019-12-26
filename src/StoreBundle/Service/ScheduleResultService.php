@@ -558,10 +558,10 @@ class ScheduleResultService implements LoggerAwareInterface
                     /** Дата поставки на $receiver */
                     $nextDelivery = $schedule->getNextDelivery($date);
 
-                    /** Если расписания для магазина нет - берём график отгрузок */
-                    if (null === $nextDelivery && $schedule->getReceiver()->isShop()) {
-                        $nextDelivery = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
-                    }
+                    /** Если расписания для магазина нет - берём график отгрузок. upd: устаревший код, больше не используется */
+//                    if (null === $nextDelivery && $schedule->getReceiver()->isShop()) {
+//                        $nextDelivery = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
+//                    }
 
                     if (null === $nextDelivery) {
                         continue;
