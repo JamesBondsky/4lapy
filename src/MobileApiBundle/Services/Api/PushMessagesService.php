@@ -78,9 +78,9 @@ class PushMessagesService implements LoggerAwareInterface
         }
         $pushToken = $session->getPushToken();
         $userId = $session->getUserId();
-        if (!$pushToken) {
-            throw new NotFoundException('Push token is not set. Please run /app_launch method or set the token in database manually.');
-        }
+        // if (!$pushToken) {
+        //     throw new NotFoundException('Push token is not set. Please run /app_launch method or set the token in database manually.');
+        // }
 
         $filter = [
             '=SUCCESS_EXEC'    => ApiPushEvent::EXEC_SUCCESS_CODE,
