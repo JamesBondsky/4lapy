@@ -69,6 +69,12 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console fourpaws:store:schedulescalculate --date="2000-01-01" # на конкретную дату (сгенерируется на следующий день после указанного)
 ```
 
+## Генерирование заказов по подписке
+
+```
+- ./bin/console fourpaws:orderssubscribe:send Обход подписок и генерация заказов
+```
+
 ## Запуск импорта местоположений DPD
 
 ```
