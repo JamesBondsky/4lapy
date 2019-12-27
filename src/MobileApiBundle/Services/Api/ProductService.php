@@ -211,8 +211,6 @@ class ProductService
             $searchQuery = IndexHelper::getAlias($searchQuery);
         }
 
-        $productCacheKey = implode('_', [$categoryId, $sort, $count, $page, md5(implode('_', is_array($searchQuery) ? $searchQuery : [$searchQuery])), $stockId]);
-
         $sort = $this->sortService->getSorts($sort, strlen($searchQuery) > 0)->getSelected();
 
         $nav = (new Navigation())
@@ -227,9 +225,17 @@ class ProductService
 
         $callBack = \Closure::fromCallable([$this, 'mapProductForList']);
 
-        if ($stockId > 0) {
+//        if ($stockId > 0) {
             $cache = new FilesystemCache('', 3600 * 24);
-            $cacheKey = md5($productCacheKey);
+            $cacheArr = [];
+            $cacheIgnoreKey = ['token', 'sign', 'PHPSESSID'];
+            foreach ($_REQUEST as $key => $value) {
+                if (!in_array($key, $cacheIgnoreKey)) {
+                    $cacheArr[$key] = $value;
+                }
+            }
+
+            $cacheKey = md5(json_encode($cacheArr));
 
             if ($cache->has($cacheKey)) {
                 $products = $cache->get($cacheKey);
@@ -242,14 +248,14 @@ class ProductService
                     ->getValues();
                 $cache->set($cacheKey, $products);
             }
-        } else {
-            $products = $productCollection
-                ->map($callBack)
-                ->filter(function ($value) {
-                    return !is_null($value);
-                })
-                ->getValues();
-        }
+//        } else {
+//            $products = $productCollection
+//                ->map($callBack)
+//                ->filter(function ($value) {
+//                    return !is_null($value);
+//                })
+//                ->getValues();
+//        }
 
 //        $productsCache = (new BitrixCache())
 //            ->withId(md5($productCacheKey))
