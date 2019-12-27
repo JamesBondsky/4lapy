@@ -24,34 +24,33 @@ use FourPaws\MobileApiBundle\Dto\Object\PushEvent as PushEventForApi;
 class PushMessagesService implements LoggerAwareInterface
 {
     use MobileApiLoggerAwareTrait;
-
+    
     /**
      * @var ApiUserSessionRepository
      */
     private $apiUserSessionRepository;
-
+    
     /**
      * @var TokenStorageInterface
      */
     private $tokenStorage;
-
+    
     /**
      * @var ApiPushEventRepository
      */
     private $apiPushEventRepository;
-
+    
     public function __construct(
         ApiUserSessionRepository $apiUserSessionRepository,
         TokenStorageInterface $tokenStorage,
         ApiPushEventRepository $apiPushEventRepository
-    )
-    {
+    ) {
         $this->apiUserSessionRepository = $apiUserSessionRepository;
-        $this->tokenStorage = $tokenStorage;
-        $this->apiPushEventRepository = $apiPushEventRepository;
+        $this->tokenStorage             = $tokenStorage;
+        $this->apiPushEventRepository   = $apiPushEventRepository;
         $this->setLogger(LoggerFactory::create('PushMessagesService', 'mobileApi'));
     }
-
+    
     /**
      * Актуализирует данные о платформе и push-токене в сессии
      * @param PostPushTokenRequest $postPushTokenRequest
@@ -59,14 +58,14 @@ class PushMessagesService implements LoggerAwareInterface
      */
     public function actualizeUserPushParams(PostPushTokenRequest $postPushTokenRequest)
     {
-        $platform = $postPushTokenRequest->getPlatform();
+        $platform  = $postPushTokenRequest->getPlatform();
         $pushToken = $postPushTokenRequest->getPushToken();
         if ($this->haveUserPushParamsChanged($platform, $pushToken)) {
             return $this->updateUserPushParams($platform, $pushToken);
         }
         return true;
     }
-
+    
     /**
      * @throws NotFoundException
      */
@@ -77,38 +76,41 @@ class PushMessagesService implements LoggerAwareInterface
             throw new NotFoundException();
         }
         $pushToken = $session->getPushToken();
-        $userId = $session->getUserId();
-        if (!$pushToken) {
+        $userId    = $session->getUserId();
+        if (!$pushToken && !$userId) {
             throw new NotFoundException('Push token is not set. Please run /app_launch method or set the token in database manually.');
         }
-
+        
         $filter = [
             '=SUCCESS_EXEC'    => ApiPushEvent::EXEC_SUCCESS_CODE,
-            '!MESSAGE.UF_TYPE' => null
+            '!MESSAGE.UF_TYPE' => null,
         ];
-
+        
         if ($userId) {
-            $filter[] = [
-                'LOGIC' => 'OR',
-                [
-                    '=PUSH_TOKEN' => $pushToken,
-                ],
-                [
-                    '=USER_ID' => $userId,
-                ],
-            ];
+            if ($pushToken) {
+                $filter[] = [
+                    'LOGIC' => 'OR',
+                    [
+                        '=PUSH_TOKEN' => $pushToken,
+                    ],
+                    [
+                        '=USER_ID' => $userId,
+                    ],
+                ];
+            } else {
+                $filter[] = ['=USER_ID' => $userId];
+            }
         } else {
             $filter['=PUSH_TOKEN'] = $pushToken;
         }
-
+        
         $pushEvents = $this->apiPushEventRepository->findBy($filter, [
             'DATE_TIME_EXEC' => 'DESC',
         ]);
-
+        
         $uniqueMessageIds = [];
         /** @var ApiPushEvent $pushEvent */
-        foreach ($pushEvents as $pushEventKey => $pushEvent)
-        {
+        foreach ($pushEvents as $pushEventKey => $pushEvent) {
             $messageId = $pushEvent->getMessageId();
             if (!in_array($messageId, $uniqueMessageIds, true)) {
                 $uniqueMessageIds[] = $messageId;
@@ -122,7 +124,7 @@ class PushMessagesService implements LoggerAwareInterface
             })
             ->getValues();
     }
-
+    
     /**
      * @param int $id
      * @return bool
@@ -135,15 +137,15 @@ class PushMessagesService implements LoggerAwareInterface
             throw new NotFoundException();
         }
         $pushToken = $session->getPushToken();
-        $userId = $session->getUserId();
+        $userId    = $session->getUserId();
         if (!$pushToken) {
             throw new NotFoundException('Push token is not set');
         }
-
+        
         $filter = [
-            '=ID' => $id
+            '=ID' => $id,
         ];
-
+        
         if ($userId) {
             $filter[] = [
                 'LOGIC' => 'OR',
@@ -157,7 +159,7 @@ class PushMessagesService implements LoggerAwareInterface
         } else {
             $filter['=PUSH_TOKEN'] = $pushToken;
         }
-
+        
         $pushEvents = $this->apiPushEventRepository->findBy($filter, [], 1);
         if (!$pushEvents) {
             throw new NotFoundException("Push event with ID=$id is not found");
@@ -166,7 +168,7 @@ class PushMessagesService implements LoggerAwareInterface
         $pushEvent->setViewed(true);
         return $this->apiPushEventRepository->update($pushEvent);
     }
-
+    
     /**
      * @param int $id
      * @return bool
@@ -179,15 +181,15 @@ class PushMessagesService implements LoggerAwareInterface
             throw new NotFoundException();
         }
         $pushToken = $session->getPushToken();
-        $userId = $session->getUserId();
+        $userId    = $session->getUserId();
         if (!$pushToken) {
             throw new NotFoundException('Push token is not set');
         }
-
+        
         $filter = [
-            '=ID' => $id
+            '=ID' => $id,
         ];
-
+        
         if ($userId) {
             $filter[] = [
                 'LOGIC' => 'OR',
@@ -201,7 +203,7 @@ class PushMessagesService implements LoggerAwareInterface
         } else {
             $filter['=PUSH_TOKEN'] = $pushToken;
         }
-
+        
         $pushEvents = $this->apiPushEventRepository->findBy($filter, [], 1);
         if (!$pushEvents) {
             throw new NotFoundException("Push event with ID=$id is not found");
@@ -209,7 +211,7 @@ class PushMessagesService implements LoggerAwareInterface
         $pushEvent = reset($pushEvents);
         return $this->apiPushEventRepository->delete($pushEvent->getId());
     }
-
+    
     /**
      * @param $platform
      * @param $pushToken
@@ -217,7 +219,7 @@ class PushMessagesService implements LoggerAwareInterface
      */
     protected function haveUserPushParamsChanged($platform, $pushToken)
     {
-        $token = $this->tokenStorage->getToken()->getCredentials();
+        $token       = $this->tokenStorage->getToken()->getCredentials();
         $userSession = $this->apiUserSessionRepository->findByToken($token);
         try {
             if ($userSession) {
@@ -228,10 +230,10 @@ class PushMessagesService implements LoggerAwareInterface
         } catch (\Exception $e) {
             $this->mobileApiLog()->info(__METHOD__ . '. $pushToken: ' . $pushToken . '. $platform: ' . $platform . '. Exception: ' . $e->getMessage());
         }
-
+        
         return $platform !== $userSession->getPlatform() || $pushToken !== $userSession->getPushToken();
     }
-
+    
     /**
      * @param $platform
      * @param $pushToken
@@ -239,17 +241,19 @@ class PushMessagesService implements LoggerAwareInterface
      */
     protected function updateUserPushParams($platform, $pushToken)
     {
-        $token = $this->tokenStorage->getToken()->getCredentials();
+        $token       = $this->tokenStorage->getToken()->getCredentials();
         $userSession = $this->apiUserSessionRepository->findByToken($token);
         $userSession
             ->setPlatform($platform)
             ->setPushToken($pushToken);
-
+        
         return $this->apiUserSessionRepository->update($userSession);
     }
-
+    
     protected function pushEventToApiFormat(ApiPushEvent $pushEvent)
     {
+        
+        
         return (new PushEventForApi())
             ->setId($pushEvent->getId())
             ->setText($pushEvent->getMessageText())
@@ -261,7 +265,7 @@ class PushMessagesService implements LoggerAwareInterface
                     ->setType($pushEvent->getMessageTypeEntity()->getXmlId())
             );
     }
-
+    
     /**
      * Отфильтровывает $pushTokens, возвращая только существующие в новой базе токены
      * @param array $pushTokens
@@ -275,19 +279,19 @@ class PushMessagesService implements LoggerAwareInterface
         if (!$pushTokens) {
             throw new InvalidArgumentException(__METHOD__ . '. Пустой массив токенов');
         }
-
+        
         $rsExistingPushTokens = ApiUserSessionTable::query()
             ->setFilter([
                 '=PUSH_TOKEN' => $pushTokens,
-                '!USER_ID' => '',
+                '!USER_ID'    => '',
             ])
             ->setSelect([
                 'PUSH_TOKEN',
             ])
             ->exec()
             ->fetchAll();
-        $existingPushTokens = array_values(array_unique(array_column($rsExistingPushTokens, 'PUSH_TOKEN')));
-
+        $existingPushTokens   = array_values(array_unique(array_column($rsExistingPushTokens, 'PUSH_TOKEN')));
+        
         return $existingPushTokens;
     }
 }
