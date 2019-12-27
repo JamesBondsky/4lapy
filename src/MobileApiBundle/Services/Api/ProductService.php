@@ -191,9 +191,11 @@ class ProductService
 
             $searchQuery = $this->getProductXmlIdsByShareId($stockId);
 
-//            $category = new \FourPaws\Catalog\Model\Category();
-//            $this->filterHelper->initCategoryFilters($category, $request);
-//            $filters = $category->getFilters();
+            if (!$categoryId) {
+                $category = new \FourPaws\Catalog\Model\Category();
+                $this->filterHelper->initCategoryFilters($category, $request);
+                $filters = $category->getFilters();
+            }
 //
 //            $filterArr = [];
 //            foreach ($filters as $filter) {
@@ -203,15 +205,13 @@ class ProductService
 //                    $filterArr[] = $filter;
 //                }
 //            }
-
+//
 //            $filters = new FilterCollection($filterArr);
         } elseif ($searchQuery) {
             /** @see CatalogController::searchAction */
             $searchQuery = mb_strtolower($searchQuery);
             $searchQuery = IndexHelper::getAlias($searchQuery);
         }
-
-        $productCacheKey = implode('_', [$categoryId, $sort, $count, $page, md5(implode('_', $searchQuery)), $stockId]);
 
         $sort = $this->sortService->getSorts($sort, strlen($searchQuery) > 0)->getSelected();
 
@@ -227,20 +227,39 @@ class ProductService
 
         $callBack = \Closure::fromCallable([$this, 'mapProductForList']);
 
-        $cache = new FilesystemCache('', 3600*24);
-        $cacheKey = md5($productCacheKey);
+//        if ($stockId > 0) {
+            $cache = new FilesystemCache('', 3600 * 24);
+            $cacheArr = [];
+            $cacheIgnoreKey = ['token', 'sign', 'PHPSESSID'];
+            foreach ($_REQUEST as $key => $value) {
+                if (!in_array($key, $cacheIgnoreKey)) {
+                    $cacheArr[$key] = $value;
+                }
+            }
 
-        if ($cache->has($cacheKey)) {
-            $products = $cache->get($cacheKey);
-        } else {
-            $products = $productCollection
-                ->map($callBack)
-                ->filter(function ($value) {
-                    return !is_null($value);
-                })
-                ->getValues();
-            $cache->set($cacheKey, $products);
-        }
+            $cacheArr['searchQuery'] = $searchQuery;
+
+            $cacheKey = md5(json_encode($cacheArr));
+
+            if ($cache->has($cacheKey)) {
+                $products = $cache->get($cacheKey);
+            } else {
+                $products = $productCollection
+                    ->map($callBack)
+                    ->filter(function ($value) {
+                        return !is_null($value);
+                    })
+                    ->getValues();
+                $cache->set($cacheKey, $products);
+            }
+//        } else {
+//            $products = $productCollection
+//                ->map($callBack)
+//                ->filter(function ($value) {
+//                    return !is_null($value);
+//                })
+//                ->getValues();
+//        }
 
 //        $productsCache = (new BitrixCache())
 //            ->withId(md5($productCacheKey))
