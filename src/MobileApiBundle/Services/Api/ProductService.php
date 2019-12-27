@@ -235,7 +235,7 @@ class ProductService
                 }
             }
 
-//            $cacheArr['searchQuery'] = $searchQuery;
+            $cacheArr['searchQuery'] = $searchQuery;
 
             $cacheKey = md5(json_encode($cacheArr));
 
