@@ -227,11 +227,21 @@ class ProductService
 
         $callBack = \Closure::fromCallable([$this, 'mapProductForList']);
 
-        $cache = new FilesystemCache('', 3600*24);
-        $cacheKey = md5($productCacheKey);
+        if ($stockId > 0) {
+            $cache = new FilesystemCache('', 3600 * 24);
+            $cacheKey = md5($productCacheKey);
 
-        if ($cache->has($cacheKey)) {
-            $products = $cache->get($cacheKey);
+            if ($cache->has($cacheKey)) {
+                $products = $cache->get($cacheKey);
+            } else {
+                $products = $productCollection
+                    ->map($callBack)
+                    ->filter(function ($value) {
+                        return !is_null($value);
+                    })
+                    ->getValues();
+                $cache->set($cacheKey, $products);
+            }
         } else {
             $products = $productCollection
                 ->map($callBack)
@@ -239,7 +249,6 @@ class ProductService
                     return !is_null($value);
                 })
                 ->getValues();
-            $cache->set($cacheKey, $products);
         }
 
 //        $productsCache = (new BitrixCache())
