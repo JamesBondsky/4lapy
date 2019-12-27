@@ -81,6 +81,10 @@ old_sound_rabbit_mq:
             connection: default
             exchange_options: {name: 'push_send_ios', type: direct }
 
+        order_subscription_creating:
+            connection: default
+            exchange_options: { name: 'order_subscription_creating', type: direct }
+
     consumers:
         callback_set:
             connection:       default
@@ -178,4 +182,11 @@ old_sound_rabbit_mq:
             exchange_options: {name: 'push_send_ios', type: direct }
             queue_options: {name: 'push_send_ios'}
             callback: push.send_iod
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
+
+        order_subscription_creating:
+            connection: default
+            exchange_options: {name: 'order_subscription_creating', type: direct }
+            queue_options: {name: 'order_subscription_creating'}
+            callback: order_subscription.creating
             qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
