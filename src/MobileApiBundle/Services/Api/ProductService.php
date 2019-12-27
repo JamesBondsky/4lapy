@@ -227,7 +227,7 @@ class ProductService
 
         $callBack = \Closure::fromCallable([$this, 'mapProductForList']);
 
-        $cache = new FilesystemCache();
+        $cache = new FilesystemCache('', 3600*24);
         $cacheKey = md5($productCacheKey);
 
         if ($cache->has($cacheKey)) {
@@ -1190,7 +1190,7 @@ class ProductService
      */
     public function getProductXmlIdsByShareId(int $stockId)
     {
-        $cache = new FilesystemCache();
+        $cache = new FilesystemCache('', 3600 * 24 * 3);
 
         $cacheKey = 'share_' . $stockId;
 
