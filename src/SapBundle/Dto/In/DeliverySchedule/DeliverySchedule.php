@@ -222,6 +222,7 @@ class DeliverySchedule
      */
     public function getDateFrom(): \DateTime
     {
+        $this->dateFrom->setTime(0, 0, 0);
         return $this->dateFrom;
     }
 
@@ -241,6 +242,7 @@ class DeliverySchedule
      */
     public function getDateTo(): \DateTime
     {
+        $this->dateTo->setTime(23, 59, 59);
         return $this->dateTo;
     }
 
