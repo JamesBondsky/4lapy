@@ -191,20 +191,22 @@ class ProductService
 
             $searchQuery = $this->getProductXmlIdsByShareId($stockId);
 
-//            $category = new \FourPaws\Catalog\Model\Category();
-//            $this->filterHelper->initCategoryFilters($category, $request);
-//            $filters = $category->getFilters();
-//
-            $filterArr = [];
-            foreach ($filters as $filter) {
-                $filterCode   = $filter->getFilterCode();
-                $requestParam = $request->get($filterCode);
-                if ($requestParam) {
-                    $filterArr[] = $filter;
-                }
+            if (!$categoryId) {
+                $category = new \FourPaws\Catalog\Model\Category();
+                $this->filterHelper->initCategoryFilters($category, $request);
+                $filters = $category->getFilters();
             }
-
-            $filters = new FilterCollection($filterArr);
+//
+//            $filterArr = [];
+//            foreach ($filters as $filter) {
+//                $filterCode   = $filter->getFilterCode();
+//                $requestParam = $request->get($filterCode);
+//                if ($requestParam) {
+//                    $filterArr[] = $filter;
+//                }
+//            }
+//
+//            $filters = new FilterCollection($filterArr);
         } elseif ($searchQuery) {
             /** @see CatalogController::searchAction */
             $searchQuery = mb_strtolower($searchQuery);
@@ -237,7 +239,7 @@ class ProductService
 
             $cacheArr['searchQuery'] = $searchQuery;
 
-            $cacheKey = md5(json_encode($cacheArr) . 'rrr');
+            $cacheKey = md5(json_encode($cacheArr));
 
             if ($cache->has($cacheKey)) {
                 $products = $cache->get($cacheKey);
