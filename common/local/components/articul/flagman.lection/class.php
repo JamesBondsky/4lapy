@@ -110,8 +110,8 @@ class FlagmanLection extends \CBitrixComponent
             });
         }
         
-        uasort($this->arResult['ITEMS'], function ($a, $b) {
-            return ($a > $b) ? -1 : 1;
-        });
+        // uasort($this->arResult['ITEMS'], function ($a, $b) {
+        //     return ($a > $b) ? -1 : 1;
+        // });
     }
 }
