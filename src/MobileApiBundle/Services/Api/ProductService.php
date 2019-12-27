@@ -211,7 +211,7 @@ class ProductService
             $searchQuery = IndexHelper::getAlias($searchQuery);
         }
 
-        $productCacheKey = implode('_', [$categoryId, $sort, $count, $page, md5(implode('_', $searchQuery)), $stockId]);
+        $productCacheKey = implode('_', [$categoryId, $sort, $count, $page, md5(implode('_', is_array($searchQuery) ? $searchQuery : [$searchQuery])), $stockId]);
 
         $sort = $this->sortService->getSorts($sort, strlen($searchQuery) > 0)->getSelected();
 
