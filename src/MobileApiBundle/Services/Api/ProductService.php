@@ -195,16 +195,16 @@ class ProductService
 //            $this->filterHelper->initCategoryFilters($category, $request);
 //            $filters = $category->getFilters();
 //
-//            $filterArr = [];
-//            foreach ($filters as $filter) {
-//                $filterCode   = $filter->getFilterCode();
-//                $requestParam = $request->get($filterCode);
-//                if ($requestParam) {
-//                    $filterArr[] = $filter;
-//                }
-//            }
+            $filterArr = [];
+            foreach ($filters as $filter) {
+                $filterCode   = $filter->getFilterCode();
+                $requestParam = $request->get($filterCode);
+                if ($requestParam) {
+                    $filterArr[] = $filter;
+                }
+            }
 
-//            $filters = new FilterCollection($filterArr);
+            $filters = new FilterCollection($filterArr);
         } elseif ($searchQuery) {
             /** @see CatalogController::searchAction */
             $searchQuery = mb_strtolower($searchQuery);
@@ -235,7 +235,7 @@ class ProductService
                 }
             }
 
-            $cacheArr['searchQuery'] = $searchQuery;
+//            $cacheArr['searchQuery'] = $searchQuery;
 
             $cacheKey = md5(json_encode($cacheArr));
 
