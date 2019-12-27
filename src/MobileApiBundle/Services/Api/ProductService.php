@@ -237,7 +237,7 @@ class ProductService
 
             $cacheArr['searchQuery'] = $searchQuery;
 
-            $cacheKey = md5(json_encode($cacheArr));
+            $cacheKey = md5(json_encode($cacheArr) . 'rrr');
 
             if ($cache->has($cacheKey)) {
                 $products = $cache->get($cacheKey);
