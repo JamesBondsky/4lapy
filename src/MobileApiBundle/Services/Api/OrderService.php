@@ -761,7 +761,7 @@ class OrderService implements LoggerAwareInterface
             );
 
         if ($bonusSubtractAmount == "0") {
-            $bonusVulnerablePrice = (90 * ($totalPrice->getActual() - $totalPrice->getCourierPrice())) / 100;
+            $bonusVulnerablePrice = ((90 * ($totalPrice->getActual() - $totalPrice->getCourierPrice())) / 100) - $bonusSubtractAmount;
         } else {
             if ((int) $priceWithDiscount) {
                 $bonusVulnerablePrice = ((90 * ((float) $priceWithDiscount - $totalPrice->getCourierPrice())) / 100) - $bonusSubtractAmount;
