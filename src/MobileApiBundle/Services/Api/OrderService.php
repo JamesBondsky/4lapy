@@ -760,13 +760,13 @@ class OrderService implements LoggerAwareInterface
                 && ($currentDelivery && $currentDelivery->getStockResult()->getDelayed()->isEmpty())
             );
 
-        if (! (int) $bonusSubtractAmount) {
+        if (!(int) $bonusSubtractAmount) {
             $bonusVulnerablePrice = ((90 * ($totalPrice->getActual() - $totalPrice->getCourierPrice())) / 100);
         } else {
             if ((int) $priceWithDiscount) {
-                $bonusVulnerablePrice = ((90 * ((float) $priceWithDiscount - $totalPrice->getCourierPrice())) / 100) - $bonusSubtractAmount;
+                $bonusVulnerablePrice = ((90 * (float) $priceWithDiscount) / 100) - $bonusSubtractAmount;
             } else {
-                $bonusVulnerablePrice = ((90 * ((float) $priceWithoutDiscount - $totalPrice->getCourierPrice())) / 100) - $bonusSubtractAmount;
+                $bonusVulnerablePrice = ((90 * (float) $priceWithoutDiscount) / 100) - $bonusSubtractAmount;
             }
         }
         
