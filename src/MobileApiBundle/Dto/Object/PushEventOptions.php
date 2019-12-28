@@ -18,7 +18,15 @@ class PushEventOptions
      * @Assert\NotBlank()
      */
     protected $id;
-
+    
+    /**
+     * @var string
+     * @Serializer\SerializedName("otherId")
+     * @Serializer\Type("string")
+     * @Assert\NotBlank()
+     */
+    protected $otherId;
+    
     /**
      * @var string
      * @Serializer\Type("string")
@@ -41,6 +49,24 @@ class PushEventOptions
     public function setId(int $id): PushEventOptions
     {
         $this->id = $id;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getOtherId(): int
+    {
+        return $this->otherId;
+    }
+    
+    /**
+     * @param string $otherId
+     * @return PushEventOptions
+     */
+    public function setOtherId(string $otherId): PushEventOptions
+    {
+        $this->otherId = $otherId;
         return $this;
     }
 
