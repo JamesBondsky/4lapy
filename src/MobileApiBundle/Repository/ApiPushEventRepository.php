@@ -216,13 +216,25 @@ class ApiPushEventRepository implements ApiPushEventRepositoryInterface
         if ($id > 0) {
             try {
                 $messageId = ApiPushEventTable::query()
-                    ->setSelect(['MESSAGE_ID'])
+                    ->setSelect(['MESSAGE_ID', 'USER_ID'])
                     ->setFilter(['=ID' => $id])
                     ->exec()
-                    ->fetch()['MESSAGE_ID'];
+                    ->fetch();
 
-                ApiPushMessageTable::delete($messageId);
-                $result = ApiPushEventTable::delete($id);
+                $pushesIdresult = ApiPushEventTable::query()
+                    ->setSelect(['ID'])
+                    ->setFilter(['MESSAGE_ID' => $messageId['MESSAGE_ID'], 'USER_ID' => $messageId['USER_ID']])
+                    ->exec();
+                
+                while ($res = $pushesIdresult->fetch()) {
+                    $pushesId[] = $res['ID'];
+                }
+
+                // i know it's too bad, by it's doesnt work when you try to give it an array
+                foreach ($pushesId as $pushId) {
+                    $result = ApiPushEventTable::delete($pushId);
+                }
+                
             } catch (\Exception $exception) {
                 throw new BitrixException($exception->getMessage(), $exception->getCode(), $exception);
             }
