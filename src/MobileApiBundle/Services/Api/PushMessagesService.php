@@ -252,6 +252,12 @@ class PushMessagesService implements LoggerAwareInterface
     
     protected function pushEventToApiFormat(ApiPushEvent $pushEvent)
     {
+        $eventId = $pushEvent->getEventId();
+        
+        if (!$eventId) {
+            $eventId = $pushEvent->getOtherEventId();
+        }
+        
         return (new PushEventForApi())
             ->setId($pushEvent->getId())
             ->setText($pushEvent->getMessageText())
@@ -259,8 +265,8 @@ class PushMessagesService implements LoggerAwareInterface
             ->setViewed($pushEvent->getViewed())
             ->setOptions(
                 (new PushEventOptions())
-                    ->setId($pushEvent->getEventId())
-                    ->setOtherId($pushEvent->getOtherEventId())
+                    ->setId($eventId)
+                    // ->setOtherId($pushEvent->getOtherEventId())
                     ->setType($pushEvent->getMessageTypeEntity()->getXmlId())
             );
     }

@@ -449,7 +449,7 @@ class OrderService
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function getUserOrderByNumber(User $user, int $orderNumber)
+    public function getUserOrderByNumber(User $user, $orderNumber)
     {
         return $this->orderRepository->getUserOrderByNumber($user->getId(), $orderNumber);
     }

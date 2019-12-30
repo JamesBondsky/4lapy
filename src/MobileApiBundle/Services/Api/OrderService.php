@@ -289,7 +289,7 @@ class OrderService implements LoggerAwareInterface
      * @throws ApplicationCreateException
      * @throws Exception
      */
-    public function getOneByNumberForCurrentUser(int $orderNumber)
+    public function getOneByNumberForCurrentUser($orderNumber)
     {
         $user = $this->appUserService->getCurrentUser();
         $order = $this->personalOrderService->getUserOrderByNumber($user, $orderNumber);
