@@ -4,11 +4,13 @@ namespace FourPaws\MobileApiBundle\Repository;
 
 use FourPaws\AppBundle\Enum\CrudGroups;
 use FourPaws\MobileApiBundle\Entity\ApiPushEvent;
+use FourPaws\MobileApiBundle\Entity\ApiPushMessage;
 use FourPaws\MobileApiBundle\Exception\BitrixException;
 use FourPaws\MobileApiBundle\Exception\InvalidIdentifierException;
 use FourPaws\MobileApiBundle\Exception\ValidationException;
 use FourPaws\MobileApiBundle\Exception\WrongTransformerResultException;
 use FourPaws\MobileApiBundle\Tables\ApiPushEventTable;
+use FourPaws\MobileApiBundle\Tables\ApiPushMessageTable;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
@@ -213,6 +215,13 @@ class ApiPushEventRepository implements ApiPushEventRepositoryInterface
     {
         if ($id > 0) {
             try {
+                $messageId = ApiPushEventTable::query()
+                    ->setSelect(['MESSAGE_ID'])
+                    ->setFilter(['=ID' => $id])
+                    ->exec()
+                    ->fetch()['MESSAGE_ID'];
+
+                ApiPushMessageTable::delete($messageId);
                 $result = ApiPushEventTable::delete($id);
             } catch (\Exception $exception) {
                 throw new BitrixException($exception->getMessage(), $exception->getCode(), $exception);
