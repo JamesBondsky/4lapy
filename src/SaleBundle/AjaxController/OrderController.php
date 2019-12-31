@@ -375,7 +375,13 @@ class OrderController extends Controller implements LoggerAwareInterface
                 ) {
                     continue;
                 }
-
+    
+                if ((true)
+                    && ($delivery->getDeliveryDate()->format('d.m.Y') == '01.01.2020' || $delivery->getDeliveryDate()->format('d.m.Y') == '02.01.2020')
+                ) {
+                    continue;
+                }
+                
                 $result[] = [
                     'name'  => (string)$interval,
                     'value' => $i + 1,
