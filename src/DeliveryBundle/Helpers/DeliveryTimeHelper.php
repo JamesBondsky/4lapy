@@ -65,7 +65,7 @@ class DeliveryTimeHelper
     {
         $nyDate = $date->format('d.m.Y');
         
-        if (in_array($nyDate, self::UNACTIVE_DATES)) {
+        if (in_array($nyDate, self::UNACTIVE_DATES) && $options['PICK_UP'] != 'Y') {
             $date->add(\DateInterval::createfromdatestring('+' . array_search($nyDate, self::UNACTIVE_DATES). ' day'));
         }
 
