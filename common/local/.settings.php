@@ -4,6 +4,7 @@ use Adv\Bitrixtools\Tools\Log\ExceptionLogger;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\DB\MysqliConnection;
 use FourPaws\App\Env;
+use Symfony\Component\Dotenv\Dotenv;
 
 /*
  * Обязательно нужно подключить vendor/autoload.php ,
@@ -11,7 +12,8 @@ use FourPaws\App\Env;
  */
 require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
-require_once dirname(__DIR__) . '/bitrix/php_interface/local.env.php';
+$dotenv = new Dotenv();
+$dotenv->load( dirname(__DIR__, 2) . '/.env.local');
 
 return [
     'utf_mode' =>

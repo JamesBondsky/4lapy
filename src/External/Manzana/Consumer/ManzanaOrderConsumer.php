@@ -64,16 +64,16 @@ class ManzanaOrderConsumer extends ManzanaConsumerBase
 
         Event::enableEvents();
 
-        if (isset($userId)) {
-            $userService = Application::getInstance()->getContainer()->get(UserSearchInterface::class);
-            $manzanaOrdersImportUserRepository = $userService->getManzanaOrdersImportUserRepository();
-            try
-            {
+//        if (isset($userId)) {
+//            $userService = Application::getInstance()->getContainer()->get(UserSearchInterface::class);
+//            $manzanaOrdersImportUserRepository = $userService->getManzanaOrdersImportUserRepository();
+//            try
+//            {
 //                $manzanaOrdersImportUserRepository->deleteUser($userId);
-            } catch (NotFoundException $e)
-            {
-            }
-        }
+//            } catch (NotFoundException $e)
+//            {
+//            }
+//        }
 
         return static::MSG_ACK;
     }
