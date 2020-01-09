@@ -138,7 +138,7 @@ class Chance2Service extends ChanceService
     {
         $sum = 0;
         foreach ($basketItems as $basketItem) {
-            if (!empty($allowProductIds) && in_array($basketItems['productId'], $allowProductIds, true)) {
+            if (!empty($allowProductIds) && !in_array($basketItems['productId'], $allowProductIds, true)) {
                 continue;
             }
 
@@ -180,7 +180,7 @@ class Chance2Service extends ChanceService
             foreach ($order->getBasket()->getBasketItems() as $basketItem) {
                 $items[] = [
                     'productId' => $basketItem->getProductId(),
-                    'price' => $basketItem->getPrice(),
+                    'price' => $basketItem->getPrice() * $basketItem->getQuantity(),
                 ];
             }
         }
