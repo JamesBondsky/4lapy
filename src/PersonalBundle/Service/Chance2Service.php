@@ -123,8 +123,8 @@ class Chance2Service extends ChanceService
         $basketItems = $this->getAllBasketItems($orders);
 
         $totalChance = $this->getBasketItemsChanceWithFilter($basketItems, []);
-        $totalChance += (2 * $this->getFeedBasketItemsChance($basketItems));
-        $totalChance += (3 * $this->getBasketItemsChanceWithFilter($basketItems, $this->getClotherProductIds()));
+        $totalChance += $this->getFeedBasketItemsChance($basketItems);
+        $totalChance += (2 * $this->getBasketItemsChanceWithFilter($basketItems, $this->getClotherProductIds()));
 
         return $totalChance;
     }
