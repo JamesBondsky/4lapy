@@ -51,6 +51,7 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Cheque;
 use FourPaws\External\Manzana\Model\ChequeItem;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderDelivery;
 use FourPaws\PersonalBundle\Entity\OrderItem;
@@ -103,9 +104,9 @@ class OrderService
         'A', // Отменен
         'K', // Отменен
     ];
-    
+
     public const STATUS_CANCELING = 'XX'; //Отменяется
-    
+
     protected const MANZANA_FINAL_STATUS = 'G';
 
     /**
@@ -246,15 +247,37 @@ class OrderService
         App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
     }
 
-	/**
-	 * @param User $user
-	 * @throws Exception
-	 */
-    public function importOrdersFromManzana(User $user): void
+    /**
+     * @param User $user
+     * @param bool $newAction
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws DeliveryNotFoundException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
+     * @throws LoaderException
+     * @throws ManzanaServiceContactSearchMoreOneException
+     * @throws ManzanaServiceContactSearchNullException
+     * @throws ManzanaServiceException
+     * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws WrongPhoneNumberException
+     */
+    public function importOrdersFromManzana(User $user, $newAction = false): void
     {
-        /** @var ChanceService $chanceServie */
-        $chanceService = Application::getInstance()->getContainer()->get(ChanceService::class);
+        if ($newAction) {
+            $chanceService = Application::getInstance()->getContainer()->get(Chance2Service::class);
+        } else {
+            $chanceService = Application::getInstance()->getContainer()->get(ChanceService::class);
+        }
 
+        /** @var ChanceService $chanceServie */
         $userIds = $chanceService->getAllUserIds();
 
         if (!in_array($user->getId(), $userIds, true)) {
