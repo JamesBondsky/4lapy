@@ -69,7 +69,7 @@ class ManzanaOrderConsumer extends ManzanaConsumerBase
             $manzanaOrdersImportUserRepository = $userService->getManzanaOrdersImportUserRepository();
             try
             {
-                $manzanaOrdersImportUserRepository->deleteUser($userId);
+//                $manzanaOrdersImportUserRepository->deleteUser($userId);
             } catch (NotFoundException $e)
             {
             }
