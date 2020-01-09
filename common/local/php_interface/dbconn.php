@@ -1,13 +1,10 @@
 <?php
 
-use Symfony\Component\Dotenv\Dotenv;
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
 
-if (getenv('APP_ENV') === false) {
-    require_once dirname(__DIR__, 3) . '/vendor/autoload.php';
-
-    $dotenv = new Dotenv();
-    $dotenv->load(dirname(__DIR__, 3) . '/.env.local');
-}
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/local.env.php';
 
 define('BX_USE_MYSQLI', true);
 define('DBPersistent', false);
