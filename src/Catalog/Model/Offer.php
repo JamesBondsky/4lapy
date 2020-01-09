@@ -2455,8 +2455,8 @@ class Offer extends IblockElement
     {
         if ($this->isByRequest() && $this->isAvailable()) {
             $availability = 'Только под заказ';
-        } else if ($this->onlyPickupAvailable()) {
-            $availability = 'Самовывоз';
+        // } else if ($this->onlyPickupAvailable()) {
+        //     $availability = 'Самовывоз';
         } else if (!$this->isAvailable()) {
             $availability = 'Нет в наличии';
         } else {
@@ -2467,7 +2467,7 @@ class Offer extends IblockElement
 
     public function onlyPickupAvailable()
     {
-        return !$this->isActive() && ($this->getQuantity() > 0) && (!$this->getProduct()->isDeliveryAvailable() && $this->getProduct()->isPickupAvailable());
+        // return !$this->isActive() && ($this->getQuantity() > 0) && (!$this->getProduct()->isDeliveryAvailable() && $this->getProduct()->isPickupAvailable());
     }
 
     /**
