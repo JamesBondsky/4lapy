@@ -269,7 +269,7 @@ class OrderService
      * @throws SystemException
      * @throws WrongPhoneNumberException
      */
-    public function importOrdersFromManzana(User $user, $newAction = false): void
+    public function importOrdersFromManzana(User $user, $newAction = true): void
     {
         if ($newAction) {
             $chanceService = Application::getInstance()->getContainer()->get(Chance2Service::class);
