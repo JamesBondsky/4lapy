@@ -8,9 +8,9 @@ use FourPaws\PersonalBundle\Service\Chance2Service;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
-$APPLICATION->SetPageProperty('title', 'Выиграй путешествие на 2-их в Тайланд!');
+$APPLICATION->SetPageProperty('title', 'Выиграй путешествие на 2-их в Таиланд!');
 $APPLICATION->SetPageProperty('description', '');
-$APPLICATION->SetTitle('Выиграй путешествие на 2-их в Тайланд!');
+$APPLICATION->SetTitle('Выиграй путешествие на 2-их в Таиланд!');
 
 $userChance = null;
 /** @var ChanceService $chaceService */
@@ -120,7 +120,7 @@ $chanceService = Application::getInstance()->getContainer()->get(Chance2Service:
                                 <span class="img">
                                     <img src="/leto2020/img/tickets_icon.png" alt="">
                                 </span>
-                                <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Тайланд</span>
+                                <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Таиланд</span>
                             </li>
                         </ul>
                     </div>
