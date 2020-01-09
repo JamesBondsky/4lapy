@@ -30,6 +30,8 @@ services:
       - ./var/sap-exchange-prod:/home/sap-exchange-prod:rw
       - ./docker/php/remote-xdebug.ini:/usr/local/etc/php/conf.d/remote-xdebug.ini
       - ./.env.local:/application/.env.local
+      - ./composer.json:/application/composer.json
+      - ./composer.lock:/application/composer.lock
 
   memcached:
     image: memcached:latest
