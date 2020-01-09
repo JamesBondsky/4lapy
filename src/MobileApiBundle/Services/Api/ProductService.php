@@ -463,6 +463,10 @@ class ProductService
             ->setBundle($this->getBundle($offer));                       // с этим товаром покупают
         $fullProduct->setPictureList($this->getPictureList($product, $offer));           // картинки
 
+        if ($fullProduct->getAvailability() == 'В наличии' && $fullProduct->getPickupOnly()) {
+            $fullProduct->setAvailability('Самовывоз');
+        }
+        
         if ($product->getNormsOfUse()->getText() || $product->getLayoutRecommendations()->getText()) {
             if ($product->getLayoutRecommendations()->getText() != '' && $product->getLayoutRecommendations()->getText() != null) {
                 $fullProduct->setNutritionRecommendations($product->getLayoutRecommendations()->getText());
