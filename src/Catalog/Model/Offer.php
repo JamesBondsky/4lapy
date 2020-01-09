@@ -297,6 +297,7 @@ class Offer extends IblockElement
     /**
      * @var bool
      * @Type("bool")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_BONUS_EXCLUDE = false;
 
