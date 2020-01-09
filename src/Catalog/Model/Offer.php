@@ -2455,10 +2455,10 @@ class Offer extends IblockElement
     {
         if ($this->isByRequest() && $this->isAvailable()) {
             $availability = 'Только под заказ';
-        } else if (!$this->isAvailable()) {
-            $availability = 'Нет в наличии';
         } else if ($this->onlyPickupAvailable()) {
             $availability = 'Самовывоз';
+        } else if (!$this->isAvailable()) {
+            $availability = 'Нет в наличии';
         } else {
             $availability = 'В наличии';
         }
