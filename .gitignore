@@ -63,3 +63,4 @@ web/test.php
 docker/ssl
 docker/id_rsa
 .docker-sync
+.env.local
