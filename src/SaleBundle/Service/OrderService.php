@@ -50,6 +50,7 @@ use FourPaws\DeliveryBundle\Exception\LocationNotFoundException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\DostavistaService;
+use FourPaws\External\Exception\DaDataQc;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
@@ -1346,6 +1347,8 @@ class OrderService implements LoggerAwareInterface
                         'STREET_PREFIX' => $address->getStreetPrefix(),
                         'ZIP_CODE' => $address->getZipCode(),
                     ]);
+                } catch (DaDataQc $exQC) {
+
                 } catch (AddressSplitException $e) {
                     $this->log()->error(sprintf('failed to split delivery address: %s', $e->getMessage()), [
                         'fuserId' => $storage->getFuserId(),
@@ -2615,11 +2618,11 @@ class OrderService implements LoggerAwareInterface
              $orderNumber = $order->getField('ACCOUNT_NUMBER');
              $sapStatus = StatusService::STATUS_CANCELED;
              $result = $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
-             
+
              if (!$result) {
                  $this->sendSapFailMail($userId, $order);
              }
-             
+
         } catch (\Exception $e) {
             $this->sendSapFailMail($userId, $order);
         }
