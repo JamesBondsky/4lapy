@@ -77,7 +77,7 @@ foreach ($arResult['ITEMS'] as &$item) {
     }
 
     if(isset($item['ACTIVE_TO'])){
-        $item['DISPLAY_ACTIVE_TO'] = CIBlockFormatProperties::DateFormat($arParams["ACTIVE_DATE_FORMAT"], MakeTimeStamp($arItem["ACTIVE_TO"], CSite::GetDateFormat()));
+        $item['DISPLAY_ACTIVE_TO'] = CIBlockFormatProperties::DateFormat($arParams["ACTIVE_DATE_FORMAT"], MakeTimeStamp($item["ACTIVE_TO"], CSite::GetDateFormat()));
     }
 }
 unset($item);
