@@ -189,6 +189,8 @@ class PetService
 
         if ($birthday = $addUserPetRequest->getBirthday()) {
             $petEntity->setBirthday((new Date($birthday->format('d.m.Y'))));
+        } else {
+            $petEntity->setBirthday('');
         }
 
         if ($genderCode = $addUserPetRequest->getGender()) {
@@ -231,6 +233,8 @@ class PetService
 
         if ($birthday = $userPetUpdateRequest->getBirthday()) {
             $petEntity->setBirthday((new Date($birthday->format('d.m.Y'))));
+        } else {
+            $petEntity->setBirthday('');
         }
 
         if ($genderCode = $userPetUpdateRequest->getGender()) {
