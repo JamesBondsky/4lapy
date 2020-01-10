@@ -253,6 +253,7 @@ class PushMessagesService implements LoggerAwareInterface
         return (new PushEventForApi())
             ->setId($pushEvent->getId())
             ->setText($pushEvent->getMessageText())
+            ->setTitle($pushEvent->getMessageTitle())
             ->setDateTimeExec($pushEvent->getDateTimeExec())
             ->setViewed($pushEvent->getViewed())
             ->setOptions(
