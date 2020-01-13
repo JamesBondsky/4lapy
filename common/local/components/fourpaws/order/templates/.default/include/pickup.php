@@ -185,7 +185,7 @@ $metro = $arResult['METRO'][$selectedShop->getMetro()];
                 </div>
                 <div class="b-radio__addition-text">
                     <p class="js-pickup_full js-pickup-time">
-                        <?= DeliveryTimeHelper::showTime($pickup) ?>
+                        <?= DeliveryTimeHelper::showTime($pickup, ['PICK_UP' => 'Y']) ?>
                     </p>
                 </div>
             </div>

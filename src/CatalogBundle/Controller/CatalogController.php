@@ -21,6 +21,7 @@ use FourPaws\Search\SearchService;
 use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\Cache\Simple\FilesystemCache;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -261,12 +262,26 @@ class CatalogController extends Controller
     {
         $category = $categoryRequest->getCategory();
 
-        $result = $this->searchService->searchProducts(
-            $category->getFilters(),
-            $categoryRequest->getSorts()->getSelected(),
-            $categoryRequest->getNavigation(),
-            $categoryRequest->getSearchString()
-        );
+        $cacheArr = [
+            'sorts' => (array)$categoryRequest->getSorts()->getSelected(),
+            'category_code' => $category->getCode(),
+            'navigation' => (array)$categoryRequest->getNavigation()
+        ];
+        $cacheKey = md5(implode('_', $cacheArr));
+
+        $cache = new FilesystemCache('', 3600 * 2);
+
+        if ($cache->has($cacheKey)) {
+            $result = $cache->get($cacheKey);
+        } else {
+            $result = $this->searchService->searchProducts(
+                $category->getFilters(),
+                $categoryRequest->getSorts()->getSelected(),
+                $categoryRequest->getNavigation(),
+                $categoryRequest->getSearchString()
+            );
+            $cache->set($cacheKey, $result);
+        }
 
         if ($this->landingService->isLanding($request) && $category->isActiveLandingCategory()) {
             foreach ($categoryRequest->getLandingCollection() as $landing) {

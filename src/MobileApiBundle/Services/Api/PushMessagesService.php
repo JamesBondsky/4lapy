@@ -78,7 +78,7 @@ class PushMessagesService implements LoggerAwareInterface
         }
         $pushToken = $session->getPushToken();
         $userId = $session->getUserId();
-        if (!$pushToken) {
+        if (!$pushToken && !$userId) {
             throw new NotFoundException('Push token is not set. Please run /app_launch method or set the token in database manually.');
         }
 

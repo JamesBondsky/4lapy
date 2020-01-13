@@ -62,29 +62,33 @@ VOLUME /var/log/php
 RUN mkdir var
 RUN mkdir var/cache
 RUN chmod -R 777 var
+RUN chown -R www-data:www-data var
 
-COPY ./composer.json /application/composer.json
-COPY ./composer.lock /application/composer.lock
-COPY ./.php_cs /application/.php_cs
-
-RUN mkdir /root/.ssh/
-RUN touch /root/.ssh/known_hosts
-RUN ssh-keyscan gitea.articul.ru >> /root/.ssh/known_hosts
-RUN ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
-COPY ./docker/id_rsa /root/.ssh/id_rsa
-
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN set -eux; \
-	composer install --ignore-platform-reqs --prefer-dist --no-scripts --no-progress --no-suggest; \
-	composer clear-cache
-
-RUN cd /application/vendor/4lapy/bitrix && git pull && cd /application
+#COPY ./composer.json /application/composer.json
+#COPY ./composer.lock /application/composer.lock
+#
+#RUN mkdir /root/.ssh/
+#RUN touch /root/.ssh/known_hosts
+#RUN ssh-keyscan gitea.articul.ru >> /root/.ssh/known_hosts
+#RUN ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
+#COPY ./docker/id_rsa /root/.ssh/id_rsa
+#
+#COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+#RUN set -eux; \
+#	composer install --ignore-platform-reqs --prefer-dist --no-scripts --no-progress --no-suggest; \
+#	composer clear-cache
+#
+#RUN cd /application/vendor/4lapy/bitrix && git pull && cd /application
+#RUN chmod -R 777 /application/vendor/adv/yandex-market-api
+#RUN chown -R www-data:www-data /application/vendor/adv/yandex-market-api
+#
+#RUN ln -s /application/vendor/4lapy/bitrix /application/common
 
 CMD ["php-fpm"]
 
 
 # nginx
-FROM nginx:${NGINX_VERSION}-alpine AS nginx
+FROM nginx:${NGINX_VERSION} AS nginx
 
 RUN mkdir -p /etc/nginx/ssl/
 #COPY --from=api_platform_ssl cert.key cert.crt /etc/nginx/ssl/

@@ -1663,6 +1663,7 @@ class OrderSubscribeService implements LoggerAwareInterface
      * @param int $checkIntervalHours Время, вычитаемое от текущей даты, для запроса подписок
      * @param string|\DateTimeInterface $currentDate Дата, которая будет установлена в качестве сегодняшней
      * @param bool $extResult
+     * @param array $subscriptionIds Массив ID подписок, для которых выполнить обработку. Если не задано, то ограничения нет
      * @return Result
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -1672,7 +1673,7 @@ class OrderSubscribeService implements LoggerAwareInterface
      * @throws \Exception
      * @throws \FourPaws\PersonalBundle\Exception\RuntimeException
      */
-    public function sendOrders(int $limit = 1000, $currentDate = '', bool $extResult = true): Result
+    public function sendOrders(int $limit = 1000, $currentDate = '', bool $extResult = true, array $subscriptionIds = []): Result
     {
         $result = new Result();
         $currentDate = $currentDate ?: new \DateTimeImmutable();
@@ -1681,6 +1682,9 @@ class OrderSubscribeService implements LoggerAwareInterface
         $params = [];
         $params['limit'] = $limit;
         $params['filter']['=UF_ACTIVE'] = 1;
+        if ($subscriptionIds) {
+            $params['filter']['=ID'] = $subscriptionIds;
+        }
         $params['filter'][] = [
             'LOGIC' => 'OR',
             ['<=UF_DATE_CHECK' => new DateTime()],

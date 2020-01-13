@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3.4'
 
 services:
   nginx:
@@ -9,29 +9,29 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - ./vendor/4Lapy/bitrix:/application/vendor/4Lapy/bitrix:ro
-      - ./common/bitrix:/application/common/bitrix:ro
-      - ./common/local:/application/common/local:ro
-      - ./common/static/build:/application/common/static/build
-      - ./web:/application/web:ro
-      - ./public:/application/public:ro
-      - phpsocket:/socket
+      - ./vendor:/application/vendor
+      - ./common:/application/common
+      - ./web:/application/web
+      - ./public:/application/public
 
   php:
     build:
       context: ./
       target: php
     volumes:
-      - app-app-sync:/application/app:nocopy
-      - app-bin-sync:/application/bin:nocopy
-      - app-common-sync:/application/common:nocopy
-      - app-src-sync:/application/src:nocopy
-      - app-web-sync:/application/web:nocopy
+      - ./vendor:/application/vendor:rw,cached
+      - ./app:/application/app:rw,cached
+      - ./bin:/application/bin:rw,cached
+      - ./common:/application/common:rw,cached
+      - ./src:/application/src:rw,cached
+      - ./web:/application/web:rw,cached
       - ./var/logs:/adv/vhosts/4lapy/logs:rw
       - ./var/sap-exchange:/home/sap-exchange:rw
       - ./var/sap-exchange-prod:/home/sap-exchange-prod:rw
       - ./docker/php/remote-xdebug.ini:/usr/local/etc/php/conf.d/remote-xdebug.ini
-      - phpsocket:/socket
+      - ./.env.local:/application/.env.local
+      - ./composer.json:/application/composer.json
+      - ./composer.lock:/application/composer.lock
 
   memcached:
     image: memcached:latest
@@ -77,15 +77,3 @@ services:
 volumes:
   redis-data: {}
   elasticsearch-data: {}
-  phpsocket: {}
-  app-app-sync:
-    external: true
-  app-bin-sync:
-    external: true
-  app-common-sync:
-    external: true
-  app-src-sync:
-    external: true
-  app-web-sync:
-    external: true
-
