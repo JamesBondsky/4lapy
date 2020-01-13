@@ -250,6 +250,7 @@ class PushMessagesService implements LoggerAwareInterface
 
     protected function pushEventToApiFormat(ApiPushEvent $pushEvent)
     {
+        //@todo нужен обработчик событий при добавлении записей в api_push_messages
         $categoryTitle = '';
 
         if ($pushEvent->getMessageTypeEntity()->getXmlId() == 'category') {
