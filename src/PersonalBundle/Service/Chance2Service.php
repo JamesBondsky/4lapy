@@ -95,9 +95,9 @@ class Chance2Service extends ChanceService
      * @param $userId
      * @param $period
      * @return int
-     * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
+     * @throws ArgumentException
      */
     public function getUserPeriodChance($userId, $period): int
     {
@@ -123,8 +123,8 @@ class Chance2Service extends ChanceService
         $basketItems = $this->getAllBasketItems($orders);
 
         $totalChance = $this->getBasketItemsChanceWithFilter($basketItems, []);
-        $totalChance += (2 * $this->getFeedBasketItemsChance($basketItems));
-        $totalChance += (3 * $this->getBasketItemsChanceWithFilter($basketItems, $this->getClotherProductIds()));
+        $totalChance += $this->getFeedBasketItemsChance($basketItems);
+        $totalChance += (2 * $this->getBasketItemsChanceWithFilter($basketItems, $this->getClotherProductIds()));
 
         return $totalChance;
     }
@@ -207,11 +207,10 @@ class Chance2Service extends ChanceService
             return true;
         }
 
+        $brandSectionMap = $this->getSectionBrandMap();
         foreach ($offer->getProduct()->getSectionsIdList() as $section) {
-            foreach ($this->getSectionBrandMap() as $sectionId => $brands) {
-                if (($section['ID'] === $sectionId) && in_array($brandCode, $brands, true)) {
-                    return true;
-                }
+            if (($brandList = $brandSectionMap[$section]) && in_array($brandCode, $brandList, true)) {
+                return true;
             }
         }
 
@@ -274,12 +273,23 @@ class Chance2Service extends ChanceService
 
             $sections = [];
             while ($arSection = $rsSection->Fetch()) {
-                $sections[$arSection['CODE']] = $arSection['ID'];
+                $sections[$arSection['CODE']] = [$arSection['ID']];
+
+                $rsChildSection = CIBlockSection::GetList(false, [
+                    'SECTION_ID' => $arSection['ID'],
+                    'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+                ], false, ['ID', 'CODE']);
+
+                while ($arChildSection = $rsChildSection->Fetch()) {
+                    $sections[$arSection['CODE']][] = $arChildSection['ID'];
+                }
             }
 
             $result = [];
             foreach (self::FEED_BRAND_CODES as $sectionCode => $brands) {
-                $result[$sections[$sectionCode]] = $brands;
+                foreach ($sections[$sectionCode] as $sectionId) {
+                    $result[$sectionId] = $brands;
+                }
             }
 
             return $result;

@@ -74,6 +74,7 @@ use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\Catalog\Table\CommentsTable;
 use Bitrix\Main\IO\File;
 use WebArch\BitrixCache\BitrixCache;
+use Symfony\Component\Cache\Simple\FilesystemCache;
 
 class ProductService
 {
@@ -190,27 +191,16 @@ class ProductService
 
             $searchQuery = $this->getProductXmlIdsByShareId($stockId);
 
-//            $category = new \FourPaws\Catalog\Model\Category();
-//            $this->filterHelper->initCategoryFilters($category, $request);
-//            $filters = $category->getFilters();
-//
-//            $filterArr = [];
-//            foreach ($filters as $filter) {
-//                $filterCode   = $filter->getFilterCode();
-//                $requestParam = $request->get($filterCode);
-//                if ($requestParam) {
-//                    $filterArr[] = $filter;
-//                }
-//            }
-
-//            $filters = new FilterCollection($filterArr);
+            if (!$categoryId) {
+                $category = new \FourPaws\Catalog\Model\Category();
+                $this->filterHelper->initCategoryFilters($category, $request);
+                $filters = $category->getFilters();
+            }
         } elseif ($searchQuery) {
             /** @see CatalogController::searchAction */
             $searchQuery = mb_strtolower($searchQuery);
             $searchQuery = IndexHelper::getAlias($searchQuery);
         }
-
-        $productCacheKey = implode('_', [$categoryId, $sort, $count, $page, md5(implode('_', $searchQuery)), $stockId]);
 
         $sort = $this->sortService->getSorts($sort, strlen($searchQuery) > 0)->getSelected();
 
@@ -226,25 +216,33 @@ class ProductService
 
         $callBack = \Closure::fromCallable([$this, 'mapProductForList']);
 
-        $productsCache = (new BitrixCache())
-            ->withId(md5($productCacheKey))
-            ->withTime(864000)
-            ->resultOf(function () use ($productCollection, $callBack) {
-//                return $callBack;
-                $products = $productCollection
-                    ->map($callBack)
-                    ->filter(function ($value) {
-                        return !is_null($value);
-                    })
-                    ->getValues();
+        $cache = new FilesystemCache('', 3600 * 2);
+        $cacheArr = [];
+        $cacheIgnoreKey = ['token', 'sign', 'PHPSESSID'];
+        foreach ($_REQUEST as $key => $value) {
+            if (!in_array($key, $cacheIgnoreKey)) {
+                $cacheArr[$key] = $value;
+            }
+        }
 
-                return $products;
-            });
+        $cacheArr['searchQuery'] = $searchQuery;
 
-        $products = $productsCache ?? [];
+        $cacheKey = md5(json_encode($cacheArr));
+
+        if ($cache->has($cacheKey)) {
+            $products = $cache->get($cacheKey);
+        } else {
+            $products = $productCollection
+                ->map($callBack)
+                ->filter(function ($value) {
+                    return !is_null($value);
+                })
+                ->getValues();
+            $cache->set($cacheKey, $products);
+        }
 
         return (new ArrayCollection([
-            'products'  => $products,
+            'products' => $products,
             'cdbResult' => $productCollection->getCdbResult(),
         ]));
     }
@@ -1174,20 +1172,35 @@ class ProductService
      */
     public function getProductXmlIdsByShareId(int $stockId)
     {
+        $cache = new FilesystemCache('', 3600 * 24 * 3);
+
         $cacheKey = 'share_' . $stockId;
-        $shareCache = (new BitrixCache())
-            ->withId($cacheKey)
-            ->withTime(864000)
-            ->resultOf(function () use ($stockId) {
-                $share = (new ShareQuery())
-                    ->withFilter(['ID' => $stockId])
-                    ->exec()
-                    ->first();
 
-                return $share;
-            });
+        if (!$cache->has($cacheKey)) {
+            $share = (new ShareQuery())
+                ->withFilter(['ID' => $stockId])
+                ->exec()
+                ->first();
 
-        $share = $shareCache['result'];
+            $cache->set($cacheKey, $share);
+        } else {
+            $share = $cache->get($cacheKey);
+        }
+
+
+//        $shareCache = (new BitrixCache())
+//            ->withId($cacheKey)
+//            ->withTime(864000)
+//            ->resultOf(function () use ($stockId) {
+//                $share = (new ShareQuery())
+//                    ->withFilter(['ID' => $stockId])
+//                    ->exec()
+//                    ->first();
+//
+//                return $share;
+//            });
+//
+//        $share = $shareCache['result'];
 
         $xmlIds = [];
 

@@ -39,6 +39,7 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console rabbitmq:consumer push_processing #обработка обычных пушей
 - ./bin/symfony_console rabbitmq:consumer push_file_processing #обработка пушей из файла
 - ./bin/symfony_console rabbitmq:consumer push_send_ios #отправка ios пушей
+- ./bin/symfony_console rabbitmq:consumer order_subscription_creating # срочное создание заказов по отдельным подпискам 
 ```
 
 ## Перезапуск консьюмеров манзаны по расписанию
@@ -67,6 +68,12 @@ https://api.esv2.com - валидный адрес
 ```
 - ./bin/symfony_console fourpaws:store:schedulescalculate # на завтрашний день
 - ./bin/symfony_console fourpaws:store:schedulescalculate --date="2000-01-01" # на конкретную дату (сгенерируется на следующий день после указанного)
+```
+
+## Генерирование заказов по подписке
+
+```
+- ./bin/console fourpaws:orderssubscribe:send Обход подписок и генерация заказов
 ```
 
 ## Запуск импорта местоположений DPD
