@@ -130,7 +130,7 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
                     if ($userId > 0 && ($USER->GetID() !== $userId)) {
                         $USER->Authorize($userId, false, false);
                     }
-                    $orderService->importOrdersFromManzana($user);
+                    $orderService->importOrdersFromManzana($user, ($type === 'j'));
                 } catch (Exception $e) {
                     $this->log()->error(sprintf('Error importing orders for user #%s: %s. %s', $userId, $e->getMessage(), $e->getTraceAsString()));
                 }

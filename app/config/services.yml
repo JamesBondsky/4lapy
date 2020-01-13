@@ -70,6 +70,9 @@ services:
     class: FourPaws\External\Push\Consumer\PushSendIosConsumer
     arguments: ['@jms_serializer', '@push.service']
 
+  order_subscription.creating:
+    class: FourPaws\PersonalBundle\Consumer\OrderSubscriptionCreatingConsumer
+
   search.service:
     class: FourPaws\Search\SearchService
     arguments:

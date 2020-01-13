@@ -35,6 +35,7 @@ use FourPaws\StoreBundle\Exception\NotFoundException;
 use Psr\Log\LoggerAwareInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\Cache\Simple\FilesystemCache;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use WebArch\BitrixCache\BitrixCache;
@@ -274,13 +275,23 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                     }
 
                     foreach ($product->getOffers() as $offer) {
-                        $responseItem = (new BitrixCache())
-                            ->withId('getProductInfo_' . $product->getId() . '_' . $offer->getId() . '_' . $locationCode)
-                            ->withTag('productInfo')
-                            ->withTime(1800) // 30 минут
-                            ->resultOf(static function () use ($product, $offer, $getProductInfo) {
-                                return $getProductInfo($product, $offer);
-                            });
+                        $cache = new FilesystemCache('', 1800);
+                        $cacheKey = 'getProductInfo_' . $product->getId() . '_' . $offer->getId() . '_' . $locationCode;
+
+                        if ($cache->has($cacheKey)) {
+                            $responseItem = $cache->get($cacheKey);
+                        } else {
+                            $responseItem = $getProductInfo($product, $offer);
+                            $cache->set($cacheKey, $responseItem);
+                        }
+
+//                        $responseItem = (new BitrixCache())
+//                            ->withId('getProductInfo_' . $product->getId() . '_' . $offer->getId() . '_' . $locationCode)
+//                            ->withTag('productInfo')
+//                            ->withTime(1800) // 30 минут
+//                            ->resultOf(static function () use ($product, $offer, $getProductInfo) {
+//                                return $getProductInfo($product, $offer);
+//                            });
                         //$responseItem = $getProductInfo($product, $offer);
                         //$tempLogger = LoggerFactory::create('info', 'devProductInfo');
                         //$tempLogger->info('product info: ', $responseItem);
@@ -294,11 +305,22 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
             return $response;
         };
 
-        $response = (new BitrixCache())
-            ->withId(__METHOD__ . '_' . md5(serialize($productListRequest)) . '_' . $locationCode)
-            ->withTag('infoAction')
-            ->withTime(3600) // 60 минут
-            ->resultOf($getProductListInfo);
+        $cache = new FilesystemCache('', 3600);
+        $currentMethod = explode('::', __METHOD__)[1];
+        $cacheKey = $currentMethod . '_' . md5(serialize($productListRequest)) . '_' . $locationCode;
+//
+        if ($cache->has($cacheKey)) {
+            $response = $cache->get($cacheKey);
+        } else {
+            $response = $getProductListInfo();
+            $cache->set($cacheKey, $response);
+        }
+
+//        $response = (new BitrixCache())
+//            ->withId(__METHOD__ . '_' . md5(serialize($productListRequest)) . '_' . $locationCode)
+//            ->withTag('infoAction')
+//            ->withTime(3600) // 60 минут
+//            ->resultOf($getProductListInfo);
 
         if ($response['products']) {
             $cartItems = $this->basketService->getBasketProducts();

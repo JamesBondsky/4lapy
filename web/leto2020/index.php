@@ -1,20 +1,22 @@
 <?php
 
+use Bitrix\Main\Grid\Declension;
 use FourPaws\App\Application;
 use FourPaws\Helpers\ProtectorHelper;
-use FourPaws\AppBundle\AjaxController\LandingController;
 use FourPaws\PersonalBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Service\Chance2Service;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
-$APPLICATION->SetPageProperty('title', 'Выиграй путешествие на 2-их в Тайланд!');
+$APPLICATION->SetPageProperty('title', 'Выиграй путешествие на 2-их в Таиланд!');
 $APPLICATION->SetPageProperty('description', '');
-$APPLICATION->SetTitle('Выиграй путешествие на 2-их в Тайланд!');
+$APPLICATION->SetTitle('Выиграй путешествие на 2-их в Таиланд!');
 
 $userChance = null;
 /** @var ChanceService $chaceService */
 $chanceService = Application::getInstance()->getContainer()->get(Chance2Service::class);
+
+$chanceDeclension = new Declension('шанс', 'шанса', 'шансов');
 ?>
 
 <?php if ($USER->IsAuthorized()) { ?>
@@ -120,13 +122,54 @@ $chanceService = Application::getInstance()->getContainer()->get(Chance2Service:
                                 <span class="img">
                                     <img src="/leto2020/img/tickets_icon.png" alt="">
                                 </span>
-                                <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Тайланд</span>
+                                <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Таиланд</span>
                             </li>
                         </ul>
                     </div>
                 </div>
             </div>
         </div>
+        <?php } else { ?>
+          <div class="b-container">
+            <div class="title-leto2020">Спасибо за&nbsp;регистрацию в&nbsp;розыгрыше!</div>
+            <div class="participate-leto2020__inner-wrap">
+              <div class="participate-leto2020__inner">
+                <div class="response-form-participate-leto2020">
+                        <span class="response-form-participate-leto2020__title">
+                            Сейчас у Вас накоплено
+                            <nobr>
+                                <span class="response-form-participate-leto2020__count"><?= $userChance ?></span>
+                                <?= $chanceDeclension->get($userChance) ?>
+                            </nobr>
+                        </span>
+                  <div class="response-form-participate-leto2020__subtitle">
+                    Совершайте больше покупок от&nbsp;500&nbsp;руб и&nbsp;увеличивайте шансы выиграть призы!
+                  </div>
+
+                  <ul class="response-form-participate-leto2020__prizes">
+                    <li>
+                                <span class="img">
+                                    <img src="/leto2020/img/power-bank_icon.png" alt="">
+                                </span>
+                      <span class="text"><b>200</b> power banks</span>
+                    </li>
+                    <li>
+                                <span class="img">
+                                    <img src="/leto2020/img/phone_icon.png" alt="">
+                                </span>
+                      <span class="text"><b>20</b> смартфонов</span>
+                    </li>
+                    <li>
+                                <span class="img">
+                                    <img src="/leto2020/img/tickets_icon.png" alt="">
+                                </span>
+                      <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Таиланд</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
         <?php } ?>
     </section>
 

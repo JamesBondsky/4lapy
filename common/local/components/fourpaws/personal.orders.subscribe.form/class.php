@@ -831,6 +831,11 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
                 if (empty($this->arResult['ERROR'])) {
                     BitrixApplication::getConnection()->commitTransaction();
+                    $subscribeId = $orderSubscribe->getId();
+                    if ($subscribeId >= 0) {
+                        $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.order_subscription_creating_producer');
+                        $producer->publish($subscribeId);
+                    }
                 } else{
                     BitrixApplication::getConnection()->rollbackTransaction();
                     $this->log()->error(__METHOD__.' ошибка выполнения: '.$this->getExecErrors());
