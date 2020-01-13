@@ -250,6 +250,15 @@ class PushMessagesService implements LoggerAwareInterface
 
     protected function pushEventToApiFormat(ApiPushEvent $pushEvent)
     {
+        $categoryTitle = '';
+
+        if ($pushEvent->getMessageTypeEntity()->getXmlId() == 'category') {
+            $categoryTitle = \Bitrix\Iblock\SectionTable::getList([
+                'select' => ['NAME'],
+                'filter' => ['=ID' => $pushEvent->getId()]
+            ])->fetch()['NAME'];
+        }
+        
         return (new PushEventForApi())
             ->setId($pushEvent->getId())
             ->setText($pushEvent->getMessageText())
@@ -259,6 +268,7 @@ class PushMessagesService implements LoggerAwareInterface
             ->setOptions(
                 (new PushEventOptions())
                     ->setId($pushEvent->getEventId())
+                    ->setTitle($categoryTitle)
                     ->setType($pushEvent->getMessageTypeEntity()->getXmlId())
             );
     }

@@ -18,6 +18,14 @@ class PushEventOptions
      * @Assert\NotBlank()
      */
     protected $id;
+    
+    /**
+     * @var string
+     * @Serializer\SerializedName("title")
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $title = '';
 
     /**
      * @var string
@@ -43,7 +51,25 @@ class PushEventOptions
         $this->id = $id;
         return $this;
     }
-
+    
+    /**
+     * @return string
+     */
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+    
+    /**
+     * @param string $title
+     * @return PushEventOptions
+     */
+    public function setTitle(string $title): PushEventOptions
+    {
+        $this->title = $title;
+        return $this;
+    }
+    
     /**
      * @return string
      */
