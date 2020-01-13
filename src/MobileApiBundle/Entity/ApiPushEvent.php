@@ -82,8 +82,9 @@ class ApiPushEvent
      * @Serializer\SerializedName("OTHER_EVENT_ID")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"read"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $otherEventId;
+    protected $otherEventId = '';
 
     /**
      * @var string
@@ -273,6 +274,10 @@ class ApiPushEvent
      */
     public function getOtherEventId(): string
     {
+        if ($this->otherEventId == null) {
+            return '';
+        }
+
         return $this->otherEventId;
     }
     
