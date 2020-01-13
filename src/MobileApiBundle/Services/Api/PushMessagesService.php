@@ -256,20 +256,20 @@ class PushMessagesService implements LoggerAwareInterface
         if ($pushEvent->getMessageTypeEntity()->getXmlId() == 'category') {
             $categoryTitle = \Bitrix\Iblock\SectionTable::getList([
                 'select' => ['NAME'],
-                'filter' => ['=ID' => $pushEvent->getId()]
+                'filter' => ['=ID' => $pushEvent->getEventId()]
             ])->fetch()['NAME'];
         }
         
         return (new PushEventForApi())
             ->setId($pushEvent->getId())
             ->setText($pushEvent->getMessageText())
-            ->setTitle($pushEvent->getMessageTitle())
+            ->setTitle((string) $pushEvent->getMessageTitle())
             ->setDateTimeExec($pushEvent->getDateTimeExec())
             ->setViewed($pushEvent->getViewed())
             ->setOptions(
                 (new PushEventOptions())
                     ->setId($pushEvent->getEventId())
-                    ->setTitle($categoryTitle)
+                    ->setTitle((string) $categoryTitle)
                     ->setType($pushEvent->getMessageTypeEntity()->getXmlId())
             );
     }
