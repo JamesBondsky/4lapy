@@ -123,6 +123,8 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
             }
 
             $users = $userService->getUserRepository()->findBy($arFilter, []);
+            $totalCount = count($users);
+            $i = 1;
 
             foreach ($users as $user) {
                 $userId = $user->getId();
@@ -130,10 +132,13 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
                     if ($userId > 0 && ($USER->GetID() !== $userId)) {
                         $USER->Authorize($userId, false, false);
                     }
+                    $this->log()->info(sprintf('Start recalculate chance for user: %s, %s/%s', $user->getId(), $i, $totalCount));
                     $orderService->importOrdersFromManzana($user, ($type === 'j'));
                 } catch (Exception $e) {
                     $this->log()->error(sprintf('Error importing orders for user #%s: %s. %s', $userId, $e->getMessage(), $e->getTraceAsString()));
                 }
+
+                $i++;
             }
         } else {
             if (!$userId) {

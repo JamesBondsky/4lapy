@@ -104,6 +104,7 @@ class Chance2Service extends ChanceService
         $res = OrderTable::query()
             ->setFilter([
                 'USER_ID' => $userId,
+                'PAYED' => 'Y',
                 '>=DATE_INSERT' => static::PERIODS[$period]['from'],
                 '<=DATE_INSERT' => static::PERIODS[$period]['to'],
                 'STATUS_ID' => [
@@ -138,7 +139,7 @@ class Chance2Service extends ChanceService
     {
         $sum = 0;
         foreach ($basketItems as $basketItem) {
-            if (!empty($allowProductIds) && in_array($basketItems['productId'], $allowProductIds, true)) {
+            if (!empty($allowProductIds) && !in_array($basketItem['productId'], $allowProductIds, true)) {
                 continue;
             }
 
@@ -180,7 +181,7 @@ class Chance2Service extends ChanceService
             foreach ($order->getBasket()->getBasketItems() as $basketItem) {
                 $items[] = [
                     'productId' => $basketItem->getProductId(),
-                    'price' => $basketItem->getPrice(),
+                    'price' => $basketItem->getPrice() * $basketItem->getQuantity(),
                 ];
             }
         }
@@ -227,12 +228,23 @@ class Chance2Service extends ChanceService
                 return [];
             }
 
-            $rsProduct = CIBlockElement::GetList(false, [
-                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
-                'SECTION_ID' => $arSection['ID'],
-            ]);
+            $sectionIds = [
+                $arSection['ID']
+            ];
+
+            $rsSection = CIBlockSection::GetList(false, ['SECTION_ID' => $arSection['ID']]);
+
+            while ($arSection = $rsSection->Fetch()) {
+                $sectionIds[] = $arSection['ID'];
+            }
 
             $productIds = [];
+
+            $rsProduct = CIBlockElement::GetList(false, [
+                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+                'SECTION_ID' => $sectionIds,
+            ], false, false, ['ID', 'IBLOCK_ID']);
+
             while ($arProduct = $rsProduct->Fetch()) {
                 $productIds[] = $arProduct['ID'];
             }

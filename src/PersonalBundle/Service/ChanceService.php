@@ -291,7 +291,8 @@ class ChanceService
      */
     public function getAllUserIds(): array
     {
-        $doGetAllVariants = function () {
+//        $doGetAllVariants = function () {
+        try {
             $userIds = [];
             $res = $this->getDataManager()::query()
                 ->setSelect(['UF_USER_ID'])
@@ -302,17 +303,20 @@ class ChanceService
             }
 
             return $userIds;
-        };
-
-        try {
-            return (new BitrixCache())
-                ->withId(__METHOD__ . 'chance.users')
-                ->withTime(36000)
-                ->withTag(static::CACHE_TAG)
-                ->resultOf($doGetAllVariants);
         } catch (Exception $e) {
             return [];
         }
+//        };
+//
+//        try {
+//            return (new BitrixCache())
+//                ->withId(__METHOD__ . 'chance.users')
+//                ->withTime(36000)
+//                ->withTag(static::CACHE_TAG)
+//                ->resultOf($doGetAllVariants);
+//        } catch (Exception $e) {
+//            return [];
+//        }
     }
 
     /**
