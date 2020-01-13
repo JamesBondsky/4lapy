@@ -204,7 +204,7 @@ $markup = PawsApplication::markup();
                             <div class="item-card__descr">
                                 Незабываемое путешествие<br />
                                 на&nbsp;<nobr>2-их</nobr> в&nbsp;Таиланд!<br />
-                                <b>Розыгрыш: 27&nbsp;января</b>
+                                <b>Розыгрыш: 3&nbsp;февраля</b>
                             </div>
                         </div>
                     </div>
@@ -234,7 +234,7 @@ $markup = PawsApplication::markup();
                         <div class="item">
                             <div class="item__icon item__icon_blue"></div>
                             <div class="item__descr">
-                                Ищи себя в&nbsp;списках победителей на&nbsp;этом сайте каждый понедельник 6,&nbsp;13,&nbsp;20 и&nbsp;27&nbsp;января!
+                                Ищи себя в&nbsp;списках победителей на&nbsp;этом сайте каждый понедельник 6,&nbsp;13,&nbsp;20,&nbsp;27&nbsp;января и&nbsp;3&nbsp;февраля!
                             </div>
                         </div>
                     </div>
