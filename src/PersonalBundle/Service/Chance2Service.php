@@ -117,14 +117,16 @@ class Chance2Service extends ChanceService
             ->exec();
 
         $orders = [];
+        $totalOrderPrice = 0.0;
 
         while ($order = $res->fetch()) {
             $orders[] = Order::load($order['ID']);
+            $totalOrderPrice += (float)$order['PRICE'];
         }
 
         $basketItems = $this->getAllBasketItems($orders);
 
-        $totalChance = $this->getBasketItemsChanceWithFilter($basketItems, []);
+        $totalChance = (int)floor($totalOrderPrice / self::CHANCE_RATE);
         $totalChance += $this->getFeedBasketItemsChance($basketItems);
         $totalChance += (2 * $this->getBasketItemsChanceWithFilter($basketItems, $this->getClotherProductIds()));
 
