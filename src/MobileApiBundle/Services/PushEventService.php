@@ -269,10 +269,12 @@ class PushEventService
         $pushEvents = $this->apiPushEventRepository->findForIos();
         foreach ($pushEvents as $pushEvent) {
             try {
+                $eventId = $this->getEventId($pushEvent);
+                
                 $this->applePushNotificationService->sendNotification(
                     $pushEvent->getPushToken(),
                     $pushEvent->getMessageText(),
-                    $pushEvent->getEventId(),
+                    $eventId,
                     $pushEvent->getMessageTypeEntity()->getXmlId()
                 );
 
@@ -657,5 +659,16 @@ class PushEventService
             || ($typeCode == 'order_review' && $user->isSendFeedbackMsg())
             || ($typeCode == 'message')
         );
+    }
+    
+    protected function getEventId(ApiPushEvent $pushEvent)
+    {
+        $eventId = $pushEvent->getEventId();
+        
+        if (!$eventId) {
+            $eventId = $pushEvent->getOtherEventId();
+        }
+        
+        return $eventId;
     }
 }
