@@ -239,10 +239,12 @@ class PushEventService
         $pushEvents = $this->apiPushEventRepository->findForAndroid();
         foreach ($pushEvents as $pushEvent) {
             try {
+                $eventId = $this->getEventId($pushEvent);
+                
                 $response = $this->fireBaseCloudMessagingService->sendNotification(
                     $pushEvent->getPushToken(),
                     $pushEvent->getMessageText(),
-                    $pushEvent->getEventId(),
+                    $eventId,
                     $pushEvent->getMessageTypeEntity()->getXmlId(),
                     $pushEvent->getMessageTitle(),
                     $pushEvent->getPhotoUrl()
@@ -306,6 +308,8 @@ class PushEventService
         if (count($pushEvents) > 0) {
             foreach ($pushEvents as $pushEvent) {
                 try {
+                    $eventId = $this->getEventId($pushEvent);
+                    
                     $categoryTitle = '';
 
                     $data = [
@@ -320,7 +324,7 @@ class PushEventService
                         ],
                         'photourl' => $pushEvent->getPhotoUrl(),
                         'type'     => $pushEvent->getMessageTypeEntity()->getXmlId(),
-                        'id'       => $pushEvent->getEventId(),
+                        'id'       => $eventId,
                     ];
 
                     if ($data['photourl']) {
