@@ -422,7 +422,7 @@ class OrderService
         App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
 
         // todo убрать после новго года
-        App::getInstance()->getContainer()->get(ChanceService::class)->updateUserChance($user->getId());
+//        App::getInstance()->getContainer()->get(ChanceService::class)->updateUserChance($user->getId());
         App::getInstance()->getContainer()->get(Chance2Service::class)->updateUserChance($user->getId());
     }
 
