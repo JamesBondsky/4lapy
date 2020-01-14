@@ -258,14 +258,26 @@ class PushMessagesService implements LoggerAwareInterface
 
     protected function pushEventToApiFormat(ApiPushEvent $pushEvent)
     {
+        //@todo нужен обработчик событий при добавлении записей в api_push_messages
+        $categoryTitle = '';
+
+        if ($pushEvent->getMessageTypeEntity()->getXmlId() == 'category') {
+            $categoryTitle = \Bitrix\Iblock\SectionTable::getList([
+                'select' => ['NAME'],
+                'filter' => ['=ID' => $pushEvent->getEventId()]
+            ])->fetch()['NAME'];
+        }
+        
         return (new PushEventForApi())
             ->setId($pushEvent->getId())
             ->setText($pushEvent->getMessageText())
+            ->setTitle((string) $pushEvent->getMessageTitle())
             ->setDateTimeExec($pushEvent->getDateTimeExec())
             ->setViewed($pushEvent->getViewed())
             ->setOptions(
                 (new PushEventOptions())
                     ->setId($pushEvent->getEventId())
+                    ->setTitle((string) $categoryTitle)
                     ->setType($pushEvent->getMessageTypeEntity()->getXmlId())
             );
     }
