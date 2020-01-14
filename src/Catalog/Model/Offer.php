@@ -1992,7 +1992,7 @@ class Offer extends IblockElement
             $price *= (100 - $this->getCondValue()) / 100;
         }
 
-        $this->withPrice($price)
+        $this->withPrice(round($price, 2))
              ->withOldPrice($oldPrice)
              ->withDiscount(round(100 - (100*$price / $oldPrice)));
         $this->isCounted = true;
@@ -2574,6 +2574,7 @@ class Offer extends IblockElement
             return $this->getPrice();
         }
         $priceDefault = $this->getPrice();
+
         $priceSubscribe = \round($this->getBasePrice()*((100-$discountValue)/100), 1, PHP_ROUND_HALF_DOWN);
         if($priceSubscribe > $priceDefault){
             return $priceDefault;
