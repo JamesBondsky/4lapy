@@ -12,13 +12,12 @@ use Symfony\Component\Validator\Constraints as Assert;
 class PushEventOptions
 {
     /**
-     * @var int
+     * @var string
      * @Serializer\SerializedName("id")
-     * @Serializer\Type("int")
-     * @Assert\NotBlank()
+     * @Serializer\Type("string")
      */
     protected $id;
-    
+
     /**
      * @var string
      * @Serializer\SerializedName("title")
@@ -35,7 +34,7 @@ class PushEventOptions
     protected $type;
 
     /**
-     * @return int
+     * @return string
      */
     public function getId(): int
     {
@@ -43,15 +42,15 @@ class PushEventOptions
     }
 
     /**
-     * @param int $id
+     * @param string $id
      * @return PushEventOptions
      */
-    public function setId(int $id): PushEventOptions
+    public function setId(string $id): PushEventOptions
     {
         $this->id = $id;
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -59,7 +58,7 @@ class PushEventOptions
     {
         return $this->title;
     }
-    
+
     /**
      * @param string $title
      * @return PushEventOptions
@@ -69,7 +68,7 @@ class PushEventOptions
         $this->title = $title;
         return $this;
     }
-    
+
     /**
      * @return string
      */

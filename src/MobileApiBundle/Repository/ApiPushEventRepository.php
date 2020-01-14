@@ -86,6 +86,7 @@ class ApiPushEventRepository implements ApiPushEventRepositoryInterface
             ->addSelect('MESSAGE.UF_MESSAGE', 'MESSAGE_TEXT')
             ->addSelect('MESSAGE.UF_TYPE', 'MESSAGE_TYPE')
             ->addSelect('MESSAGE.UF_EVENT_ID', 'EVENT_ID')
+            ->addSelect('MESSAGE.UF_OTHER_EVENT_ID', 'OTHER_EVENT_ID')
             ->addSelect('MESSAGE.UF_TITLE', 'MESSAGE_TITLE')
             ->addSelect('URL', 'PHOTO_URL');
         if ($criteria) {
