@@ -253,6 +253,15 @@ class StoreService
     protected function storeToApiFormat(Store $store, array $servicesList = [], array $metroList = []): ApiStore
     {
         $metroId = $store->getMetro();
+    
+        $storeServices = $store->getServices();
+
+        foreach ($servicesList as $key => $serviceItem) {
+            if (!in_array($serviceItem['ID'], $storeServices)) {
+                unset($servicesList[$key]);
+            }
+        }
+
         $metroName = $metroId > 0 && $metroList[$metroId] ? $metroList[$metroId]['UF_NAME'] : '';
         $metroAddressText = $metroId > 0 && $metroList[$metroId] ? 'м.' . $metroName . ', ' : '';
         $metroColor = $metroId > 0 && $metroList[$metroId] ? '#' . $metroList[$metroId]['BRANCH']['UF_COLOUR_CODE'] : '';

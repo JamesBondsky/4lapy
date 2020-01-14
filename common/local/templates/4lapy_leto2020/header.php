@@ -178,7 +178,7 @@ $markup = PawsApplication::markup();
                             <div class="item-card__descr">
                                 Всего 200&nbsp;шт<br />
                                 Розыгрыш по&nbsp;50&nbsp;шт в&nbsp;неделю:<br />
-                                <b>13, 20, 27&nbsp;января и&nbsp;3&nbsp;февраля</b>
+                                <b>6,&nbsp;13,&nbsp;20 и&nbsp;27&nbsp;января</b>
                             </div>
                         </div>
                     </div>
@@ -191,7 +191,7 @@ $markup = PawsApplication::markup();
                             <div class="item-card__descr">
                                 Всего 20&nbsp;шт<br />
                                 Розыгрыши по&nbsp;5&nbsp;шт в&nbsp;неделю:<br/>
-                                <b>13, 20, 27&nbsp;января и&nbsp;3&nbsp;февраля</b>
+                                <b>6,&nbsp;13,&nbsp;20 и&nbsp;27&nbsp;января</b>
                             </div>
                         </div>
                     </div>
@@ -234,7 +234,7 @@ $markup = PawsApplication::markup();
                         <div class="item">
                             <div class="item__icon item__icon_blue"></div>
                             <div class="item__descr">
-                                Ищи себя в&nbsp;списках победителей на&nbsp;этом сайте каждый понедельник 13, 20, 27 января и&nbsp;3 февраля!
+                                Ищи себя в&nbsp;списках победителей на&nbsp;этом сайте каждый понедельник 6,&nbsp;13,&nbsp;20,&nbsp;27&nbsp;января и&nbsp;3&nbsp;февраля!
                             </div>
                         </div>
                     </div>
@@ -264,7 +264,7 @@ $markup = PawsApplication::markup();
                             <div class="item__title">шансы за&nbsp;покупки<br/> товаров брендов</div>
                             <div class="item__subtitle">
                                 GRANDIN, ROYAL CANIN, АВВА, MEALFEEL, FRESH STEP, MURMIX, EVER CLEAN, MONGE,
-                                UNOCAT, TREINER, WELLKISS, YUMMY, CHATELL, CHEWELL, MURMIX, НАГРАДА, ПАДОВАН
+                                UNOCAT, TRAINER, WELLKISS, YUMMY, CHATELL, CHEWELL, MURMIX, НАГРАДА, PADOVAN
                             </div>
                         </div>
                     </div>

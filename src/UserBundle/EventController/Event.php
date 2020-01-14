@@ -18,6 +18,7 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
@@ -115,6 +116,7 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'clearUserCache'], 'main');
         /** обновляем имя пользователя в order storage */
         static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'updateOrderStorage'], 'main');
+        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'deactivateSubscribe'], 'main');
 
         /** чистим кеш юзера при авторизации */
         static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'clearUserCache'], 'main');
@@ -384,9 +386,11 @@ class Event extends BaseServiceHandler
 
         /** @var UserService $userService */
         $userService = $container->get(CurrentUserProviderInterface::class);
-        $user = $userService->getUserRepository()->find((int)$fields['ID']);
+        try {
+            $user = $userService->getUserRepository()->find((int)$fields['ID']);
 
-        $userService->refreshUserCard($user);
+            $userService->refreshUserCard($user);
+        } catch (\Exception $e) {}
 
         return true;
     }
@@ -850,5 +854,25 @@ class Event extends BaseServiceHandler
         } catch (OrderStorageValidationException $e) {
             return;
         }
+    }
+
+    public static function deactivateSubscribe($arFields)
+    {
+        if ($arFields['ACTIVE'] == 'N') {
+            $container = App::getInstance()->getContainer();
+            /** @var OrderSubscribeService $service */
+            $service = $container->get('order_subscribe.service');
+
+            try {
+                $subscribeList = $service->findActiveSubscribeByUserId($arFields['ID']);
+
+                foreach ($subscribeList as $itemSubscribe) {
+                    $service->deactivateSubscription($itemSubscribe);
+                }
+            } catch (\Exception $e) {
+            }
+        }
+
+        return true;
     }
 }

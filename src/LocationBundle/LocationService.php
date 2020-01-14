@@ -27,6 +27,7 @@ use Bitrix\Sale\Location\TypeTable;
 use CBitrixComponent;
 use CBitrixLocationSelectorSearchComponent;
 use CIBlockElement;
+use Dadata\Response\Address as AddressResponse;
 use Exception;
 use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\Adapter\Model\Input\DadataLocation;
@@ -37,6 +38,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\External\DaDataService;
 use FourPaws\External\Exception\DaDataExecuteException;
+use FourPaws\External\Exception\DaDataQc;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Enum\CitiesSectionCode;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
@@ -1193,6 +1195,10 @@ class LocationService
         $splitAddress = function () use ($address, $locationCode) {
             $dadataLocation = $this->daDataService->splitAddress($address);
 
+            if ($dadataLocation->getQc() != AddressResponse::QC_GEO_EXACT) {
+                throw new DaDataQc('qc value is not valid');
+            }
+
             if (!$locationCode) {
                 $locationCode = (new DaDataLocationAdapter())->convert($dadataLocation)->getCode();
             }
@@ -1228,6 +1234,8 @@ class LocationService
 //                ->resultOf($splitAddress)['result'];
 
             $result = $splitAddress()['result'];
+        } catch (DaDataQc $exQC) {
+            throw new DaDataQc('qc value is not valid');
         } catch (\Exception $e) {
             $this->log()->error(
                 sprintf('failed to split address: %s: %s', \get_class($e), $e->getMessage()),
@@ -1467,6 +1475,11 @@ class LocationService
     public function getDadataLocationOkato(string $address): string
     {
         $dadataLocation = $this->daDataService->splitAddress($address);
+
+        if ($dadataLocation->getQc() != AddressResponse::QC_GEO_EXACT) {
+            throw new DaDataQc('qc value is not valid');
+        }
+
         if (!$dadataLocation->getOkato()) {
             throw new DaDataExecuteException('dadata location not found');
         }

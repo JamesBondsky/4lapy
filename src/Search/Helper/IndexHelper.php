@@ -124,6 +124,7 @@ class IndexHelper implements LoggerAwareInterface
     public function createCatalogIndex(bool $force = false): bool
     {
         $catalogIndex = $this->getCatalogIndex();
+
         $indexExists = $catalogIndex->exists();
         if ($indexExists && !$force) {
             return false;
@@ -324,6 +325,7 @@ class IndexHelper implements LoggerAwareInterface
                                 'PROPERTY_IS_HIT'           => ['type' => 'boolean'],
                                 'PROPERTY_IS_NEW'           => ['type' => 'boolean'],
                                 'PROPERTY_IS_SALE'          => ['type' => 'boolean'],
+                                'PROPERTY_BONUS_EXCLUDE'    => ['type' => 'boolean'],
                                 'PROPERTY_IS_POPULAR'       => ['type' => 'boolean'],
                                 'price'                     => ['type' => 'scaled_float', 'scaling_factor' => 100],
                                 'currency'                  => ['type' => 'keyword'],
@@ -485,6 +487,7 @@ class IndexHelper implements LoggerAwareInterface
         if (!$products) {
             return true;
         }
+       
         $responseSet = $this->getCatalogIndex()->addDocuments($documents);
 
         if (!$responseSet->isOk()) {
@@ -580,7 +583,8 @@ class IndexHelper implements LoggerAwareInterface
         if ($flushBaseFilter) {
             $query->withFilter([]);
         }
-
+    
+        // $query->withFilter(['ID' => [86097]]);
         $allProducts = $query->exec();
         $this->__indexAll(Product::class, $allProducts, $batchSize);
 //        $indexOk = 0;
@@ -663,6 +667,7 @@ class IndexHelper implements LoggerAwareInterface
              * @see indexProducts for Product::class
              * @see indexBrands for Brand::class
              */
+            
             if (call_user_func([$this, $method], $allItemChunk)) {
                 $indexOk += \count($allItemChunk);
             } else {
