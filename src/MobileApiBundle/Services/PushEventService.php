@@ -662,6 +662,7 @@ class PushEventService
             || ($typeCode == 'status' && $user->isSendOrderStatusMsg())
             || ($typeCode == 'order_review' && $user->isSendFeedbackMsg())
             || ($typeCode == 'message')
+            || ($typeCode == 'category')
         );
     }
     
