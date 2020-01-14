@@ -238,11 +238,17 @@ class PushEventService
     {
         $pushEvents = $this->apiPushEventRepository->findForAndroid();
         foreach ($pushEvents as $pushEvent) {
+            $eventId = $pushEvent->getEventId();
+            
+            if (!$eventId) {
+                $eventId = $pushEvent->getOtherEventId();
+            }
+            
             try {
                 $response = $this->fireBaseCloudMessagingService->sendNotification(
                     $pushEvent->getPushToken(),
                     $pushEvent->getMessageText(),
-                    $pushEvent->getEventId(),
+                    $eventId,
                     $pushEvent->getMessageTypeEntity()->getXmlId(),
                     $pushEvent->getMessageTitle(),
                     $pushEvent->getPhotoUrl()
