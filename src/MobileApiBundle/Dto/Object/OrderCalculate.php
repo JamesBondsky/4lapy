@@ -74,8 +74,8 @@ class OrderCalculate
     /**
      * 90% от цены товара без учета доставки, которую можно заменить бонусами
      * @Serializer\SerializedName("bonus_vulnerable_price")
-     * @Serializer\Type("float")
-     * @var float
+     * @Serializer\Type("int")
+     * @var int
      */
     protected $bonusVulnerablePrice;
 
@@ -242,17 +242,17 @@ class OrderCalculate
     /**
      * @return int
      */
-    public function getBonusVulnerablePrice(): float
+    public function getBonusVulnerablePrice(): int
     {
         return $this->bonusVulnerablePrice;
     }
     
     /**
-     * @param float $bonusVulnerablePrice
+     * @param int $bonusVulnerablePrice
      *
      * @return OrderCalculate
      */
-    public function setBonusVulnerablePrice(float $bonusVulnerablePrice): OrderCalculate
+    public function setBonusVulnerablePrice(int $bonusVulnerablePrice): OrderCalculate
     {
         $this->bonusVulnerablePrice = $bonusVulnerablePrice;
         return $this;

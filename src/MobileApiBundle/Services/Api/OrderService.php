@@ -706,8 +706,6 @@ class OrderService implements LoggerAwareInterface
             $totalPrice->setCourierPrice($deliveryPrice);
         }
 
-        $bonusVulnerablePrice = (90 * ($totalPrice->getActual() - $totalPrice->getCourierPrice())) / 100;
-
         $stampsAdded = $this->manzana->getStampsToBeAdded();
         $stampService = $this->stampService;
         $stampsUsed = array_reduce($basketProducts->getValues(), static function($carry, $product) use ($stampService) {
@@ -762,6 +760,16 @@ class OrderService implements LoggerAwareInterface
                 && ($currentDelivery && $currentDelivery->getStockResult()->getDelayed()->isEmpty())
             );
 
+        if (!(int) $bonusSubtractAmount) {
+            $bonusVulnerablePrice = ((90 * ($totalPrice->getActual() - $totalPrice->getCourierPrice())) / 100);
+        } else {
+            if ((int) $priceWithDiscount) {
+                $bonusVulnerablePrice = ((90 * (float) $priceWithDiscount) / 100) - $bonusSubtractAmount;
+            } else {
+                $bonusVulnerablePrice = ((90 * (float) $priceWithoutDiscount) / 100) - $bonusSubtractAmount;
+            }
+        }
+        
         if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
             $orderCalculate
                 ->setStampsDetails([
