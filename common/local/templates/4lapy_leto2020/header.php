@@ -264,7 +264,7 @@ $markup = PawsApplication::markup();
                             <div class="item__title">шансы за&nbsp;покупки<br/> товаров брендов</div>
                             <div class="item__subtitle">
                                 GRANDIN, ROYAL CANIN, АВВА, MEALFEEL, FRESH STEP, MURMIX, EVER CLEAN, MONGE,
-                                UNOCAT, TREINER, WELLKISS, YUMMY, CHATELL, CHEWELL, MURMIX, НАГРАДА, ПАДОВАН
+                                UNOCAT, TRAINER, WELLKISS, YUMMY, CHATELL, CHEWELL, MURMIX, НАГРАДА, PADOVAN
                             </div>
                         </div>
                     </div>
