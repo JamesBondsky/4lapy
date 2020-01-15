@@ -425,6 +425,10 @@ class ApiPushMessage
      */
     public function getOtherEventId(): string
     {
+        if ($this->otherEventId == null) {
+            return '';
+        }
+        
         return $this->otherEventId;
     }
     
