@@ -841,7 +841,7 @@ class OrderService implements LoggerAwareInterface
         }
 
         $address = null;
-        if ($storage->getAddressId()) {
+        if ($storage->getAddressId() && $selectedDelivery->getDeliveryCode() != '4lapy_pickup') {
             if ($storage->getCityCode() !== \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
                 $storage->updateAddressBySaveAddressByMoscowDistrict($this->addressService, $this->locationService);
             }
@@ -1397,7 +1397,12 @@ class OrderService implements LoggerAwareInterface
                             ->setStreet('Красный бор');
                     } else {
                         $addressString = $this->storeService->getStoreAddress($shop) . ', ' . $shop->getAddress();
-                        $address = $this->locationService->splitAddress($addressString, $shop->getLocation());
+                        try {
+                            $address = $this->locationService->splitAddress($addressString, $shop->getLocation());
+                        } catch (Exception $e) {
+                            $address = $this->storeService->getStoreAddress($shop);
+                            $address->setStreet($shop->getAddress());
+                        }
                     }
                     $this->setOrderAddress($order, $address);
                 } catch (AddressSplitException $e) {
@@ -2760,7 +2765,7 @@ class OrderService implements LoggerAwareInterface
 
         return true;
     }
-    
+
     protected function sendSapFailMail($userId, $order)
     {
         $user = \CUser::GetByID($userId)->Fetch();
