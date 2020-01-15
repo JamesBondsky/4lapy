@@ -75,6 +75,11 @@ class NotificationService implements LoggerAwareInterface
      * @var ExpertsenderService
      */
     protected $emailService;
+    
+    /**
+     * @var bool
+     */
+    protected $alreadySended = false;
 
     /**
      * Для предотвращения зацикливания отправки писем
@@ -378,6 +383,8 @@ class NotificationService implements LoggerAwareInterface
         $parameters = $this->getOrderData($order);
 
         $this->sendPushOrSms('FourPawsSaleBundle:Sms:order.canceled.html.php', $parameters, 'status', true);
+        
+        $this->alreadySended = true;
         static::$isSending = false;
     }
 
@@ -855,9 +862,12 @@ class NotificationService implements LoggerAwareInterface
         // $user = $this->getUser();
 
         // if($user && $this->pushEventService->canSendPushMessage($user, $typeCode)){
-        $this->addPushMessage($template, $parameters);
+        if ($this->alreadySended === false) {
+            $this->addPushMessage($template, $parameters);
+            $this->sendSms($template, $parameters, $immediate);
+        }
         // } else {
-        $this->sendSms($template, $parameters, $immediate);
+       
         // }
     }
 
