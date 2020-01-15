@@ -34,6 +34,9 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
     protected const OPTION_TYPE = 'type';
     protected const OPTION_TYPE_SHORTCUT = 't';
 
+    protected const OPTION_ERROR = 'error';
+    protected const OPTION_ERROR_SHORTCUT = 'o';
+
     /**
      * @var ChanceService
      */
@@ -43,6 +46,8 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
      * @var Chance2Service
      */
     protected $chance2Service;
+
+    protected $existErrorUserIds;
 
     /**
      * @param ChanceService $chanceService
@@ -83,6 +88,13 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
                 InputOption::VALUE_OPTIONAL,
                 '',
                 false
+            )
+            ->addOption(
+                self::OPTION_ERROR,
+                self::OPTION_ERROR_SHORTCUT,
+                InputOption::VALUE_OPTIONAL,
+                '',
+                false
             );
     }
 
@@ -100,8 +112,16 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
         $userId = $input->getOption(self::OPTION_USER);
         $type = $input->getOption(self::OPTION_TYPE);
         $withManzana = $input->getOption(self::OPTION_MANZANA);
+        $errorUsers = (bool)$input->getOption(self::OPTION_ERROR);
+
+        if ($errorUsers) {
+            $withManzana = true;
+        }
 
         $currentChanceService = ($type === 'j') ? $this->chance2Service : $this->chanceService;
+
+        $successUserIds = [];
+        $errorUserIds = [];
 
         if ($withManzana) {
             /** @var OrderService $orderService */
@@ -110,7 +130,9 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
             /** @var UserService $userService */
             $userService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
 
-            if ($userId) {
+            if ($errorUsers) {
+                $arFilter = ['ID' => $this->getExistErrorUserIds()];
+            } else if ($userId) {
                 $arFilter = ['ID' => $userId];
             } else {
                 $allUserIds = $currentChanceService->getAllUserIds();
@@ -123,6 +145,8 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
             }
 
             $users = $userService->getUserRepository()->findBy($arFilter, []);
+            $totalCount = count($users);
+            $i = 1;
 
             foreach ($users as $user) {
                 $userId = $user->getId();
@@ -130,10 +154,18 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
                     if ($userId > 0 && ($USER->GetID() !== $userId)) {
                         $USER->Authorize($userId, false, false);
                     }
+                    $this->log()->info(sprintf('Start recalculate chance for user: %s, %s/%s', $user->getId(), $i, $totalCount));
                     $orderService->importOrdersFromManzana($user, ($type === 'j'));
+
+                    $successUserIds[] = $userId;
                 } catch (Exception $e) {
+                    if ((strpos('Ошибка получения данных', $e->getMessage()) !== false) && !in_array($userId, $this->getExistErrorUserIds(), false)) {
+                        $errorUserIds[] = $userId;
+                    }
                     $this->log()->error(sprintf('Error importing orders for user #%s: %s. %s', $userId, $e->getMessage(), $e->getTraceAsString()));
                 }
+
+                $i++;
             }
         } else {
             if (!$userId) {
@@ -144,6 +176,50 @@ class ChanceRecalculateCommand extends Command implements LoggerAwareInterface
             $currentChanceService->updateUserChance($userId);
         }
 
+        $this->deleteSuccessUsersFromErrorList($successUserIds);
+        $this->addErrorUsersToErrorList($errorUserIds);
+
         return true;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getExistErrorUserIds(): array
+    {
+        global $DB;
+
+        if ($this->existErrorUserIds === null) {
+            $dbRes = $DB->Query('select user_id from 4lapy_user_chance_error');
+
+            $this->existErrorUserIds = [];
+            while ($res = $dbRes->Fetch()) {
+                $this->existErrorUserIds[] = $res['user_id'];
+            }
+        }
+
+        return $this->existErrorUserIds;
+    }
+
+    protected function deleteSuccessUsersFromErrorList($successUserIds)
+    {
+        global $DB;
+
+        if (!empty($successUserIds)) {
+            $condition = implode(',', $successUserIds);
+
+            $DB->Query("delete from 4lapy_user_chance_error where user_id in ($condition)");
+        }
+    }
+
+    protected function addErrorUsersToErrorList($errorUserIds)
+    {
+        global $DB;
+
+        if (!empty($errorUserIds)) {
+            $values = implode(',', $errorUserIds);
+
+            $DB->Query("insert into 4lapy_user_chance_error (user_id) values ($values)");
+        }
     }
 }

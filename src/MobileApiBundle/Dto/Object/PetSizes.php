@@ -1,28 +1,18 @@
 <?php
 
-namespace FourPaws\MobileApiBundle\Dto\Request;
+namespace FourPaws\MobileApiBundle\Dto\Object;
 
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\MobileApiBundle\Dto\Parts\Pet;
-use FourPaws\MobileApiBundle\Dto\Request\Types\PostRequest;
-use FourPaws\MobileApiBundle\Dto\Request\Types\SimpleUnserializeRequest;
 use JMS\Serializer\Annotation as Serializer;
 
-class UserPetAddRequest implements SimpleUnserializeRequest, PostRequest
+class PetSizes
 {
-    use Pet;
-
     /**
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("gender")
-     * @var string
-     */
-    protected $gender;
-    
-    /**
-     * @Serializer\Type("int")
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\PetSize")
      * @Serializer\SerializedName("size")
      * @Serializer\SkipWhenEmpty()
-     * @var int
+     * @var PetSize
      */
     protected $size = 0;
     
@@ -49,28 +39,11 @@ class UserPetAddRequest implements SimpleUnserializeRequest, PostRequest
      * @var float
      */
     protected $chest = 0.0;
-
+    
     /**
-     * @return string
+     * @return PetSize
      */
-    public function getGender(): ?string
-    {
-        return $this->gender;
-    }
-
-    /**
-     * @param string $gender
-     * @return $this
-     */
-    public function setGender(string $gender)
-    {
-        $this->gender = $gender;
-        return $this;
-    }
-    /**
-     * @return int
-     */
-    public function getSize(): int
+    public function getSize(): PetSize
     {
         return $this->size;
     }
@@ -79,7 +52,7 @@ class UserPetAddRequest implements SimpleUnserializeRequest, PostRequest
      * @param int $size
      * @return $this
      */
-    public function setSize(int $size)
+    public function setSize($size)
     {
         $this->size = $size;
         return $this;
@@ -136,6 +109,24 @@ class UserPetAddRequest implements SimpleUnserializeRequest, PostRequest
     public function setChest(float $chest)
     {
         $this->chest = $chest;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getSizeTitle(): string
+    {
+        return $this->sizeTitle;
+    }
+    
+    /**
+     * @param string $sizeTitle
+     * @return $this
+     */
+    public function setSizeTitle(string $sizeTitle)
+    {
+        $this->sizeTitle = $sizeTitle;
         return $this;
     }
 }

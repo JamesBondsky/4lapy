@@ -514,6 +514,8 @@ class NotificationService implements LoggerAwareInterface
      */
     protected function addPushMessage(string $tpl, array $parameters): void
     {
+        $otherEventId = '';
+        
         if (empty($parameters) || !$parameters['userId']) {
             return;
         }
@@ -536,11 +538,16 @@ class NotificationService implements LoggerAwareInterface
             'XML_ID' => 'status',
         ])->fetch();
 
+        if (preg_match('/^[a-zA-Z]{1}/', $parameters['accountNumber'])) {
+            $otherEventId = $parameters['accountNumber'];
+        }
+        
         $pushMessage = (new ApiPushMessage())
             ->setActive(true)
             ->setMessage($text)
             ->setUserIds([$parameters['userId']])
             ->setEventId($parameters['accountNumber'])
+            ->setOtherEventId($otherEventId)
             ->setStartSend(new \DateTime())
             ->setTypeId($type['ID']);
 

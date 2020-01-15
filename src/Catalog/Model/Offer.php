@@ -297,6 +297,7 @@ class Offer extends IblockElement
     /**
      * @var bool
      * @Type("bool")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_BONUS_EXCLUDE = false;
 
@@ -2448,13 +2449,15 @@ class Offer extends IblockElement
     /**
      * Возвращает текст о наличии для карточки товара на сайте и в приложении
      * @return string
-     * @throws ApplicationCreateException
+     * @throws ApplicationCreateExceptionk
      * @throws ArgumentException
      */
     public function getAvailabilityText(): string
     {
         if ($this->isByRequest() && $this->isAvailable()) {
             $availability = 'Только под заказ';
+        // } else if ($this->onlyPickupAvailable()) {
+        //     $availability = 'Самовывоз';
         } else if (!$this->isAvailable()) {
             $availability = 'Нет в наличии';
         } else {
@@ -2463,9 +2466,9 @@ class Offer extends IblockElement
         return $availability;
     }
 
-    public function getPickupInfo()
+    public function onlyPickupAvailable()
     {
-
+        // return !$this->isActive() && ($this->getQuantity() > 0) && (!$this->getProduct()->isDeliveryAvailable() && $this->getProduct()->isPickupAvailable());
     }
 
     /**
