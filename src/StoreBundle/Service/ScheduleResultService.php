@@ -282,6 +282,24 @@ class ScheduleResultService implements LoggerAwareInterface
     }
 
     /**
+     * @param Store $sender
+     * @param Store $receiver
+     * @return ScheduleResultCollection
+     * @throws \RuntimeException
+     */
+    public function findResultsBySenderAndReceiverNew(array $filter, $date): ScheduleResultCollection
+    {
+        $result = null;
+        try {
+            $result = $this->repository->findBySenderAndReceiverByDate($filter, $date);
+        } catch (\Exception $e) {
+
+        }
+
+        return $result ?? new ScheduleResultCollection();
+    }
+
+    /**
      * @return string
      */
     public function getFilename()

@@ -96,4 +96,34 @@ class ScheduleResultRepository extends D7Repository
 
         return $this->byReceiver[$receiverXmlId];
     }
+
+    /**
+     * @param string $senderXmlId
+     * @param string $receiverXmlId
+     *
+     * @return ScheduleResultCollection
+     * @throws \Exception
+     */
+    public function findBySenderAndReceiverByDate(array $filter, \DateTime $dateTime): ScheduleResultCollection
+    {
+        $dateTime->setTime(23, 59, 59);
+
+        $filterArr = [
+            'LOGIC' => 'OR',
+        ];
+
+        foreach ($filter as $itemFilter) {
+            $filterArr[] = [
+                '=UF_SENDER' => $itemFilter['sender'],
+                '=UF_RECEIVER' => $itemFilter['received'],
+                '=UF_DATE_ACTIVE' => $dateTime->format('d.m.Y')
+            ];
+        }
+
+        $result = $this->findBy($filterArr)->toArray();
+
+        $resultCollection = new ScheduleResultCollection($result);
+
+        return $resultCollection;
+    }
 }
