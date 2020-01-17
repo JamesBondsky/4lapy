@@ -367,6 +367,24 @@ class Sberbank
     }
 
     /**
+     * Можно напрямую использовать этот метод вместо depositPayment для закрытия транзакций при полной оплате
+     * (корзина не передается, сумма = 0 (это значит полную оплату))
+     *
+     * @param string $orderId
+     * @param int $amount
+     * @param array $fiscal
+     *
+     * @return array
+     *
+     * @throws ArgumentException
+     */
+    public function depositFullPayment(string $orderId, int $amount = 0): array
+    {
+        $data = compact('orderId',  'amount');
+        return $this->gatewayQuery('deposit.do', $data);
+    }
+
+    /**
      * @param $response
      *
      * @return bool

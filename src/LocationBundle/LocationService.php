@@ -1196,7 +1196,7 @@ class LocationService
             $dadataLocation = $this->daDataService->splitAddress($address);
 
             if ($dadataLocation->getQc() != AddressResponse::QC_GEO_EXACT) {
-                throw new DaDataQc('qc value is not valid');
+                //throw new DaDataQc('qc value is not valid');
             }
 
             if (!$locationCode) {
@@ -1235,7 +1235,7 @@ class LocationService
 
             $result = $splitAddress()['result'];
         } catch (DaDataQc $exQC) {
-            throw new DaDataQc('qc value is not valid');
+            //throw new DaDataQc('qc value is not valid');
         } catch (\Exception $e) {
             $this->log()->error(
                 sprintf('failed to split address: %s: %s', \get_class($e), $e->getMessage()),
@@ -1477,7 +1477,7 @@ class LocationService
         $dadataLocation = $this->daDataService->splitAddress($address);
 
         if ($dadataLocation->getQc() != AddressResponse::QC_GEO_EXACT) {
-            throw new DaDataQc('qc value is not valid');
+            //throw new DaDataQc('qc value is not valid');
         }
 
         if (!$dadataLocation->getOkato()) {
