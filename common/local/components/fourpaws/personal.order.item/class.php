@@ -291,7 +291,7 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
             $this->arResult['FINISHED'] = true;
         } else if (in_array($statusId, PersonalOrderService::STATUS_CANCEL, true)) {
             $this->arResult['CANCELED'] = true;
-        } else if ((new DateTime())->getTimestamp() - $personalOrder->getDateInsert()->getTimestamp() < 2592000) { // заказ автоматически отменияется в SAP через 30 дней
+        } else if (((new DateTime())->getTimestamp() - $personalOrder->getDateInsert()->getTimestamp() < 2592000) && $statusId != PersonalOrderService::STATUS_NEW && $statusId != PersonalOrderService::STATUS_OTHER_NEW) { // заказ автоматически отменияется в SAP через 30 дней
             $this->arResult['CAN_CANCEL'] = true;
         }
     }
