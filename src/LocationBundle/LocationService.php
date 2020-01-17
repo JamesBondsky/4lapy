@@ -10,7 +10,9 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ObjectPropertyException;
@@ -25,6 +27,7 @@ use Bitrix\Sale\Location\TypeTable;
 use CBitrixComponent;
 use CBitrixLocationSelectorSearchComponent;
 use CIBlockElement;
+use Dadata\Response\Address as AddressResponse;
 use Exception;
 use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\Adapter\Model\Input\DadataLocation;
@@ -35,12 +38,15 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\External\DaDataService;
 use FourPaws\External\Exception\DaDataExecuteException;
+use FourPaws\External\Exception\DaDataQc;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Enum\CitiesSectionCode;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\LocationBundle\Query\CityQuery;
+use FourPaws\LocationBundle\Repository\LocationParentsRepository;
+use FourPaws\LocationBundle\Repository\Table\LocationParentsTable;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -460,7 +466,7 @@ class LocationService
      * @param int $limit
      * @param bool $needPath
      * @param bool $findByParent искать в названиях родительских местоположений
-     * @param bool $excludeMoscowDistricts
+     * @param bool $excludeMoscowDistrictsNew
      *
      * @return array
      */
@@ -469,10 +475,12 @@ class LocationService
         int $limit = 0,
         bool $needPath = true,
         bool $findByParent = false,
-        bool $excludeMoscowDistricts = false
+        bool $excludeMoscowDistrictsNew = false
     ): array
     {
-        $cacheFinder = function () use ($excludeMoscowDistricts, $queryParams, $limit, $needPath, $findByParent) {
+        $excludeMoscowDistricts = false;
+
+        $cacheFinder = function () use ($excludeMoscowDistricts, $queryParams, $limit, $needPath, $findByParent, $excludeMoscowDistrictsNew) {
             /* для поиска по родительским местоположениям $needPath должен быть true и $queryParams являться массивом, чтобы из него можно было вытащить строку поиска */
             if (($findByParent && !$needPath) || ($queryParams instanceof Query)) {
                 $findByParent = false;
@@ -494,6 +502,9 @@ class LocationService
             if (!($queryParams instanceof Query)) {
                 /** сразу в селект не добалять позиции с join - получать их позже - для скорости
                  * поиск по коду и только по названию без родителя будет быстрее */
+                if (!isset($locationQueryFilter['TYPE_ID']) && $excludeMoscowDistrictsNew) {
+                    $locationQueryFilter['!=TYPE_ID'] = 9;
+                }
                 $query = LocationTable::query()->setOrder($locationQueryOrder)->setFilter($locationQueryFilter)->setSelect($locationQuerySelect);
             } else {
                 $query = $queryParams;
@@ -563,23 +574,43 @@ class LocationService
 
                 /** очень долгий запрос на получение родителей */
                 if ($needPath && !$excludeLocation) {
-                    /** @var Result $parentRes */
-                    $parentRes = LocationTable::query()
-                        ->where('DEPTH_LEVEL', '<', $item['DEPTH_LEVEL'])
-                        ->where('LEFT_MARGIN', '<', $item['LEFT_MARGIN'])
-                        ->where('RIGHT_MARGIN', '>', $item['RIGHT_MARGIN'])
-                        ->setSelect([
-                            'ID',
-                            'CODE',
-                            'DISPLAY' => 'NAME.NAME',
-                            '_TYPE_ID' => 'TYPE.ID',
-                            '_TYPE_CODE' => 'TYPE.CODE',
-                            '_TYPE_NAME' => 'TYPE.NAME.NAME',
-                        ])
-                        ->setOrder(['_TYPE_ID' => 'ASC'])
-                        ->exec();
+                    $parents = LocationParentsRepository::getById($item['ID']);
 
-                    while ($parentItem = $parentRes->fetch()) {
+                    if ($parents === false) {
+                        // временное логирование для проверки работы функционала после релиза.
+                        // Можно убрать позднее (количество этих записей должно свестись к минимуму, если функционал работает правильно)
+                        $tempLogger = LoggerFactory::create('LocationParents', 'bsalelocation');
+                        $tempLogger->info('В таблице 4lapy_locations_parents создается новая запись, item id: ' . $item['ID']);
+
+                        $parents = LocationTable::query()
+                            ->where('DEPTH_LEVEL', '<', $item['DEPTH_LEVEL'])
+                            ->where('LEFT_MARGIN', '<', $item['LEFT_MARGIN'])
+                            ->where('RIGHT_MARGIN', '>', $item['RIGHT_MARGIN'])
+                            ->setSelect([
+                                'ID',
+                                'CODE',
+                                'DISPLAY' => 'NAME.NAME',
+                                '_TYPE_ID' => 'TYPE.ID',
+                                '_TYPE_CODE' => 'TYPE.CODE',
+                                '_TYPE_NAME' => 'TYPE.NAME.NAME',
+                            ])
+                            ->setOrder(['_TYPE_ID' => 'ASC'])
+                            ->exec()
+                            ->fetchAll();
+
+                        try {
+                            LocationParentsTable::add([
+                                'ID' => $item['ID'],
+                                'PARENTS' => json_encode($parents),
+                            ]);
+                        } catch (SqlQueryException $e) {
+                            // Если упала ошибка о наличии такого PRIMARY в таблице - это ок, значит, возникла ситуация гонок
+                            // и достаточно отдать результат запроса
+                            $this->log()->info('LocationParents. item: ' . $item['ID'] . ' Exception code: ' . $e->getCode() . '. Exception: ' . $e->getMessage());
+                        }
+                    }
+
+                    foreach ($parents as $parentItem) {
                         $parentItem['NAME'] = $parentItem['DISPLAY'];
                         unset($parentItem['DISPLAY']);
                         $parentItem['TYPE'] = $this->stringArrayToArray($parentItem, 'TYPE');
@@ -1164,6 +1195,10 @@ class LocationService
         $splitAddress = function () use ($address, $locationCode) {
             $dadataLocation = $this->daDataService->splitAddress($address);
 
+            if ($dadataLocation->getQc() != AddressResponse::QC_GEO_EXACT) {
+                throw new DaDataQc('qc value is not valid');
+            }
+
             if (!$locationCode) {
                 $locationCode = (new DaDataLocationAdapter())->convert($dadataLocation)->getCode();
             }
@@ -1199,6 +1234,8 @@ class LocationService
 //                ->resultOf($splitAddress)['result'];
 
             $result = $splitAddress()['result'];
+        } catch (DaDataQc $exQC) {
+            throw new DaDataQc('qc value is not valid');
         } catch (\Exception $e) {
             $this->log()->error(
                 sprintf('failed to split address: %s: %s', \get_class($e), $e->getMessage()),
@@ -1432,16 +1469,64 @@ class LocationService
     /**
      * @param string $address
      * @return DadataLocation
+     * @throws ApplicationCreateException
      * @throws DaDataExecuteException
      */
     public function getDadataLocationOkato(string $address): string
     {
         $dadataLocation = $this->daDataService->splitAddress($address);
+
+        if ($dadataLocation->getQc() != AddressResponse::QC_GEO_EXACT) {
+            throw new DaDataQc('qc value is not valid');
+        }
+
         if (!$dadataLocation->getOkato()) {
             throw new DaDataExecuteException('dadata location not found');
         }
 
         $okato = $dadataLocation->getOkato();
         return substr($okato, 0, 8);
+    }
+
+    /**
+     * @param $locationId
+     * @return array
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function findLocationGroupsById($locationId): array
+    {
+        $result = [];
+
+        $groupRes = GroupLocationTable::query()
+            ->setFilter(['=LOCATION_ID' => $locationId])
+            ->setLimit(10)
+            ->setSelect(['GROUP.CODE'])
+            ->setCacheTtl(360000)
+            ->exec();
+
+        while ($group = $groupRes->fetch()) {
+            $result[] = $group['SALE_LOCATION_GROUP_LOCATION_GROUP_CODE'];
+        }
+        return $result;
+    }
+
+    /**
+     * @param $locationCode
+     * @return array
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function findLocationGroupsByCode($locationCode): array
+    {
+        $location = $this->findLocationByCode($locationCode);
+
+        if (empty($location)) {
+            return [];
+        }
+
+        return $this->findLocationGroupsById($location['ID']);
     }
 }

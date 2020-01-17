@@ -28,7 +28,7 @@ use Psr\Log\LoggerAwareInterface;
 class InfoService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
-
+    
     /** @var ImageProcessor */
     private $imageProcessor;
 
@@ -43,7 +43,17 @@ class InfoService implements LoggerAwareInterface
 
     /** @var ShortProduct[]  */
     private static $cache = [];
-
+    
+    /**
+     * @var array
+     */
+    private $repeatedOffers = [];
+    
+    /**
+     * @var array
+     */
+    private $repeatedProducts = [];
+    
     public function __construct(ImageProcessor $imageProcessor, ProductService $productService)
     {
         $this->imageProcessor = $imageProcessor;
@@ -435,23 +445,57 @@ class InfoService implements LoggerAwareInterface
     {
         $this->isNeedLoad = false;
         $products = new ArrayCollection();
+        $limitProducts = new ArrayCollection();
         $iblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES);
         $rs = CIBlockElement::GetProperty($iblockId, $specialOfferId, [], ['CODE' => 'PRODUCTS', 'EMPTY' => 'N']);
+        
         while ($property = $rs->fetch()) {
-            if ($products->count() == $limit) {
+            if ($limitProducts->count() == $limit) {
                 $this->isNeedLoad = true;
                 break;
             }
             $offerId = $property['VALUE'];
-
+            
             if (!array_key_exists($property['VALUE'], self::$cache)) {
                 $offer = (new OfferQuery())->withFilter(['=XML_ID' => $offerId])->exec()->current();
                 $product = $offer->getProduct();
-                self::$cache[$offerId] = $this->productService->convertToShortProduct($product, $offer);
+    
+                $this->repeatedOffers[] = $offerId;
+                
+                if (in_array($product->getId(), $this->repeatedProducts)) {
+                    continue;
+                }
+                
+                $this->repeatedProducts[] = $product->getId();
+                
+                $result = $this->productService->convertToFullProduct($product, $offer, true, false);
+
+                self::$cache[$offerId] = $result;
             }
 
-            $products->add(self::$cache[$offerId]);
+            $limitProducts->add(self::$cache[$offerId]);
         }
+
+        foreach (self::$cache as $cacheItem) {
+            $packingVariants = $cacheItem->getPackingVariants();
+            
+            if (count($packingVariants) == 1) {
+                $cacheItem->setPackingVariants([]);
+                $products->add($cacheItem);
+                continue;
+            }
+    
+            foreach ($packingVariants as $key => $packingVariant) {
+                if (!in_array($packingVariant->getXmlId(), $this->repeatedOffers)) {
+                    unset($packingVariants[$key]);
+                }
+            }
+            
+            $cacheItem->setPackingVariants($packingVariants);
+            
+            $products->add($cacheItem);
+        }
+
         return $products;
     }
 }

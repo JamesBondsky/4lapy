@@ -8,6 +8,14 @@ $arUrlRewrite=array (
     'PATH' => '/sale/order/index.php',
     'SORT' => 100,
   ),
+  8 => 
+  array (
+    'CONDITION' => '#^/comparing/#',
+    'RULE' => '',
+    'ID' => 'articul:comparing',
+    'PATH' => '/comparing/index.php',
+    'SORT' => 100,
+  ),
   1 => 
   array (
     'CONDITION' => '#^/articles/#',
@@ -30,14 +38,6 @@ $arUrlRewrite=array (
     'RULE' => '',
     'ID' => 'bitrix:news',
     'PATH' => '/shares/index.php',
-    'SORT' => 100,
-  ),
-  8 =>
-  array (
-    'CONDITION' => '#^/comparing/#',
-    'RULE' => '',
-    'ID' => 'articul:comparing',
-    'PATH' => '/comparing/index.php',
     'SORT' => 100,
   ),
   2 => 

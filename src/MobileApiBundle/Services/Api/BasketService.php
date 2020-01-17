@@ -138,33 +138,33 @@ class BasketService
                 $userId = null;
             }
             
-            if ($userId && count($basket->getOrderableItems()) > 0) {
-                $user                  = $this->appUserService->getCurrentUser();
-                $needAddDobrolapMagnet = $user->getGiftDobrolap();
-                /** Если пользователю должны магнит */
-                if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {
-                    $magnetID = $this->appBasketService->getDobrolapMagnet()['ID'];
-                    /** если магнит найден как оффер */
-                    if ($magnetID) {
-                        $basketItem = $this->appBasketService->addOfferToBasket(
-                            (int)$magnetID,
-                            1,
-                            [],
-                            true,
-                            $basket
-                        );
-                        $result     = $basket->save();
-                        /** если магнит успешно добавлен в корзину */
-                        if ($basketItem->getId() && $result->isSuccess()) {
-                            $userDB = new \CUser;
-                            $fields = [
-                                'UF_GIFT_DOBROLAP' => false,
-                            ];
-                            $userDB->Update($userId, $fields);
-                        }
-                    }
-                }
-            }
+           if ($userId && count($basket->getOrderableItems()) > 0) {
+               $user                  = $this->appUserService->getCurrentUser();
+               $needAddDobrolapMagnet = $user->getGiftDobrolap();
+               /** Если пользователю должны магнит */
+               if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {
+                   $magnetID = $this->appBasketService->getDobrolapMagnet()['ID'];
+                   /** если магнит найден как оффер */
+                   if ($magnetID) {
+                       $basketItem = $this->appBasketService->addOfferToBasket(
+                           (int)$magnetID,
+                           1,
+                           [],
+                           true,
+                           $basket
+                       );
+                       $result     = $basket->save();
+                       /** если магнит успешно добавлен в корзину */
+                       if ($basketItem->getId() && $result->isSuccess()) {
+                           $userDB = new \CUser;
+                           $fields = [
+                               'UF_GIFT_DOBROLAP' => false,
+                           ];
+                           $userDB->Update($userId, $fields);
+                       }
+                   }
+               }
+           }
             
             $this->sqlHeartbeat();
             $order = \Bitrix\Sale\Order::create(SITE_ID, $userId);

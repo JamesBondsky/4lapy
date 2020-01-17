@@ -49,8 +49,6 @@ use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
-use FourPaws\SaleBundle\Exception\BitrixProxyException;
-use FourPaws\PersonalBundle\Service\CouponService;
 
 /**
  * Class BasketController
@@ -156,10 +154,20 @@ class BasketController extends Controller implements LoggerAwareInterface
             $basketItem = $this->basketService->addOfferToBasket($offerId, $quantity, [], true, null, true);
             // @todo костыль - иначе в миникорзине не будет картинки нового товара
             $this->basketService->getOfferCollection(true);
+
+            $promoCode = $this->getPersonalOffersService()->tryGet20thBasketOfferCoupon(false);
+
+            if ($promoCode) {
+                $this->couponStorage->clear();
+                $this->couponStorage->save($promoCode);
+            }
+
             $data = [
                 'remainQuantity' => 10,
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
                 'disableAdd' => false,
+                'show_address_popup' => $this->basketService->needShowAddressPopup(null, true),
+                'got_coupon' => (bool)$promoCode,
             ];
 
             $temporaryItem = clone $basketItem;
@@ -180,9 +188,14 @@ class BasketController extends Controller implements LoggerAwareInterface
                 }
             }
 
-            $data['warning'] = !$availableDelivery;
-
-            $message = ($availableDelivery) ? 'Товар добавлен в корзину' : 'Обратите внимание, что доставка в ваш регион не осуществляется.';
+            if ($promoCode) {
+                $message = '<h3>Вы 20-й в акции<br>"Скидка 20% на каждый 20-й заказ"!</h3><br><br>Не забудьте оформить заказ сегодня.<br>Скидка уже ждет вас в корзине.</div>';
+            } elseif($availableDelivery) {
+                $message = 'Товар добавлен в корзину';
+            } else {
+                $data['warning'] = true;
+                $message = 'Обратите внимание, что доставка в ваш регион не осуществляется.';
+            }
 
             $response = JsonSuccessResponse::createWithData(
                 $message,
@@ -371,8 +384,8 @@ class BasketController extends Controller implements LoggerAwareInterface
             $personalOfferService->checkCoupon($promoCode);
 
             /** @var PiggyBankService $piggyBankService */
-            $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
-            $piggyBankService->checkPiggyBankCoupon($promoCode);
+//            $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
+//            $piggyBankService->checkPiggyBankCoupon($promoCode);
 
             $bitrixCoupon = DiscountCouponTable::query()
                 ->setFilter([

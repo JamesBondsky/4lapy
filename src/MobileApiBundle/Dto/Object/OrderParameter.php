@@ -75,7 +75,7 @@ class OrderParameter
      * Тип доставки
      * @Serializer\SerializedName("deliveryType")
      * @Serializer\Type("string")
-     * @Assert\Choice({"courier", "pickup", "dostavista", "dobrolap"})
+     * @Assert\Choice({"courier", "pickup", "dostavista", "dobrolap", "express"})
      * @var string
      */
     protected $deliveryType = '';

@@ -34,6 +34,12 @@ class CatalogDetailBundle extends CBitrixComponent
 
     protected $userService;
 
+//    public function onPrepareComponentParams($arParams)
+//    {
+//        $arParams['CACHE_TIME'] = $arParams['CACHE_TIME'] ?? getenv('GLOBAL_CACHE_TTL'); // !!! из-за этой строки при наличии переменной GLOBAL_CACHE_TTL перед <html> появляются закрывающие div`ы
+//        return parent::onPrepareComponentParams($arParams);
+//    }
+
     /**
      * GroupSet constructor.
      *
@@ -57,24 +63,25 @@ class CatalogDetailBundle extends CBitrixComponent
      */
     public function executeComponent()
     {
-        /** @var Offer $currentOffer */
-        $currentOffer = $this->arParams['OFFER'];
-        try {
-            $this->arResult['BUNDLE'] = $currentOffer->getBundle();
-            if ($this->arResult['BUNDLE']) {
-                $this->getBrands();
+        if ($this->startResultCache()) {
+            /** @var Offer $currentOffer */
+            $currentOffer = $this->arParams['OFFER'];
+            try {
+                $this->arResult['BUNDLE'] = $currentOffer->getBundle();
+                if ($this->arResult['BUNDLE']) {
+                    $this->getBrands();
+                }
+            } catch (\Exception $e) {
+                $logger = LoggerFactory::create('productDetail');
+                $logger->error($e->getMessage());
             }
-        } catch (\Exception $e) {
-            $logger = LoggerFactory::create('productDetail');
-            $logger->error($e->getMessage());
-        }
-        if ($this->arResult['BUNDLE'] === null) {
-            return null;
-        }
+            if ($this->arResult['BUNDLE'] === null) {
+                return null;
+            }
 
-        $this->loadTemplateFields();
-        $this->includeComponentTemplate();
-
+            $this->loadTemplateFields();
+            $this->includeComponentTemplate();
+        }
         return true;
     }
 

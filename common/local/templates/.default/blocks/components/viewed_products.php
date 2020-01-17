@@ -3,6 +3,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
 /**
  * Блок "Просмотренные мной товары"
  *
@@ -16,7 +17,6 @@ use FourPaws\KioskBundle\Service\KioskService;
 
 /** @global $APPLICATION */
 /** @var array $arParams */
-
 if(!KioskService::isKioskMode()) {
     $arParams['PRODUCTS_IBLOCK_TYPE'] = IblockType::CATALOG;
     $arParams['PRODUCTS_IBLOCK_CODE'] = IblockCode::PRODUCTS;

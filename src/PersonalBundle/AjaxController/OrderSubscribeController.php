@@ -44,6 +44,7 @@ class OrderSubscribeController extends Controller
                     'INCLUDE_TEMPLATE' => 'N',
                     'ORDER_ID' => $request->get('orderId'),
                     'SUBSCRIBE_ID' => $request->get('subscribeId'),
+                    'IS_SINGLE_SUBSCRIBE' => $request->get('changeNextDelivery')
                 ],
                 null,
                 [
@@ -103,6 +104,7 @@ class OrderSubscribeController extends Controller
                 }
             }
         } catch (\Exception $exception) {
+            $error = $exception->getMessage();
             // При исключениях выводим общее уведомление об ошибке
         }
 
@@ -111,7 +113,7 @@ class OrderSubscribeController extends Controller
                 'Неизвестная ошибка. Пожалуйста, обратитесь к администратору сайта',
                 [
                     'errors' => [
-                        'systemError' => 'Неизвестная ошибка. Пожалуйста, обратитесь к администратору сайта'
+                        'systemError' => $error
                     ]
                 ]
             );

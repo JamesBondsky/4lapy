@@ -1,0 +1,6 @@
+# Ignore everything
+**
+
+!/docker/**
+!composer.json
+!composer.lock

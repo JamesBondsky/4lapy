@@ -39,6 +39,7 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console rabbitmq:consumer push_processing #обработка обычных пушей
 - ./bin/symfony_console rabbitmq:consumer push_file_processing #обработка пушей из файла
 - ./bin/symfony_console rabbitmq:consumer push_send_ios #отправка ios пушей
+- ./bin/symfony_console rabbitmq:consumer order_subscription_creating # срочное создание заказов по отдельным подпискам 
 ```
 
 ## Перезапуск консьюмеров манзаны по расписанию
@@ -69,6 +70,12 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console fourpaws:store:schedulescalculate --date="2000-01-01" # на конкретную дату (сгенерируется на следующий день после указанного)
 ```
 
+## Генерирование заказов по подписке
+
+```
+- ./bin/console fourpaws:orderssubscribe:send Обход подписок и генерация заказов
+```
+
 ## Запуск импорта местоположений DPD
 
 ```
@@ -79,14 +86,14 @@ https://api.esv2.com - валидный адрес
 ## Смена типа оплаты для неоплаченных заказов с оплатой онлайн
 
 ```
-- ./bin/symfony_console f:o:p:c
+- ./bin/symfony_console fourpaws:order:paysystem:change
 ```
 
 ## Получение из Manzana заказов для пользователей, активных за последнее время
 
 ```
-- ./bin/symfony_console f:s:o:m:i # за 1 месяц
-- ./bin/symfony_console f:s:o:m:i --period="2 month" --mq=1 # period - за произвольный период; user - ID пользователя, для которого выгрузить (период при этом не учитывается); mq - использовать сервер очередей для импорта
+- ./bin/symfony_console fourpaws:sale:order:manzana:import # за 1 месяц
+- ./bin/symfony_console fourpaws:sale:order:manzana:import --period="2 month" --mq=1 # period - за произвольный период; user - ID пользователя, для которого выгрузить (период при этом не учитывается); mq - использовать сервер очередей для импорта
 ```
 
 ## Деактивация завершившихся акций

@@ -9,18 +9,14 @@ namespace FourPaws\StoreBundle\Service;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Data\Cache;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use Dadata\Response\Date;
-use Faker\Provider\DateTime;
 use FourPaws\AppBundle\Service\CacheGeneratingLocker;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\Dto\Coordinates;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\DeliverySchedule;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Entity\StoreSearchResult;
 use FourPaws\StoreBundle\Enum\StoreLocationType;
@@ -67,6 +63,8 @@ class StoreService implements LoggerAwareInterface
      * Ветаптека в сервисах
      */
     public const XML_ID_VET_APTEKA = 'vet-apteka';
+
+    public const EXPRESS_STORE_XML_ID = 'R298';
 
     /**
      * @var LocationService
@@ -676,69 +674,69 @@ class StoreService implements LoggerAwareInterface
     }
 
     /**
-     * Возвращает дату ближайшей для $date отгрузки со склада
+     * Возвращает дату ближайшей для $date отгрузки со склада. upd: устаревший код, дает неправильные расчеты
      *
      * @param Store     $store
      * @param \DateTime $date
      * @return \DateTime
      */
-    public function getStoreShipmentDate(Store $store, \DateTime $date): \DateTime
-    {
-        $items = [
-            11 => $store->getShipmentTill11(),
-            13 => $store->getShipmentTill13(),
-            18 => $store->getShipmentTill18(),
-        ];
-
-        $tmpDate = clone $date;
-        $currentDay = (int)$tmpDate->format('w');
-        $currentHour = (int)$tmpDate->format('G');
-        $results = [];
-
-        /**
-         * @var int   $maxHour
-         * @var array $days
-         */
-        foreach ($items as $maxHour => $days) {
-            if (empty($days)) {
-                continue;
-            }
-
-            $res = [];
-            foreach ($days as $day) {
-                $diff = $day - $currentDay;
-                /**
-                 * Если текущий день является днем отгрузки
-                 */
-                if ($diff === 0) {
-                    /**
-                     * Если текущий час меньше времени окончания отгрузки,
-                     * то отгрузка в текущий день, иначе - через неделю
-                     */
-                    if ($currentHour < $maxHour) {
-                        $res[] = 0;
-                    } else {
-                        $res[] = 7;
-                    }
-                    continue;
-                }
-
-                /**
-                 * если diff < 0, то поставка на следующей неделе, соответственно, добавляем 7 дней
-                 */
-                $res[] = ($diff > 0) ? $diff : $diff + 7;
-            }
-
-            $results[] = min($res);
-        }
-
-        $modifier = empty($results) ? 0 : min($results);
-        if ($modifier) {
-            $tmpDate->modify(sprintf('+%s days', $modifier));
-        }
-
-        return $tmpDate;
-    }
+//    public function getStoreShipmentDate(Store $store, \DateTime $date): \DateTime
+//    {
+//        $items = [
+//            11 => $store->getShipmentTill11(),
+//            13 => $store->getShipmentTill13(),
+//            18 => $store->getShipmentTill18(),
+//        ];
+//
+//        $tmpDate = clone $date;
+//        $currentDay = (int)$tmpDate->format('w');
+//        $currentHour = (int)$tmpDate->format('G');
+//        $results = [];
+//
+//        /**
+//         * @var int   $maxHour
+//         * @var array $days
+//         */
+//        foreach ($items as $maxHour => $days) {
+//            if (empty($days)) {
+//                continue;
+//            }
+//
+//            $res = [];
+//            foreach ($days as $day) {
+//                $diff = $day - $currentDay;
+//                /**
+//                 * Если текущий день является днем отгрузки
+//                 */
+//                if ($diff === 0) {
+//                    /**
+//                     * Если текущий час меньше времени окончания отгрузки,
+//                     * то отгрузка в текущий день, иначе - через неделю
+//                     */
+//                    if ($currentHour < $maxHour) {
+//                        $res[] = 0;
+//                    } else {
+//                        $res[] = 7;
+//                    }
+//                    continue;
+//                }
+//
+//                /**
+//                 * если diff < 0, то поставка на следующей неделе, соответственно, добавляем 7 дней
+//                 */
+//                $res[] = ($diff > 0) ? $diff : $diff + 7;
+//            }
+//
+//            $results[] = min($res);
+//        }
+//
+//        $modifier = empty($results) ? 0 : min($results);
+//        if ($modifier) {
+//            $tmpDate->modify(sprintf('+%s days', $modifier));
+//        }
+//
+//        return $tmpDate;
+//    }
 
     /**
      *

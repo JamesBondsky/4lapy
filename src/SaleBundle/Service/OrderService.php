@@ -8,6 +8,7 @@ use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
@@ -28,6 +29,7 @@ use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentItem;
 use Bitrix\Sale\UserMessageException;
 use COption;
+use DateTime;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -44,9 +46,11 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Exception\LocationNotFoundException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\DostavistaService;
+use FourPaws\External\Exception\DaDataQc;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
@@ -60,6 +64,7 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\LocationService;
@@ -69,6 +74,7 @@ use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -77,6 +83,9 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderExtendException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
+use FourPaws\SaleBundle\Repository\OrderStatusRepository;
+use FourPaws\SapBundle\Dto\Out\Orders\Order as OrderDtoOut;
+use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
@@ -126,6 +135,8 @@ class OrderService implements LoggerAwareInterface
      * РЦ Склад
      */
     public const STORE = 'DC01';
+
+    public static $isSubscription = false;
 
     /**
      * @var AddressService
@@ -334,17 +345,21 @@ class OrderService implements LoggerAwareInterface
      * @throws DeliveryNotFoundException
      * @throws NotImplementedException
      * @throws NotSupportedException
+     * @throws ObjectException
      * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
      * @throws OrderCreateException
      * @throws StoreNotFoundException
+     * @throws SystemException
      * @throws UserMessageException
-     * @throws ObjectException
+     * @throws ArgumentTypeException
+     * @throws LocationNotFoundException
      */
     public function initOrder(
         OrderStorage $storage,
         ?Basket $basket = null,
-        ?CalculationResultInterface $selectedDelivery = null
+        ?CalculationResultInterface $selectedDelivery = null,
+        bool $skipExpressDeliveryException = false
     ): Order {
         $order = Order::create(SITE_ID, $storage->getUserId() ?: null);
 
@@ -402,7 +417,7 @@ class OrderService implements LoggerAwareInterface
             $basket = $basket->createClone();
             $orderable = $selectedDelivery->getStockResult()->getOrderable();
             /** @var BasketItem $basketItem */
-            foreach ($basket as $basketItem) {
+            foreach ($basket as $indexBasketItem => $basketItem) {
                 $toUpdate = [
                     'CUSTOM_PRICE' => 'Y',
                 ];
@@ -416,6 +431,7 @@ class OrderService implements LoggerAwareInterface
                         }
                     }
                 }
+
                 $diff = $basketItem->getQuantity() - $amount;
                 if ($amount === 0) {
                     $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
@@ -445,6 +461,21 @@ class OrderService implements LoggerAwareInterface
                                 'VALUE' => $property['VALUE'],
                             ]);
                         }
+                    }
+                }
+
+                if (!$basketItem->getPrice()) {
+                    $currOrder = $orderable->filterByOfferId($basketItem->getProductId())->first();
+
+                    try {
+                        $isGift = $currOrder ? $currOrder->getPriceForAmount()->first()->isGift() : false;
+                    } catch (Exception $e) {
+                        $isGift = false;
+                    }
+
+                    if ((!$currOrder || ($currOrder && !$currOrder->getOffer()->getPrice())) && !$isGift) {
+                        $this->basketService->deleteOfferFromBasket($basketItem->getId());
+                        $basket->deleteItem($indexBasketItem);
                     }
                 }
 
@@ -597,6 +628,24 @@ class OrderService implements LoggerAwareInterface
                             $deliveryTo->format('H'),
                             $deliveryDate->format('i')
                         );
+                    } elseif ($this->deliveryService->isExpressDelivery($selectedDelivery)) {
+                        $deliveryDate = new DateTime();
+                        try {
+                            $deliveryTo = (new DateTime())->modify(sprintf('+%s minutes', $this->deliveryService->getExpressDeliveryInterval($storage->getCityCode(), $selectedDelivery)));
+                        } catch (LocationNotFoundException $e) {
+                            if (!$skipExpressDeliveryException) {
+                                throw $e;
+                            }
+
+                            $deliveryTo = new DateTime();
+                        }
+                        $value = sprintf(
+                            '%s:%s-%s:%s',
+                            $deliveryDate->format('H'),
+                            $deliveryDate->format('i'),
+                            $deliveryTo->format('H'),
+                            $deliveryTo->format('i')
+                        );
                     } else {
                         $value = sprintf(
                             '%s:00-23:59',
@@ -624,7 +673,7 @@ class OrderService implements LoggerAwareInterface
         $lat = $storage->getLat();
         $lng = $storage->getLng();
         $userCoords = [floatval($lat), floatval($lng)];
-        if ($this->deliveryService->isDostavistaDelivery($selectedDelivery) || $this->deliveryService->isDelivery($selectedDelivery)) {
+        if ($this->deliveryService->isDeliverable($selectedDelivery)) {
             $this->setOrderPropertiesByCode($order, ['USER_COORDS' => $lat . ',' . $lng]);
         }
 
@@ -743,13 +792,19 @@ class OrderService implements LoggerAwareInterface
             }
 
             try {
-                if ($storage->getBonus()) {
+                $amountBonus = $storage->getBonus();
+                $percentSumm = floor($order->getBasket()->getOrderableItems()->getPrice()*0.9);
+                if ($amountBonus) {
+                    if ($amountBonus > $percentSumm) {
+                        $amountBonus = $percentSumm;
+                    }
+
                     if (!$innerPayment = $paymentCollection->getInnerPayment()) {
                         $innerPayment = $paymentCollection->createInnerPayment();
                     }
-                    $innerPayment->setField('SUM', $storage->getBonus());
+                    $innerPayment->setField('SUM', $amountBonus);
                     $innerPayment->setPaid('Y');
-                    $sum -= $storage->getBonus();
+                    $sum -= $amountBonus;
                 }
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('bonus payment failed: %s', $e->getMessage()), [
@@ -786,15 +841,30 @@ class OrderService implements LoggerAwareInterface
         }
 
         $address = null;
-        if ($storage->getAddressId()) {
+        if ($storage->getAddressId() && $selectedDelivery->getDeliveryCode() != '4lapy_pickup') {
+            if ($storage->getCityCode() !== \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
+                $storage->updateAddressBySaveAddressByMoscowDistrict($this->addressService, $this->locationService);
+            }
             try {
                 $address = $this->addressService->getById($storage->getAddressId());
-                $storage->setStreet($address->getStreet())
-                    ->setHouse($address->getHouse())
-                    ->setBuilding($address->getHousing())
-                    ->setFloor($address->getFloor())
-                    ->setApartment($address->getFlat())
-                    ->setPorch($address->getEntrance());
+
+                if ($address->getLocation() == \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
+                    $storage->updateAddressBySaveAddressByMoscowDistrict($this->addressService, $this->locationService);
+
+                    $storage->setStreet($address->getStreet())
+                        ->setHouse($address->getHouse())
+                        ->setBuilding($address->getHousing())
+                        ->setFloor($address->getFloor())
+                        ->setApartment($address->getFlat())
+                        ->setPorch($address->getEntrance());
+                } else {
+                    $storage->setStreet($address->getStreet())
+                        ->setHouse($address->getHouse())
+                        ->setBuilding($address->getHousing())
+                        ->setFloor($address->getFloor())
+                        ->setApartment($address->getFlat())
+                        ->setPorch($address->getEntrance());
+                }
             } catch (AddressNotFoundException $e) {
                 $storage->setAddressId(0);
             }
@@ -813,7 +883,8 @@ class OrderService implements LoggerAwareInterface
             'PORCH',
             'FLOOR',
         ];
-        $skipAddressProperties = !$this->deliveryService->isDelivery($selectedDelivery) && !$this->deliveryService->isDostavistaDelivery($selectedDelivery);
+
+        $skipAddressProperties = !$this->deliveryService->isDeliverable($selectedDelivery);
 
         /** @var PropertyValue $propertyValue */
         foreach ($propertyValueCollection as $propertyValue) {
@@ -877,6 +948,14 @@ class OrderService implements LoggerAwareInterface
                     ]
                 );
             }
+        }
+
+        if(KioskService::isKioskMode()) {
+            $this->setOrderPropertyByCode(
+                $order,
+                'OPERATOR_SHOP',
+                KioskService::getOrderShop()
+            );
         }
 
         if ($storage->isFastOrder()) {
@@ -1032,8 +1111,8 @@ class OrderService implements LoggerAwareInterface
         if (null === $selectedDelivery) {
             $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         }
-        if($storage->getDeliveryDate() > 0){
-            $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, ($storage->getDeliveryDate()+1))[$storage->getDeliveryDate()];
+        if ($storage->getDeliveryDate() > 0) {
+            $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, ($storage->getDeliveryDate() + 1))[$storage->getDeliveryDate()];
         }
 
         /**
@@ -1150,11 +1229,10 @@ class OrderService implements LoggerAwareInterface
 //                if (($card = $contact->getCards()->first()) instanceof Card) {
 //                    $storage->setDiscountCardNumber($card->cardNumber);
 //                }
-
                 $contactId = $this->manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
                 $cards = $this->manzanaService->getCardsByContactId($contactId);
                 foreach ($cards as $cardItem) {
-                    if ($cardItem->isActive()) {
+                    if (isset($cardItem) && $cardItem->isActive()) {
                         $storage->setDiscountCardNumber($cardItem->cardNumber);
                         break;
                     }
@@ -1188,6 +1266,8 @@ class OrderService implements LoggerAwareInterface
                 'SUBSCRIBE_ID',
                 $storage->getSubscribeId()
             );
+
+            self::$isSubscription = true;
         }
 
         $shipmentPlaceCode = $this->getOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE')->getValue();
@@ -1204,7 +1284,7 @@ class OrderService implements LoggerAwareInterface
 
         $address = null;
         if (!$fastOrder) {
-            if ($this->deliveryService->isDelivery($selectedDelivery) || $this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
+            if ($this->deliveryService->isDeliverable($selectedDelivery)) {
                 /**
                  * Для доставки - сохраняем адрес
                  */
@@ -1267,6 +1347,8 @@ class OrderService implements LoggerAwareInterface
                         'STREET_PREFIX' => $address->getStreetPrefix(),
                         'ZIP_CODE' => $address->getZipCode(),
                     ]);
+                } catch (DaDataQc $exQC) {
+
                 } catch (AddressSplitException $e) {
                     $this->log()->error(sprintf('failed to split delivery address: %s', $e->getMessage()), [
                         'fuserId' => $storage->getFuserId(),
@@ -1278,9 +1360,8 @@ class OrderService implements LoggerAwareInterface
                 $lat = $storage->getLat();
                 $lng = $storage->getLng();
                 $userCoords = [floatval($lat), floatval($lng)];
-                if ($this->deliveryService->isDostavistaDelivery($selectedDelivery) || $this->deliveryService->isDelivery($selectedDelivery)) {
-                    $this->setOrderPropertiesByCode($order, ['USER_COORDS' => $lat . ',' . $lng]);
-                }
+
+                $this->setOrderPropertiesByCode($order, ['USER_COORDS' => $lat . ',' . $lng]);
 
                 //получаем ближайший магазин по координатам адреса пользователя и коодинатам магазинов, где все в наличие
                 if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
@@ -1316,7 +1397,12 @@ class OrderService implements LoggerAwareInterface
                             ->setStreet('Красный бор');
                     } else {
                         $addressString = $this->storeService->getStoreAddress($shop) . ', ' . $shop->getAddress();
-                        $address = $this->locationService->splitAddress($addressString, $shop->getLocation());
+                        try {
+                            $address = $this->locationService->splitAddress($addressString, $shop->getLocation());
+                        } catch (Exception $e) {
+                            $address = $this->storeService->getStoreAddress($shop);
+                            $address->setStreet($shop->getAddress());
+                        }
                     }
                     $this->setOrderAddress($order, $address);
                 } catch (AddressSplitException $e) {
@@ -1649,7 +1735,8 @@ class OrderService implements LoggerAwareInterface
             case \in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true):
                 $address = (string)$this->compileOrderAddress($order);
                 break;
-            case ($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE):
+            case $deliveryCode === DeliveryService::DELIVERY_DOSTAVISTA_CODE:
+            case $deliveryCode === DeliveryService::EXPRESS_DELIVERY_CODE:
                 $address = $this->compileOrderAddress($order)->toStringExt();
                 break;
         }
@@ -1660,8 +1747,9 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @throws NotFoundException
      * @return OfferCollection
+     * @throws ArgumentNullException
+     * @throws NotFoundException
      */
     public function getOrderProducts(Order $order): OfferCollection
     {
@@ -1689,7 +1777,6 @@ class OrderService implements LoggerAwareInterface
      * @param Order $order
      *
      * @throws ArgumentNullException
-     * @throws NotImplementedException
      * @throws NotFoundException
      * @return Order
      */
@@ -1943,6 +2030,7 @@ class OrderService implements LoggerAwareInterface
                 case $this->deliveryService->isInnerPickup($delivery) && $stockResult->getDelayed()->isEmpty():
                     // способ получения 06
                 case $this->deliveryService->isDostavistaDelivery($delivery):
+                case $this->deliveryService->isExpressDelivery($delivery):
                 case $deliveryFromShop && $stockResult->getDelayed()->isEmpty():
                     $value = OrderPropertyService::COMMUNICATION_SMS;
                     break;
@@ -2163,7 +2251,7 @@ class OrderService implements LoggerAwareInterface
      */
     public function sendToDostavistaQueue(Order $order, string $name, string $phone, string $comment, string &$periodTo, Store $nearShop = null, bool $isPaid = false): void
     {
-        $curDate = new \DateTime;
+        $curDate = new DateTime;
         $basket = $order->getBasket();
         /** @var int $insurance Цена страхования */
         $deliveryPrice = $order->getDeliveryPrice();
@@ -2381,9 +2469,9 @@ class OrderService implements LoggerAwareInterface
             $basketItemsXmlId[] = $this->basketService->getBasketItemXmlId($basketItem);
         }
         $basketRoyalCaninItems = array_uintersect(static::ROYAL_CANIN_OFFERS, $basketItemsXmlId, 'strcasecmp');
-        $curTime = new \DateTime();
-        $dateTimeStart = \DateTime::createFromFormat('d.m.Y H:i:s', '08.04.2019 00:00:00');
-        $dateTimeFinish = \DateTime::createFromFormat('d.m.Y H:i:s', '03.06.2019 23:59:59');
+        $curTime = new DateTime();
+        $dateTimeStart = DateTime::createFromFormat('d.m.Y H:i:s', '08.04.2019 00:00:00');
+        $dateTimeFinish = DateTime::createFromFormat('d.m.Y H:i:s', '03.06.2019 23:59:59');
         if ($curTime >= $dateTimeStart && $curTime <= $dateTimeFinish && $orderPrice > 1000 && count($basketRoyalCaninItems) > 0) {
             $res = true;
         }
@@ -2393,11 +2481,11 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Store $sender
      * @param Store $receiver
-     * @param \DateTime $currentDate
-     * @param \DateTime $deliveryDate
+     * @param DateTime $currentDate
+     * @param DateTime $deliveryDate
      * @return mixed|null
      */
-    protected function getScheduleResultOptimal(Store $sender, Store $receiver, \DateTime $currentDateOrig, \DateTime $deliveryDate)
+    protected function getScheduleResultOptimal(Store $sender, Store $receiver, DateTime $currentDateOrig, DateTime $deliveryDate)
     {
         $scheduleResultOptimal = null;
         $currentDate = clone $currentDateOrig;
@@ -2464,8 +2552,11 @@ class OrderService implements LoggerAwareInterface
      * @throws OrderCancelException
      * @throws SqlQueryException
      */
-    public function cancelOrder($orderId): bool
+    public function cancelOrder($orderId)
     {
+        $sendEmail = true;
+        $newStatus = '';
+
         // ищем заказ
         try {
             $order = $this->getOrderById($orderId);
@@ -2495,9 +2586,12 @@ class OrderService implements LoggerAwareInterface
             return false;
         }
 
-        $sendEmail = false;
         if (($statusId === OrderStatus::STATUS_IN_PROGRESS) || ($statusId === OrderStatus::STATUS_DELIVERING)) {
-            $sendEmail = true;
+            $user = \CUser::GetByID($userId)->Fetch();
+            \CEvent::Send('USER_WANNA_CANCEL_ORDER', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER'), 'NAME' => $user['NAME'], 'PHONE' => $user['PERSONAL_PHONE']]);
+            \CSaleOrder::StatusOrder($orderId, OrderStatus::STATUS_CANCELING);
+
+            return 'canceling';
         }
 
         // формируем новый статус в зависимости от службы доставки
@@ -2509,59 +2603,36 @@ class OrderService implements LoggerAwareInterface
 
         try {
             $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
-            if ($this->deliveryService->isDeliveryCode($deliveryCode)) {
+            if ($this->deliveryService->isDeliveryCode($deliveryCode) && !$newStatus) {
                 $newStatus = OrderStatus::STATUS_CANCEL_COURIER;
             } else if ($this->deliveryService->isPickupCode($deliveryCode)) {
                 $newStatus = OrderStatus::STATUS_CANCEL_PICKUP;
+            } else if ($deliveryCode = DeliveryService::DELIVERY_DOSTAVISTA_CODE || $deliveryCode = DeliveryService::DOBROLAP_DELIVERY_CODE || $deliveryCode = DeliveryService::EXPRESS_DELIVERY_CODE) {
+                $newStatus = OrderStatus::STATUS_CANCEL_COURIER;
             } else {
-                throw new OrderCancelException('Не найдена служба доставки для заказа');
+
             }
         } catch (\Exception $e) {
             throw new OrderCancelException('Не найдена служба доставки для заказа');
         }
 
-        $connection = BitrixApplication::getConnection();
-
-        $connection->startTransaction();
+        $this->cancelBitrixOrder($order, $orderId, $newStatus);
 
         try {
             // отменяем заказ в Sap'е
-            $orderNumber = $order->getField('ACCOUNT_NUMBER');
-            $sapStatus = StatusService::STATUS_CANCELED;
-            $setStatusResult = $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
-    
-            if (!$setStatusResult) {
-                $connection->rollbackTransaction();
-                return false;
-            }
-            
-            // отменяем заказ
-            $cancelResult = (new \CSaleOrder)->cancelOrder($orderId, BaseEntity::BITRIX_TRUE, '');
+             $orderNumber = $order->getField('ACCOUNT_NUMBER');
+             $sapStatus = StatusService::STATUS_CANCELED;
+             $result = $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
 
-            if ($cancelResult) {
-                $order->setField('STATUS_ID', $newStatus);
-                $saveResult = $order->save();
-            } else {
-                $connection->rollbackTransaction();
-                return false;
-            }
+             if (!$result) {
+                 $this->sendSapFailMail($userId, $order);
+             }
 
-            if (!$saveResult->isSuccess()) {
-                $connection->rollbackTransaction();
-                return false;
-            }
-            
-            $connection->commitTransaction();
         } catch (\Exception $e) {
-            $connection->rollbackTransaction();
-            return false;
+            $this->sendSapFailMail($userId, $order);
         }
 
-        if ($sendEmail) {
-            \CEvent::Send('ADMIN_EMAIL_AFTER_ORDER_CANCEL', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER')]);
-        }
-
-        return true;
+        return 'cancel';
     }
 
     /**
@@ -2661,5 +2732,43 @@ class OrderService implements LoggerAwareInterface
         $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
 
         return $propertyValue ? ($propertyValue->getValue() ?? '') : '';
+    }
+
+    protected function cancelBitrixOrder($order, $orderId, $status)
+    {
+        $connection = BitrixApplication::getConnection();
+
+        $connection->startTransaction();
+
+        try {
+            // отменяем заказ
+            $cancelResult = (new \CSaleOrder)->cancelOrder($orderId, BaseEntity::BITRIX_TRUE, '');
+
+            if ($cancelResult) {
+                $order->setField('STATUS_ID', $status);
+                $saveResult = $order->save();
+            } else {
+                $connection->rollbackTransaction();
+                return false;
+            }
+
+            if (!$saveResult->isSuccess()) {
+                $connection->rollbackTransaction();
+                return false;
+            }
+
+            $connection->commitTransaction();
+        } catch (\Exception $e) {
+            $connection->rollbackTransaction();
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function sendSapFailMail($userId, $order)
+    {
+        $user = \CUser::GetByID($userId)->Fetch();
+        \CEvent::Send('USER_WANNA_CANCEL_ORDER', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER'), 'NAME' => $user['NAME'], 'PHONE' => $user['PERSONAL_PHONE']]);
     }
 }

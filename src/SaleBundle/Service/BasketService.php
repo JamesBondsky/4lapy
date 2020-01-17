@@ -16,12 +16,12 @@ use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\Result as MainResult;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
@@ -41,14 +41,12 @@ use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\Catalog\Query\PriceQuery;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Enum\IblockType;
 use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
-use FourPaws\Helpers\IblockHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
@@ -73,7 +71,7 @@ use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use WebArch\BitrixCache\BitrixCache;
+use Symfony\Component\HttpFoundation\Request;
 
 /** @noinspection EfferentObjectCouplingInspection */
 
@@ -112,8 +110,8 @@ class BasketService implements LoggerAwareInterface
     /** @var StockService $stockService */
     private $stockService;
 
-    public const GIFT_DOBROLAP_XML_ID = '3006635';
-    public const GIFT_DOBROLAP_XML_ID_ALT = '3006616';
+    public const GIFT_DOBROLAP_XML_ID = '3007113';
+    public const GIFT_DOBROLAP_XML_ID_ALT = '3007113';
     private $dobrolapMagnets;
 
     public const GIFT_NOVEMBER_NEWSPAPER_XML_ID = '3006893';
@@ -1149,8 +1147,9 @@ class BasketService implements LoggerAwareInterface
     {
         /**
          * @todo выпилить 1 октября 2018 года (коммент перенесен из метода isGiftProduct)
+         *       #магнит #магнитики #магнит цена корзина пипец #подарок магнит #что за жопа #magnet #fmagnet
          */
-        return (!\in_array($xmlId, ['3005425', '3005437', '3005424', '3005436'], true) && // @todo костыль для акции "добролап" (коммент перенесен из метода isGiftProduct)
+        return (!\in_array($xmlId, ['3005425', '3005437', '3005424', '3005436', '3007113'], true) && // @todo костыль для акции "добролап" (коммент перенесен из метода isGiftProduct)
             ($xmlId[0] === '3')) || ($extendedCheck && $xmlId[0] === '2');
     }
 
@@ -1489,7 +1488,7 @@ class BasketService implements LoggerAwareInterface
             ->registerRuntimeField(
                 new ReferenceField(
                     'ELEMENT', ElementTable::class,
-                    Query\Join::on('this.PRODUCT_ID', 'ref.ID')
+                    Join::on('this.PRODUCT_ID', 'ref.ID')
                         ->where('ref.ACTIVE', BitrixUtils::BX_BOOL_TRUE)
                         ->where('ref.IBLOCK_ID', $offersIblockId),
                     ['join_type' => 'INNER']
@@ -1498,7 +1497,7 @@ class BasketService implements LoggerAwareInterface
             ->registerRuntimeField(
                 new ReferenceField(
                     'CATALOG_PRICE', PriceTable::class,
-                    Query\Join::on('this.PRODUCT_ID', 'ref.PRODUCT_ID')->where('ref.CATALOG_GROUP_ID', 2),
+                    Join::on('this.PRODUCT_ID', 'ref.PRODUCT_ID')->where('ref.CATALOG_GROUP_ID', 2),
                     ['join_type' => 'INNER']
                 )
             )
@@ -1657,7 +1656,7 @@ class BasketService implements LoggerAwareInterface
             $tItems[$offer->getId()]['WEIGHT'] = $offer->getCatalogProduct()->getWeight();
             $tItems[$offer->getId()]['DETAIL_PAGE_URL'] = $offer->getDetailPageUrl();
             $tItems[$offer->getId()]['PRODUCT_XML_ID'] = $offer->getXmlId();
-            if($tItems[$offer->getId()]['QUANTITY'] > $offer->getQuantity()){
+            if($tItems[$offer->getId()]['QUANTITY'] > $offer->getQuantity() && $offer->getQuantity()){
                 $tItems[$offer->getId()]['QUANTITY'] = $offer->getQuantity();
             }
         }
@@ -1784,5 +1783,47 @@ class BasketService implements LoggerAwareInterface
     public function getBasketPropertyValueByCode(BasketItem $item, string $code): string
     {
         return (string)($item->getPropertyCollection()->getPropertyValues()[$code]['VALUE'] ?? '');
+    }
+
+    /**
+     * @param Request|null $request
+     * @param bool $withDelivery
+     * @return bool
+     */
+    public function needShowAddressPopup(Request $request = null, $withDelivery = false): bool
+    {
+        /** @var LocationService $locationService */
+        $locationService = App::getInstance()->getContainer()->get('location.service');
+        if ($locationService->getCurrentLocation() !== LocationService::LOCATION_CODE_MOSCOW) {
+            return false;
+        }
+
+        if ($request instanceof Request) {
+            $hasCookieValue = ((int)$request->cookies->get('show_address_popup', 0) === 1);
+        } else {
+            $hasCookieValue = (isset($_COOKIE['show_address_popup']) && ((int)$_COOKIE['show_address_popup'] === 1));
+        }
+
+        if ($hasCookieValue) {
+            return false;
+        }
+
+        if ($withDelivery) {
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
+            try {
+                foreach ($deliveryService->getByBasket($this->getBasket()) as $delivery) {
+                    if ($deliveryService->isDeliverable($delivery)) {
+                        return true;
+                    }
+                }
+            } catch (\Exception $e) {
+                return false;
+            }
+        } else {
+            return true;
+        }
+
+        return false;
     }
 }

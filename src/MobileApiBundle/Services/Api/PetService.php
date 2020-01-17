@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Bitrix\Main\Request;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\UI\FileInputUtility;
 use FourPaws\AppBundle\Entity\UserFieldEnumValue;
@@ -15,6 +16,8 @@ use FourPaws\CatalogBundle\Service\FilterService;
 use FourPaws\MobileApiBundle\Dto\Object\Pet;
 use FourPaws\MobileApiBundle\Dto\Object\PetGender;
 use FourPaws\MobileApiBundle\Dto\Object\PetPhoto;
+use FourPaws\MobileApiBundle\Dto\Object\PetSizes;
+use FourPaws\MobileApiBundle\Dto\Object\PetSize;
 use FourPaws\MobileApiBundle\Dto\Request\UserPetAddRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserPetDeleteRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserPetPhotoAddRequest;
@@ -24,6 +27,8 @@ use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Service\PetService as AppPetService;
 use FourPaws\PersonalBundle\Repository\PetRepository;
 use FourPaws\UserBundle\Service\UserService as UserBundleService;
+use Bitrix\Main\UserFieldTable;
+use FourPaws\Helpers\HighloadHelper;
 
 class PetService
 {
@@ -56,6 +61,16 @@ class PetService
      * @var UserBundleService
      */
     private $userBundleService;
+    
+    /**
+     * @var $fenteziSize array
+     */
+    private $fenteziSize = [];
+    
+    /**
+     * @var $petSizes array
+     */
+    private $petSizes = [];
 
     public function __construct(
         CategoriesService $categoriesService,
@@ -98,6 +113,7 @@ class PetService
             $result[$type['ID']] = [
                 'id' => $type['ID'],
                 'title' => $type['UF_NAME'],
+                'name_require' => (($type['UF_CODE'] === 'koshki') || ($type['UF_CODE'] === 'sobaki')),
                 'gender' => $genders,
                 'breeds' => []
             ];
@@ -109,7 +125,12 @@ class PetService
                     ];
                 }
             }
+            
+            if ($type['UF_CODE'] === 'sobaki') {
+                $result[$type['ID']]['sizes'] = $this->getUserPetSizes();
+            }
         }
+        
         return array_values($result);
     }
 
@@ -119,6 +140,8 @@ class PetService
      */
     public function getUserPetAll()
     {
+        $this->petSizes = $sizes = $this->getUserPetSizes();
+        
         return $this->appPetService->getCurUserPets()->map(\Closure::fromCallable([$this, 'map']));
     }
 
@@ -149,17 +172,25 @@ class PetService
     public function addUserPet(UserPetAddRequest $addUserPetRequest)
     {
         $currentUser = $this->userBundleService->getCurrentUser();
-
+    
         $petEntity = (new \FourPaws\PersonalBundle\Entity\Pet())
-            ->setName($addUserPetRequest->getName())
             ->setType($addUserPetRequest->getCategoryId())
             ->setUserId($currentUser->getId())
             ->setBreed($addUserPetRequest->getBreedOther())
             ->setBreedId($addUserPetRequest->getBreedId())
-           ;
+            ->setSize($addUserPetRequest->getSize())
+            ->setBack($addUserPetRequest->getBack())
+            ->setNeck($addUserPetRequest->getNeck())
+            ->setChest($addUserPetRequest->getChest());
+
+        if ($petName = $addUserPetRequest->getName()) {
+            $petEntity->setName($petName);
+        }
 
         if ($birthday = $addUserPetRequest->getBirthday()) {
             $petEntity->setBirthday((new Date($birthday->format('d.m.Y'))));
+        } else {
+            $petEntity->setBirthday('');
         }
 
         if ($genderCode = $addUserPetRequest->getGender()) {
@@ -172,6 +203,9 @@ class PetService
 
         $this->petRepository->setEntity($petEntity);
         $this->petRepository->create();
+
+        $this->prevIdAdd = $petEntity->getId();
+
         return $this->getUserPetAll();
     }
 
@@ -192,10 +226,15 @@ class PetService
             ->setType($userPetUpdateRequest->getCategoryId())
             ->setBreed($userPetUpdateRequest->getBreedOther())
             ->setBreedId($userPetUpdateRequest->getBreedId())
-        ;
+            ->setSize($userPetUpdateRequest->getSize())
+            ->setBack($userPetUpdateRequest->getBack())
+            ->setNeck($userPetUpdateRequest->getNeck())
+            ->setChest($userPetUpdateRequest->getChest());
 
         if ($birthday = $userPetUpdateRequest->getBirthday()) {
             $petEntity->setBirthday((new Date($birthday->format('d.m.Y'))));
+        } else {
+            $petEntity->setBirthday('');
         }
 
         if ($genderCode = $userPetUpdateRequest->getGender()) {
@@ -283,15 +322,14 @@ class PetService
      */
     public function map($pet)
     {
-        $birthdayStmp = $pet->getBirthday()->getTimestamp();
-        $birthday = (new \DateTime())->setTimestamp($birthdayStmp);
+        $petSize = $this->getPetSize($pet);
+        
         $result = (new Pet())
             ->setId($pet->getId())
             ->setName($pet->getName())
             ->setCategoryId($pet->getType())
             ->setBreedId($pet->getBreedId())
             ->setBreedOther($pet->getBreed())
-            ->setBirthday($birthday)
             ->setBirthdayString($pet->getAgeString())
             ->setPhoto(
                 (new PetPhoto())
@@ -299,7 +337,15 @@ class PetService
                     ->setPreview($pet->getImgPath())
                     ->setSrc($pet->getResizePopupImgPath())
             )
-        ;
+            ->setPetSize($petSize)
+            ->setIsAddNow(isset($this->prevIdAdd) ? ($this->prevIdAdd == $pet->getId()) : false);
+
+        if ($pet->getBirthday()) {
+            $birthdayStmp = $pet->getBirthday()->getTimestamp();
+            $birthday = (new \DateTime())->setTimestamp($birthdayStmp);
+            $result->setBirthday($birthday);
+        }
+
         if ($genderCode = $pet->getGender()) {
             $result->setGender(
                 (new PetGender())
@@ -308,6 +354,53 @@ class PetService
             );
         }
         return $result;
+    }
+    
+    public function getUserPetSizes()
+    {
+        $petSizes = [];
+        $i = 0;
+        
+        $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
+            [
+                'FIELD_NAME' => 'UF_SIZE',
+                'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
+            ]
+        )->exec()->fetch()['ID'];
+        $userFieldEnum = new \CUserFieldEnum();
+        $res = $userFieldEnum->GetList([], ['USER_FIELD_ID' => $userFieldId]);
+        
+        while ($item = $res->Fetch()) {
+            if ($item['XML_ID'] == 'n') {
+                $this->fenteziSize = [
+                    'id' => $item['ID'],
+                    'title' => $item['VALUE']
+                ];
+                continue;
+            }
+            
+            $petSizes[$i]['id'] = $item['ID'];
+            $petSizes[$i]['title'] = $item['VALUE'];
+            $i++;
+        }
+        
+        return $petSizes;
+    }
+    
+    public function calculateSize($back, $neck, $chest)
+    {
+        $petSizeSercvice = new PetSizeService($back, $neck, $chest);
+        
+        $currentSize = $petSizeSercvice->calculate();
+        $sizes = $this->getUserPetSizes();
+        
+        foreach ($sizes as $size) {
+            if ($size['title'] == $currentSize) {
+                return $size;
+            }
+        }
+        
+        return $this->fenteziSize;
     }
 
     protected function resizeUserPetPhoto(array $photo): array
@@ -335,5 +428,30 @@ class PetService
         }
         return $photo;
     }
+    
+    protected function getPetSize($pet)
+    {
+        $petSize = new PetSize();
+        $petSize->setId($pet->getSize());
+        
+        $petSizes = new PetSizes();
+        
+        $petSizes->setBack($pet->getBack());
+        $petSizes->setNeck($pet->getNeck());
+        $petSizes->setChest($pet->getChest());
+        
+        foreach ($this->petSizes as $size) {
+            if ($size['id'] == $pet->getSize()) {
+                $petSize->setTitle($size['title']);
+            }
+        }
 
+        if (!$petSize->getTitle()) {
+            $petSize->setTitle($this->fenteziSize['title']);
+        }
+
+        $petSizes->setSize($petSize);
+        
+        return $petSizes;
+    }
 }

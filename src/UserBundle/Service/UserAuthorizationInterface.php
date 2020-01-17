@@ -32,6 +32,11 @@ interface UserAuthorizationInterface
     public function isAuthorized(): bool;
 
     /**
+     * @return bool
+     */
+    public function isAdmin(): bool;
+
+    /**
      * @param int $id
      *
      * @return bool

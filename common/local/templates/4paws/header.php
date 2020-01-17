@@ -24,7 +24,7 @@ use FourPaws\UserBundle\Enum\UserLocationEnum;
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()
     ->getContext());
-$markup = PawsApplication::markup(); 
+$markup = PawsApplication::markup();
 
 /**
  * @var $sViewportCookie - Значение куки отвечающе за переключение вьпорта с мобильного на десктоп.
@@ -32,11 +32,16 @@ $markup = PawsApplication::markup();
 $sViewportCookie = $_COOKIE['viewport'] ?? null;
 
 $bodyClass = '';
+
 if(KioskService::isKioskMode()) {
     $bodyClass = 'body-kiosk js-body-kiosk';
 
     if($USER->IsAuthorized()) {
         $bodyClass .= ' authorized';
+    }
+
+    if (isset($_REQUEST['store'])) {
+        $_SESSION['kiosk_store'] = $_REQUEST['store'];
     }
 }
 
@@ -64,7 +69,8 @@ if(KioskService::isKioskMode()) {
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="google" content="notranslate">
     <meta name="format-detection" content="telephone=no">
-    <meta name="yandex-verification" content="6266e34669b85ed6">
+    <meta name="yandex-verification" content="d69492b0ac6396cf" />
+    <meta name="google-site-verification" content="YhnMv-eup_rK_sqgNqgHc8UrWyWaZQ22m5z7xnokuNs" />
 
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/favicons.php'; ?>
 
@@ -82,7 +88,7 @@ if(KioskService::isKioskMode()) {
     $asset = Asset::getInstance();
     $asset->addCss($markup->getCssFile());
     $asset->addJs('//api-maps.yandex.ru/2.1/?apikey=8bb38591-0ddc-44f1-a86c-7e5d50e8cac3&lang=ru_RU&load=package.full');
-    //$asset->addJs('/api-maps.yandex.ru.js');
+//    $asset->addJs('/api-maps.yandex.ru.js');
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
 
     /** onesignal.com */
@@ -236,7 +242,9 @@ if(KioskService::isKioskMode()) {
 			                        <div class="b-person-coupon__inner">
 			                            <div class="b-person-coupon__close js-close-person-coupon-popup"></div>
 				                        <? if ($offerDiscountText) { ?>
-			                                <div class="b-person-coupon__persent">-<?= $offerDiscountText ?></div>
+                                            <div class="b-person-coupon__persent" data-text-fill-title-coupon="true" data-max-size-title-desktop="46" data-max-size-title-mobile="33">
+                                                <span>-<?= $offerDiscountText ?></span>
+                                            </div>
 										<? } ?>
 			                            <div class="b-person-coupon__descr"><?= $lastCouponOffer['~PREVIEW_TEXT'] ?></div>
 			                            <a href="/personal/personal-offers/" class="b-person-coupon__btn">Подробнее</a>

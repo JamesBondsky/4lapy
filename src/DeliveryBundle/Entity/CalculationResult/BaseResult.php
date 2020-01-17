@@ -346,7 +346,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
         if (null !== $this->fullstockResult) {
             if ($this->fullstockResult->getOrderable()->isEmpty()) {
-                $this->addError(new Error('Нет остатков на складах по данному набору товаров'));
+//                $this->addError(new Error('Нет остатков на складах по данному набору товаров')); todo
             } else {
                 $this->getSelectedStore();
                 $stockResult = $this->getStockResult()->getOrderable()->filterByStore($this->selectedStore);
@@ -721,9 +721,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $result1 = $storeData1['RESULT'];
             /** @var PickupResult $result2 */
             $result2 = $storeData2['RESULT'];
-
+            
             /** в киоске первым идёт магазин, в котором он стоит */
-            if (KioskService::isKioskMode()) {
+            if (KioskService::isKioskMode() && !$result2->getErrors()) {
                 /** @var KioskService $kioskService */
                 $kioskService = Application::getInstance()->getContainer()->get('kiosk.service');
                 $store = $kioskService->getStore();

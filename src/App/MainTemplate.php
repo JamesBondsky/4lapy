@@ -519,8 +519,26 @@ class MainTemplate extends TemplateAbstract
         return $this->isPartitionPage('/dobrolap/');
     }
 
+    /**
+     * @return bool
+     */
+    public function isFlagman(): bool
+    {
+        return $this->isPartitionPage('/events/');
+    }
+
     public function isStampsPage() :bool
     {
         return $this->isDir('/personal/marki') || $this->isDir('/home');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFrontOffice(): bool
+    {
+        $isFrontOffice = $this->isDir('/local/components/fourpaws/front_office.avatar');
+
+        return $isFrontOffice;
     }
 }

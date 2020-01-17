@@ -550,6 +550,11 @@ class ScheduleResultService implements LoggerAwareInterface
 
             /** @var DeliverySchedule $schedule */
             foreach ($this->deliveryScheduleService->findBySenderAndRegularity($sender, $regularityId) as $schedule) {
+                // Если хотя бы одно из значений даты и времени не входит в дату действия расписания, то поставка была бы рассчитана неправильно
+                if (end($from) < $schedule->getActiveFrom() || array_values($from)[0] > $schedule->getActiveTo()) {
+                    continue;
+                }
+
                 /**
                  * Поиск даты поставки
                  */
@@ -558,10 +563,10 @@ class ScheduleResultService implements LoggerAwareInterface
                     /** Дата поставки на $receiver */
                     $nextDelivery = $schedule->getNextDelivery($date);
 
-                    /** Если расписания для магазина нет - берём график отгрузок */
-                    if (null === $nextDelivery && $schedule->getReceiver()->isShop()) {
-                        $nextDelivery = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
-                    }
+                    /** Если расписания для магазина нет - берём график отгрузок. upd: устаревший код, больше не используется */
+//                    if (null === $nextDelivery && $schedule->getReceiver()->isShop()) {
+//                        $nextDelivery = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
+//                    }
 
                     if (null === $nextDelivery) {
                         continue;

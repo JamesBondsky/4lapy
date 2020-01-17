@@ -13,6 +13,7 @@ use FourPaws\SaleBundle\Entity\OrderProperty;
 use FourPaws\SaleBundle\Entity\OrderPropertyVariant;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\DeserializationContext;
+use WebArch\BitrixCache\BitrixCache;
 
 class OrderPropertyVariantRepository
 {
@@ -46,30 +47,39 @@ class OrderPropertyVariantRepository
     /**
      * @param array $filter
      *
+     * @param int $cacheTime
      * @throws ArgumentException
      * @return OrderPropertyVariantCollection
      */
-    public function findBy(array $filter = []): OrderPropertyVariantCollection
+    public function findBy(array $filter = [], int $cacheTime = 86400): OrderPropertyVariantCollection
     {
-        $variants = OrderPropsVariantTable::getList(
-            [
-                'select' => ['*'],
-                'filter' => $filter,
-            ]
-        );
-
-        $result = new OrderPropertyVariantCollection();
-        while ($variant = $variants->fetch()) {
-            /** @var OrderPropertyVariant $entity */
-            $entity = $this->arrayTransformer->fromArray(
-                $variant,
-                OrderPropertyVariant::class,
-                DeserializationContext::create()->setGroups(['read'])
+        $getVariants = function() use ($filter) {
+            $variants = OrderPropsVariantTable::getList(
+                [
+                    'select' => ['*'],
+                    'filter' => $filter,
+                ]
             );
 
-            $result[$entity->getValue()] = $entity;
-        }
+            $result = new OrderPropertyVariantCollection();
+            while ($variant = $variants->fetch()) {
+                /** @var OrderPropertyVariant $entity */
+                $entity = $this->arrayTransformer->fromArray(
+                    $variant,
+                    OrderPropertyVariant::class,
+                    DeserializationContext::create()->setGroups(['read'])
+                );
 
-        return $result;
+                $result[$entity->getValue()] = $entity;
+            }
+
+            return $result;
+        };
+
+        return (new BitrixCache())
+            ->withId(__METHOD__ . '_' . md5(serialize($filter)))
+            ->withTime($cacheTime)
+            ->withTag('OrderPropertyVariantRepository_FindBy')
+            ->resultOf($getVariants)['result'];
     }
 }

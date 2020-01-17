@@ -13,7 +13,6 @@ use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\ExpressionField;
-use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -43,7 +42,6 @@ use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Query\HlbColorQuery;
 use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
-use FourPaws\Catalog\Collection\PriceCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Service\BrandService;
@@ -57,12 +55,9 @@ use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Object\Color;
-use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
-use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
-use FourPaws\StoreBundle\Repository\StockRepository;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserService;
@@ -79,7 +74,6 @@ use JMS\Serializer\SerializerInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use Symfony\Component\EventDispatcher\Tests\SubscriberService;
 use WebArch\BitrixCache\BitrixCache;
 
 /**
@@ -303,6 +297,7 @@ class Offer extends IblockElement
     /**
      * @var bool
      * @Type("bool")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_BONUS_EXCLUDE = false;
 
@@ -1585,7 +1580,7 @@ class Offer extends IblockElement
     public function isDeliverable($locationId = ''): bool
     {
         if (null === $this->isDeliverable || $locationId != '') {
-            $this->isDeliverable = ($this->getAvailableAmount($locationId, DeliveryService::DELIVERY_CODES) > 0);
+            $this->isDeliverable = ($this->getAvailableAmount($locationId, array_merge(DeliveryService::DELIVERY_CODES, [DeliveryService::DELIVERY_DOSTAVISTA_CODE, DeliveryService::EXPRESS_DELIVERY_CODE])) > 0);
         }
 
         return $this->isDeliverable;
@@ -2046,24 +2041,37 @@ class Offer extends IblockElement
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
+     * @throws \Exception
+     *
      * @return int
      */
     protected function getAvailableAmount(string $locationId = '', $deliveryCodes = []): int
     {
-        /** @var DeliveryService $deliveryService */
-        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-        $deliveries = $deliveryService->getByLocation($locationId, $deliveryCodes);
-        $max = 0;
-        foreach ($deliveries as $delivery) {
+        $getAvailableAmount = function() use($locationId, $deliveryCodes): int
+        {
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+            $deliveries = $deliveryService->getByLocation($locationId, $deliveryCodes);
+            $max = 0;
+            foreach ($deliveries as $delivery) {
 
-            // Из-за того, что здесь не передаётся количество оффера, максимальное количество не будет >1
-            $delivery->setStockResult($deliveryService->getStockResultForOffer($this, $delivery));
+                // Из-за того, что здесь не передаётся количество оффера, максимальное количество не будет >1
+                $delivery->setStockResult($deliveryService->getStockResultForOffer($this, $delivery));
 
-            if ($delivery->isSuccess()) {
-                $availableAmount = $delivery->getStockResult()->getOrderable()->getAmount();
-                $max = $max > $availableAmount ? $max : $availableAmount;
+                if ($delivery->isSuccess()) {
+                    $availableAmount = $delivery->getStockResult()->getOrderable()->getAmount();
+                    $max = $max > $availableAmount ? $max : $availableAmount;
+                }
             }
-        }
+
+            return $max;
+        };
+
+        $max = (new BitrixCache())
+            ->withId(__METHOD__ . '_' . $this->getId() . '_' . $locationId . '_' . md5(serialize($deliveryCodes)))
+            ->withTime(3600) // 60 минут
+            ->withTag('getAvailableAmount')
+            ->resultOf($getAvailableAmount)['result'];
 
         return $max;
     }
@@ -2191,12 +2199,15 @@ class Offer extends IblockElement
         $result = null;
         $setItemsEntity = HLBlockFactory::createTableObject('BundleItems');
         $resBundleItems = $setItemsEntity::query()
-                                         ->where('UF_ACTIVE', true)
-                                         ->where('UF_PRODUCT', $offerId)
-                                         ->setSelect(['ID'])
-                                         ->setOrder(['RAND'])
-                                         ->registerRuntimeField(new ExpressionField('RAND', 'RAND()'))
-                                         ->exec();
+            ->where('UF_ACTIVE', true);
+        if ($this->getPrice()) {
+            $resBundleItems = $resBundleItems->where('UF_PRODUCT', $offerId);
+        }
+        $resBundleItems = $resBundleItems->setSelect(['ID'])
+            ->setOrder(['RAND']);
+
+        $resBundleItems = $resBundleItems->registerRuntimeField(new ExpressionField('RAND', 'RAND()'))
+            ->exec();
         while ($break === false) {
             /**
              * @var array $bundleItem
@@ -2237,6 +2248,10 @@ class Offer extends IblockElement
                 if ($setItem['UF_COUNT_ITEMS']) {
                     $enumField = (new UserFieldEnumService())->getEnumValueEntity((int)$setItem['UF_COUNT_ITEMS']);
                     $countItems = (int)$enumField->getValue();
+                }
+
+                if (!$this->getPrice()) {
+                    $countItems = 2;
                 }
 
                 $res = $setItemsEntity::query()
@@ -2434,13 +2449,15 @@ class Offer extends IblockElement
     /**
      * Возвращает текст о наличии для карточки товара на сайте и в приложении
      * @return string
-     * @throws ApplicationCreateException
+     * @throws ApplicationCreateExceptionk
      * @throws ArgumentException
      */
     public function getAvailabilityText(): string
     {
         if ($this->isByRequest() && $this->isAvailable()) {
             $availability = 'Только под заказ';
+        // } else if ($this->onlyPickupAvailable()) {
+        //     $availability = 'Самовывоз';
         } else if (!$this->isAvailable()) {
             $availability = 'Нет в наличии';
         } else {
@@ -2449,9 +2466,9 @@ class Offer extends IblockElement
         return $availability;
     }
 
-    public function getPickupInfo()
+    public function onlyPickupAvailable()
     {
-
+        // return !$this->isActive() && ($this->getQuantity() > 0) && (!$this->getProduct()->isDeliveryAvailable() && $this->getProduct()->isPickupAvailable());
     }
 
     /**

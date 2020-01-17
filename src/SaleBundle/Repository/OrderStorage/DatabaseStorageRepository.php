@@ -13,6 +13,7 @@ use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
+use WebArch\BitrixCache\BitrixCache;
 
 class DatabaseStorageRepository extends StorageBaseRepository
 {
@@ -72,10 +73,11 @@ class DatabaseStorageRepository extends StorageBaseRepository
 
     /**
      * @param int $fuserId
+     * @param bool $isCreate
      * @return OrderStorage
      * @throws OrderStorageSaveException
      */
-    public function findByFuser(int $fuserId): OrderStorage
+    public function findByFuser(int $fuserId, $isCreate = true): OrderStorage
     {
         if ($data = Table::getByPrimary($fuserId)->fetch()) {
             $data = array_merge($data, (array)$data['UF_DATA']);
@@ -83,7 +85,9 @@ class DatabaseStorageRepository extends StorageBaseRepository
             $data = $this->setInitialValues($data);
         } else {
             $data = $this->setInitialValues([]);
-            $this->create($data);
+            if ($isCreate) {
+                $this->create($data);
+            }
         }
 
         return $this->arrayTransformer->fromArray(

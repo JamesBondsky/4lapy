@@ -118,7 +118,7 @@ if (null === $offer) {
                             <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_STARS_VIEW); ?>
                             <div class="b-common-item__rank-wrapper">
                                 <?= MarkHelper::getDetailTopMarks($offer) ?>
-                                <?php if ($offer->isShare()) {
+                                <?php if (false && $offer->isShare()) {
                                     /** @var IblockElement $share */
                                     foreach ($offer->getShare() as $share) { ?>
                                         <span class="b-common-item__rank-text b-common-item__rank-text--red"><?= $share->getName() ?></span>
@@ -215,7 +215,7 @@ if (null === $offer) {
                                     </h2>
                                 </a>
                             </li>
-                            <?php if ($offer->isShare()) { ?>
+                            <?php if (false && $offer->isShare()) { ?>
                                 <li class="b-tab-title__item js-tab-item">
                                     <a class="b-tab-title__link js-tab-link"
                                        href="javascript:void(0);" title="Акция"
@@ -297,7 +297,7 @@ if (null === $offer) {
                             false,
                             ['HIDE_ICONS' => 'Y']
                         ); ?>
-                        <?php if ($offer->isShare()) { ?>
+                        <?php if (false && $offer->isShare()) { ?>
                             <div class="b-tab-content__container js-tab-content" data-tab-content="shares">
                                 <?php /** @var IblockElement $share */
                                 foreach ($offer->getShare() as $share) {

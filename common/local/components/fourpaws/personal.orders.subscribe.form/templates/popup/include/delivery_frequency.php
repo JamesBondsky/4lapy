@@ -5,9 +5,6 @@ use FourPaws\Decorators\SvgDecorator;
 // выбранные опции
 $orderSubscribe = $component->getOrderSubscribe();
 $orderSubscribeService = $component->getOrderSubscribeService();
-if($orderSubscribe){
-    $selectedFrequency = $orderSubscribe->getFrequency();
-}
 
 // периодичность
 $subscribeIntervals = $component->getOrderSubscribeService()->getFrequencies();
@@ -30,7 +27,7 @@ $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Чет
                     <?php
                     foreach ($subscribeIntervals as $i => $frequency) { ?>
                         <option value="<?= $frequency['ID'] ?>"
-                            <?=($selectedFrequency == $frequency['ID']) ? 'selected' : ''?>
+                            <?=($arResult['SELECTED_FREQUENCY'] == $frequency['ID']) ? 'selected' : ''?>
                             data-freq-type="<?=$orderSubscribeService->getFrequencyType($frequency)?>"
                             data-freq-value="<?=$orderSubscribeService->getFrequencyValue($frequency)?>">
                             <?= (string)$frequency['VALUE'] ?>

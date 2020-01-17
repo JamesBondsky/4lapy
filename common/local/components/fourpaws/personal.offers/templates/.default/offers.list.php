@@ -36,7 +36,7 @@ if (!$coupons->isEmpty()) {
 		        <div class="b-personal-offers-item">
 		            <div class="b-personal-offers-item__offers">
 		                <div class="b-personal-offers-item__percent">
-                            <div class="percent-title" data-text-fill-title-coupon="true"><span><?= $coupon['custom_title'] ?></span></div>
+                            <div class="percent-title" data-text-fill-title-coupon="true" data-max-size-title-desktop="56"><span><?= $coupon['custom_title'] ?></span></div>
                             <div class="percent-descr"><?= $offer['~PREVIEW_TEXT'] ?></div>
                             <? if ($coupon['custom_date_to']) { ?>
                                 <div class="percent-descr" style="color: grey; font-size: 12px; font-weight: normal;"><?= $coupon['custom_date_to'] ?></div>

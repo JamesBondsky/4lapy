@@ -52,7 +52,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <div class="b-avantage__item">
                 <div class="b-avantage__image-wrap">
-                    <img class="b-avantage__image b-avantage__image--fastdelivery"
+                     <img class="b-avantage__image b-avantage__image--fastdelivery"
                          src="/static/build/images/inhtml/icons/icon-fastdelivery.svg" alt=""
                          role="presentation">
                 </div>
@@ -63,7 +63,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <div class="b-avantage__item">
                 <div class="b-avantage__image-wrap">
-                    <img class="b-avantage__image b-avantage__image--order"
+                     <img class="b-avantage__image b-avantage__image--order"
                          src="/static/build/images/inhtml/icons/icon-online-order.svg" alt=""
                          role="presentation">
                 </div>

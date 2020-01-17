@@ -77,7 +77,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                     <label class="b-input-line__label" for="password-authorization">Пароль</label>
                     <?php if(!$arResult['KIOSK']) { ?>
                         <a class="b-link-gray b-link-gray--label"
-                           href="/personal/forgot-password/?backurl=<?= $backUrl ?>"
+                           href="<?= (CSite::InDir('/ny2020')) ? '/ny2020' : '' ?>/personal/forgot-password/?backurl=<?= $backUrl ?>"
                            title="Забыли пароль?">Забыли пароль?</a>
                     <?php } ?>
                 </div>
@@ -124,7 +124,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                 ); ?>
                 <div class="b-registration__new-user">Я новый покупатель.
                     <a class="b-link b-link--authorization b-link--authorization"
-                       href="/personal/register/?backurl=<?= $backUrl ?>"
+                       href="<?= (CSite::InDir('/ny2020')) ? '/ny2020' : '' ?>/personal/register/?backurl=<?= $backUrl ?>"
                        title="Зарегистрироваться"><span
                                 class="b-link__text b-link__text--authorization">Зарегистрироваться</span></a>
                 </div>

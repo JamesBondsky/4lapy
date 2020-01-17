@@ -1,11 +1,26 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b5a7af6a294644c87fc83a27d7ccf4dd",
+    "content-hash": "7c86ee6333ffdf2f34f24fe98980e577",
     "packages": [
+        {
+            "name": "4lapy/bitrix",
+            "version": "dev-prod",
+            "source": {
+                "type": "git",
+                "url": "git@gitea.articul.ru:4Lapy/bitrix.git",
+                "reference": "2667ed8a94a32298fd5d65bc6c1a3290f2df3c33"
+            },
+            "type": "library",
+            "license": [
+                "MIT"
+            ],
+            "description": "Bitrix for 4 lapy",
+            "time": "2019-12-10T12:51:17+00:00"
+        },
         {
             "name": "adv/bitrix-tools",
             "version": "v1.0.20",
@@ -122,11 +137,11 @@
         },
         {
             "name": "articul/articul.newrelic",
-            "version": "v1.1",
+            "version": "v1.2.3",
             "source": {
                 "type": "git",
                 "url": "git@bitbucket.org:articul/articul.newrelic.git",
-                "reference": "b39253e5c547fe4685e98010bf3b1cd1b7cc8bf9"
+                "reference": "4b575965d743b75833749757b2629869f1a9bade"
             },
             "require": {
                 "composer/installers": "~1.0",
@@ -158,7 +173,7 @@
                 "skype": "andrey.brajnikov",
                 "source": "https://bitbucket.org/articul/articul.newrelic"
             },
-            "time": "2019-03-22T07:05:24+00:00"
+            "time": "2019-11-21T08:19:53+00:00"
         },
         {
             "name": "ci/restclientbundle",
@@ -424,6 +439,7 @@
             ],
             "description": "Promoting the interoperability of container objects (DIC, SL, etc.)",
             "homepage": "https://github.com/container-interop/container-interop",
+            "abandoned": "psr/container",
             "time": "2017-02-14T19:40:03+00:00"
         },
         {
@@ -3397,6 +3413,12 @@
                 "url": "https://github.com/Roave/SecurityAdvisories.git",
                 "reference": "7f9676e3d324ff0745cda4f4222b194993d37d57"
             },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Roave/SecurityAdvisories/zipball/7f9676e3d324ff0745cda4f4222b194993d37d57",
+                "reference": "7f9676e3d324ff0745cda4f4222b194993d37d57",
+                "shasum": ""
+            },
             "conflict": {
                 "3f/pygmentize": "<1.2",
                 "adodb/adodb-php": "<5.20.6",
@@ -5303,6 +5325,7 @@
                 "push",
                 "zf"
             ],
+            "abandoned": true,
             "time": "2019-02-07T18:01:00+00:00"
         },
         {
@@ -6829,6 +6852,7 @@
                 "mock",
                 "xunit"
             ],
+            "abandoned": true,
             "time": "2018-01-06T05:45:45+00:00"
         },
         {
@@ -7636,6 +7660,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "4lapy/bitrix": 20,
         "duccio/apns-php": 15,
         "igi/sypexgeo": 20,
         "nelmio/api-doc-bundle": 10,

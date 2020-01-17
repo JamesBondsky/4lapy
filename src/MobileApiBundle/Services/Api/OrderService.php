@@ -7,6 +7,7 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -56,16 +57,19 @@ use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\MobileApiBundle\Exception\BonusSubtractionException;
 use FourPaws\MobileApiBundle\Exception\OrderNotFoundException;
 use FourPaws\MobileApiBundle\Exception\ProductsAmountUnavailableException;
+use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
+use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
 use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
@@ -90,13 +94,16 @@ use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService as AppOrderSubscribeService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use JMS\Serializer\Serializer;
+use FourPaws\SaleBundle\Enum\OrderStatus as Status;
 
-
-class OrderService
+class OrderService implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     /** @var ApiBasketService */
     private $apiBasketService;
 
@@ -153,10 +160,19 @@ class OrderService
     /** @var Manzana */
     private $manzana;
 
-    const DELIVERY_TYPE_COURIER = 'courier';
-    const DELIVERY_TYPE_PICKUP = 'pickup';
-    const DELIVERY_TYPE_DOSTAVISTA = 'dostavista';
-    const DELIVERY_TYPE_DOBROLAP = 'dobrolap';
+    /** @var OrderParameter */
+    private $orderParameter;
+
+    /** @var orderCalculate */
+    private $orderCalculate;
+
+    /** @var AddressService $addressService */
+    private $addressService;
+
+    public const DELIVERY_TYPE_COURIER = 'courier';
+    public const DELIVERY_TYPE_PICKUP = 'pickup';
+    public const DELIVERY_TYPE_DOSTAVISTA = 'dostavista';
+    public const DELIVERY_TYPE_DOBROLAP = 'dobrolap';
 
     public function __construct(
         ApiBasketService $apiBasketService,
@@ -177,7 +193,8 @@ class OrderService
         AppBonusService $appBonusService,
         PersonalOffersService $personalOffersService,
         StampService $stampService,
-        Manzana $manzana
+        Manzana $manzana,
+        AddressService $addressService
     )
     {
         $this->apiBasketService = $apiBasketService;
@@ -199,6 +216,8 @@ class OrderService
         $this->personalOffersService = $personalOffersService;
         $this->stampService = $stampService;
         $this->manzana = $manzana;
+
+        $this->addressService = $addressService;
     }
 
     /**
@@ -270,7 +289,7 @@ class OrderService
      * @throws ApplicationCreateException
      * @throws Exception
      */
-    public function getOneByNumberForCurrentUser(int $orderNumber)
+    public function getOneByNumberForCurrentUser($orderNumber)
     {
         $user = $this->appUserService->getCurrentUser();
         $order = $this->personalOrderService->getUserOrderByNumber($user, $orderNumber);
@@ -349,6 +368,9 @@ class OrderService
             $orderDateUpdate = \DateTime::createFromFormat('d.m.Y H:i:s', $order->getDateUpdate()->toString());
             $isCompleted = $orderDateUpdate < $currentMinusMonthDate || in_array($order->getStatusId(), $closedOrderStatuses, true);
 
+            $this->orderCalculate = $this->getOrderCalculate($basketProducts, false, 0, $order);
+            $this->orderParameter = $this->getOrderParameter($basketProducts, $order, $text, $icons);
+
             $response
                 ->setId($order->getAccountNumber())
                 ->setDateFormat($dateInsert)
@@ -356,8 +378,14 @@ class OrderService
                 ->setStatus($status)
                 ->setCompleted($isCompleted)
                 ->setPaid($order->isPayed())
-                ->setCartParam($this->getOrderParameter($basketProducts, $order, $text, $icons))
-                ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
+                ->setCartParam($this->orderParameter)
+                ->setCartCalc($this->orderCalculate);
+
+            if ($isCompleted || $status->getCode() == Status::STATUS_CANCELING) {
+                $response->setCanBeCanceled(false);
+            }
+            //Вырубить возможность отмены для апи. Временно здесь
+            // $response->setCanBeCanceled(false);
         }
 
         return $response;
@@ -555,7 +583,7 @@ class OrderService
             $orderParameter->setGoodsInfo($this->apiProductService::getGoodsTitleForCheckout(
                 $basketProducts->getTotalQuantity(),
                 $weight,
-                $basketProducts->getTotalPrice()->getActual()
+                $this->orderCalculate->getTotalPrice()->getActual()
             ));
 
         }
@@ -734,6 +762,16 @@ class OrderService
                 && ($currentDelivery && $currentDelivery->getStockResult()->getDelayed()->isEmpty())
             );
 
+        if (!(int) $bonusSubtractAmount) {
+            $bonusVulnerablePrice = ((90 * ($totalPrice->getActual() - $totalPrice->getCourierPrice())) / 100);
+        } else {
+            if ((int) $priceWithDiscount) {
+                $bonusVulnerablePrice = ((90 * (float) $priceWithDiscount) / 100) - $bonusSubtractAmount;
+            } else {
+                $bonusVulnerablePrice = ((90 * (float) $priceWithoutDiscount) / 100) - $bonusSubtractAmount;
+            }
+        }
+        
         if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
             $orderCalculate
                 ->setStampsDetails([
@@ -746,6 +784,10 @@ class OrderService
                         ->setTitle('Списано марок')
                         ->setValue($stampsUsed),
                 ]);
+        }
+    
+        if ($bonusVulnerablePrice) {
+            $orderCalculate->setBonusVulnerablePrice($bonusVulnerablePrice);
         }
 
         return $orderCalculate;
@@ -790,21 +832,22 @@ class OrderService
     }
 
     /**
-     * @return array
+     * @return DeliveryVariant[]
      * @throws Exception
      */
-    public function getDeliveryVariants()
+    public function getDeliveryVariants(): array
     {
         $basketProducts = $this->apiBasketService->getBasketProducts(true);
-        
+
         $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
         $delivery   = null;
         $pickup     = null;
         $dostavista = null;
         $dobrolap   = null;
+        $express    = null;
         foreach ($deliveries as $calculationResult) {
             // toDo убрать условие "&& !$calculationResult instanceof DpdPickupResult" после того как в мобильном приложении будет реализован вывод точек DPD на карте в чекауте
-            if ($this->appDeliveryService->isInnerPickup($calculationResult) && !$calculationResult instanceof DpdPickupResult) {
+            if (!$calculationResult instanceof DpdPickupResult && $this->appDeliveryService->isInnerPickup($calculationResult)) {
                 $pickup = $calculationResult;
             } elseif ($this->appDeliveryService->isInnerDelivery($calculationResult)) {
                 $delivery = $calculationResult;
@@ -812,12 +855,15 @@ class OrderService
                 $dostavista = $calculationResult;
             } elseif ($this->appDeliveryService->isDobrolapDelivery($calculationResult)) {
                 $dobrolap = $calculationResult;
+            } elseif ($this->appDeliveryService->isExpressDelivery($calculationResult)) {
+                $express = $calculationResult;
             }
         }
         $courierDelivery = (new DeliveryVariant());
         $pickupDelivery = (new DeliveryVariant());
         $dostavistaDelivery = (new DeliveryVariant());
         $dobrolapDelivery = (new DeliveryVariant());
+        $expressDelivery = (new DeliveryVariant());
 
         if ($delivery && $basketProducts->count() != 0) {
             $courierDelivery
@@ -837,14 +883,14 @@ class OrderService
                 ->setPrice($pickup->getDeliveryPrice());
         }
         if ($dostavista) {
-            $avaliable = $this->checkDostavistaAvaliability($dostavista);
+            $available = $this->checkDostavistaAvaliability($dostavista);
 
             $currentDate = new \DateTime();
 
             $deliveryDate = $dostavista->getDeliveryDate();
 
             $dostavistaDelivery
-                ->setAvailable($avaliable)
+                ->setAvailable($available)
                 ->setPrice($dostavista->getDeliveryPrice())
                 ->setShortDate('В течение 3 часов');
 
@@ -861,7 +907,28 @@ class OrderService
                 ->setPrice($dobrolap->getDeliveryPrice());
         }
 
-        return [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery];
+        if ($express) {
+            $expressDelivery
+                ->setAvailable(true)
+                ->setPrice($express->getPrice());
+
+            $currentDate = new \DateTime();
+
+            $deliveryDate = $express->getDeliveryDate();
+
+            $expressDelivery
+                ->setAvailable(true)
+                ->setPrice($express->getDeliveryPrice())
+                ->setShortDate('В течение {{express.interval}} минут');
+
+            if ($deliveryDate->format('d.m') === $currentDate->format('d.m')) {
+                $expressDelivery->setDate('Сегодня, ' . $deliveryDate->format('d.m.Y') . ' - в течение {{express.interval}} минут с момента заказа');
+            } else {
+                $expressDelivery->setDate(DeliveryTimeHelper::showTime($dostavista) . ' - в течение {{express.interval}} минут с момента заказа');
+            }
+        }
+
+        return [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery, $expressDelivery];
     }
 
     public function checkDostavistaAvaliability($dostavista)
@@ -885,7 +952,7 @@ class OrderService
     public function getDeliveryDetails(): array
     {
         $basketProducts = $this->apiBasketService->getBasketProducts(true);
-        
+
         /** @var DeliveryVariant $courierDelivery */
         /** @var DeliveryVariant $pickupDelivery */
         [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery] = $this->getDeliveryVariants();
@@ -897,7 +964,7 @@ class OrderService
         if ($dobrolapDelivery) {
             $result['dobrolap'] = [
                 'available' => $dobrolapDelivery->getAvailable(),
-                'description' => 'Ваш заказ будет доставлен в выбранный Вами приют для бездомных животных. После оплаты заказа вы получите сюрприз и памятный магнит.',
+                'description' => 'Ваш заказ будет доставлен в выбранный Вами приют для бездомных животных. После оплаты заказа вы получите памятный магнит.',
             ];
         }
 
@@ -1122,8 +1189,16 @@ class OrderService
             $deliveryDate = $delivery->getDeliveryDate();
             $intervals = $delivery->getAvailableIntervals();
             $day = FormatDate('d.m.Y l', $delivery->getDeliveryDate()->getTimestamp());
+            
+            if (FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '01.01.2020' || FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '02.01.2020') {
+                continue;
+            }
+            
             if (!empty($intervals) && count($intervals)) {
                 foreach ($intervals as $deliveryIntervalIndex => $interval) {
+                    if (FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '31.12.2019' && (($interval->getTo() > 18) || ($interval->getTo() == 0))) {
+                        continue;
+                    }
                     /** @var Interval $interval */
                     $dates[] = (new DeliveryTime())
                         ->setTitle($day . ' ' . $interval)
@@ -1162,6 +1237,11 @@ class OrderService
             $itemData,
             $totalWeight,
         ];
+    }
+
+    public function getOrderIdByNumber($number)
+    {
+        return \CSaleOrder::GetList([], ['ACCOUNT_NUMBER' => $number], false, false, ['ID'])->fetch()['ID'];
     }
 
     /**
@@ -1257,6 +1337,16 @@ class OrderService
         }
 
         $storage->setFromApp(true)->setFromAppDevice($platform);
+
+        /* Если на шаге выбора доставки не выбирали адрес из подсказок, то пробуем определить его тут для проставления района Москвы */
+        if ($storage->getCityCode() === \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
+            $storage->updateAddressBySaveAddress($this->addressService, $this->locationService, $this->orderStorageService);
+        }
+
+        if ($deliveryType === self::DELIVERY_TYPE_DOSTAVISTA) {
+            $this->updateExpressDelivery($storage);
+        }
+
         try {
             $order = $this->appOrderService->createOrder($storage);
         } catch (OrderCreateException $e) {
@@ -1286,15 +1376,15 @@ class OrderService
                 'title' => 'СПАСИБО ЧТО ВЫ ТВОРИТЕ ДОБРО ВМЕСТЕ С НАМИ!',
                 'titleOrder' => 'Ваш заказ №' . $order->getField('ACCOUNT_NUMBER') . ' оформлен',
                 'description' => 'И будет доставлен в ' . ($this->shelterData ? $this->shelterData['name'] : ''),
-                'titleThank' => 'МЫ ГОВОРИМ ВАМ СПАСИБО!',
-                'descriptionFirstThank' => 'В знак благодарности мы подготовили небольшой сюрприз фанты "Добролап" с приятными презентами',
-                'descriptionSecondThank' => 'Также мы вложим в Ваш следующий заказ подарок - памятный магнит.',
-                'titleNow' => 'А СЕЙЧАС',
-                'descriptionNow' => 'Выберите для себя один из шести сюрпризов, тапнув на любой из них.',
+                'titleThank' => 'Мы говорим Вам спасибо!',
+                //'descriptionFirstThank' => 'В знак благодарности мы подготовили небольшой сюрприз фанты "Добролап" с приятными презентами',
+                //'descriptionSecondThank' => 'Также мы вложим в Ваш следующий заказ подарок - памятный магнит.',
+                //'titleNow' => 'А СЕЙЧАС',
+                //'descriptionNow' => 'Выберите для себя один из шести сюрпризов, тапнув на любой из них.',
             ];
             $icons = [
                 'mainIcon' => $mainIcon,
-                'fantIcons' => $fantIcons,
+                //'fantIcons' => $fantIcons,
             ];
         }
 
@@ -1312,6 +1402,31 @@ class OrderService
         return $response;
     }
 
+
+    /**
+     * @param OrderStorage $storage
+     * @return void
+     */
+    protected function updateExpressDelivery(OrderStorage $storage): void
+    {
+        try {
+            if (!$storage->getCityCode() || empty($storage->getCityCode())) {
+                throw new RuntimeException('no location in storage');
+            }
+
+            $this->appDeliveryService->getExpressDeliveryInterval($storage->getCityCode());
+
+            foreach ($this->orderStorageService->getDeliveries($storage) as $delivery) {
+                if ($this->appDeliveryService->isExpressDelivery($delivery)) {
+                    $storage->setDeliveryId($this->appDeliveryService->getDeliveryIdByCode(DeliveryService::EXPRESS_DELIVERY_CODE));
+                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+
+                }
+            }
+
+        } catch (Exception $e) {
+        }
+    }
 
     public function isMKAD($lat, $lng): bool
     {
@@ -1546,12 +1661,12 @@ class OrderService
     private function is_in_polygon($points_polygon, $vertices_x, $vertices_y, $longitude_x, $latitude_y)
     {
         $i = $j = $c = $point = 0;
-        for ($i = 0, $j = $points_polygon ; $i < $points_polygon; $j = $i++) {
+        for ($i = 0, $j = $points_polygon; $i < $points_polygon; $j = $i++) {
             $point = $i;
-            if( $point == $points_polygon )
+            if ($point == $points_polygon)
                 $point = 0;
-            if ( (($vertices_y[$point]  >  $latitude_y != ($vertices_y[$j] > $latitude_y)) &&
-                ($longitude_x < ($vertices_x[$j] - $vertices_x[$point]) * ($latitude_y - $vertices_y[$point]) / ($vertices_y[$j] - $vertices_y[$point]) + $vertices_x[$point]) ) )
+            if ((($vertices_y[$point] > $latitude_y != ($vertices_y[$j] > $latitude_y)) &&
+                ($longitude_x < ($vertices_x[$j] - $vertices_x[$point]) * ($latitude_y - $vertices_y[$point]) / ($vertices_y[$j] - $vertices_y[$point]) + $vertices_x[$point])))
                 $c = !$c;
         }
         return $c;

@@ -31,7 +31,7 @@ $markup = PawsApplication::markup();
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="google" content="notranslate">
     <meta name="format-detection" content="telephone=no">
-    <meta name="yandex-verification" content="6266e34669b85ed6">
+    <meta name="yandex-verification" content="d69492b0ac6396cf" />
 
     <meta property="og:title" content="Главный приз: путешествие на родину породы"/>
     <meta property="og:description" content="Купите рационы породной линейки ROYAL CANIN® на сумму от 1000 рублей и получите 150 баллов на карту."/>

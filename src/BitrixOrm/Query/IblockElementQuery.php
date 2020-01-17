@@ -4,6 +4,7 @@ namespace FourPaws\BitrixOrm\Query;
 
 use FourPaws\BitrixOrm\Collection\CollectionBase;
 use FourPaws\BitrixOrm\Collection\IblockElementCollection;
+use WebArch\BitrixCache\BitrixCache;
 
 /**
  * Class IblockElementQuery

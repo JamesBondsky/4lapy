@@ -18,6 +18,7 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
@@ -55,6 +56,7 @@ class Event extends BaseServiceHandler
     public const GROUP_OPERATORS = 29;
 
     protected static $isEventsDisable = false;
+    public static $isManzanaEventsActive = true;
 
     public static function disableEvents(): void
     {
@@ -79,6 +81,7 @@ class Event extends BaseServiceHandler
 
         /** События форматирования телефона */
         static::initHandlerCompatible('OnBeforeUserAdd', [self::class, 'checkPhoneFormat'], 'main');
+        static::initHandlerCompatible('OnAfterUserAdd', [self::class, 'getCardInManzana'], 'main');
         static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'checkPhoneFormat'], 'main');
 
         /** замена логина */
@@ -113,6 +116,7 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'clearUserCache'], 'main');
         /** обновляем имя пользователя в order storage */
         static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'updateOrderStorage'], 'main');
+        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'deactivateSubscribe'], 'main');
 
         /** чистим кеш юзера при авторизации */
         static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'clearUserCache'], 'main');
@@ -342,34 +346,51 @@ class Event extends BaseServiceHandler
 
     public static function updateManzana(&$fields): bool
     {
+        if (self::$isManzanaEventsActive) {
+            $container = App::getInstance()->getContainer();
+
+            /** @var UserService $userService */
+            $userService = $container->get(CurrentUserProviderInterface::class);
+            $user = $userService->getUserRepository()->find((int)$fields['ID']);
+            if ($user === null) {
+                return false;
+            }
+
+            $clientByCheck = new Client();
+
+            /**
+             * @var ManzanaService $manzanaService
+             */
+            $manzanaService = $container->get('manzana.service');
+
+            $client = $userService->setManzanaClientPersonalDataByUser($fields, $user);
+            $userService->setClientPersonalDataByCurUser($clientByCheck, $user);
+
+            foreach ($clientByCheck as $clientKey => $clientValue) {
+                if ($client->$clientKey != $clientValue && empty($client->$clientKey)) {
+                    $client->$clientKey = $clientValue;
+                }
+            }
+
+            if ($client != $clientByCheck) {
+                $manzanaService->updateContactAsync($client);
+            }
+        }
+
+        return true;
+    }
+
+    public static function getCardInManzana(&$fields): bool
+    {
         $container = App::getInstance()->getContainer();
 
         /** @var UserService $userService */
         $userService = $container->get(CurrentUserProviderInterface::class);
-        $user = $userService->getUserRepository()->find((int)$fields['ID']);
-        if ($user === null) {
-            return false;
-        }
+        try {
+            $user = $userService->getUserRepository()->find((int)$fields['ID']);
 
-        $clientByCheck = new Client();
-
-        /**
-         * @var ManzanaService $manzanaService
-         */
-        $manzanaService = $container->get('manzana.service');
-
-        $client = $userService->setManzanaClientPersonalDataByUser($fields, $user);
-        $userService->setClientPersonalDataByCurUser($clientByCheck, $user);
-
-        foreach ($clientByCheck as $clientKey => $clientValue) {
-            if ($client->$clientKey != $clientValue && empty($client->$clientKey)) {
-                $client->$clientKey = $clientValue;
-            }
-        }
-
-        if ($client != $clientByCheck) {
-            $manzanaService->updateContactAsync($client);
-        }
+            $userService->refreshUserCard($user);
+        } catch (\Exception $e) {}
 
         return true;
     }
@@ -542,7 +563,7 @@ class Event extends BaseServiceHandler
              *  так же чекаем что это не страница заказа
              *  но для регистрации надо оставить
              */
-            if (!$template->hasUserAuth() && !$template->isAjaxRegister()) {
+            if (!$template->hasUserAuth() && !$template->isAjaxRegister() && !$template->isFrontOffice()) {
                 return;
             }
             $container = App::getInstance()->getContainer();
@@ -807,7 +828,7 @@ class Event extends BaseServiceHandler
         $userService = $container->get(CurrentUserProviderInterface::class);
 
         try {
-            $storage = $orderStorageService->getStorage($userService->getCurrentFUserId());
+            $storage = $orderStorageService->getStorage($userService->getCurrentFUserId(), false);
         } catch (OrderStorageSaveException $e) {
             return;
         }
@@ -833,5 +854,25 @@ class Event extends BaseServiceHandler
         } catch (OrderStorageValidationException $e) {
             return;
         }
+    }
+
+    public static function deactivateSubscribe($arFields)
+    {
+        if ($arFields['ACTIVE'] == 'N') {
+            $container = App::getInstance()->getContainer();
+            /** @var OrderSubscribeService $service */
+            $service = $container->get('order_subscribe.service');
+
+            try {
+                $subscribeList = $service->findActiveSubscribeByUserId($arFields['ID']);
+
+                foreach ($subscribeList as $itemSubscribe) {
+                    $service->deactivateSubscription($itemSubscribe);
+                }
+            } catch (\Exception $e) {
+            }
+        }
+
+        return true;
     }
 }

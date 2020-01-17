@@ -156,7 +156,7 @@ class OrderRepository extends BaseRepository
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function getUserOrderByNumber(int $userId, int $orderNumber)
+    public function getUserOrderByNumber(int $userId, $orderNumber)
     {
         return $this->getUserOrders($userId, 1, 0, ['ACCOUNT_NUMBER' => $orderNumber])->current();
     }

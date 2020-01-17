@@ -5,9 +5,11 @@ namespace FourPaws\SaleBundle\Service;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -16,6 +18,7 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use Bitrix\Sale\UserMessageException;
+use DateTime;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -24,7 +27,6 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
-use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\KioskBundle\Service\KioskService;
@@ -42,6 +44,8 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
+use function array_filter;
+use function in_array;
 
 class OrderStorageService
 {
@@ -70,11 +74,6 @@ class OrderStorageService
     protected $storageRepository;
 
     /**
-     * @var UserAccountService
-     */
-    protected $userAccountService;
-
-    /**
      * @var DeliveryService
      */
     protected $deliveryService;
@@ -97,11 +96,12 @@ class OrderStorageService
     /**
      * OrderStorageService constructor.
      *
-     * @param BasketService                $basketService
+     * @param BasketService $basketService
      * @param CurrentUserProviderInterface $currentUserProvider
-     * @param DatabaseStorageRepository    $storageRepository
-     * @param DeliveryService              $deliveryService
-     * @param StoreService                 $storeService
+     * @param DatabaseStorageRepository $storageRepository
+     * @param DeliveryService $deliveryService
+     * @param StoreService $storeService
+     * @param OrderSubscribeService $orderSubscribeService
      */
     public function __construct(
         BasketService $basketService,
@@ -124,7 +124,7 @@ class OrderStorageService
      * Вычисляет шаг оформления заказа в соответствии с состоянием хранилища
      *
      * @param OrderStorage $storage
-     * @param string       $startStep
+     * @param string $startStep
      *
      * @return string
      */
@@ -136,18 +136,18 @@ class OrderStorageService
 
     /**
      * @param int|null $fuserId
-     *
-     * @throws OrderStorageSaveException
+     * @param bool $isCreate
      * @return bool|OrderStorage
+     * @throws OrderStorageSaveException
      */
-    public function getStorage(int $fuserId = null)
+    public function getStorage(int $fuserId = null, $isCreate = true)
     {
         if (!$fuserId) {
             $fuserId = $this->currentUserProvider->getCurrentFUserId();
         }
 
         try {
-            return $this->storageRepository->findByFuser($fuserId);
+            return $this->storageRepository->findByFuser($fuserId, $isCreate);
         } catch (NotFoundException $e) {
             return false;
         }
@@ -193,9 +193,9 @@ class OrderStorageService
     {
         $mapping = [
             'order-pick-time' => 'split',
-            'shopId'          => 'deliveryPlaceCode',
-            'pay-type'        => 'paymentId',
-            'cardNumber'      => 'discountCardNumber',
+            'shopId' => 'deliveryPlaceCode',
+            'pay-type' => 'paymentId',
+            'cardNumber' => 'discountCardNumber',
         ];
 
         foreach ($data as $name => $value) {
@@ -235,7 +235,8 @@ class OrderStorageService
                         ) {
                             $availableValues[] = 'email';
                         }
-                    } catch (NotAuthorizedException | UsernameNotFoundException $e) {}
+                    } catch (NotAuthorizedException | UsernameNotFoundException $e) {
+                    }
                 } else {
                     $availableValues[] = 'phone';
                     $availableValues[] = 'email';
@@ -246,23 +247,21 @@ class OrderStorageService
                 try {
                     $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
 
-                    if (\in_array($deliveryCode, array_merge(DeliveryService::DELIVERY_CODES, [DeliveryService::DELIVERY_DOSTAVISTA_CODE]), true)) {
-                        switch ($data['delyveryType']) {
-                            case 'twoDeliveries':
-                                $data['deliveryInterval'] = $data['deliveryInterval1'];
-                                $data['secondDeliveryInterval'] = $data['deliveryInterval2'];
-                                $data['deliveryDate'] = $data['deliveryDate1'];
-                                $data['secondDeliveryDate'] = $data['deliveryDate2'];
-                                if ($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
-                                    $data['comment'] = $data['comment_dostavista'];
-                                } else {
-                                    $data['comment'] = $data['comment1'];
-                                    $data['secondComment'] = $data['comment2'];
-                                }
-                                $data['split'] = 1;
-                                break;
-                            default:
-                                $data['split'] = 0;
+                    if (in_array($deliveryCode, array_merge(DeliveryService::DELIVERY_CODES, [DeliveryService::DELIVERY_DOSTAVISTA_CODE]), true)) {
+                        if ($data['delyveryType'] === 'twoDeliveries') {
+                            $data['deliveryInterval'] = $data['deliveryInterval1'];
+                            $data['secondDeliveryInterval'] = $data['deliveryInterval2'];
+                            $data['deliveryDate'] = $data['deliveryDate1'];
+                            $data['secondDeliveryDate'] = $data['deliveryDate2'];
+                            if ($deliveryCode === DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+                                $data['comment'] = $data['comment_dostavista'];
+                            } else {
+                                $data['comment'] = $data['comment1'];
+                                $data['secondComment'] = $data['comment2'];
+                            }
+                            $data['split'] = 1;
+                        } else {
+                            $data['split'] = 0;
                         }
                     } elseif ((int)$data['split'] === 1) {
                         $tmpStorage = clone $storage;
@@ -344,7 +343,7 @@ class OrderStorageService
                 continue;
             }
 
-            if (!\in_array($name, $availableValues, true)) {
+            if (!in_array($name, $availableValues, true)) {
                 continue;
             }
 
@@ -356,12 +355,16 @@ class OrderStorageService
             if (method_exists($storage, $setter)) {
                 switch ($name) {
                     case 'deliveryId':
-                        $storage->$setter($data['deliveryTypeId']);
+                        if (isset($data['deliveryTypeId']) && !empty($data['deliveryTypeId'])) {
+                            $storage->$setter($data['deliveryTypeId']);
+                        } else {
+                            $storage->$setter($data['deliveryId']);
+                        }
                         break;
                     case 'comment':
-                        if($step == OrderStorageEnum::DELIVERY_STEP && $deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE && $data['comment_dostavista']){
+                        if (($step === OrderStorageEnum::DELIVERY_STEP) && (isset($deliveryCode)) && ($deliveryCode === DeliveryService::DELIVERY_DOSTAVISTA_CODE) && $data['comment_dostavista']) {
                             $storage->$setter($data['comment_dostavista']);
-                        } elseif(isset($data['comment'])) {
+                        } elseif (isset($data['comment'])) {
                             $storage->$setter($data['comment']);
                         }
                         break;
@@ -395,7 +398,7 @@ class OrderStorageService
      * Устанавливает код района в код города (только для Москвы)
      *
      * @param OrderStorage $storage
-     * @param string       $step
+     * @param string $step
      *
      * @return bool
      * @throws OrderStorageSaveException
@@ -403,7 +406,7 @@ class OrderStorageService
      */
     public function updateStorageMoscowZone(OrderStorage $storage, string $step = OrderStorageEnum::AUTH_STEP): bool
     {
-        if ($storage->getCityCode() == DeliveryService::MOSCOW_LOCATION_CODE) {
+        if ($storage->getCityCode() === DeliveryService::MOSCOW_LOCATION_CODE) {
             $storage->setCityCode($storage->getMoscowDistrictCode());
             try {
                 return $this->storageRepository->save($storage, $step);
@@ -432,11 +435,12 @@ class OrderStorageService
     /**
      * @param OrderStorage $storage
      *
-     * @throws NotFoundException
+     * @return PaymentCollection
      * @throws ArgumentOutOfRangeException
      * @throws NotImplementedException
      * @throws ObjectNotFoundException
-     * @return PaymentCollection
+     * @throws ObjectException
+     * @throws NotFoundException
      */
     public function getPayments(OrderStorage $storage): PaymentCollection
     {
@@ -473,9 +477,9 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param bool         $withInner
-     * @param bool         $filter
-     * @param float        $basketPrice
+     * @param bool $withInner
+     * @param bool $filter
+     * @param float $basketPrice
      *
      * @return array
      * @throws ArgumentException
@@ -503,15 +507,15 @@ class OrderStorageService
         /**
          * Для заказа по подписке доступна только оплата при получении
          */
-        if($storage->isSubscribe()){
-            $payments = array_filter($payments, function($item){
-                return in_array($item['CODE'], [OrderPayment::PAYMENT_CASH, OrderPayment::PAYMENT_CASH_OR_CARD]);
+        if ($storage->isSubscribe()) {
+            $payments = array_filter($payments, static function ($item) {
+                return in_array($item['CODE'], [OrderPayment::PAYMENT_CASH, OrderPayment::PAYMENT_CASH_OR_CARD], false);
             });
         }
         $deliveryCode = $this->deliveryService->getDeliveryCodeById($storage->getDeliveryId());
-        if ($this->deliveryService->isDobrolapDeliveryCode($deliveryCode)){
-            $payments = array_filter($payments, function($item){
-                return $item['CODE'] == OrderPayment::PAYMENT_ONLINE;
+        if ($this->deliveryService->isDobrolapDeliveryCode($deliveryCode)) {
+            $payments = array_filter($payments, static function ($item) {
+                return ($item['CODE'] === OrderPayment::PAYMENT_ONLINE);
             });
         }
 
@@ -562,9 +566,9 @@ class OrderStorageService
         if ($storage->getDeliveryId()) {
             $deliveryCode = $this->deliveryService->getDeliveryCodeById($storage->getDeliveryId());
         }
-        if ($deliveryCode === false || !$this->deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+        if ($deliveryCode === false || !($this->deliveryService->isDostavistaDeliveryCode($deliveryCode) || $this->deliveryService->isExpressDeliveryCode($deliveryCode))) {
             if ($filter
-                && !empty(\array_filter($payments, function ($item) {
+                && !empty(array_filter($payments, static function ($item) {
                     return $item['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD;
                 }))) {
                 foreach ($payments as $id => $payment) {
@@ -574,24 +578,22 @@ class OrderStorageService
                     }
                 }
             }
-        } else {
-            if ($filter
-                && !empty(\array_filter($payments, function ($item) {
-                    return $item['CODE'] === OrderPayment::PAYMENT_CASH;
-                }))) {
-                foreach ($payments as $id => $payment) {
-                    if ($payment['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD) {
-                        unset($payments[$id]);
-                        break;
-                    }
+        } else if ($filter
+            && !empty(array_filter($payments, static function ($item) {
+                return $item['CODE'] === OrderPayment::PAYMENT_CASH;
+            }))) {
+            foreach ($payments as $id => $payment) {
+                if ($payment['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD) {
+                    unset($payments[$id]);
+                    break;
                 }
             }
         }
 
         // в режиме киоска доступна только оплата при получении
-        if(KioskService::isKioskMode()){
+        if (KioskService::isKioskMode()) {
             foreach ($payments as $id => $payment) {
-                if (!in_array($payment['CODE'], [OrderPayment::PAYMENT_CASH_OR_CARD, OrderPayment::PAYMENT_CASH])) {
+                if (!in_array($payment['CODE'], [OrderPayment::PAYMENT_CASH_OR_CARD, OrderPayment::PAYMENT_CASH], false)) {
                     unset($payments[$id]);
                 }
             }
@@ -602,16 +604,21 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param bool         $reload
+     * @param bool $reload
      *
+     * @return CalculationResultInterface[]
+     * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws DeliveryNotFoundException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     * @throws UserMessageException
-     * @throws ApplicationCreateException
-     * @throws DeliveryNotFoundException
      * @throws StoreNotFoundException
-     * @return CalculationResultInterface[]
+     * @throws SystemException
+     * @throws UserMessageException
+     * @throws ArgumentNullException
+     * @throws ObjectException
      */
     public function getDeliveries(OrderStorage $storage, $reload = false): array
     {
@@ -624,7 +631,7 @@ class OrderStorageService
             }
 
             // для подписки оставляем всё, кроме достависты
-            if($storage->isSubscribe()){
+            if ($storage->isSubscribe()) {
                 $codes = array_merge(DeliveryService::PICKUP_CODES, DeliveryService::DELIVERY_CODES);
             }
 
@@ -645,11 +652,16 @@ class OrderStorageService
      * @return PickupResultInterface|null
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
      * @throws DeliveryNotFoundException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
+     * @throws SystemException
      * @throws UserMessageException
+     * @throws ArgumentNullException
+     * @throws ObjectException
      */
     public function getPickupDelivery(OrderStorage $storage): ?PickupResultInterface
     {
@@ -670,11 +682,16 @@ class OrderStorageService
      * @return DeliveryResultInterface|null
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
      * @throws DeliveryNotFoundException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
+     * @throws SystemException
      * @throws UserMessageException
+     * @throws ArgumentNullException
+     * @throws ObjectException
      */
     public function getInnerDelivery(OrderStorage $storage): ?DeliveryResultInterface
     {
@@ -692,19 +709,23 @@ class OrderStorageService
     /**
      * @param OrderStorage $storage
      *
+     * @return CalculationResultInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
      * @throws DeliveryNotFoundException
-     * @throws NotFoundException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
+     * @throws SystemException
      * @throws UserMessageException
-     * @return CalculationResultInterface
+     * @throws ArgumentNullException
+     * @throws ObjectException
      */
     public function getSelectedDelivery(OrderStorage $storage): CalculationResultInterface
     {
-        $deliveries = $this->getDeliveries($storage);
+        $deliveries = $this->getDeliveries($storage, true);
         $selectedDelivery = current($deliveries);
         if ($deliveryId = $storage->getDeliveryId()) {
             /** @var CalculationResultInterface $delivery */
@@ -732,11 +753,12 @@ class OrderStorageService
     }
 
     /**
-     * @param OrderStorage          $storage
+     * @param OrderStorage $storage
      * @param PickupResultInterface $delivery
      *
-     * @throws ArgumentException
      * @return Store
+     * @throws SystemException
+     * @throws ArgumentException
      */
     public function getSelectedShop(OrderStorage $storage, PickupResultInterface $delivery): Store
     {
@@ -754,7 +776,7 @@ class OrderStorageService
                 if ($selectedStore && $stores->hasStore($selectedStore)) {
                     $result = $selectedStore;
                 }
-            } catch (StoreNotFoundException | TerminalNotFoundException $e) {
+            } catch (StoreNotFoundException $e) {
                 // обработка не требуется. срабатывает при смене зоны доставки / деактивации склада
             }
         }
@@ -780,10 +802,15 @@ class OrderStorageService
      * @return bool
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
      * @throws DeliveryNotFoundException
+     * @throws NotImplementedException
      * @throws NotSupportedException
+     * @throws ObjectException
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
+     * @throws SystemException
      * @throws UserMessageException
      */
     public function validateDeliveryDate($storage): bool
@@ -801,7 +828,7 @@ class OrderStorageService
                 $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, 10)[$storage->getDeliveryDate()];
             }
 
-            return !($selectedDelivery->getDeliveryDate()->getTimestamp() < (new \DateTime())->getTimestamp());
+            return !($selectedDelivery->getDeliveryDate()->getTimestamp() < (new DateTime())->getTimestamp());
         }
 
         return true;
@@ -816,7 +843,7 @@ class OrderStorageService
     {
         $storage
             ->setDeliveryDate(0)
-            ->setCurrentDate(new \DateTime());
+            ->setCurrentDate(new DateTime());
 
         return $storage;
     }

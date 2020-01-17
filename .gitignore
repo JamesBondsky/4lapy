@@ -14,6 +14,8 @@ node_modules/
 
 /app/config/parameters.yml
 
+/public
+
 /var/*
 !/var/cache
 /var/cache/*
@@ -46,14 +48,19 @@ Desktop.ini
 /common/local/logs/*
 /common/static
 /common/local/php_interface/dbconn.php
+/common/local/php_interface/local.env.php
 
 /local
 
 /common/local/resources/sypexgeo/SxGeoCity.dat
-
-web/20190426.4lapy_db.dump.sql.gz
+lapy_db.dump.sql.gz
 web/500errors.txt
 web/dummy.postdata.log
 web/manzana_user.error.log
 web/manzana_user_numbers.error.log
 web/test.php
+
+docker/ssl
+docker/id_rsa
+.docker-sync
+.env.local
