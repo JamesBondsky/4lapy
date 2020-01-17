@@ -32,6 +32,10 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
 
     protected const OPT_DATE = 'date';
 
+    protected const OPT_SENDER = 'sender';
+
+    protected const OPT_RECEIVER = 'receiver';
+
     protected const OPT_TRANSITION_COUNT = 'transition-count';
 
     /** @var ScheduleResultService */
@@ -76,6 +80,18 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                 'Start date (' . static::DATE_FORMAT . ')'
             )
             ->addOption(
+                static::OPT_SENDER,
+                's',
+                InputOption::VALUE_OPTIONAL,
+                'Sender store'
+            )
+            ->addOption(
+                static::OPT_RECEIVER,
+                'r',
+                InputOption::VALUE_OPTIONAL,
+                'Receiver store'
+            )
+            ->addOption(
                 static::OPT_TRANSITION_COUNT,
                 'tc',
                 InputOption::VALUE_OPTIONAL,
@@ -90,6 +106,8 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
     {
         $d = $input->getOption(static::OPT_DATE);
         $tc = $input->getOption(static::OPT_TRANSITION_COUNT);
+        $s = $input->getOption(static::OPT_SENDER);
+        $receiver = $input->getOption(static::OPT_RECEIVER);
 
         if ($d) {
             if (!$date = DateTime::createFromFormat(static::DATE_FORMAT, $d)) {
@@ -112,12 +130,26 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
         $start_global = microtime(true);
 
         /** Расчёты не сгенерируются, если для первого отправителя не будет расписаний */
-        $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-        //$senders = [$this->storeService->getStoreByXmlId('DC01')];
+        if ($s) {
+            $senders = [$this->storeService->getStoreByXmlId($s)];
+        } else {
+            $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        }
+
+        if ($receiver) {
+            $receivers = [$this->storeService->getStoreByXmlId($receiver)];
+        } else {
+            $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        }
+//        $senders = [$this->storeService->getStoreByXmlId('DC01')];
+//        $senders1 = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
 
         $regularities = $this->scheduleResultService->getRegularityEnumAll();
         /** @var UserFieldEnumValue $regularity */
         foreach ($regularities as $regularityId => $regularity) {
+//            if ($regularityId != 42) {
+//                continue;
+//            }
 
             $scheduleRegularity = $this->deliveryScheduleService->getRegular()->filter(function($item) use ($regularity){
                 /**
@@ -149,7 +181,7 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                     $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender, $dateDelete, $regularityId);
 
                     $this->sqlHeartBeat();
-                    $results = $this->scheduleResultService->calculateForSender($sender, $dateActive, $scheduleRegularityId, $tc);
+                    $results = $this->scheduleResultService->calculateForSender($sender, $dateActive, $scheduleRegularityId, $tc, $receivers);
 
                     $this->sqlHeartBeat();
                     [$created] = $this->scheduleResultService->updateResults($results, $dateDelete);

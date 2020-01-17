@@ -338,10 +338,19 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
         $result = [];
         try {
-            $result = (new BitrixCache())
-                ->withId(__METHOD__)
-                ->withTag('delivery_schedule')
-                ->resultOf($getTypes)['result'];
+            $result = $getTypes()['result'];
+//            $cacheKey = 'delivery_schedule';
+//            $cache = new FilesystemCache('', 3600);
+//            if ($cache->has($cacheKey)) {
+//                $result = $cache->get($cacheKey);
+//            } else {
+//                $result = $getTypes()['result'];
+//                $cache->set($cacheKey, $result);
+//            }
+//            $result = (new BitrixCache())
+//                ->withId(__METHOD__)
+//                ->withTag('delivery_schedule')
+//                ->resultOf($getTypes)['result'];
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get enum list: %s', $e->getMessage()));
         }

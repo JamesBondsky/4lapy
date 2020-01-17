@@ -421,14 +421,17 @@ class ScheduleResultService implements LoggerAwareInterface
         Store $sender,
         \DateTime $date,
         int $regularityId,
-        ?int $transitionCount = null
+        ?int $transitionCount = null,
+        $receivers = null
     ): ScheduleResultCollection
     {
         if (null === $transitionCount) {
             $transitionCount = self::MAX_TRANSITION_COUNT;
         }
 
-        $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        if (!$receivers) {
+            $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        }
         //$receivers = [$this->storeService->getStoreByXmlId('R111')];
 
         $result = [];
