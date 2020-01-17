@@ -13,7 +13,7 @@ class CSocServFB2 extends \CSocServFacebook
     public function prepareUser($arFBUser, $short = false)
     {
         $arFields = array(
-			'EXTERNAL_AUTH_ID' => parent::ID,
+			'EXTERNAL_AUTH_ID' => self::ID,
             'XML_ID' => $arFBUser["id"],
             'LOGIN' => static::LOGIN_PREFIX.$arFBUser["id"],
             'EMAIL' => ($arFBUser["email"] != '') ? $arFBUser["email"] : '',
@@ -74,11 +74,11 @@ class CSocServFB2 extends \CSocServFacebook
     {
         if(IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
         {
-            $redirect_uri = self::CONTROLLER_URL."/redirect.php?redirect_to=".urlencode(\CSocServUtil::GetCurUrl('auth_service_id='.parent::ID, array("code")));
+            $redirect_uri = self::CONTROLLER_URL."/redirect.php?redirect_to=".urlencode(\CSocServUtil::GetCurUrl('auth_service_id='.self::ID, array("code")));
         }
         else
         {
-            $redirect_uri = \CSocServUtil::GetCurUrl('auth_service_id='.parent::ID, array("code"));
+            $redirect_uri = \CSocServUtil::GetCurUrl('auth_service_id='.self::ID, array("code"));
         }
 
         $fb = $this->getEntityOAuth();
@@ -119,11 +119,11 @@ class CSocServFB2 extends \CSocServFacebook
 
         if(IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
         {
-            $redirect_uri = self::CONTROLLER_URL."/redirect.php?redirect_to=".urlencode(\CSocServUtil::GetCurUrl('auth_service_id='.parent::ID, array("code")));
+            $redirect_uri = self::CONTROLLER_URL."/redirect.php?redirect_to=".urlencode(\CSocServUtil::GetCurUrl('auth_service_id='.self::ID, array("code")));
         }
         else
         {
-            $redirect_uri = \CSocServUtil::GetCurUrl('auth_service_id='.parent::ID, array("code"));
+            $redirect_uri = \CSocServUtil::GetCurUrl('auth_service_id='.self::ID, array("code"));
         }
 
         if($fb->GetAccessToken($redirect_uri) !== false)
@@ -141,11 +141,11 @@ class CSocServFB2 extends \CSocServFacebook
 
         if(IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
         {
-            $redirect_uri = self::CONTROLLER_URL."/redirect.php?redirect_to=".urlencode(\CSocServUtil::GetCurUrl('auth_service_id='.parent::ID, array("code")));
+            $redirect_uri = self::CONTROLLER_URL."/redirect.php?redirect_to=".urlencode(\CSocServUtil::GetCurUrl('auth_service_id='.self::ID, array("code")));
         }
         else
         {
-            $redirect_uri = \CSocServUtil::GetCurUrl('auth_service_id='.parent::ID, array("code"));
+            $redirect_uri = \CSocServUtil::GetCurUrl('auth_service_id='.self::ID, array("code"));
         }
 
         if($fb->GetAccessToken($redirect_uri) !== false)
@@ -244,11 +244,11 @@ class CSocServFB2 extends \CSocServFacebook
         if($authError === SOCSERV_REGISTRATION_DENY)
         {
             $url = (preg_match("/\?/", $url)) ? $url.'&' : $url.'?';
-            $url .= 'auth_service_id='.parent::ID.'&auth_service_error='.$authError;
+            $url .= 'auth_service_id='.self::ID.'&auth_service_error='.$authError;
         }
         elseif($bSuccess !== true)
         {
-            $url = (isset($urlPath)) ? $urlPath.'?auth_service_id='.parent::ID.'&auth_service_error='.$authError : $GLOBALS['APPLICATION']->GetCurPageParam(('auth_service_id='.parent::ID.'&auth_service_error='.$authError), $aRemove);
+            $url = (isset($urlPath)) ? $urlPath.'?auth_service_id='.self::ID.'&auth_service_error='.$authError : $GLOBALS['APPLICATION']->GetCurPageParam(('auth_service_id='.self::ID.'&auth_service_error='.$authError), $aRemove);
         }
 
         if(\CModule::IncludeModule("socialnetwork") && strpos($url, "current_fieldset=") === false)

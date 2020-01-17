@@ -239,6 +239,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 $this->setSocial();
             }
 
+            $exId = $request->get('ex_id');
+
+            if (isset($exId)) {
+                $this->arResult['STEP'] = 'step1';
+            }
+
             $this->includeComponentTemplate();
         } catch (\Exception $e) {
             try {
@@ -883,12 +889,11 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         try {
             /** @var ConfirmCodeService $confirmService */
 
-//            $confirmService = $container->get(ConfirmCodeInterface::class);
-//            $res = $confirmService::checkConfirmSms(
-//                $phone,
-//                $confirmCode
-//            );
-            $res = true;
+            $confirmService = $container->get(ConfirmCodeInterface::class);
+            $res = $confirmService::checkConfirmSms(
+                $phone,
+                $confirmCode
+            );
             if (!$res) {
                 if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] === 3) {
                     $html = $this->getHtml(
