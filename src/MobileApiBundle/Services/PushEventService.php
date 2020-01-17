@@ -354,7 +354,7 @@ class PushEventService
 
                     $customArr = [
                         'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
-                        'id' => $pushEvent->getEventId(),
+                        'id' => $eventId,
                         'title' => $categoryTitle
                     ];
 
@@ -664,12 +664,12 @@ class PushEventService
     {
         return (
             ($typeCode == 'news' && $user->isSendNewsMsg())
-            || ($typeCode == 'action' && $user->isSendInterviewMsg())
+            || ($typeCode == 'action' && $user->isSendNewsMsg())
             || ($typeCode == 'personal_offer' && $user->isSendNewsMsg())
             || ($typeCode == 'status' && $user->isSendOrderStatusMsg())
             || ($typeCode == 'order_review' && $user->isSendFeedbackMsg())
-            || ($typeCode == 'message')
-            || ($typeCode == 'category')
+            || ($typeCode == 'message' && $user->isSendNewsMsg())
+            || ($typeCode == 'category' && $user->isSendNewsMsg())
         );
     }
 
