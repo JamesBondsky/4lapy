@@ -527,7 +527,7 @@ class PushEventService
         
         /** @var User $user */
         if (!$this->shouldSendPushMessage($user, $typeCode)) {
-            $apiPushEvent->setSuccessExec(ApiPushEvent::EXEC_FAIL_CODE);
+            $apiPushEvent->setSuccessExec(ApiPushEvent::EXEC_SUCCESS_CODE);
         }
         
         return $apiPushEvent;
