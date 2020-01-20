@@ -28,14 +28,11 @@ class Chance2Service extends ChanceService
 
     protected const FEED_DEFAULT_CODES = [
         'royal-canin',
-        'hills',
-        'khills',
         'monge',
-//        'fresh-step', под вопросом
-//        'ever-clean',
-//        'trainer',
-//        'padovan',
-//        'adresnik',
+        'fresh-step',
+        'ever-clean',
+        'trainer',
+        'padovan',
     ];
 
     protected const FEED_BRAND_CODES = [
