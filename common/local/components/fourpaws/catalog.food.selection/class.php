@@ -20,7 +20,7 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
 {
     /** @var FoodSelectionService $foodSelectionService */
     private $foodSelectionService;
-    
+
     /**
      * CFourPawsFoodSelectionComponent constructor.
      *
@@ -38,11 +38,17 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
             $container = App::getInstance()->getContainer();
         } catch (ApplicationCreateException $e) {
             $logger = LoggerFactory::create('component');
-            $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+            $logger->error(sprintf(
+                'Component execute error: [%s] %s in %s:%d',
+                $e->getCode(),
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine()
+            ));
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        
+
         $this->foodSelectionService = $container->get('food_selection.service');
     }
 
@@ -59,7 +65,7 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
     public function executeComponent()
     {
         $this->setFrameMode(true);
-        
+
         if ($this->startResultCache()) {
             TaggedCacheHelper::addManagedCacheTag('catalog:food_selection');
 
@@ -74,7 +80,7 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
 
             $this->includeComponentTemplate();
         }
-        
+
         return true;
     }
 }
