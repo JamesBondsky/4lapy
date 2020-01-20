@@ -89,7 +89,13 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
             try {
                 $logger = LoggerFactory::create('component');
-                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+                $logger->error(sprintf(
+                    'Component execute error: [%s] %s in %s:%d',
+                    $e->getCode(),
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine()
+                ));
             } catch (\RuntimeException $e) {
                 /** оч. плохо - логи мы не получим */
             }

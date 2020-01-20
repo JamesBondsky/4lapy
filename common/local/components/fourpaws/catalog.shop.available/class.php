@@ -35,19 +35,25 @@ class FourPawsCatalogShopAvailableComponent extends CBitrixComponent
             $this->storeService = Application::getInstance()->getContainer()->get('store.service');
         } catch (ApplicationCreateException $e) {
             $logger = LoggerFactory::create('component');
-            $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+            $logger->error(sprintf(
+                'Component execute error: [%s] %s in %s:%d',
+                $e->getCode(),
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine()
+            ));
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
     }
-    
+
     /** {@inheritdoc} */
     public function onPrepareComponentParams($params) : array
     {
         if (!($params['PRODUCT'] instanceof Product) && !empty($params['PRODUCT_ID'])) {
             $params['PRODUCT']      = \FourPaws\Catalog\Query\ProductQuery::getById((int)$params['PRODUCT_ID']);
         }
-        
+
         if (empty($params['OFFER']) && !empty($params['OFFER_ID'])) {
             $params['OFFER'] = OfferQuery::getById((int)$params['OFFER_ID']);
         }
@@ -55,10 +61,10 @@ class FourPawsCatalogShopAvailableComponent extends CBitrixComponent
             $params['OFFER'] = $params['PRODUCT']->getOffers()->first();
         }
         $params['CACHE_TIME'] = 360000;
-        
+
         return $params;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -72,7 +78,7 @@ class FourPawsCatalogShopAvailableComponent extends CBitrixComponent
         if ($this->startResultCache($this->arParams['CACHE_TIME'], ['OFFER_ID'=>$offer->getId()])) {
             $this->includeComponentTemplate();
         }
-        
+
         return true;
     }
 }
