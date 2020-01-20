@@ -52,29 +52,29 @@ class BasketService
      * @var AppBasketService
      */
     private $appBasketService;
-    
+
     /**
      * @var ApiProductService;
      */
     private $apiProductService;
-    
+
     /**
      * @var TokenStorageInterface
      */
     private $tokenStorage;
-    
+
     /** @var DeliveryService */
     private $deliveryService;
-    
+
     /** @var AppUserService */
     private $appUserService;
-    
+
     /** @var OrderSubscribeService */
     private $orderSubscribeService;
-    
+
     /** @var StampService */
     private $stampService;
-    
+
     public function __construct(
         AppBasketService $appBasketService,
         ApiProductService $apiProductService,
@@ -92,8 +92,8 @@ class BasketService
         $this->orderSubscribeService = $orderSubscribeService;
         $this->stampService          = $stampService;
     }
-    
-    
+
+
     /**
      * @param bool $onlyOrderable флаг запрашивать ли товары доступные для покупки или все товары (в том числе и недоступные для покупки)
      * @return BasketProductCollection
@@ -122,10 +122,10 @@ class BasketService
                 break;
             }
         }
-        
+
         $fUserId = $this->appUserService->getCurrentFUserId() ?: 0;
         $basket  = $this->appBasketService->getBasket(true, $fUserId);
-        
+
         /**
          * Непонятный код для того чтобы корреткно работали подарки (бесплатные товары) в рамках акций "берешь n товаров, 1 бесплатно"
          * @see BasketComponent::executeComponent()
@@ -137,41 +137,41 @@ class BasketService
             catch (NotAuthorizedException $e) {
                 $userId = null;
             }
-            
-           if ($userId && count($basket->getOrderableItems()) > 0) {
-               $user                  = $this->appUserService->getCurrentUser();
-               $needAddDobrolapMagnet = $user->getGiftDobrolap();
-               /** Если пользователю должны магнит */
-               if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {
-                   $magnetID = $this->appBasketService->getDobrolapMagnet()['ID'];
-                   /** если магнит найден как оффер */
-                   if ($magnetID) {
-                       $basketItem = $this->appBasketService->addOfferToBasket(
-                           (int)$magnetID,
-                           1,
-                           [],
-                           true,
-                           $basket
-                       );
-                       $result     = $basket->save();
-                       /** если магнит успешно добавлен в корзину */
-                       if ($basketItem->getId() && $result->isSuccess()) {
-                           $userDB = new \CUser;
-                           $fields = [
-                               'UF_GIFT_DOBROLAP' => false,
-                           ];
-                           $userDB->Update($userId, $fields);
-                       }
-                   }
-               }
-           }
-            
+
+//           if ($userId && count($basket->getOrderableItems()) > 0) {
+//               $user                  = $this->appUserService->getCurrentUser();
+//               $needAddDobrolapMagnet = $user->getGiftDobrolap();
+//               /** Если пользователю должны магнит */
+//               if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {
+//                   $magnetID = $this->appBasketService->getDobrolapMagnet()['ID'];
+//                   /** если магнит найден как оффер */
+//                   if ($magnetID) {
+//                       $basketItem = $this->appBasketService->addOfferToBasket(
+//                           (int)$magnetID,
+//                           1,
+//                           [],
+//                           true,
+//                           $basket
+//                       );
+//                       $result     = $basket->save();
+//                       /** если магнит успешно добавлен в корзину */
+//                       if ($basketItem->getId() && $result->isSuccess()) {
+//                           $userDB = new \CUser;
+//                           $fields = [
+//                               'UF_GIFT_DOBROLAP' => false,
+//                           ];
+//                           $userDB->Update($userId, $fields);
+//                       }
+//                   }
+//               }
+//           }
+
             $this->sqlHeartbeat();
             $order = \Bitrix\Sale\Order::create(SITE_ID, $userId);
-            
+
             $this->sqlHeartbeat();
             $order->setBasket($basket);
-            
+
             $this->sqlHeartbeat();
             // но иногда он так просто не запускается
             if (!\FourPaws\SaleBundle\Discount\Utils\Manager::isExtendCalculated()) {
@@ -179,22 +179,22 @@ class BasketService
                 $this->sqlHeartbeat();
             }
         }
-        
+
         $products    = new BasketProductCollection();
         $basketItems = $onlyOrderable ? $basket->getOrderableItems()->getBasketItems() : $basket->getBasketItems();
         // В этом массиве будут храниться детализация цены для каждого товара в случае акций "берешь n товаров, 1 бесплатно", "50% скидка на второй товар" и т.д.
-        
+
         foreach ($basketItems as $basketItem) {
             $offer = OfferQuery::getById($basketItem->getProductId());
-            
+
             if (!$offer) {
                 continue;
             }
-            
+
             if ($this->isSubProduct($basketItem) && !in_array($offer->getXmlId(), [AppBasketService::GIFT_DOBROLAP_XML_ID, AppBasketService::GIFT_DOBROLAP_XML_ID_ALT], true)) {
                 continue;
             }
-            
+
             /** @var $basketItem BasketItem */
             $useStamps          = false;
             $canUseStamps       = false;
@@ -203,15 +203,15 @@ class BasketService
                 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
                     $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
                 }
-                
+
                 if ($useStamps) {
                     $canUseStamps = true;
                 }
-                
+
                 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
                     $maxStampsLevelValue = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
                     $canUseStamps        = ((bool)$maxStampsLevelValue || $canUseStamps);
-                    
+
                     if ($useStamps) {
                         if ($usedStamps = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'])['stampsUsed']) {
                             $canUseStampsAmount = $usedStamps;
@@ -226,14 +226,14 @@ class BasketService
                     }
                 }
             }
-            
+
             $product      = $this->getBasketProduct($basketItem->getId(), $offer, $basketItem->getQuantity(), $useStamps, $canUseStamps, $canUseStampsAmount);
             $shortProduct = $product->getShortProduct();
-            
+
             if (!$shortProduct) {
                 continue;
             }
-            
+
             $shortProduct->setPickupOnly(
                 $this->isPickupOnly($basketItem, $delivery, $offer)
             );
@@ -241,7 +241,7 @@ class BasketService
                 $shortProduct->setGiftDiscountId($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT']['VALUE']);
                 $shortProduct->setPrice((new Price())->setActual(0)->setOld(0));
             }
-            
+
             if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
                 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL'])) {
                     $usedStampsLevel = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE']);
@@ -249,24 +249,24 @@ class BasketService
                         $shortProduct->setUsedStamps((int)$usedStampsLevel['stampsUsed']);
                     }
                 }
-                
+
                 // уровни скидок за марки
                 $serializer             = Application::getInstance()->getContainer()->get(SerializerInterface::class);
                 $maxStampsLevelDiscount = 0;
-                
+
                 $maxStampsLevelKey = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'])['key'];
                 if ($maxStampsLevelKey) {
                     $maxStampsLevelDiscount = $this->stampService->parseLevelKey($maxStampsLevelKey)['discountStamps'];
                 }
-                
+
                 $stampLevels = [];
-                
+
                 if ($canUseStamps) {
                     foreach ($this->stampService->getBasketItemStampLevels($basketItem, $offer->getXmlId(), $maxStampsLevelDiscount) as $stampLevel) {
                         $stampLevels[] = $serializer->fromArray($stampLevel, StampLevel::class);
                     }
                 }
-                
+
                 /** @var StampLevel $stampLevelObj */
                 foreach ($stampLevels as $stampLevelKey => $stampLevelObj) {
                     $oldShortProduct = $product->getShortProduct();
@@ -282,23 +282,23 @@ class BasketService
                 //FIXME можно убрать лишние параметры из $stampLevels (discountValue и discountType)
                 $shortProduct->setStampLevels($stampLevels); //TODO get stampLevels from Manzana. If Manzana doesn't answer then set no levels
             }
-            
+
             $product->setShortProduct($shortProduct);
             $products->add($product);
-            
+
         }
-        
+
         $products = $this->fillBasketProductsPrices($basketItems, $products);
-    
+
         if ($promoCode) {
             $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
             $couponStorage->save($promoCode);
         }
-        
+
         return $products;
     }
-    
-    
+
+
     /**
      * Фильтруем товары в рамках акций n+1, 50% за второй товар и т.д.
      * Если basketCode = n1, n2 ... nX - значит это акционный товар например в рамках акции "берешь n товаров, 1 бесплатно" (sic!)
@@ -335,7 +335,7 @@ class BasketService
                 }
             }
         }
-        
+
         return $products->map(function ($product) use ($pricesWithQuantityAll) {
             /** @var Product $product */
             if (array_key_exists($product->getBasketItemId(), $pricesWithQuantityAll)) {
@@ -350,7 +350,7 @@ class BasketService
             return $product;
         });
     }
-    
+
     /**
      * @param int       $basketItemId
      * @param Offer     $offer
@@ -369,7 +369,7 @@ class BasketService
     {
         $product      = $offer->getProduct();
         $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity);
-        
+
         return (new Product())
             ->setBasketItemId($basketItemId)
             ->setShortProduct($shortProduct)
@@ -378,7 +378,7 @@ class BasketService
             ->setCanUseStamps($canUseStamps)
             ->setCanUseStampsAmount($canUseStampsAmount);
     }
-    
+
     /**
      * @param BasketItem                 $basketItem
      * @param CalculationResultInterface $delivery
@@ -415,7 +415,7 @@ class BasketService
         }
         return false;
     }
-    
+
     /**
      * @param BasketItem $basketItem
      * @return bool
@@ -424,7 +424,7 @@ class BasketService
     {
         return strpos($basketItem->getBasketCode(), 'n') === 0;
     }
-    
+
     /**
      * @throws SqlQueryException
      */
@@ -432,5 +432,5 @@ class BasketService
     {
         BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
     }
-    
+
 }
