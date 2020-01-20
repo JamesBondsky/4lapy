@@ -381,11 +381,11 @@ class OrderService implements LoggerAwareInterface
                 ->setCartParam($this->orderParameter)
                 ->setCartCalc($this->orderCalculate);
 
-            if ($isCompleted || $status->getCode() == Status::STATUS_CANCELING) {
-                $response->setCanBeCanceled(false);
-            }
+            // if ($isCompleted || $status->getCode() == Status::STATUS_CANCELING) {
+            //     $response->setCanBeCanceled(false);
+            // }
             //Вырубить возможность отмены для апи. Временно здесь
-            // $response->setCanBeCanceled(false);
+            $response->setCanBeCanceled(false);
         }
 
         return $response;
