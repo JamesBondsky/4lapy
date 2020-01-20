@@ -551,8 +551,10 @@ class ScheduleResultService implements LoggerAwareInterface
             }
             $route[$sender->getXmlId()] = $sender;
 
+            $schedules = $this->deliveryScheduleService->findBySenderAndRegularity($sender, $regularityId);
+
             /** @var DeliverySchedule $schedule */
-            foreach ($this->deliveryScheduleService->findBySenderAndRegularity($sender, $regularityId) as $schedule) {
+            foreach ($schedules as $schedule) {
                 // Если хотя бы одно из значений даты и времени не входит в дату действия расписания, то поставка была бы рассчитана неправильно
                 if (end($from) < $schedule->getActiveFrom() || array_values($from)[0] > $schedule->getActiveTo()) {
                     continue;

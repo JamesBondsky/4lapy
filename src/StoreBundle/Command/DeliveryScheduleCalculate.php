@@ -139,7 +139,7 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
         if ($receiver) {
             $receivers = [$this->storeService->getStoreByXmlId($receiver)];
         } else {
-            $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+            $receivers = $senders;
         }
 //        $senders = [$this->storeService->getStoreByXmlId('DC01')];
 //        $senders1 = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
@@ -147,9 +147,9 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
         $regularities = $this->scheduleResultService->getRegularityEnumAll();
         /** @var UserFieldEnumValue $regularity */
         foreach ($regularities as $regularityId => $regularity) {
-//            if ($regularityId != 42) {
-//                continue;
-//            }
+            if ($regularityId != 42) {
+                continue;
+            }
 
             $scheduleRegularity = $this->deliveryScheduleService->getRegular()->filter(function($item) use ($regularity){
                 /**
@@ -175,6 +175,10 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                 $isSuccess = false;
                 $totalCreated = 0;
                 $totalDeleted = 0;
+
+                if ($sender->getXmlId() != '0000100436') {
+                    continue;
+                }
 
                 try {
                     $this->sqlHeartBeat();
