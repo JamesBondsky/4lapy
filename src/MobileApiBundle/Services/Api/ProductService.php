@@ -238,6 +238,7 @@ class ProductService
                     return !is_null($value);
                 })
                 ->getValues();
+            $cache->deleteItem($cacheKey);
             $cache->set($cacheKey, $products);
         }
 
@@ -466,7 +467,7 @@ class ProductService
         if ($fullProduct->getAvailability() == 'В наличии' && $fullProduct->getPickupOnly()) {
             $fullProduct->setAvailability('Самовывоз');
         }
-        
+
         if ($product->getNormsOfUse()->getText() || $product->getLayoutRecommendations()->getText()) {
             if ($product->getLayoutRecommendations()->getText() != '' && $product->getLayoutRecommendations()->getText() != null) {
                 $fullProduct->setNutritionRecommendations($product->getLayoutRecommendations()->getText());
@@ -1186,6 +1187,7 @@ class ProductService
                 ->exec()
                 ->first();
 
+            $cache->deleteItem($cacheKey);
             $cache->set($cacheKey, $share);
         } else {
             $share = $cache->get($cacheKey);

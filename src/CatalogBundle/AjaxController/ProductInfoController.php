@@ -282,6 +282,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                             $responseItem = $cache->get($cacheKey);
                         } else {
                             $responseItem = $getProductInfo($product, $offer);
+                            $cache->deleteItem($cacheKey);
                             $cache->set($cacheKey, $responseItem);
                         }
 
@@ -313,6 +314,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
             $response = $cache->get($cacheKey);
         } else {
             $response = $getProductListInfo();
+            $cache->deleteItem($cacheKey);
             $cache->set($cacheKey, $response);
         }
 

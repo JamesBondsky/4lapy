@@ -280,6 +280,7 @@ class CatalogController extends Controller
                 $categoryRequest->getNavigation(),
                 $categoryRequest->getSearchString()
             );
+            $cache->deleteItem($cacheKey);
             $cache->set($cacheKey, $result);
         }
 
