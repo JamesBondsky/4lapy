@@ -66,7 +66,7 @@ class StoreRepository extends BaseRepository
 
         $cache = new FilesystemCache('', 3600);
 
-        if ($cache->has($cacheKey)) {
+        if ($cache->has($cacheKey) && false) {
             $resultCollection = $cache->get($cacheKey);
         } else {
             $query = StoreTable::query();
