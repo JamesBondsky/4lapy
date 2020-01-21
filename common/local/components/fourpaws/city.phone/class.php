@@ -82,7 +82,13 @@ class FourPawsCityPhoneComponent extends CBitrixComponent
 
             try {
                 $logger = LoggerFactory::create('component');
-                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+                $logger->error(sprintf(
+                    'Component execute error: [%s] %s in %s:%d',
+                    $e->getCode(),
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine()
+                ));
             } catch (RuntimeException $e) {
             }
         }

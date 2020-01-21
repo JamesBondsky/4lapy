@@ -28,7 +28,7 @@ $chanceDeclension = new Declension('шанс', 'шанса', 'шансов');
 		<div class="b-container" data-wrap-form-participate-leto2020="true">
             <?php $arUser = \CUser::GetById($USER->GetID())->Fetch(); ?>
 
-            <div class="title-leto2020">Зарегестрируйтесь и&nbsp;выйграйте призы</div>
+            <div class="title-leto2020">Зарегистрируйтесь и выиграйте призы</div>
 
             <div class="participate-leto2020__inner-wrap">
                 <div class="participate-leto2020__inner">
@@ -122,7 +122,7 @@ $chanceDeclension = new Declension('шанс', 'шанса', 'шансов');
                                 <span class="img">
                                     <img src="/leto2020/img/tickets_icon.png" alt="">
                                 </span>
-                                <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Таиланд</span>
+                                <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Лето</span>
                             </li>
                         </ul>
                     </div>
@@ -163,7 +163,7 @@ $chanceDeclension = new Declension('шанс', 'шанса', 'шансов');
                                 <span class="img">
                                     <img src="/leto2020/img/tickets_icon.png" alt="">
                                 </span>
-                      <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Таиланд</span>
+                      <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Лето</span>
                     </li>
                   </ul>
                 </div>

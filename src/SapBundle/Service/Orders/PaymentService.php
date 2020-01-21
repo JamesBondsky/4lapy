@@ -148,6 +148,11 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             throw new InvalidOrderNumberException('Order number is empty');
         }
         $order = SaleOrder::loadByAccountNumber($paymentTask->getBitrixOrderId());
+
+        if ($order === null) {
+            $order = SaleOrder::loadByAccountNumber('p' . $paymentTask->getBitrixOrderId());
+        }
+
         if (!$order) {
             throw new NotFoundOrderException(
                 sprintf('Order with number %s not found', $paymentTask->getBitrixOrderId())

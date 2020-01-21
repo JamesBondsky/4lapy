@@ -380,13 +380,13 @@ class OrderService implements LoggerAwareInterface
                 ->setPaid($order->isPayed())
                 ->setCartParam($this->orderParameter)
                 ->setCartCalc($this->orderCalculate);
-    
-            $statusCode = $status->getCode();
-            if ($isCompleted || $statusCode == Status::STATUS_CANCELING || $statusCode == PersonalOrderService::STATUS_NEW || $statusCode == PersonalOrderService::STATUS_OTHER_NEW) {
-                $response->setCanBeCanceled(false);
-            }
+
+//            $statusCode = $status->getCode();
+//            if ($isCompleted || $statusCode == Status::STATUS_CANCELING || $statusCode == PersonalOrderService::STATUS_NEW || $statusCode == PersonalOrderService::STATUS_OTHER_NEW) {
+//                $response->setCanBeCanceled(false);
+//            }
             //Вырубить возможность отмены для апи. Временно здесь
-            // $response->setCanBeCanceled(false);
+            $response->setCanBeCanceled(false);
         }
 
         return $response;
@@ -772,7 +772,7 @@ class OrderService implements LoggerAwareInterface
                 $bonusVulnerablePrice = ((90 * (float) $priceWithoutDiscount) / 100) - $bonusSubtractAmount;
             }
         }
-        
+
         if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
             $orderCalculate
                 ->setStampsDetails([
@@ -786,7 +786,7 @@ class OrderService implements LoggerAwareInterface
                         ->setValue($stampsUsed),
                 ]);
         }
-    
+
         if ($bonusVulnerablePrice) {
             $orderCalculate->setBonusVulnerablePrice($bonusVulnerablePrice);
         }
@@ -1190,11 +1190,11 @@ class OrderService implements LoggerAwareInterface
             $deliveryDate = $delivery->getDeliveryDate();
             $intervals = $delivery->getAvailableIntervals();
             $day = FormatDate('d.m.Y l', $delivery->getDeliveryDate()->getTimestamp());
-            
+
             if (FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '01.01.2020' || FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '02.01.2020') {
                 continue;
             }
-            
+
             if (!empty($intervals) && count($intervals)) {
                 foreach ($intervals as $deliveryIntervalIndex => $interval) {
                     if (FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '31.12.2019' && (($interval->getTo() > 18) || ($interval->getTo() == 0))) {
