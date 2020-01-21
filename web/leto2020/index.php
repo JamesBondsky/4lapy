@@ -122,7 +122,7 @@ $chanceDeclension = new Declension('шанс', 'шанса', 'шансов');
                                 <span class="img">
                                     <img src="/leto2020/img/tickets_icon.png" alt="">
                                 </span>
-                                <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Таиланд</span>
+                                <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Лето</span>
                             </li>
                         </ul>
                     </div>
@@ -163,7 +163,7 @@ $chanceDeclension = new Declension('шанс', 'шанса', 'шансов');
                                 <span class="img">
                                     <img src="/leto2020/img/tickets_icon.png" alt="">
                                 </span>
-                      <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Таиланд</span>
+                      <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Лето</span>
                     </li>
                   </ul>
                 </div>
