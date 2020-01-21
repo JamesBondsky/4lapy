@@ -105,6 +105,8 @@ class OrderService
         'K', // Отменен
     ];
 
+    public const STATUS_NEW = 'Q'; //Новый
+    public const STATUS_OTHER_NEW = 'N'; //??? Новый (еще один)
     public const STATUS_CANCELING = 'XX'; //Отменяется
 
     protected const MANZANA_FINAL_STATUS = 'G';
