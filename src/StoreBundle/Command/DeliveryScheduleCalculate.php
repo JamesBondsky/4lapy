@@ -176,10 +176,6 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                 $totalCreated = 0;
                 $totalDeleted = 0;
 
-                if ($sender->getXmlId() != '0000100436') {
-                    continue;
-                }
-
                 try {
                     $this->sqlHeartBeat();
                     $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender, $dateDelete, $regularityId);
