@@ -4,11 +4,13 @@ namespace FourPaws\MobileApiBundle\Repository;
 
 use FourPaws\AppBundle\Enum\CrudGroups;
 use FourPaws\MobileApiBundle\Entity\ApiPushEvent;
+use FourPaws\MobileApiBundle\Entity\ApiPushMessage;
 use FourPaws\MobileApiBundle\Exception\BitrixException;
 use FourPaws\MobileApiBundle\Exception\InvalidIdentifierException;
 use FourPaws\MobileApiBundle\Exception\ValidationException;
 use FourPaws\MobileApiBundle\Exception\WrongTransformerResultException;
 use FourPaws\MobileApiBundle\Tables\ApiPushEventTable;
+use FourPaws\MobileApiBundle\Tables\ApiPushMessageTable;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
@@ -84,6 +86,7 @@ class ApiPushEventRepository implements ApiPushEventRepositoryInterface
             ->addSelect('MESSAGE.UF_MESSAGE', 'MESSAGE_TEXT')
             ->addSelect('MESSAGE.UF_TYPE', 'MESSAGE_TYPE')
             ->addSelect('MESSAGE.UF_EVENT_ID', 'EVENT_ID')
+            ->addSelect('MESSAGE.UF_OTHER_EVENT_ID', 'OTHER_EVENT_ID')
             ->addSelect('MESSAGE.UF_TITLE', 'MESSAGE_TITLE')
             ->addSelect('URL', 'PHOTO_URL');
         if ($criteria) {
@@ -213,7 +216,26 @@ class ApiPushEventRepository implements ApiPushEventRepositoryInterface
     {
         if ($id > 0) {
             try {
-                $result = ApiPushEventTable::delete($id);
+                $messageId = ApiPushEventTable::query()
+                    ->setSelect(['MESSAGE_ID', 'USER_ID'])
+                    ->setFilter(['=ID' => $id])
+                    ->exec()
+                    ->fetch();
+
+                $pushesIdresult = ApiPushEventTable::query()
+                    ->setSelect(['ID'])
+                    ->setFilter(['MESSAGE_ID' => $messageId['MESSAGE_ID'], 'USER_ID' => $messageId['USER_ID']])
+                    ->exec();
+                
+                while ($res = $pushesIdresult->fetch()) {
+                    $pushesId[] = $res['ID'];
+                }
+
+                // i know it's too bad, by it's doesnt work when you try to give it an array
+                foreach ($pushesId as $pushId) {
+                    $result = ApiPushEventTable::delete($pushId);
+                }
+                
             } catch (\Exception $exception) {
                 throw new BitrixException($exception->getMessage(), $exception->getCode(), $exception);
             }

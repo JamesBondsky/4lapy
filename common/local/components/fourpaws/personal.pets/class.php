@@ -66,7 +66,13 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
             $container = App::getInstance()->getContainer();
         } catch (ApplicationCreateException $e) {
             $logger = LoggerFactory::create('component');
-            $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+            $logger->error(sprintf(
+                'Component execute error: [%s] %s in %s:%d',
+                $e->getCode(),
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine()
+            ));
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }

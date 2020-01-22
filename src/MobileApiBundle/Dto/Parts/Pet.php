@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Dto\Parts;
 
 use FourPaws\MobileApiBundle\Dto\Object\PetGender;
 use FourPaws\MobileApiBundle\Dto\Object\PetPhoto;
+use FourPaws\MobileApiBundle\Dto\Object\PetSizes;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -85,6 +86,13 @@ trait Pet
      * @var bool
      */
     protected $isAddNow = false;
+    
+    /**
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\PetSizes")
+     * @Serializer\SerializedName("pet_size")
+     * @var PetSizes
+     */
+    protected $petSize;
 
     /**
      * @return int
@@ -257,5 +265,23 @@ trait Pet
     public function getIsAddNow()
     {
         return $this->isAddNow;
+    }
+    
+    /**
+     * @return PetSizes
+     */
+    public function getPetSize(): ?PetSizes
+    {
+        return $this->petSize;
+    }
+    
+    /**
+     * @param PetSizes $petSize
+     * @return $this
+     */
+    public function setPetSize($petSize)
+    {
+        $this->petSize = $petSize;
+        return $this;
     }
 }

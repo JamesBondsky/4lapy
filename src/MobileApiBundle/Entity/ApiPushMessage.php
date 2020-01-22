@@ -67,7 +67,15 @@ class ApiPushMessage
      * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $eventId;
-
+    
+    /**
+     * @var string
+     * @Serializer\SerializedName("UF_OTHER_EVENT_ID")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read","update","create"})
+     */
+    protected $otherEventId;
+    
     /**
      * @var int[]
      * @Serializer\SerializedName("UF_GROUPS")
@@ -410,5 +418,27 @@ class ApiPushMessage
     public function getMessageTitle()
     {
         return $this->messageTitle;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getOtherEventId(): string
+    {
+        if ($this->otherEventId == null) {
+            return '';
+        }
+        
+        return $this->otherEventId;
+    }
+    
+    /**
+     * @param string $otherEventId
+     * @return ApiPushMessage
+     */
+    public function setOtherEventId(string $otherEventId): ApiPushMessage
+    {
+        $this->otherEventId = $otherEventId;
+        return $this;
     }
 }

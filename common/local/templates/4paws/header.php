@@ -31,10 +31,10 @@ $markup = PawsApplication::markup();
  */
 $sViewportCookie = $_COOKIE['viewport'] ?? null;
 
-$bodyClass = 'new-year';
+$bodyClass = '';
 
 if(KioskService::isKioskMode()) {
-    $bodyClass = 'new-year body-kiosk js-body-kiosk';
+    $bodyClass = 'body-kiosk js-body-kiosk';
 
     if($USER->IsAuthorized()) {
         $bodyClass .= ' authorized';

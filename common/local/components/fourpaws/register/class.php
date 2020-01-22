@@ -51,6 +51,7 @@ use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\Exception\RuntimeException;
 use JMS\Serializer\Serializer;
@@ -242,7 +243,13 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         } catch (\Exception $e) {
             try {
                 $logger = LoggerFactory::create('component');
-                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+                $logger->error(sprintf(
+                    'Component execute error: [%s] %s in %s:%d',
+                    $e->getCode(),
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine()
+                ));
             } catch (\RuntimeException $e) {
             }
         }
@@ -404,6 +411,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                         'backurl' => $data['backurl'],
                         'code'    => $confirmService::getGeneratedCode('confirm_register'),
                     ]);
+
+                    /** @var UserService $userService */
+                    $userService = $container->get(CurrentUserProviderInterface::class);
+                    $userService->refreshUserCard($regUser);
 
                     return JsonSuccessResponse::create(
                         '',

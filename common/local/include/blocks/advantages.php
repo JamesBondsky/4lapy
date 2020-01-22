@@ -8,11 +8,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <div class="b-avantage__slider js-avantage-slider">
             <div class="b-avantage__item">
                 <div class="b-avantage__image-wrap">
-                    <?php /*<img class="b-avantage__image b-avantage__image--bonus"
-                         src="/static/build/images/inhtml/icons/bonus-programm.svg" alt=""
-                         role="presentation"> */?>
                     <img class="b-avantage__image b-avantage__image--bonus"
-                         src="/static/build/images/inhtml/new-year/bonus-avantage.png" alt=""
+                         src="/static/build/images/inhtml/icons/bonus-programm.svg" alt=""
                          role="presentation">
                 </div>
                 <div class="b-avantage__text">
@@ -22,11 +19,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <div class="b-avantage__item">
                 <div class="b-avantage__image-wrap">
-                    <?php /*<img class="b-avantage__image b-avantage__image--proposition"
-                         src="/static/build/images/inhtml/icons/icon-proposition.svg" alt=""
-                         role="presentation"> */?>
                     <img class="b-avantage__image b-avantage__image--proposition"
-                         src="/static/build/images/inhtml/new-year/proposition-avantage.png" alt=""
+                         src="/static/build/images/inhtml/icons/icon-proposition.svg" alt=""
                          role="presentation">
                 </div>
                 <div class="b-avantage__text">
@@ -36,11 +30,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <div class="b-avantage__item">
                 <div class="b-avantage__image-wrap">
-                    <?php /* <img class="b-avantage__image b-avantage__image--bigchoice"
-                         src="/static/build/images/inhtml/icons/icon-bonus-program-main.svg" alt=""
-                         role="presentation"> */?>
                     <img class="b-avantage__image b-avantage__image--bigchoice"
-                         src="/static/build/images/inhtml/new-year/bigchoice-avantage.png" alt=""
+                         src="/static/build/images/inhtml/icons/icon-bonus-program-main.svg" alt=""
                          role="presentation">
                 </div>
                 <div class="b-avantage__text">
@@ -50,11 +41,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <div class="b-avantage__item">
                 <div class="b-avantage__image-wrap">
-                    <?php /* <img class="b-avantage__image b-avantage__image--payment"
-                         src="/static/build/images/inhtml/icons/icon-payment.svg" alt=""
-                         role="presentation"> */?>
                     <img class="b-avantage__image b-avantage__image--payment"
-                         src="/static/build/images/inhtml/new-year/pay-avantage.png" alt=""
+                         src="/static/build/images/inhtml/icons/icon-payment.svg" alt=""
                          role="presentation">
                 </div>
                 <div class="b-avantage__text">
@@ -64,11 +52,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <div class="b-avantage__item">
                 <div class="b-avantage__image-wrap">
-                     <?php /* <img class="b-avantage__image b-avantage__image--fastdelivery"
+                     <img class="b-avantage__image b-avantage__image--fastdelivery"
                          src="/static/build/images/inhtml/icons/icon-fastdelivery.svg" alt=""
-                         role="presentation"> */?>
-                    <img class="b-avantage__image b-avantage__image--fastdelivery"
-                         src="/static/build/images/inhtml/new-year/delivery-avantage.png" alt=""
                          role="presentation">
                 </div>
                 <div class="b-avantage__text">
@@ -78,11 +63,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <div class="b-avantage__item">
                 <div class="b-avantage__image-wrap">
-                     <?php /* <img class="b-avantage__image b-avantage__image--order"
+                     <img class="b-avantage__image b-avantage__image--order"
                          src="/static/build/images/inhtml/icons/icon-online-order.svg" alt=""
-                         role="presentation"> */?>
-                    <img class="b-avantage__image b-avantage__image--order"
-                         src="/static/build/images/inhtml/new-year/online-avantage.png" alt=""
                          role="presentation">
                 </div>
                 <div class="b-avantage__text">

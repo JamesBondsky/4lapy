@@ -30,6 +30,7 @@ use Sly\NotificationPusher\Model\Device;
 use Sly\NotificationPusher\Model\Message;
 use Sly\NotificationPusher\Model\Push;
 use tests\units\Sly\NotificationPusher\PushManager;
+use FourPaws\BitrixOrm\Table\EnumUserFieldTable;
 
 class PushEventService
 {
@@ -123,6 +124,8 @@ class PushEventService
 
         $dataFetch = $res->fetchAll();
 
+        $dataFetch = $this->modifyDataFetch($dataFetch);
+
         $pushMessages = $this->transformer->fromArray(
             $dataFetch,
             'array<' . ApiPushMessage::class . '>'
@@ -192,6 +195,7 @@ class PushEventService
     {
         // выбираем push сообщения за указанный период
         $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
+
         $res = $hlBlockPushMessages->query()
             ->setFilter([
                 'UF_ACTIVE' => true,
@@ -205,6 +209,8 @@ class PushEventService
             ->exec();
 
         $dataFetch = $res->fetchAll();
+
+        $dataFetch = $this->modifyDataFetch($dataFetch);
 
         /** @var ApiPushMessage[] $pushMessages */
         $pushMessages = $this->transformer->fromArray(
@@ -239,10 +245,12 @@ class PushEventService
         $pushEvents = $this->apiPushEventRepository->findForAndroid();
         foreach ($pushEvents as $pushEvent) {
             try {
+                $eventId = $this->getEventId($pushEvent);
+
                 $response = $this->fireBaseCloudMessagingService->sendNotification(
                     $pushEvent->getPushToken(),
                     $pushEvent->getMessageText(),
-                    $pushEvent->getEventId(),
+                    $eventId,
                     $pushEvent->getMessageTypeEntity()->getXmlId(),
                     $pushEvent->getMessageTitle(),
                     $pushEvent->getPhotoUrl()
@@ -269,10 +277,12 @@ class PushEventService
         $pushEvents = $this->apiPushEventRepository->findForIos();
         foreach ($pushEvents as $pushEvent) {
             try {
+                $eventId = $this->getEventId($pushEvent);
+
                 $this->applePushNotificationService->sendNotification(
                     $pushEvent->getPushToken(),
                     $pushEvent->getMessageText(),
-                    $pushEvent->getEventId(),
+                    $eventId,
                     $pushEvent->getMessageTypeEntity()->getXmlId()
                 );
 
@@ -304,6 +314,8 @@ class PushEventService
         if (count($pushEvents) > 0) {
             foreach ($pushEvents as $pushEvent) {
                 try {
+                    $eventId = $this->getEventId($pushEvent);
+
                     $categoryTitle = '';
 
                     $data = [
@@ -318,7 +330,7 @@ class PushEventService
                         ],
                         'photourl' => $pushEvent->getPhotoUrl(),
                         'type'     => $pushEvent->getMessageTypeEntity()->getXmlId(),
-                        'id'       => $pushEvent->getEventId(),
+                        'id'       => $eventId,
                     ];
 
                     if ($data['photourl']) {
@@ -342,7 +354,7 @@ class PushEventService
 
                     $customArr = [
                         'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
-                        'id' => $pushEvent->getEventId(),
+                        'id' => $eventId,
                         'title' => $categoryTitle
                     ];
 
@@ -595,7 +607,7 @@ class PushEventService
         $foundPhoneNumbers = [];
         /** @var User $user */
         foreach ($users as $user) {
-            if ($this->canSendPushMessage($user, $typeCode, true)) {
+            if ($this->canSendPushMessage($user, $typeCode, true) && $this->shouldSendPushMessage($user, $typeCode)) {
                 $foundPhoneNumbers[] = $user->getPersonalPhone();
                 $userIds[]           = $user->getId();
             }
@@ -652,10 +664,78 @@ class PushEventService
     {
         return (
             ($typeCode == 'news' && $user->isSendNewsMsg())
-            || ($typeCode == 'action' && $user->isSendInterviewMsg())
+            || ($typeCode == 'action' && $user->isSendNewsMsg())
+            || ($typeCode == 'personal_offer' && $user->isSendNewsMsg())
             || ($typeCode == 'status' && $user->isSendOrderStatusMsg())
             || ($typeCode == 'order_review' && $user->isSendFeedbackMsg())
-            || ($typeCode == 'message')
+            || ($typeCode == 'message' && $user->isSendNewsMsg())
+            || ($typeCode == 'category' && $user->isSendNewsMsg())
         );
+    }
+
+    protected function getTypeCodes()
+    {
+        try {
+            $types = EnumUserFieldTable::query()
+                ->setSelect(['ID', 'XML_ID'])
+                ->setFilter(['=USER_FIELD_ID' => 643])
+                ->setCacheTtl('36000')
+                ->exec();
+
+            while ($type = $types->fetch()) {
+                $result[$type['ID']] = $type['XML_ID'];
+            }
+
+            return $result;
+        } catch (\Exception $e) {
+
+        }
+    }
+
+    protected function modifyDataFetch($dataFetch)
+    {
+        try {
+            $typeCodes = $this->getTypeCodes();
+
+            foreach ($dataFetch as &$prePushItem) {
+                if ($prePushItem['UF_USERS']) {
+                    $usersNeededToBeDelete = [];
+
+                    $users = $this->userRepository
+                        ->findBy([
+                            '=ID' => $prePushItem['UF_USERS'],
+                        ]);
+
+                    $typeCode = $typeCodes[$prePushItem['UF_TYPE']];
+
+                    foreach ($users as $user) {
+                        if (!$this->shouldSendPushMessage($user, $typeCode)) {
+                            $usersNeededToBeDelete[] = $user->getId();
+                        }
+                    }
+
+                    foreach ($prePushItem['UF_USERS'] as $pushUserKey => $pushUser) {
+                        if (in_array($pushUser, $usersNeededToBeDelete)) {
+                            unset($prePushItem['UF_USERS'][$pushUserKey]);
+                        }
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+
+        }
+
+        return $dataFetch;
+    }
+
+    protected function getEventId(ApiPushEvent $pushEvent)
+    {
+        $eventId = $pushEvent->getEventId();
+
+        if (!$eventId) {
+            $eventId = $pushEvent->getOtherEventId();
+        }
+
+        return $eventId;
     }
 }

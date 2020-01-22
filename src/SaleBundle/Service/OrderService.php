@@ -50,6 +50,7 @@ use FourPaws\DeliveryBundle\Exception\LocationNotFoundException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\DostavistaService;
+use FourPaws\External\Exception\DaDataQc;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
@@ -840,7 +841,7 @@ class OrderService implements LoggerAwareInterface
         }
 
         $address = null;
-        if ($storage->getAddressId()) {
+        if ($storage->getAddressId() && $selectedDelivery->getDeliveryCode() != '4lapy_pickup') {
             if ($storage->getCityCode() !== \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
                 $storage->updateAddressBySaveAddressByMoscowDistrict($this->addressService, $this->locationService);
             }
@@ -1346,6 +1347,8 @@ class OrderService implements LoggerAwareInterface
                         'STREET_PREFIX' => $address->getStreetPrefix(),
                         'ZIP_CODE' => $address->getZipCode(),
                     ]);
+                } catch (DaDataQc $exQC) {
+
                 } catch (AddressSplitException $e) {
                     $this->log()->error(sprintf('failed to split delivery address: %s', $e->getMessage()), [
                         'fuserId' => $storage->getFuserId(),
@@ -1394,7 +1397,12 @@ class OrderService implements LoggerAwareInterface
                             ->setStreet('Красный бор');
                     } else {
                         $addressString = $this->storeService->getStoreAddress($shop) . ', ' . $shop->getAddress();
-                        $address = $this->locationService->splitAddress($addressString, $shop->getLocation());
+                        try {
+                            $address = $this->locationService->splitAddress($addressString, $shop->getLocation());
+                        } catch (Exception $e) {
+                            $address = $this->storeService->getStoreAddress($shop);
+                            $address->setStreet($shop->getAddress());
+                        }
                     }
                     $this->setOrderAddress($order, $address);
                 } catch (AddressSplitException $e) {
@@ -2615,11 +2623,11 @@ class OrderService implements LoggerAwareInterface
              $orderNumber = $order->getField('ACCOUNT_NUMBER');
              $sapStatus = StatusService::STATUS_CANCELED;
              $result = $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
-             
+
              if (!$result) {
                  $this->sendSapFailMail($userId, $order);
              }
-             
+
         } catch (\Exception $e) {
             $this->sendSapFailMail($userId, $order);
         }
@@ -2757,7 +2765,7 @@ class OrderService implements LoggerAwareInterface
 
         return true;
     }
-    
+
     protected function sendSapFailMail($userId, $order)
     {
         $user = \CUser::GetByID($userId)->Fetch();
