@@ -147,10 +147,6 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
         $regularities = $this->scheduleResultService->getRegularityEnumAll();
         /** @var UserFieldEnumValue $regularity */
         foreach ($regularities as $regularityId => $regularity) {
-            if ($regularityId != 42) {
-                continue;
-            }
-
             $scheduleRegularity = $this->deliveryScheduleService->getRegular()->filter(function($item) use ($regularity){
                 /**
                  * @var UserFieldEnumValue $item
