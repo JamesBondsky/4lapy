@@ -269,7 +269,7 @@ class CatalogController extends Controller
         ];
         $cacheKey = md5(implode('_', $cacheArr));
 
-        $cache = new FilesystemCache('', 3600 * 2);
+        $cache = new FilesystemCache('', 3600 * 2, getenv('CACHE_DIR') ?? null);
 
         if ($cache->has($cacheKey)) {
             $result = $cache->get($cacheKey);
@@ -280,6 +280,7 @@ class CatalogController extends Controller
                 $categoryRequest->getNavigation(),
                 $categoryRequest->getSearchString()
             );
+            $cache->deleteItem($cacheKey);
             $cache->set($cacheKey, $result);
         }
 
