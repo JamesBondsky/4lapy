@@ -64,7 +64,7 @@ class StoreRepository extends BaseRepository
 
         $cacheKey = md5($cacheKey);
 
-        $cache = new FilesystemCache('', 3600);
+        $cache = new FilesystemCache('', 3600, getenv('CACHE_DIR') ?? null);
 
         if ($cache->has($cacheKey) && false) {
             $resultCollection = $cache->get($cacheKey);
