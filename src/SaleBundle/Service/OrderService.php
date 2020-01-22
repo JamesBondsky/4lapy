@@ -2618,18 +2618,20 @@ class OrderService implements LoggerAwareInterface
 
         $this->cancelBitrixOrder($order, $orderId, $newStatus);
 
-        try {
-            // отменяем заказ в Sap'е
-             $orderNumber = $order->getField('ACCOUNT_NUMBER');
-             $sapStatus = StatusService::STATUS_CANCELED;
-             $result = $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
-
-             if (!$result) {
-                 $this->sendSapFailMail($userId, $order);
-             }
-
-        } catch (\Exception $e) {
-            $this->sendSapFailMail($userId, $order);
+        if (getenv('PROD_SAP_REQUEST') != 'disable') {
+            try {
+                // отменяем заказ в Sap'е
+                $orderNumber = $order->getField('ACCOUNT_NUMBER');
+                $sapStatus = StatusService::STATUS_CANCELED;
+                $result = $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
+        
+                if (!$result) {
+                    $this->sendSapFailMail($userId, $order);
+                }
+        
+            } catch (\Exception $e) {
+                $this->sendSapFailMail($userId, $order);
+            }
         }
 
         return 'cancel';
