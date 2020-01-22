@@ -275,7 +275,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                     }
 
                     foreach ($product->getOffers() as $offer) {
-                        $cache = new FilesystemCache('', 1800);
+                        $cache = new FilesystemCache('', 1800, getenv('cache_dir') ?? null);
                         $cacheKey = 'getProductInfo_' . $product->getId() . '_' . $offer->getId() . '_' . $locationCode;
 
                         if ($cache->has($cacheKey)) {
@@ -306,7 +306,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
             return $response;
         };
 
-        $cache = new FilesystemCache('', 3600);
+        $cache = new FilesystemCache('', 3600, getenv('cache_dir') ?? null);
         $currentMethod = explode('::', __METHOD__)[1];
         $cacheKey = $currentMethod . '_' . md5(serialize($productListRequest)) . '_' . $locationCode;
 //
