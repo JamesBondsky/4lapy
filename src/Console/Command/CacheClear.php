@@ -52,7 +52,7 @@ class CacheClear extends Command implements LoggerAwareInterface
              ->addArgument(
                  self::ARG_CACHE_TYPE,
                  InputArgument::OPTIONAL,
-                 'Cache type [all, menu, managed, html]',
+                 'Cache type [all, menu, managed, html, symfony-fs]',
                  'all'
              )
              ->addOption(
@@ -77,28 +77,32 @@ class CacheClear extends Command implements LoggerAwareInterface
             $this->log(LogLevel::INFO, 'Cache Path: ' . $cachePath);
         }
 
-        $this->fileCacheClean($cacheType, $cacheEngine, $cachePath);
-        $this->cache->clear();
-        Application::getInstance()->getManagedCache()->cleanAll();
-        if (!$cachePath) {
-            switch ($cacheType) {
-                case 'menu':
-                    $GLOBALS['CACHE_MANAGER']->CleanDir('menu');
-                    CBitrixComponent::clearComponentCache('bitrix:menu');
-                    break;
-                case 'managed':
-                    $GLOBALS['CACHE_MANAGER']->CleanAll();
-                    $GLOBALS['stackCacheManager']->CleanAll();
-                    break;
-                case 'html':
-                    StaticHtmlCache::getInstance()->deleteAll();
-                    break;
-                case 'all':
-                    BXClearCache(true);
-                    $GLOBALS['CACHE_MANAGER']->CleanAll();
-                    $GLOBALS['stackCacheManager']->CleanAll();
-                    StaticHtmlCache::getInstance()->deleteAll();
-                    break;
+        if ($cacheType === 'symfony-fs') {
+            $this->cache->clear();
+        } else {
+            $this->fileCacheClean($cacheType, $cacheEngine, $cachePath);
+
+            Application::getInstance()->getManagedCache()->cleanAll();
+            if (!$cachePath) {
+                switch ($cacheType) {
+                    case 'menu':
+                        $GLOBALS['CACHE_MANAGER']->CleanDir('menu');
+                        CBitrixComponent::clearComponentCache('bitrix:menu');
+                        break;
+                    case 'managed':
+                        $GLOBALS['CACHE_MANAGER']->CleanAll();
+                        $GLOBALS['stackCacheManager']->CleanAll();
+                        break;
+                    case 'html':
+                        StaticHtmlCache::getInstance()->deleteAll();
+                        break;
+                    case 'all':
+                        BXClearCache(true);
+                        $GLOBALS['CACHE_MANAGER']->CleanAll();
+                        $GLOBALS['stackCacheManager']->CleanAll();
+                        StaticHtmlCache::getInstance()->deleteAll();
+                        break;
+                }
             }
         }
         $this->logResult();
