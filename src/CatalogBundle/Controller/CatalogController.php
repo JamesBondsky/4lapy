@@ -269,7 +269,7 @@ class CatalogController extends Controller
         ];
         $cacheKey = md5(implode('_', $cacheArr));
 
-        $cache = new FilesystemCache('', 3600 * 2, getenv('cache_dir') ?? null);
+        $cache = new FilesystemCache('', 3600 * 2, getenv('CACHE_DIR') ?? null);
 
         if ($cache->has($cacheKey)) {
             $result = $cache->get($cacheKey);

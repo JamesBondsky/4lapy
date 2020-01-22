@@ -42,7 +42,7 @@ class CacheClear extends Command implements LoggerAwareInterface
         parent::__construct($name);
         $this->setLogger(new Logger('Cache cleaner', [new StreamHandler(STDOUT, Logger::DEBUG)]));
 
-        $this->cache = new FilesystemCache('', 0, getenv('cache_dir') ?? null);
+        $this->cache = new FilesystemCache('', 0, getenv('CACHE_DIR') ?? null);
     }
 
     protected function configure()

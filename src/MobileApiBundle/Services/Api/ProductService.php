@@ -216,7 +216,7 @@ class ProductService
 
         $callBack = \Closure::fromCallable([$this, 'mapProductForList']);
 
-        $cache = new FilesystemCache('', 3600 * 2, getenv('cache_dir') ?? null);
+        $cache = new FilesystemCache('', 3600 * 2, getenv('CACHE_DIR') ?? null);
         $cacheArr = [];
         $cacheIgnoreKey = ['token', 'sign', 'PHPSESSID'];
         foreach ($_REQUEST as $key => $value) {
@@ -1177,7 +1177,7 @@ class ProductService
      */
     public function getProductXmlIdsByShareId(int $stockId)
     {
-        $cache = new FilesystemCache('', 3600 * 24 * 3, getenv('cache_dir') ?? null);
+        $cache = new FilesystemCache('', 3600 * 24 * 3, getenv('CACHE_DIR') ?? null);
 
         $cacheKey = 'share_' . $stockId;
 
