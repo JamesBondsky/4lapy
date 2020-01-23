@@ -7,7 +7,7 @@ use Exception;
 use FourPaws\Catalog\Collection\VariantCollection;
 use FourPaws\Catalog\Model\Share;
 use FourPaws\Catalog\Model\Variant;
-use FourPaws\Catalog\Query\BrandQuery;
+use FourPaws\Catalog\Query\ShareQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use WebArch\BitrixCache\BitrixCache;
@@ -23,7 +23,7 @@ class ShareFilter extends Abstraction\FilterBase
      */
     public function getFilterCode(): string
     {
-        return 'Brand';
+        return 'Share';
     }
 
     /**
@@ -31,7 +31,7 @@ class ShareFilter extends Abstraction\FilterBase
      */
     public function getPropCode(): string
     {
-        return 'BRAND';
+        return 'SHARE';
     }
 
     /**
@@ -39,7 +39,7 @@ class ShareFilter extends Abstraction\FilterBase
      */
     public function getRuleCode(): string
     {
-        return 'brand.CODE';
+        return 'share.CODE';
     }
 
     /**
@@ -52,13 +52,13 @@ class ShareFilter extends Abstraction\FilterBase
         $doGetAllVariants = function () {
             $variants = [];
 
-            $brandCollection = (new ShareQuery())->withOrder(['SORT' => 'asc', 'NAME' => 'asc'])
+            $shareCollection = (new ShareQuery())->withOrder(['SORT' => 'asc', 'NAME' => 'asc'])
                 ->exec();
 
             /** @var Share $brand */
-            foreach ($brandCollection as $brand) {
-                $variants[] = (new Variant())->withName($brand->getName())
-                    ->withValue($brand->getCode());
+            foreach ($shareCollection as $share) {
+                $variants[] = (new Variant())->withName($share->getName())
+                    ->withValue($share->getCode());
             }
 
             return $variants;
@@ -67,7 +67,7 @@ class ShareFilter extends Abstraction\FilterBase
         /** @var Variant[] $variants */
         $variants = (new BitrixCache())->withId(__METHOD__ . $this->getId())
             ->withIblockTag(
-                IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS)
+                IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::SHARES)
             )
             ->resultOf($doGetAllVariants);
 

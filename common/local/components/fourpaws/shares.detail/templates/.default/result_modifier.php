@@ -19,12 +19,12 @@ use FourPaws\BitrixOrm\Model\CropImageDecorator;
 /**
  * @var \CBitrixComponentTemplate $this
  *
- * @var array $arResult
+ * @var array                     $arResult
  */
 
 $arResult['NO_SHOW_VIDEO'] = false;
 if (stripos($arResult['DETAIL_TEXT'], '#video#') !== false) {
-    $arResult['DETAIL_TEXT'] = str_replace(
+    $arResult['DETAIL_TEXT']   = str_replace(
         '#video#',
         !empty($arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE']) ? $arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'] : '',
         $arResult['DETAIL_TEXT']
@@ -54,7 +54,7 @@ if (!empty($arResult['DETAIL_PICTURE']) && is_array($arResult['DETAIL_PICTURE'])
     $image = CropImageDecorator::createFromPrimary($arResult['~DETAIL_PICTURE']);
 }
 if ($image instanceof CropImageDecorator) {
-    $image->setCropWidth(890)->setCropHeight(500);
+    //$image->setCropWidth(890)->setCropHeight(500);
     $arResult['DETAIL_PICTURE']['SRC'] = $image;
 }
 
@@ -70,7 +70,7 @@ if (!empty($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])) {
             }
         }
         if (!empty($html)) {
-            $arResult['DETAIL_TEXT'] = str_replace('#slider#', $html, $arResult['DETAIL_TEXT']);
+            $arResult['DETAIL_TEXT']    = str_replace('#slider#', $html, $arResult['DETAIL_TEXT']);
             $arResult['NO_SHOW_SLIDER'] = true;
         }
     }
@@ -94,3 +94,37 @@ $this->__component->setResultCacheKeys(
         'ACTIVE',
     ]
 );
+
+function getResizeImage(array $arImage, int $width, int $height): string
+{
+    $obImg = new \FourPaws\BitrixOrm\Model\ResizeImageDecorator($arImage);
+    $obImg->setResizeWidth($width);
+    $obImg->setResizeHeight($height);
+    return $obImg->getSrc();
+}
+
+if ($arResult['BANNER_DESKTOP']) {
+    $uploadDir = COption::GetOptionString("main", "upload_dir", "upload");
+    $banners   = ['BANNER_MOBILE' => $arResult['BANNER_MOBILE'], 'BANNER_TABLET' => $arResult['BANNER_TABLET'], 'BANNER_DESKTOP' => $arResult['BANNER_DESKTOP'],];
+    
+    foreach ($banners as $bannerKey => $banner) {
+        $path           = '/' . $uploadDir . '/' . $banner['SUBDIR'] . '/' . $banner['FILE_NAME'];
+        $banner['src'] = $path;
+        switch ($bannerKey) {
+            case 'BANNER_DESKTOP':
+                $width  = 1280;
+                $height = 300;
+                break;
+            case 'BANNER_TABLET':
+                $width  = 940;
+                $height = 250;
+                break;
+            case 'BANNER_MOBILE':
+                $width  = 767;
+                $height = 160;
+                break;
+        }
+        $arResult[$bannerKey]['RESIZED_IMAGE'] = getResizeImage($banner, $width, $height);
+    }
+}
+

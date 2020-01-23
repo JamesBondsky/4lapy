@@ -113,6 +113,4 @@ class Share extends IblockElement implements HitMetaInfoAwareInterface
      * @Groups({"elastic"})
      */
     protected $DETAIL_PAGE_URL = '';
-    
-    
 }

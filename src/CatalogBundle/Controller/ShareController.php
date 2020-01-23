@@ -26,6 +26,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use UnexpectedValueException;
+use FourPaws\CatalogBundle\Service\ShareService;
 
 /**
  * Class ShareController
@@ -54,6 +55,9 @@ class ShareController extends Controller
     /** @var SortService */
     private $sortService;
     
+    /** @var ShareService */
+    private $shareService;
+    
     
     /**
      * CatalogController constructor.
@@ -61,18 +65,21 @@ class ShareController extends Controller
      * @param SearchService  $searchService
      * @param ProductService $productService
      * @param FilterHelper   $filterHelper
-     * @param SortService   $sortService
+     * @param SortService    $sortService
+     * @param ShareService   $shareService
      */
     public function __construct(
         SearchService $searchService,
         ProductService $productService,
         FilterHelper $filterHelper,
-        SortService $sortService
+        SortService $sortService,
+        ShareService $shareService
     ) {
         $this->searchService  = $searchService;
         $this->productService = $productService;
         $this->filterHelper   = $filterHelper;
-        $this->sortService   = $sortService;
+        $this->sortService    = $sortService;
+        $this->shareService   = $shareService;
     }
     
     /**
@@ -80,6 +87,8 @@ class ShareController extends Controller
      *
      * @param Request                $request
      * @param CatalogShareRequest    $catalogShareRequest
+     * @param GoogleEcommerceService $ecommerceService
+     * @param DataLayerService       $dataLayerService
      *
      * @return Response
      *
@@ -93,46 +102,48 @@ class ShareController extends Controller
      * @throws Exception
      * @throws ApplicationCreateException
      */
-    public function detailAction(Request $request, CatalogShareRequest $catalogShareRequest): Response
-    {
+    public function detailAction(
+        Request $request,
+        CatalogShareRequest $catalogShareRequest,
+        GoogleEcommerceService $ecommerceService,
+        DataLayerService $dataLayerService
+    ): Response {
+        $arParams = $this->shareService->getParams($catalogShareRequest->getShare()->getId(), $catalogShareRequest->getShare());
+        
         $searchQuery = $this->productService->getProductXmlIdsByShareId($catalogShareRequest->getShare()->getId());
+        $sort = $catalogShareRequest->getSorts()->getSelected();
         
-        $category = new \FourPaws\Catalog\Model\Category();
-        $this->filterHelper->initCategoryFilters($category, $request);
-        $filters = $category->getFilters();
-    
-        $sort = $this->sortService->getSorts('popular', strlen($searchQuery) > 0)->getSelected();
-    
-        $nav = (new Navigation())
-            ->withPage(1)
-            ->withPageSize(10);
+        $cacheArr = [
+            'sorts'         => (array)$sort,
+            'category_code' => $catalogShareRequest->getShare()->getCode(),
+            'navigation'    => (array)$catalogShareRequest->getNavigation(),
+        ];
         
-        // $cacheArr = [
-        //     'sorts'         => $sort,
-        //     'category_code' => $catalogShareRequest->getShare()->getCode(),
-        //     'navigation'    => $nav,
-        // ];
+        $cacheKey = md5(implode('_', $cacheArr));
         
-        // $cacheKey = md5(implode('_', $cacheArr));
-        //
-        // $cache = new FilesystemCache('', 3600 * 2);
-        //
+        $cache = new FilesystemCache('', 3600 * 2);
+        
         // if ($cache->has($cacheKey)) {
         //     $result = $cache->get($cacheKey);
         // } else {
+        
             $result = $this->searchService->searchProducts(
-                $filters,
+                $catalogShareRequest->getCategory()->getFilters(),
                 $sort,
-                $nav,
+                $catalogShareRequest->getNavigation(),
                 $searchQuery
             );
-            // $cache->set($cacheKey, $result);
+        //     $cache->set($cacheKey, $result);
         // }
         
         return $this->render('FourPawsCatalogBundle:Catalog:share.detail.html.php', [
-            'request'                => $request,
-            'productSearchResult'    => $result,
-            'catalogShareRequest'    => $catalogShareRequest,
+            'request'             => $request,
+            'productSearchResult' => $result,
+            'searchService'       => $this->sortService,
+            'catalogRequest'      => $catalogShareRequest,
+            'ecommerceService'    => $ecommerceService,
+            'dataLayerService'    => $dataLayerService,
+            'arParams'            => $arParams,
         ]);
     }
 }

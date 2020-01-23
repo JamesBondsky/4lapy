@@ -22,7 +22,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class CatalogShareRequestConverter extends AbstractCatalogRequestConverter
 {
     public const SHARE_PARAM = 'share';
-
+    
     /**
      * @var ShareService
      */
@@ -31,19 +31,19 @@ class CatalogShareRequestConverter extends AbstractCatalogRequestConverter
      * @var FilterHelper
      */
     private $filterHelper;
-
+    
     /**
      * @param ShareService $shareService
      *
      * @required
      * @return static
      */
-    public function setBrandService(ShareService $shareService)
+    public function setShareService(ShareService $shareService)
     {
         $this->shareService = $shareService;
         return $this;
     }
-
+    
     /**
      * @param FilterHelper $filterHelper
      *
@@ -55,7 +55,7 @@ class CatalogShareRequestConverter extends AbstractCatalogRequestConverter
         $this->filterHelper = $filterHelper;
         return $this;
     }
-
+    
     /**
      * Checks if the object is supported.
      *
@@ -67,45 +67,57 @@ class CatalogShareRequestConverter extends AbstractCatalogRequestConverter
     {
         return CatalogShareRequest::class === $configuration->getClass();
     }
-
+    
     /**
      * @return CatalogShareRequest
      */
-    protected function getCatalogRequestObject() : CatalogShareRequest
+    protected function getCatalogRequestObject(): CatalogShareRequest
     {
         return new CatalogShareRequest();
     }
-
+    
     /**
      * @param Request             $request
      * @param ParamConverter      $configuration
      * @param CatalogShareRequest $object
      *
-     * @throws \Exception
      * @return bool
+     * @throws \Exception
      */
-    protected function configureCustom(Request $request, ParamConverter $configuration, $object) : bool
+    protected function configureCustom(Request $request, ParamConverter $configuration, $object): bool
     {
         if (!$request->attributes->has(static::SHARE_PARAM)) {
             return false;
         }
-
+        
         $value = $request->attributes->get(static::SHARE_PARAM);
         if (!$value) {
             return false;
         }
-
+        
         try {
             $share = $this->shareService->getByCode($value);
         } catch (ShareNotFoundException $e) {
-            require_once $_SERVER['DOCUMENT_ROOT'].'/404.php';
+            require_once $_SERVER['DOCUMENT_ROOT'] . '/404.php';
         } catch (ShareMoreOneFoundException $e) {
-            require_once $_SERVER['DOCUMENT_ROOT'].'/404.php';
+            require_once $_SERVER['DOCUMENT_ROOT'] . '/404.php';
         }
-
+    
+        try {
+            $category = $this->shareService->getShareCategory($share);
+        } catch (IblockNotFoundException $e) {
+            throw new NotFoundHttpException('Инфоблок каталога не найден', $e->getCode(), $e);
+        }
+    
+        try {
+            $this->filterHelper->initCategoryFilters($category, $request);
+        } catch (\Exception $e) {
+        }
+        
         $object
-            ->setShare($share);
-
+            ->setShare($share)
+            ->setCategory($category);
+        
         return true;
     }
 }
