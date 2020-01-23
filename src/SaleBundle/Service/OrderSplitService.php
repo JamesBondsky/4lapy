@@ -450,7 +450,7 @@ class OrderSplitService implements LoggerAwareInterface
         $offers = $stockResultCollection->getOffers(false);
         $basketPrices = $this->deliveryService->getBasketPrices($basket);
 
-        foreach ($this->deliveryService->getBasketPrices($basket) as $offerId => $priceForAmountCollection) {
+        foreach ($basketPrices as $offerId => $priceForAmountCollection) {
             if (!isset($offers[$offerId])) {
                 $offers[$offerId] = OfferQuery::getById($offerId);
             }

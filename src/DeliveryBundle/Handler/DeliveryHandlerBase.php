@@ -298,19 +298,19 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             if (null === $result[$item->getProductId()]) {
                 $result[$item->getProductId()] = new PriceForAmountCollection();
             }
-            yield [
-                'id' => $item->getProductId(),
-                'price' => (new PriceForAmount())
-                ->setPrice($item->getPrice())
-                ->setAmount($item->getQuantity())
-                ->setBasketCode($item->getBasketCode())
-                ->setGift($basketService->isGiftProduct($item))];
-//            $result[$item->getProductId()]->add((new PriceForAmount())
+//            yield [
+//                'id' => $item->getProductId(),
+//                'price' => (new PriceForAmount())
 //                ->setPrice($item->getPrice())
 //                ->setAmount($item->getQuantity())
 //                ->setBasketCode($item->getBasketCode())
-//                ->setGift($basketService->isGiftProduct($item))
-//            );
+//                ->setGift($basketService->isGiftProduct($item))];
+            $result[$item->getProductId()]->add((new PriceForAmount())
+                ->setPrice($item->getPrice())
+                ->setAmount($item->getQuantity())
+                ->setBasketCode($item->getBasketCode())
+                ->setGift($basketService->isGiftProduct($item))
+            );
         }
 
 //        return $result;
