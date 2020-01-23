@@ -447,6 +447,19 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
             return $this->ajaxMess->getWrongPasswordError($newTokenResponse);
         } catch (InvalidCredentialException $e) {
+            /** @var UserRepository $userRepository */
+            $userRepository = $container->get(UserRepository::class);
+
+            $searchUser = $userRepository->findOneByPhone($rawLogin);
+
+            if (count($searchUser) > 0) {
+                $currUesr = current($searchUser);
+
+                if ($currUesr->getExternalAuthId()) {
+                    return $this->ajaxMess->getWrongAuthError();
+                }
+            }
+
             if (($_SESSION['COUNT_AUTH_AUTHORIZE'] >= $this->getLimitAuthAuthorizeAttempts($rawLogin)) && $this->showBitrixCaptcha($rawLogin)) {
                 try {
                     $this->setSocial();

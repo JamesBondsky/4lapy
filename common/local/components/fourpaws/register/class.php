@@ -401,13 +401,13 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                     $exAuthId = $xmlId = '';
 
                     if (strripos($data['ex_id'], 'VK') !== false) {
-                        $exAuthId = 'VKontakte';
+                        $exAuthId = \FourPaws\SocServ\CSocServVK2::ID;
                         [,$xmlId] = explode('VKuser', $data['ex_id']);
                     } else if (strripos($data['ex_id'], 'OK') !== false) {
-                        $exAuthId = 'Odnoklassniki';
+                        $exAuthId = \FourPaws\SocServ\CSocServOK2::ID;
                         [,$xmlId] = explode('VKuser', $data['ex_id']);
                     } else if (strripos($data['ex_id'], 'FB') !== false) {
-                        $exAuthId = 'Facebook';
+                        $exAuthId = \FourPaws\SocServ\CSocServFB2::ID;
                         [,$xmlId] = explode('FB_', $data['ex_id']);
                     }
 
@@ -416,6 +416,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                         'EXTERNAL_AUTH_ID' => $exAuthId,
                         'USER_ID' => $regUser->getId(),
                         'XML_ID' => $xmlId,
+                        'NAME' => $data['NAME'],
+                        'LAST_NAME' => $data['LAST_NAME'],
+                        'EMAIL' => '',
+                        'OATOKEN' => $data['token'],
                     ];
 
                     $result = \Bitrix\Socialservices\UserTable::add($fieldsUserTable);
@@ -693,6 +697,38 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         switch ($step) {
             case 'step2':
                 $res = $this->ajaxGetStep2($request->get('confirmCode', ''), $phone);
+
+                $userData = $request->get('userData', []);
+
+                if ($userData) {
+                    $exAuthId = $xmlId = '';
+
+                    if (strripos($userData['ex_id'], 'VK') !== false) {
+                        $exAuthId = \FourPaws\SocServ\CSocServVK2::ID;
+                        [,$xmlId] = explode('VKuser', $userData['ex_id']);
+                    } else if (strripos($userData['ex_id'], 'OK') !== false) {
+                        $exAuthId = \FourPaws\SocServ\CSocServOK2::ID;
+                        [,$xmlId] = explode('VKuser', $userData['ex_id']);
+                    } else if (strripos($userData['ex_id'], 'FB') !== false) {
+                        $exAuthId = \FourPaws\SocServ\CSocServFB2::ID;
+                        [,$xmlId] = explode('FB_', $userData['ex_id']);
+                    }
+
+                    $res = $this->ajaxRegister([
+                        'PERSONAL_PHONE' => $phone,
+                        'backurl' => $request->get('backurl'),
+                        'ex_id' => $userData['ex_id'],
+                        'NAME' => $userData['name'],
+                        'LAST_NAME' => $userData['last_name'],
+                        'PERSONAL_BIRTHDAY' => $userData['birthday'],
+                        'PERSONAL_GENDER' => $userData['gender'],
+                        'EXTERNAL_AUTH_ID' => $exAuthId,
+                        'XML_ID' => $xmlId,
+                        'PASSWORD' => randString(30),
+                        'token' => $userData['token']
+                    ]);
+                }
+
                 if ($res instanceof JsonResponse) {
                     return $res;
                 }

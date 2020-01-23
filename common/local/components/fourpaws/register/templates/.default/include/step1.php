@@ -34,6 +34,7 @@ $isKioskMode = $arResult['KIOSK'] || KioskService::isKioskMode();
         <input type="hidden" name="userData[gender]" value="<?= $request->get('gender') ?>">
         <input type="hidden" name="userData[birthday]" value="<?= $request->get('birthday') ?>">
         <input type="hidden" name="userData[ex_id]" value="<?= $request->get('ex_id') ?>">
+        <input type="hidden" name="userData[token]" value="<?= $request->get('token') ?>">
         <?php if (!CatalogLandingService::isLandingPage()) { ?>
             <input type="hidden" name="backurl" value="<?= $backUrl ?>">
         <?php } ?>

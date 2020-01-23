@@ -50,6 +50,7 @@ if (!$userData) {
         <input type="hidden" name="userData[gender]" value="<?= $userData['gender'] ?? '' ?>">
         <input type="hidden" name="userData[birthday]" value="<?= $userData['birthday'] ?? '' ?>">
         <input type="hidden" name="userData[ex_id]" value="<?= $userData['ex_id'] ?? '' ?>">
+        <input type="hidden" name="userData[token]" value="<?= $userData['token'] ?? '' ?>">
         <div class="b-input-line b-input-line--add-number js-phone3-resend js-resend">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="sms-code-3">SMS-код</label>

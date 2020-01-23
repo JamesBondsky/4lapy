@@ -190,13 +190,34 @@ class CSocServFB2 extends \CSocServFacebook
                     if ($checkUser) {
                         $paramsProfile = [];
                         $authError = $this->AuthorizeUser($arFields);
+
+                        if ($authError) {
+                            $exAuthId = $xmlId = '';
+
+                            if (strripos($arFields['LOGIN'], 'VK') !== false) {
+                                $exAuthId = CSocServVK2::ID;
+                                [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
+                            } else if (strripos($arFields['LOGIN'], 'OK') !== false) {
+                                $exAuthId = CSocServOK2::ID;
+                                [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
+                            } else if (strripos($arFields['LOGIN'], 'FB') !== false) {
+                                $exAuthId = CSocServFB2::ID;
+                                [,$xmlId] = explode('FB_', $arFields['LOGIN']);
+                            }
+                            $user = new \CUser();
+                            $user->Update($checkUser['USER_ID'], [
+                                'EXTERNAL_AUTH_ID' => $exAuthId,
+                                'XML_ID' => $xmlId,
+                            ]);
+                        }
                     } else {
                         $paramsProfile = [
                             'name' => $arFields['NAME'],
                             'last_name' => $arFields['LAST_NAME'],
                             'gender' => $arFields['PERSONAL_GENDER'],
                             'birthday' => $arFields['PERSONAL_BIRTHDAY'],
-                            'ex_id' => static::LOGIN_PREFIX.$arFBUser["id"]
+                            'ex_id' => static::LOGIN_PREFIX.$arFBUser["id"],
+                            'token' => $this->getEntityOAuth()->getToken()
                         ];
                     }
 //                    $authError = $this->AuthorizeUser($arFields);
