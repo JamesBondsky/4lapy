@@ -31,9 +31,9 @@ class FourPawsOrderShopListComponent extends CBitrixComponent
         $locationService = App::getInstance()->getContainer()->get('location.service');
         $regionCode      = $locationService->getCurrentRegionCode();
         
-        if ($obCache->InitCache(36000, $this->arParams['ELEMENT_CODE'] . $regionCode, "/iblock/menu")) {
-            $share = $obCache->GetVars();
-        } elseif ($obCache->StartDataCache()) {
+        // if ($obCache->InitCache(36000, $this->arParams['ELEMENT_CODE'] . $regionCode, "/iblock/menu")) {
+        //     $share = $obCache->GetVars();
+        // } elseif ($obCache->StartDataCache()) {
             $share = CIBlockElement::GetList([], ['IBLOCK_ID' => $this->arParams['IBLOCK_ID'], 'CODE' => $this->arParams['ELEMENT_CODE']], false, false,
                 ['*', 'PROPERTY_BANNER_MOBILE', 'PROPERTY_BANNER_DESKTOP', 'PROPERTY_BANNER_TABLET'])->Fetch();
             if ($share) {
@@ -43,7 +43,7 @@ class FourPawsOrderShopListComponent extends CBitrixComponent
                 $share['BANNER_DESKTOP'] = CFile::GetByID($share['PROPERTY_BANNER_DESKTOP_VALUE'])->Fetch();
                 $obCache->EndDataCache($share);
             }
-        }
+        // }
         
         if (!$share) {
             $share['ERROR']                                   = true;

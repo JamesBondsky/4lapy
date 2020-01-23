@@ -126,7 +126,6 @@ class ShareController extends Controller
         // if ($cache->has($cacheKey)) {
         //     $result = $cache->get($cacheKey);
         // } else {
-        
             $result = $this->searchService->searchProducts(
                 $catalogShareRequest->getCategory()->getFilters(),
                 $sort,

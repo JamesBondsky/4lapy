@@ -68,7 +68,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     'searchService'  => $searchService,
                     'catalogRequest' => $catalogRequest,
                     // 'brand'          => $brand,
-                    // 'isBrand'        => true,
+                    'isShare'        => true
                 ]
             );
             ?>

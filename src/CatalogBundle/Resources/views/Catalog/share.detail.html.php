@@ -31,7 +31,7 @@ use FourPaws\CatalogBundle\Service\FilterHelper;
  */
 /** @noinspection PhpUnhandledExceptionInspection */
 $httpXRequestWith = Application::getInstance()->getContext()->getServer()->get('HTTP_X_REQUESTED_WITH');
-$isAjax = $httpXRequestWith === 'XMLHttpRequest';
+$isAjax           = $httpXRequestWith === 'XMLHttpRequest';
 if (!$isAjax) {
     require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 } else {
@@ -43,28 +43,30 @@ global $APPLICATION;
 $APPLICATION->SetPageProperty('PUBLICATION_DETAIL_CONTAINER_1', 'b-container b-container--news-detail');
 $APPLICATION->SetPageProperty('PUBLICATION_DETAIL_CONTAINER_2', 'b-detail-page');
 
-$elementId = $APPLICATION->IncludeComponent(
-    'fourpaws:shares.detail',
-    '',
-    [
-        'IBLOCK_TYPE'          => $arParams['IBLOCK_TYPE'],
-        'IBLOCK_ID'            => $arParams['IBLOCK_ID'],
-        'FIELD_CODE'           => $arParams['DETAIL_FIELD_CODE'],
-        'ELEMENT_ID'           => $arParams['VARIABLES']['ELEMENT_ID'],
-        'ELEMENT_CODE'         => $arParams['VARIABLES']['ELEMENT_CODE'],
-        // 'SECTION_ID'           => $arParams['VARIABLES']['SECTION_ID'],
-        // 'SECTION_CODE'         => $arParams['VARIABLES']['SECTION_CODE'],
-        'USE_SHARE'            => $arParams['USE_SHARE'],
-        'ADD_ELEMENT_CHAIN'    => $arParams['ADD_ELEMENT_CHAIN'],
-        'STRICT_SECTION_CHECK' => $arParams['STRICT_SECTION_CHECK'],
-        'URL_REDIRECT_404'     => $arParams['URL_REDIRECT_404'],
-        'arParams'             => &$arParams,
-    ],
-    $component,
-    [
-        'HIDE_ICONS' => 'Y',
-    ]
-);
+if (!$isAjax) {
+    $elementId = $APPLICATION->IncludeComponent(
+        'fourpaws:shares.detail',
+        '',
+        [
+            'IBLOCK_TYPE'          => $arParams['IBLOCK_TYPE'],
+            'IBLOCK_ID'            => $arParams['IBLOCK_ID'],
+            'FIELD_CODE'           => $arParams['DETAIL_FIELD_CODE'],
+            'ELEMENT_ID'           => $arParams['VARIABLES']['ELEMENT_ID'],
+            'ELEMENT_CODE'         => $arParams['VARIABLES']['ELEMENT_CODE'],
+            // 'SECTION_ID'           => $arParams['VARIABLES']['SECTION_ID'],
+            // 'SECTION_CODE'         => $arParams['VARIABLES']['SECTION_CODE'],
+            'USE_SHARE'            => $arParams['USE_SHARE'],
+            'ADD_ELEMENT_CHAIN'    => $arParams['ADD_ELEMENT_CHAIN'],
+            'STRICT_SECTION_CHECK' => $arParams['STRICT_SECTION_CHECK'],
+            'URL_REDIRECT_404'     => $arParams['URL_REDIRECT_404'],
+            'arParams'             => &$arParams,
+        ],
+        $component,
+        [
+            'HIDE_ICONS' => 'Y',
+        ]
+    );
+}
 //@todo тут начинается
 ?>
     <div class="b-container"></div>
