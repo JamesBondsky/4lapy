@@ -203,8 +203,6 @@ class CSocServVK2 extends \CSocServVKontakte {
 
                         global $USER;
                         if ($USER->IsAuthorized()) {
-                            $userId = $USER->GetID();
-
                             $fieldsUserTable = [
                                 'LOGIN' => $USER->GetID(),
                                 'EXTERNAL_AUTH_ID' => $exAuthId,
