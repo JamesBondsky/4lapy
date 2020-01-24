@@ -307,7 +307,7 @@ class CSocServFB2 extends \CSocServFacebook
         {
             $state = 'site_id='.SITE_ID.'&backurl='.urlencode($APPLICATION->GetCurPageParam('check_key='.$_SESSION["UNIQUE_KEY"], array("logout", "auth_service_error", "auth_service_id", "backurl"))).(isset($arParams['BACKURL']) ? '&redirect_url='.urlencode($arParams['BACKURL']) : '');
 //            $redirect_uri = $this->getEntityOAuth()->GetRedirectURI();
-            $redirect_uri = \CHTTP::URN2URI($APPLICATION->GetCurPage()) . '?auth_service_id=' . self::ID;
+            $redirect_uri = \CHTTP::URN2URI($APPLICATION->GetCurPage()) . 'ajax/user/oauth/facebook';
         }
 
         return $this->getEntityOAuth()->GetAuthUrl($redirect_uri, $state);
