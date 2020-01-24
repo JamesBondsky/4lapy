@@ -204,7 +204,7 @@ if (!$isAjax) { ?>
 } //@todo тут начинается
 ?>
     <div class="b-catalog">
-    <div class="b-container b-container--catalog-filter js-brand-container-catalog">
+    <div class="b-container b-container--catalog-filter js-top-filter-container-catalog">
         <?php /** товары бренда */ ?>
         <?= $view->render(
             'FourPawsCatalogBundle:Catalog:brand.filter.container.html.php',

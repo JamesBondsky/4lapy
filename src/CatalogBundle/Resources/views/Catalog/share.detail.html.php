@@ -72,7 +72,7 @@ if ($productSearchResult->getQuery()) :
     ?>
     <div class="b-container"></div>
     <div class="b-catalog">
-    <div class="b-container b-container--catalog-filter js-brand-container-catalog">
+    <div class="b-container b-container--catalog-filter js-top-filter-container-catalog">
         <?php /** товары бренда */ ?>
         <?=$view->render(
             'FourPawsCatalogBundle:Catalog:share.filter.container.html.php',
