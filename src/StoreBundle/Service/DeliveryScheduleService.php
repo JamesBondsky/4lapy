@@ -229,7 +229,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
 //                ->resultOf($getSchedules)['result'];
 
             $cacheKey = explode('::', __METHOD__ )[1] . $sender->getXmlId() . $regularityId . 'ddd';
-            $cache = new FilesystemCache('', 3600);
+            $cache = new FilesystemCache('', 3600, getenv('CACHE_DIR') ?? null);
 
             if ($cache->has($cacheKey)) {
                 $schedules = $cache->get($cacheKey);
