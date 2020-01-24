@@ -85,7 +85,7 @@ class CSocServHandlers
                 'ICON' => 'vkontakte',
             ],
             [
-                'ID' => 'Facebook',
+                'ID' => 'FB2',
                 'CLASS' => 'FourPaws\SocServ\CSocServFB2',
                 'NAME' => 'FB',
                 'ICON' => 'facebook',
