@@ -22,7 +22,6 @@ class SocialAuthController extends Controller
      */
     public function facebook(Request $request): JsonErrorResponse
     {
-        return JsonErrorResponse::createWithData('request', [$_REQUEST]);
         if(\CModule::IncludeModule("socialservices"))
         {
             $oAuthManager = new \CSocServAuthManager();
