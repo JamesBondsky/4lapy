@@ -323,7 +323,7 @@ class PetService
     public function map($pet)
     {
         $petSize = $this->getPetSize($pet);
-        
+
         $result = (new Pet())
             ->setId($pet->getId())
             ->setName($pet->getName())
@@ -431,7 +431,12 @@ class PetService
     
     protected function getPetSize($pet)
     {
+        if (!$pet->getSize()) {
+            return;
+        }
+        
         $petSize = new PetSize();
+        
         $petSize->setId($pet->getSize());
         
         $petSizes = new PetSizes();

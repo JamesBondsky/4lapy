@@ -421,14 +421,17 @@ class ScheduleResultService implements LoggerAwareInterface
         Store $sender,
         \DateTime $date,
         int $regularityId,
-        ?int $transitionCount = null
+        ?int $transitionCount = null,
+        $receivers = null
     ): ScheduleResultCollection
     {
         if (null === $transitionCount) {
             $transitionCount = self::MAX_TRANSITION_COUNT;
         }
 
-        $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        if (!$receivers) {
+            $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        }
         //$receivers = [$this->storeService->getStoreByXmlId('R111')];
 
         $result = [];
@@ -548,8 +551,10 @@ class ScheduleResultService implements LoggerAwareInterface
             }
             $route[$sender->getXmlId()] = $sender;
 
+            $schedules = $this->deliveryScheduleService->findBySenderAndRegularity($sender, $regularityId);
+
             /** @var DeliverySchedule $schedule */
-            foreach ($this->deliveryScheduleService->findBySenderAndRegularity($sender, $regularityId) as $schedule) {
+            foreach ($schedules as $schedule) {
                 // Если хотя бы одно из значений даты и времени не входит в дату действия расписания, то поставка была бы рассчитана неправильно
                 if (end($from) < $schedule->getActiveFrom() || array_values($from)[0] > $schedule->getActiveTo()) {
                     continue;
