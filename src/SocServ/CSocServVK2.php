@@ -174,23 +174,25 @@ class CSocServVK2 extends \CSocServVKontakte {
                 {
                     $arFields = $this->prepareUser($arVkUser);
                     $checkUser = $this->checkUser($arFields);
+
+                    $exAuthId = $xmlId = '';
+
+                    if (strripos($arFields['LOGIN'], 'VK') !== false) {
+                        $exAuthId = CSocServVK2::ID;
+                        [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
+                    } else if (strripos($arFields['LOGIN'], 'OK') !== false) {
+                        $exAuthId = CSocServOK2::ID;
+                        [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
+                    } else if (strripos($arFields['LOGIN'], 'FB') !== false) {
+                        $exAuthId = CSocServFB2::ID;
+                        [,$xmlId] = explode('FB_', $arFields['LOGIN']);
+                    }
+
                     if ($checkUser) {
                         $paramsProfile = [];
                         $bSuccess = $this->AuthorizeUser($arFields);
 
                         if ($bSuccess) {
-                            $exAuthId = $xmlId = '';
-
-                            if (strripos($arFields['LOGIN'], 'VK') !== false) {
-                                $exAuthId = CSocServVK2::ID;
-                                [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
-                            } else if (strripos($arFields['LOGIN'], 'OK') !== false) {
-                                $exAuthId = CSocServOK2::ID;
-                                [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
-                            } else if (strripos($arFields['LOGIN'], 'FB') !== false) {
-                                $exAuthId = CSocServFB2::ID;
-                                [,$xmlId] = explode('FB_', $arFields['LOGIN']);
-                            }
                             $user = new \CUser();
                             $user->Update($checkUser['USER_ID'], [
                                 'EXTERNAL_AUTH_ID' => $exAuthId,
@@ -198,6 +200,25 @@ class CSocServVK2 extends \CSocServVKontakte {
                             ]);
                         }
                     } else {
+
+                        global $USER;
+                        if ($USER->IsAuthorized()) {
+                            $userId = $USER->GetID();
+
+                            $fieldsUserTable = [
+                                'LOGIN' => $USER->GetID(),
+                                'EXTERNAL_AUTH_ID' => $exAuthId,
+                                'USER_ID' => $USER->GetID(),
+                                'XML_ID' => $xmlId,
+                                'NAME' => $arVkUser['response'][0]['first_name'],
+                                'LAST_NAME' => $arVkUser['response'][0]['last_name'],
+                                'EMAIL' => '',
+                                'OATOKEN' => $this->getEntityOAuth()->getToken(),
+                            ];
+
+                            $result = \Bitrix\Socialservices\UserTable::add($fieldsUserTable);
+                        }
+
                         $paramsProfile = [
                             'name' => $arFields['NAME'],
                             'last_name' => $arFields['LAST_NAME'],
