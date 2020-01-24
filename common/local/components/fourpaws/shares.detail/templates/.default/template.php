@@ -18,6 +18,17 @@ $this->setFrameMode(true);
 if (!$arResult['ERROR']) {
     ?>
     <div class="b-container">
+    <?php
+    if (!empty($arResult['BANNER_DESKTOP'])) : ?>
+        <div class="b-brand-banner">
+            <img class="b-brand-banner__background b-brand-banner__background--desktop"
+                 src="<?= $arResult['BANNER_DESKTOP']['RESIZED_IMAGE'] ?>" alt="">
+            <img class="b-brand-banner__background b-brand-banner__background--tablet"
+                 src="<?= $arResult['BANNER_TABLET']['RESIZED_IMAGE'] ?>" alt="">
+            <img class="b-brand-banner__background b-brand-banner__background--mobile"
+                 src="<?= $arResult['BANNER_MOBILE']['RESIZED_IMAGE'] ?>" alt="">
+        </div>
+    <?php endif; ?>
     <div class="b-detail-page b-detail-page--bordered"><?php
         if (!empty($arResult['DETAIL_PICTURE']) && is_array($arResult['DETAIL_PICTURE'])) {
             ?><img src="<?= $arResult['DETAIL_PICTURE']['SRC'] ?>" alt=""><?php

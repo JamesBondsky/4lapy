@@ -75,7 +75,7 @@ $APPLICATION->IncludeComponent(
         'SEF_URL_TEMPLATES' => [
             'news' => '',
             'section' => '#SECTION_CODE#/', // макрос #SECTION_CODE# используется для фильтрации по видам питомцев
-            'detail' => '#ELEMENT_CODE#.html',
+            'detail' => '#ELEMENT_CODE#/',
         ],
         'SET_LAST_MODIFIED' => 'Y',
         'SET_STATUS_404' => 'Y',

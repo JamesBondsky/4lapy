@@ -201,7 +201,8 @@ if (!$isAjax) { ?>
         } ?>
     </div>
     <?php
-} ?>
+} //@todo тут начинается
+?>
     <div class="b-catalog">
     <div class="b-container b-container--catalog-filter js-brand-container-catalog">
         <?php /** товары бренда */ ?>
