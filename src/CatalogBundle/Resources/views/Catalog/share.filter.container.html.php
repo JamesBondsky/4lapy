@@ -15,15 +15,15 @@ use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 
 /**
- * @var Request             $request
- * @var CatalogShareRequest $catalogRequest
- * @var SearchService       $searchService
- * @var ProductSearchResult $productSearchResult
- * @var PhpEngine           $view
+ * @var Request                $request
+ * @var CatalogShareRequest    $catalogRequest
+ * @var SearchService          $searchService
+ * @var ProductSearchResult    $productSearchResult
+ * @var PhpEngine              $view
  * @var DataLayerService       $dataLayerService
  * @var GoogleEcommerceService $ecommerceService
- * @var CMain               $APPLICATION
- * @var Category            $category
+ * @var CMain                  $APPLICATION
+ * @var Category               $category
  */
 
 global $APPLICATION;
@@ -31,7 +31,7 @@ global $APPLICATION;
 $category = $catalogRequest->getCategory();
 
 $filterCollection = $catalogRequest->getCategory()->getFilters();
-$count = $productSearchResult->getResultSet()->getTotalHits(); ?>
+$count            = $productSearchResult->getResultSet()->getTotalHits(); ?>
 <aside class="b-filter b-filter--popup js-filter-popup">
     <div class="b-filter__top">
         <a class="b-filter__close js-close-filter" href="javascript:void(0);" title=""></a>
@@ -67,12 +67,12 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     'category'       => $category,
                     'searchService'  => $searchService,
                     'catalogRequest' => $catalogRequest,
-                    // 'brand'          => $brand,
-                    'isShare'        => true
+                    'isShare'        => true,
                 ]
             );
             ?>
-            <?php $filterToShow = $filterCollection->getFiltersToShow();
+            <?php
+            $filterToShow = $filterCollection->getFiltersToShow();
             $filterActions      = $filterCollection->getActionsFilter(); ?>
             <?=$view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
@@ -209,19 +209,18 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         <?php
         $productCollection = $productSearchResult->getProductCollection();
         
-        echo $ecommerceService->renderScript(
-            $ecommerceService->buildImpressionsFromProductCollection($productSearchResult->getProductCollection(), 'Каталог по бренду'),
-            true
-        );
+        // echo $ecommerceService->renderScript(
+        //     $ecommerceService->buildImpressionsFromProductCollection($productSearchResult->getProductCollection(), 'Каталог по бренду'),
+        //     true
+        // );
         
-        $i                  = 1;
-        // $catalogInnerBanner = $catalogRequest->getShare()->getCatalogInnerBanner();
+        $i = 1;
         foreach ($productCollection as $product) {
             $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.element.snippet',
                 '',
                 [
-                    'PRODUCT'               => $product,
+                    'PRODUCT' => $product,
                     // 'GOOGLE_ECOMMERCE_TYPE' => 'Каталог по бренду',
                 ],
                 null,
@@ -229,27 +228,6 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     'HIDE_ICONS' => 'Y',
                 ]
             );
-            // if ($catalogInnerBanner != null && $catalogInnerBanner['TEXT'] != '') {
-            //     if ($i == 4) {
-            //         ?>
-            <!--        <div class="b-fleas-protection-banner b-mobile b-fleas-brand">-->
-            <!--            --><?//=htmlspecialcharsback($catalogInnerBanner['TEXT'])?>
-            <!--        </div>-->
-            <!--        --><?//
-            //     } elseif ($i == 6) {
-            //         ?>
-            <!--        <div class="b-fleas-protection-banner b-tablet b-fleas-brand">-->
-            <!--            --><?//=htmlspecialcharsback($catalogInnerBanner['TEXT'])?>
-            <!--        </div>-->
-            <!--        --><?//
-            //     } elseif ($i == 8) {
-            //         ?>
-            <!--        <div class="b-fleas-protection-banner b-desktop b-fleas-brand">-->
-            <!--            --><?//=htmlspecialcharsback($catalogInnerBanner['TEXT'])?>
-            <!--        </div>-->
-            <!--        --><?//
-            //     }
-            // }
             $i++;
         }
         ?>
@@ -269,11 +247,4 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             'HIDE_ICONS' => 'Y',
         ]
     ); ?>
-    <?php
-    // $catalogUnderBanner = $catalogRequest->getBrand()->getCatalogUnderBanner();
-    // if ($catalogUnderBanner != null && $catalogUnderBanner['TEXT'] != '') { ?>
-    <!--    <div class="b-brand-text">-->
-    <!--        --><?//=htmlspecialcharsback($catalogUnderBanner['TEXT'])?>
-    <!--    </div>-->
-    <?// } ?>
 </main>

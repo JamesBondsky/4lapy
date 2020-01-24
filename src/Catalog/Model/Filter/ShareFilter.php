@@ -55,7 +55,7 @@ class ShareFilter extends Abstraction\FilterBase
             $shareCollection = (new ShareQuery())->withOrder(['SORT' => 'asc', 'NAME' => 'asc'])
                 ->exec();
 
-            /** @var Share $brand */
+            /** @var Share $share */
             foreach ($shareCollection as $share) {
                 $variants[] = (new Variant())->withName($share->getName())
                     ->withValue($share->getCode());
@@ -67,7 +67,7 @@ class ShareFilter extends Abstraction\FilterBase
         /** @var Variant[] $variants */
         $variants = (new BitrixCache())->withId(__METHOD__ . $this->getId())
             ->withIblockTag(
-                IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::SHARES)
+                IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES)
             )
             ->resultOf($doGetAllVariants);
 
