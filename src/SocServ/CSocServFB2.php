@@ -9,7 +9,7 @@ class CSocServFB2 extends \CSocServFacebook
 {
     use SocServiceHelper;
 
-//    const ID = 'FB2';
+    const ID = 'FB2';
     public function prepareUser($arFBUser, $short = false)
     {
         $arFields = array(
@@ -306,7 +306,8 @@ class CSocServFB2 extends \CSocServFacebook
         else
         {
             $state = 'site_id='.SITE_ID.'&backurl='.urlencode($APPLICATION->GetCurPageParam('check_key='.$_SESSION["UNIQUE_KEY"], array("logout", "auth_service_error", "auth_service_id", "backurl"))).(isset($arParams['BACKURL']) ? '&redirect_url='.urlencode($arParams['BACKURL']) : '');
-            $redirect_uri = $this->getEntityOAuth()->GetRedirectURI();
+//            $redirect_uri = $this->getEntityOAuth()->GetRedirectURI();
+            $redirect_uri = \CHTTP::URN2URI($APPLICATION->GetCurPage()) . '?auth_service_id=' . self::ID;
         }
 
         return $this->getEntityOAuth()->GetAuthUrl($redirect_uri, $state);
