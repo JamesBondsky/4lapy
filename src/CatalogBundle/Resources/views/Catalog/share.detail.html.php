@@ -68,7 +68,8 @@ if (!$isAjax) {
     );
 }
 //@todo тут начинается
-?>
+if ($productSearchResult->getQuery()) :
+    ?>
     <div class="b-container"></div>
     <div class="b-catalog">
     <div class="b-container b-container--catalog-filter js-brand-container-catalog">
@@ -85,7 +86,7 @@ if (!$isAjax) {
             ]
         )?>
     </div>
-<?php if (!$isAjax) {
+    <?php if (!$isAjax) :
     /**
      * Просмотренные товары
      */
@@ -103,7 +104,10 @@ if (!$isAjax) {
         ]
     ); ?>
     </div>
-    <?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';
+<?php endif;
+endif;
+if (!$isAjax) {
+    require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';
 } else { ?>
     </div>
     <?php require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_after.php';

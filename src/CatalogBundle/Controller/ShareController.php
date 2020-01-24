@@ -123,17 +123,17 @@ class ShareController extends Controller
         
         $cache = new FilesystemCache('', 3600 * 2);
         
-        // if ($cache->has($cacheKey)) {
-        //     $result = $cache->get($cacheKey);
-        // } else {
+        if ($cache->has($cacheKey)) {
+            $result = $cache->get($cacheKey);
+        } else {
             $result = $this->searchService->searchProducts(
                 $catalogShareRequest->getCategory()->getFilters(),
                 $sort,
                 $catalogShareRequest->getNavigation(),
                 $searchQuery
             );
-        //     $cache->set($cacheKey, $result);
-        // }
+            $cache->set($cacheKey, $result);
+        }
         
         return $this->render('FourPawsCatalogBundle:Catalog:share.detail.html.php', [
             'request'             => $request,
