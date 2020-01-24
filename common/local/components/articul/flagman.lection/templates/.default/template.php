@@ -24,8 +24,7 @@ if (!empty($arResult['ITEMS'])) : ?>
                                     <div class="item__img" style="background-image: url('<?=($item['PICTURE']) ? ($item['PICTURE']) : "/static/build/images/inhtml/no_image_flagship.jpg"?>')"></div>
                                     <form class="item__content js-form-validation" data-form-signup-grooming-flagship="true">
                                         <div class="item__info">
-                                            <?php /*По какому-то принципу добавляем класс orange, чтобы покарить label*/?>
-                                            <div class="item__city <?php /*orange*/?>">Москва,пр.Вернадского д.6, ТРК Капитолий</div>
+                                            <?php if ($item['ADDRESS']) : ?><div class="item__city orange"><?=$item['ADDRESS'] ?></div><?php endif; ?>
                                             <div class="item__title" data-name-lectures-flagship="<?=$item['MAIN_SECTION_NAME']?>">
                                                 <span><?=$item['MAIN_SECTION_NAME']?></span>
                                             </div>
@@ -60,15 +59,11 @@ if (!empty($arResult['ITEMS'])) : ?>
                                         </div>
                                     </form>
                                 </div>
+                                <?php if ($item['DESCRIPTION']) : ?>
                                 <div class="item-description" data-descr-item-lectures-flagship-store="true">
-                                    <p><?=$key?> В&nbsp;субботу, 07 декабря 2019 года, мы&nbsp;приглашаем вас на&nbsp;встречу с&nbsp;10 собаками из&nbsp;фонда Husky Help @husky_help</p>
-                                    <p>Будет много общения, обнимашек с&nbsp;голубоглазыми собаками, новогодняя фотосессия, благотворительный <nobr>Хаски-маркет</nobr><br />
-                                        и, конечно&nbsp;же, возможность взять питомца в&nbsp;семью &#128062;<br />
-                                        &#10240;<br />
-                                        Знаете&nbsp;ли вы, что обнять хаски в&nbsp;декабре означает быть счастливым весь следующий год? &#10052;&#10052;&#10052;<br />
-                                        Приходите с&nbsp;детьми! Мы&nbsp;ждем вас в&nbsp;Центре здоровья питомца &laquo;Четыре Лапы&raquo; в&nbsp;ТРК &laquo;Капитолий&raquo; на&nbsp;проспекте Вернадского, 6</p>
-                                    <p>В&nbsp;программе: Рождественская фотосессия с&nbsp;Хаски, вопросы к&nbsp;экспертам, благотворительный <nobr>хаски-маркет</nobr>, возможность взять питомца в&nbsp;семью</p>
+                                    <?=$item['DESCRIPTION']?>
                                 </div>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
