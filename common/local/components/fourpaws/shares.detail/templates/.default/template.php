@@ -30,7 +30,7 @@ if (!$arResult['ERROR']) {
         </div>
     <?php endif; ?>
     <div class="b-detail-page b-detail-page--bordered"><?php
-        if (!empty($arResult['DETAIL_PICTURE']) && is_array($arResult['DETAIL_PICTURE'])) {
+        if (!empty($arResult['DETAIL_PICTURE']) && is_array($arResult['DETAIL_PICTURE']) && empty($arResult['BANNER_DESKTOP'])) {
             ?><img src="<?= $arResult['DETAIL_PICTURE']['SRC'] ?>" alt=""><?php
         }
         echo htmlspecialcharsback($arResult['DETAIL_TEXT']);
