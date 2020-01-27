@@ -71,5 +71,6 @@ class AddIConFieldForChampions20200124183916 extends \Adv\Bitrixtools\Migration\
         $iblockId = $helper->Iblock()->getIblockId('action_winners');
         
         $helper->Iblock()->deletePropertyIfExists($iblockId, 'ICON');
+        $helper->Iblock()->deletePropertyIfExists($iblockId, 'SLIDER');
     }
 }
