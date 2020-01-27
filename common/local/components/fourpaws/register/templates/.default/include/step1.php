@@ -19,6 +19,8 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
 
 $isKioskMode = $arResult['KIOSK'] || KioskService::isKioskMode();
 
+$userData = $_SESSION['socServiceParams'];
+
 /** @var string $phone */ ?>
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step">
     <div class="b-step-form">Шаг <span>1</span> из <span>2</span>
@@ -29,12 +31,12 @@ $isKioskMode = $arResult['KIOSK'] || KioskService::isKioskMode();
           method="post">
         <input type="hidden" name="action" value="get">
         <input type="hidden" name="step" value="sendSmsCode">
-        <input type="hidden" name="userData[name]" value="<?= $request->get('name') ?>">
-        <input type="hidden" name="userData[last_name]" value="<?= $request->get('last_name') ?>">
-        <input type="hidden" name="userData[gender]" value="<?= $request->get('gender') ?>">
-        <input type="hidden" name="userData[birthday]" value="<?= $request->get('birthday') ?>">
-        <input type="hidden" name="userData[ex_id]" value="<?= $request->get('ex_id') ?>">
-        <input type="hidden" name="userData[token]" value="<?= $request->get('token') ?>">
+        <input type="hidden" name="userData[name]" value="<?= $userData['name'] ?>">
+        <input type="hidden" name="userData[last_name]" value="<?= $userData['last_name'] ?>">
+        <input type="hidden" name="userData[gender]" value="<?= $userData['gender'] ?>">
+        <input type="hidden" name="userData[birthday]" value="<?= $userData['birthday'] ?>">
+        <input type="hidden" name="userData[ex_id]" value="<?= $userData['ex_id'] ?>">
+        <input type="hidden" name="userData[token]" value="<?= $userData['token'] ?>">
         <?php if (!CatalogLandingService::isLandingPage()) { ?>
             <input type="hidden" name="backurl" value="<?= $backUrl ?>">
         <?php } ?>

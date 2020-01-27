@@ -61,6 +61,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\AppBundle\AjaxController\LandingController;
+use Symfony\Component\Security\Csrf\CsrfTokenManager;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsRegisterComponent extends \CBitrixComponent
@@ -93,6 +94,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @var DataLayerService
      */
     private $dataLayerService;
+    /**
+     * @var CsrfTokenManager
+     */
+    private $tokenProvider;
 
     /**
      * FourPawsAuthFormComponent constructor.
@@ -239,9 +244,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 $this->setSocial();
             }
 
-            $exId = $request->get('ex_id');
-
-            if (isset($exId)) {
+            if (isset($_SESSION['socServiceParams']['ex_id'])) {
                 $this->arResult['STEP'] = 'step1';
             }
 
@@ -704,7 +707,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             case 'step2':
                 $res = $this->ajaxGetStep2($request->get('confirmCode', ''), $phone);
 
-                $userData = $request->get('userData', []);
+                $userData = $_SESSION['socServiceParams'] ?? [];
 
                 if ($userData) {
                     $exAuthId = $xmlId = '';
@@ -714,7 +717,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                         [,$xmlId] = explode('VKuser', $userData['ex_id']);
                     } else if (strripos($userData['ex_id'], 'OK') !== false) {
                         $exAuthId = \FourPaws\SocServ\CSocServOK2::ID;
-                        [,$xmlId] = explode('VKuser', $userData['ex_id']);
+                        [,$xmlId] = explode('OKuser', $userData['ex_id']);
                     } else if (strripos($userData['ex_id'], 'FB') !== false) {
                         $exAuthId = \FourPaws\SocServ\CSocServFB2::ID;
                         [,$xmlId] = explode('FB_', $userData['ex_id']);
@@ -733,6 +736,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                         'PASSWORD' => randString(30),
                         'token' => $userData['token']
                     ]);
+
+                    if ($res instanceof JsonSuccessResponse) {
+                        unset($_SESSION['socServiceParams']);
+                    }
                 }
 
                 if ($res instanceof JsonResponse) {
@@ -792,6 +799,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         );
 
         $phone = PhoneHelper::formatPhone($phone, PhoneHelper::FORMAT_FULL);
+        $backUrl = $request->get('backurl', '');
         ob_start(); ?>
         <header class="b-registration__header">
             <div class="b-title b-title--h1 b-title--registration"><?= $title ?></div>
@@ -1137,5 +1145,17 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                      . '/local/components/fourpaws/register/templates/.default/include/' . $page . '.php';
 
         return ob_get_clean();
+    }
+
+    /**
+     * @return CsrfTokenManager
+     */
+    public function getTokenProvider(): CsrfTokenManager
+    {
+        if ($this->tokenProvider === null) {
+            $this->tokenProvider = App::getInstance()->getContainer()->get('security.csrf.token_manager');
+        }
+
+        return $this->tokenProvider;
     }
 }

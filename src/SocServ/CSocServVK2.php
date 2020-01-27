@@ -157,7 +157,7 @@ class CSocServVK2 extends \CSocServVKontakte {
     {
         $GLOBALS["APPLICATION"]->RestartBuffer();
         $bSuccess = SOCSERV_AUTHORISATION_ERROR;
-        $paramsProfile = [];
+//        $paramsProfile = [];
 
         if ((isset($_REQUEST["code"]) && $_REQUEST["code"] <> '') && CSocServAuthManager::CheckUniqueKey())
         {
@@ -182,14 +182,23 @@ class CSocServVK2 extends \CSocServVKontakte {
                         [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
                     } else if (strripos($arFields['LOGIN'], 'OK') !== false) {
                         $exAuthId = CSocServOK2::ID;
-                        [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
+                        [,$xmlId] = explode('OKuser', $arFields['LOGIN']);
                     } else if (strripos($arFields['LOGIN'], 'FB') !== false) {
                         $exAuthId = CSocServFB2::ID;
                         [,$xmlId] = explode('FB_', $arFields['LOGIN']);
                     }
 
                     if ($checkUser) {
-                        $paramsProfile = [];
+                        $paramsProfile = [
+                            'name' => $arFields['NAME'],
+                            'last_name' => $arFields['LAST_NAME'],
+                            'gender' => $arFields['PERSONAL_GENDER'],
+                            'birthday' => $arFields['PERSONAL_BIRTHDAY'],
+                            'ex_id' => 'VKuser' . $arVkUser['response']['0']['id'],
+                            'token' => $this->getEntityOAuth()->getToken()
+                        ];
+
+                        $_SESSION['socServiceParams'] = $paramsProfile;
                         $bSuccess = $this->AuthorizeUser($arFields);
 
                         if ($bSuccess) {
@@ -198,6 +207,8 @@ class CSocServVK2 extends \CSocServVKontakte {
                                 'EXTERNAL_AUTH_ID' => $exAuthId,
                                 'XML_ID' => $xmlId,
                             ]);
+                            $user->Authorize($checkUser['USER_ID']);
+                            unset($_SESSION['socServiceParams']);
                         }
                     } else {
 
@@ -225,6 +236,8 @@ class CSocServVK2 extends \CSocServVKontakte {
                             'ex_id' => 'VKuser' . $arVkUser['response']['0']['id'],
                             'token' => $this->getEntityOAuth()->getToken()
                         ];
+
+                        $_SESSION['socServiceParams'] = $paramsProfile;
                     }
                 }
             }
@@ -262,6 +275,7 @@ class CSocServVK2 extends \CSocServVKontakte {
         }
         elseif ($bSuccess !== true)
         {
+            $backUrl = $url;
             $url = (isset($urlPath)) ? $urlPath . '?auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess : $GLOBALS['APPLICATION']->GetCurPageParam(('auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess), $aRemove);
         }
 
@@ -271,7 +285,7 @@ class CSocServVK2 extends \CSocServVKontakte {
         }
 
         if (count($paramsProfile) > 0) {
-            $url = '/personal/register/?backurl=/&' . http_build_query($paramsProfile);
+            $url = '/personal/register/?backurl=' . ($backUrl ?? '/');
         }
 
         echo '

@@ -13,7 +13,7 @@ use FourPaws\Helpers\ProtectorHelper;
 $request = Application::getInstance()->getContext()->getRequest();
 $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
 
-$userData = $request->get('userData');
+$userData = $_SESSION['socServiceParams'];
 
 if (!$userData) {
     $userData = [];

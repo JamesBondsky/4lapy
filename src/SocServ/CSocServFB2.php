@@ -195,7 +195,7 @@ class CSocServFB2 extends \CSocServFacebook
                         [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
                     } else if (strripos($arFields['LOGIN'], 'OK') !== false) {
                         $exAuthId = CSocServOK2::ID;
-                        [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
+                        [,$xmlId] = explode('OKuser', $arFields['LOGIN']);
                     } else if (strripos($arFields['LOGIN'], 'FB') !== false) {
                         $exAuthId = CSocServFB2::ID;
                         [,$xmlId] = explode('FB_', $arFields['LOGIN']);
@@ -211,6 +211,9 @@ class CSocServFB2 extends \CSocServFacebook
                                 'EXTERNAL_AUTH_ID' => $exAuthId,
                                 'XML_ID' => $xmlId,
                             ]);
+
+                            $user->Authorize($checkUser['USER_ID']);
+                            unset($_SESSION['socServiceParams']);
                         }
                     } else {
 
@@ -238,6 +241,8 @@ class CSocServFB2 extends \CSocServFacebook
                             'ex_id' => static::LOGIN_PREFIX.$arFBUser["id"],
                             'token' => $this->getEntityOAuth()->getToken()
                         ];
+
+                        $_SESSION['socServiceParams'] = $paramsProfile;
                     }
 //                    $authError = $this->AuthorizeUser($arFields);
                 }
@@ -288,6 +293,7 @@ class CSocServFB2 extends \CSocServFacebook
         }
         elseif($bSuccess !== true)
         {
+            $backUrl = $url;
             $url = (isset($urlPath)) ? $urlPath.'?auth_service_id='.self::ID.'&auth_service_error='.$authError : $GLOBALS['APPLICATION']->GetCurPageParam(('auth_service_id='.self::ID.'&auth_service_error='.$authError), $aRemove);
         }
 
@@ -298,7 +304,7 @@ class CSocServFB2 extends \CSocServFacebook
 
 
         if (count($paramsProfile) > 0) {
-            $url = '/personal/register/?backurl=/&' . http_build_query($paramsProfile);
+            $url = '/personal/register/?backurl=' . ($backUrl ?? '/');
         }
         ?>
         <script type="text/javascript">
@@ -326,7 +332,6 @@ class CSocServFB2 extends \CSocServFacebook
         {
             $state = 'site_id='.SITE_ID.'&backurl='.urlencode($APPLICATION->GetCurPageParam('check_key='.$_SESSION["UNIQUE_KEY"], array("logout", "auth_service_error", "auth_service_id", "backurl"))).(isset($arParams['BACKURL']) ? '&redirect_url='.urlencode($arParams['BACKURL']) : '');
             $redirect_uri = $this->getEntityOAuth()->GetRedirectURI();
-//            $redirect_uri = \CHTTP::URN2URI($APPLICATION->GetCurPage()) . 'ajax/user/oauth/facebook';
         }
 
         return $this->getEntityOAuth()->GetAuthUrl($redirect_uri, $state);

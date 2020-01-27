@@ -80,8 +80,6 @@ class CSocServOK2 extends \CSocServOdnoklassniki
                         $paramsProfile = [];
                         $bSuccess = $this->AuthorizeUser($arFields);
 
-                        $bSuccess = $this->AuthorizeUser($arFields);
-
                         if ($bSuccess) {
                             $exAuthId = $xmlId = '';
 
@@ -90,7 +88,7 @@ class CSocServOK2 extends \CSocServOdnoklassniki
                                 [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
                             } else if (strripos($arFields['LOGIN'], 'OK') !== false) {
                                 $exAuthId = CSocServOK2::ID;
-                                [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
+                                [,$xmlId] = explode('OKuser', $arFields['LOGIN']);
                             } else if (strripos($arFields['LOGIN'], 'FB') !== false) {
                                 $exAuthId = CSocServFB2::ID;
                                 [,$xmlId] = explode('FB_', $arFields['LOGIN']);
@@ -100,6 +98,8 @@ class CSocServOK2 extends \CSocServOdnoklassniki
                                 'EXTERNAL_AUTH_ID' => $exAuthId,
                                 'XML_ID' => $xmlId,
                             ]);
+                            $user->Authorize($checkUser['USER_ID']);
+                            unset($_SESSION['socServiceParams']);
                         }
                     } else {
                         $paramsProfile = [
@@ -110,6 +110,8 @@ class CSocServOK2 extends \CSocServOdnoklassniki
                             'ex_id' => "OKuser".$uid,
                             'token' => $this->getEntityOAuth()->getToken()
                         ];
+
+                        $_SESSION['socServiceParams'] = $paramsProfile;
                     }
                 }
             }
@@ -162,6 +164,7 @@ class CSocServOK2 extends \CSocServOdnoklassniki
         }
         elseif($bSuccess !== true)
         {
+            $backUrl = $url;
             $url = (isset($parseUrl))
                 ? $urlPath.'?auth_service_id='.self::ID.'&auth_service_error='.$bSuccess
                 : $APPLICATION->GetCurPageParam(('auth_service_id='.self::ID.'&auth_service_error='.$bSuccess), $aRemove);
@@ -173,7 +176,7 @@ class CSocServOK2 extends \CSocServOdnoklassniki
         $url = \CUtil::JSEscape($url);
 
         if (count($paramsProfile) > 0) {
-            $url = '/personal/register/?backurl=/&' . http_build_query($paramsProfile);
+            $url = '/personal/register/?backurl=' . ($backUrl ?? '/');
         }
 
         $location = ($mode == "opener") ? 'if(window.opener) window.opener.location = \''.$url.'\'; window.close();' : ' window.location = \''.$url.'\';';

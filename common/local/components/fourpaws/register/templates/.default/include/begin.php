@@ -13,12 +13,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $request = Application::getInstance()->getContext()->getRequest();
 $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
 
+$userData = $_SESSION['socServiceParams'];
+
 $regParam = [
-    'name' => $request->get('name'),
-    'last_name' => $request->get('last_name'),
-    'gender' => $request->get('gender'),
-    'birthday' => $request->get('birthday'),
-    'ex_id' => $request->get('ex_id'),
+    'name' => $userData['name'],
+    'last_name' => $userData['last_name'],
+    'gender' => $userData['gender'],
+    'birthday' => $userData['birthday'],
+    'ex_id' => $userData['ex_id'],
 ];
 ?>
 <div class="b-registration__content b-registration__content--moiety">

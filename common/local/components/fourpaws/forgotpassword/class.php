@@ -482,12 +482,11 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                         /** @var ConfirmCodeService $confirmService */
 
                         $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-//                        $res = $confirmService::checkConfirmSms(
-//                            $phone,
-//                            $confirmCode,
-//	                        true
-//                        );
-                        $res = true;
+                        $res = $confirmService::checkConfirmSms(
+                            $phone,
+                            $confirmCode,
+	                        true
+                        );
 
                         if (!$res) {
                             return $this->ajaxMess->getWrongConfirmCode();
