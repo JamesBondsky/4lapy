@@ -254,9 +254,9 @@ try {
         'product_stm'             => $product->getCtm(), // type: boolean, format: True/False //TODO exponea посмотреть, прилетят ли 25-го числа значения true/false (всего до исправления было 46 true)
         'product_food'            => $product->isFood(), // type: boolean, format: True/False
         'product_weight'          => $currentOffer->getCatalogProduct()->getWeight(), // type: number(float?)
-        'product_wear_size'       => '', // type: string
-        'rating'                  => 0, // type: number
-        'ratings_count'           => 0, // type: number
+        //'product_wear_size'       => '', // type: string //TODO exponea change
+        //'rating'                  => 0, // type: number //TODO exponea change
+        //'ratings_count'           => 0, // type: number //TODO exponea change
         'product_subscribe_price' => $currentOffer->getSubscribePrice(), // type: string(float)
         'product_available'       => $currentOffer->isAvailable(), // type: bool
         //'delivery_date'           => 1234567890 // type: number //TODO exponea отправлять всё событие батчами через API: https://docs.exponea.com/reference#batch-commands ?
