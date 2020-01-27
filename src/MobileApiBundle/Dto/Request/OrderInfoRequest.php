@@ -12,26 +12,25 @@ class OrderInfoRequest implements SimpleUnserializeRequest, GetRequest
     /**
      * Номер заказа
      * @Serializer\SerializedName("id")
-     * @Serializer\Type("int")
+     * @Serializer\Type("string")
      * @Assert\NotBlank()
-     * @Assert\GreaterThan(0)
-     * @var int
+     * @var string
      */
     protected $orderNumber;
 
     /**
-     * @return int
+     * @return string
      */
-    public function getOrderNumber(): int
+    public function getOrderNumber(): string
     {
         return $this->orderNumber;
     }
 
     /**
-     * @param int $orderNumber
+     * @param string $orderNumber
      * @return OrderInfoRequest
      */
-    public function setOrderNumber(int $orderNumber): OrderInfoRequest
+    public function setOrderNumber(string $orderNumber): OrderInfoRequest
     {
         $this->orderNumber = $orderNumber;
         return $this;

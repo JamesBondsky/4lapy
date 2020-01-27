@@ -75,6 +75,11 @@ class NotificationService implements LoggerAwareInterface
      * @var ExpertsenderService
      */
     protected $emailService;
+    
+    /**
+     * @var bool
+     */
+    protected $alreadySended = false;
 
     /**
      * Для предотвращения зацикливания отправки писем
@@ -378,6 +383,8 @@ class NotificationService implements LoggerAwareInterface
         $parameters = $this->getOrderData($order);
 
         $this->sendPushOrSms('FourPawsSaleBundle:Sms:order.canceled.html.php', $parameters, 'status', true);
+        
+        $this->alreadySended = true;
         static::$isSending = false;
     }
 
@@ -514,6 +521,8 @@ class NotificationService implements LoggerAwareInterface
      */
     protected function addPushMessage(string $tpl, array $parameters): void
     {
+        $otherEventId = '';
+        
         if (empty($parameters) || !$parameters['userId']) {
             return;
         }
@@ -536,11 +545,16 @@ class NotificationService implements LoggerAwareInterface
             'XML_ID' => 'status',
         ])->fetch();
 
+        if (preg_match('/^[a-zA-Z]{1}/', $parameters['accountNumber'])) {
+            $otherEventId = $parameters['accountNumber'];
+        }
+        
         $pushMessage = (new ApiPushMessage())
             ->setActive(true)
             ->setMessage($text)
             ->setUserIds([$parameters['userId']])
             ->setEventId($parameters['accountNumber'])
+            ->setOtherEventId($otherEventId)
             ->setStartSend(new \DateTime())
             ->setTypeId($type['ID']);
 
@@ -848,9 +862,12 @@ class NotificationService implements LoggerAwareInterface
         // $user = $this->getUser();
 
         // if($user && $this->pushEventService->canSendPushMessage($user, $typeCode)){
-        $this->addPushMessage($template, $parameters);
+        if ($this->alreadySended === false) {
+            $this->addPushMessage($template, $parameters);
+            $this->sendSms($template, $parameters, $immediate);
+        }
         // } else {
-        $this->sendSms($template, $parameters, $immediate);
+       
         // }
     }
 

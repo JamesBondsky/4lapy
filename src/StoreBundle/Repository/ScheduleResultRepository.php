@@ -57,7 +57,7 @@ class ScheduleResultRepository extends D7Repository
     {
         if (null === $this->bySender[$senderXmlId]) {
             $getResults = function () use ($senderXmlId) {
-                $scheduleResults = $this->findBy(['UF_SENDER' => $senderXmlId])->toArray();
+                $scheduleResults = $this->findBy(['=UF_SENDER' => $senderXmlId])->toArray();
 
                 return ['result' => new ScheduleResultCollection($scheduleResults)];
             };

@@ -2287,4 +2287,24 @@ class OrderSubscribeService implements LoggerAwareInterface
         return $orderSubscribeSingle;
     }
 
+    public function findActiveSubscribeByUserId($userId)
+    {
+        $params = [];
+        $params['filter']['=UF_ACTIVE'] = 1;
+        $params['filter']['=UF_USER_ID'] = $userId;
+        $params['filter'][] = [
+            'LOGIC' => 'OR',
+            ['<=UF_DATE_CHECK' => new DateTime()],
+            ['=UF_DATE_CHECK' => false],
+        ];
+        $params['order'] = [
+            'UF_NEXT_DEL' => 'ASC',
+            'UF_DELIVERY_TIME' => 'ASC',
+        ];
+
+        $checkOrdersList = $this->orderSubscribeRepository->findBy($params);
+
+        return $checkOrdersList;
+    }
+
 }

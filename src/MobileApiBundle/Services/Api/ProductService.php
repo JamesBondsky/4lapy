@@ -216,7 +216,7 @@ class ProductService
 
         $callBack = \Closure::fromCallable([$this, 'mapProductForList']);
 
-        $cache = new FilesystemCache('', 3600 * 2);
+        $cache = new FilesystemCache('', 3600 * 2, getenv('CACHE_DIR') ?? null);
         $cacheArr = [];
         $cacheIgnoreKey = ['token', 'sign', 'PHPSESSID'];
         foreach ($_REQUEST as $key => $value) {
@@ -238,6 +238,7 @@ class ProductService
                     return !is_null($value);
                 })
                 ->getValues();
+            $cache->deleteItem($cacheKey);
             $cache->set($cacheKey, $products);
         }
 
@@ -462,6 +463,10 @@ class ProductService
             // ->setCrossSale($this->getCrossSale($offer))              // похожие товары
             ->setBundle($this->getBundle($offer));                       // с этим товаром покупают
         $fullProduct->setPictureList($this->getPictureList($product, $offer));           // картинки
+
+        if ($fullProduct->getAvailability() == 'В наличии' && $fullProduct->getPickupOnly()) {
+            $fullProduct->setAvailability('Самовывоз');
+        }
 
         if ($product->getNormsOfUse()->getText() || $product->getLayoutRecommendations()->getText()) {
             if ($product->getLayoutRecommendations()->getText() != '' && $product->getLayoutRecommendations()->getText() != null) {
@@ -1172,7 +1177,7 @@ class ProductService
      */
     public function getProductXmlIdsByShareId(int $stockId)
     {
-        $cache = new FilesystemCache('', 3600 * 24 * 3);
+        $cache = new FilesystemCache('', 3600 * 24 * 3, getenv('CACHE_DIR') ?? null);
 
         $cacheKey = 'share_' . $stockId;
 
@@ -1182,6 +1187,7 @@ class ProductService
                 ->exec()
                 ->first();
 
+            $cache->deleteItem($cacheKey);
             $cache->set($cacheKey, $share);
         } else {
             $share = $cache->get($cacheKey);

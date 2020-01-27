@@ -49,6 +49,7 @@ class PushFileProcessingConsumer extends PushBase
                         $data['EVENT_ID'] = $pushMessage->getEventId();
                         $data['PHOTO_URL'] = $pushMessage->getPhotoUrl();
                         $data['MESSAGE_TITLE'] = $pushMessage->getMessageTitle();
+                        $data['OTHER_EVENT_ID'] = $pushMessage->getOtherEventId();
                         $producer->publish(json_encode($data));
                     }
                 }

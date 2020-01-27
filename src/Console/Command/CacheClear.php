@@ -13,6 +13,7 @@ use Monolog\Logger;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LogLevel;
+use Symfony\Component\Cache\Simple\FilesystemCache;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -34,10 +35,14 @@ class CacheClear extends Command implements LoggerAwareInterface
 
     const OPT_CACHE_PATH = 'cache-path';
 
+    private $cache;
+
     public function __construct($name = null)
     {
         parent::__construct($name);
         $this->setLogger(new Logger('Cache cleaner', [new StreamHandler(STDOUT, Logger::DEBUG)]));
+
+        $this->cache = new FilesystemCache('', 0, getenv('CACHE_DIR') ?? null);
     }
 
     protected function configure()
@@ -47,7 +52,7 @@ class CacheClear extends Command implements LoggerAwareInterface
              ->addArgument(
                  self::ARG_CACHE_TYPE,
                  InputArgument::OPTIONAL,
-                 'Cache type [all, menu, managed, html]',
+                 'Cache type [all, menu, managed, html, symfony-fs]',
                  'all'
              )
              ->addOption(
@@ -72,27 +77,32 @@ class CacheClear extends Command implements LoggerAwareInterface
             $this->log(LogLevel::INFO, 'Cache Path: ' . $cachePath);
         }
 
-        $this->fileCacheClean($cacheType, $cacheEngine, $cachePath);
-        Application::getInstance()->getManagedCache()->cleanAll();
-        if (!$cachePath) {
-            switch ($cacheType) {
-                case 'menu':
-                    $GLOBALS['CACHE_MANAGER']->CleanDir('menu');
-                    CBitrixComponent::clearComponentCache('bitrix:menu');
-                    break;
-                case 'managed':
-                    $GLOBALS['CACHE_MANAGER']->CleanAll();
-                    $GLOBALS['stackCacheManager']->CleanAll();
-                    break;
-                case 'html':
-                    StaticHtmlCache::getInstance()->deleteAll();
-                    break;
-                case 'all':
-                    BXClearCache(true);
-                    $GLOBALS['CACHE_MANAGER']->CleanAll();
-                    $GLOBALS['stackCacheManager']->CleanAll();
-                    StaticHtmlCache::getInstance()->deleteAll();
-                    break;
+        if ($cacheType === 'symfony-fs') {
+            $this->cache->clear();
+        } else {
+            $this->fileCacheClean($cacheType, $cacheEngine, $cachePath);
+
+            Application::getInstance()->getManagedCache()->cleanAll();
+            if (!$cachePath) {
+                switch ($cacheType) {
+                    case 'menu':
+                        $GLOBALS['CACHE_MANAGER']->CleanDir('menu');
+                        CBitrixComponent::clearComponentCache('bitrix:menu');
+                        break;
+                    case 'managed':
+                        $GLOBALS['CACHE_MANAGER']->CleanAll();
+                        $GLOBALS['stackCacheManager']->CleanAll();
+                        break;
+                    case 'html':
+                        StaticHtmlCache::getInstance()->deleteAll();
+                        break;
+                    case 'all':
+                        BXClearCache(true);
+                        $GLOBALS['CACHE_MANAGER']->CleanAll();
+                        $GLOBALS['stackCacheManager']->CleanAll();
+                        StaticHtmlCache::getInstance()->deleteAll();
+                        break;
+                }
             }
         }
         $this->logResult();

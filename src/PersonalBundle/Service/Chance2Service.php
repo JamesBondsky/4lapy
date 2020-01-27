@@ -16,6 +16,7 @@ use Exception;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\PersonalBundle\Exception\RuntimeException;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use WebArch\BitrixCache\BitrixCache;
 
@@ -27,14 +28,11 @@ class Chance2Service extends ChanceService
 
     protected const FEED_DEFAULT_CODES = [
         'royal-canin',
-        'hills',
-        'khills',
         'monge',
-//        'fresh-step', под вопросом
-//        'ever-clean',
-//        'trainer',
-//        'padovan',
-//        'adresnik',
+        'fresh-step',
+        'ever-clean',
+        'trainer',
+        'padovan',
     ];
 
     protected const FEED_BRAND_CODES = [
@@ -104,6 +102,7 @@ class Chance2Service extends ChanceService
         $res = OrderTable::query()
             ->setFilter([
                 'USER_ID' => $userId,
+                'PAYED' => 'Y',
                 '>=DATE_INSERT' => static::PERIODS[$period]['from'],
                 '<=DATE_INSERT' => static::PERIODS[$period]['to'],
                 'STATUS_ID' => [
@@ -115,18 +114,52 @@ class Chance2Service extends ChanceService
             ->exec();
 
         $orders = [];
+        $totalOrderPrice = 0.0;
 
         while ($order = $res->fetch()) {
             $orders[] = Order::load($order['ID']);
+            $totalOrderPrice += (float)$order['PRICE'];
         }
 
         $basketItems = $this->getAllBasketItems($orders);
 
-        $totalChance = $this->getBasketItemsChanceWithFilter($basketItems, []);
+        $totalChance = (int)floor($totalOrderPrice / self::CHANCE_RATE);
         $totalChance += $this->getFeedBasketItemsChance($basketItems);
         $totalChance += (2 * $this->getBasketItemsChanceWithFilter($basketItems, $this->getClotherProductIds()));
 
         return $totalChance;
+    }
+
+    /**
+     * @return int
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws RuntimeException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function getCurrentUserChances(): int
+    {
+        $userId = $this->userService->getCurrentUserId();
+
+        try {
+            if (!$userData = $this->getDataManager()::query()->setFilter(['UF_USER_ID' => $userId])->setSelect(['UF_DATA'])->exec()->fetch()) {
+                throw new RuntimeException('Пользователь не зарегистрирован');
+            }
+        } catch (RuntimeException $e) {
+            throw $e;
+        }
+
+        try {
+            $userData = unserialize($userData['UF_DATA']);
+            $result = 0;
+            foreach ($userData as $periodChance) {
+                $result += (int)$periodChance;
+            }
+            return $result;
+        } catch (Exception $e) {
+            return 0;
+        }
     }
 
     /**
@@ -138,7 +171,7 @@ class Chance2Service extends ChanceService
     {
         $sum = 0;
         foreach ($basketItems as $basketItem) {
-            if (!empty($allowProductIds) && in_array($basketItems['productId'], $allowProductIds, true)) {
+            if (!empty($allowProductIds) && !in_array($basketItem['productId'], $allowProductIds, true)) {
                 continue;
             }
 
@@ -180,7 +213,7 @@ class Chance2Service extends ChanceService
             foreach ($order->getBasket()->getBasketItems() as $basketItem) {
                 $items[] = [
                     'productId' => $basketItem->getProductId(),
-                    'price' => $basketItem->getPrice(),
+                    'price' => $basketItem->getPrice() * $basketItem->getQuantity(),
                 ];
             }
         }
@@ -227,12 +260,23 @@ class Chance2Service extends ChanceService
                 return [];
             }
 
-            $rsProduct = CIBlockElement::GetList(false, [
-                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
-                'SECTION_ID' => $arSection['ID'],
-            ]);
+            $sectionIds = [
+                $arSection['ID']
+            ];
+
+            $rsSection = CIBlockSection::GetList(false, ['SECTION_ID' => $arSection['ID']]);
+
+            while ($arSection = $rsSection->Fetch()) {
+                $sectionIds[] = $arSection['ID'];
+            }
 
             $productIds = [];
+
+            $rsProduct = CIBlockElement::GetList(false, [
+                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+                'SECTION_ID' => $sectionIds,
+            ], false, false, ['ID', 'IBLOCK_ID']);
+
             while ($arProduct = $rsProduct->Fetch()) {
                 $productIds[] = $arProduct['ID'];
             }

@@ -28,6 +28,13 @@ class PushEvent
 
     /**
      * @var string
+     * @Serializer\SerializedName("title")
+     * @Serializer\Type("string")
+     */
+    protected $title;
+
+    /**
+     * @var string
      * @Serializer\SerializedName("text")
      * @Serializer\Type("string")
      */
@@ -82,7 +89,25 @@ class PushEvent
         $this->dateTimeExec = $dateTimeExec;
         return $this;
     }
-
+    
+    /**
+     * @return string
+     */
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+    
+    /**
+     * @param string $text
+     * @return PushEvent
+     */
+    public function setTitle(string $title): PushEvent
+    {
+        $this->title = $title;
+        return $this;
+    }
+    
     /**
      * @return string
      */

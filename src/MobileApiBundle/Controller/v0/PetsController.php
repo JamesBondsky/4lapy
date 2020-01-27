@@ -17,6 +17,7 @@ use FourPaws\MobileApiBundle\Dto\Request\UserPetUpdateRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Services\Api\PetService as ApiPetService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Symfony\Component\HttpFoundation\Request;
 
 class PetsController extends BaseController
 {
@@ -54,7 +55,39 @@ class PetsController extends BaseController
     {
         return (new Response())->setData($this->apiPetService->getUserPetAll());
     }
-
+    
+    /**
+     * @Rest\Get("/user_pet_sizes/")
+     * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
+     *
+     * @return Response
+     */
+    public function getUserPetSizesAction()
+    {
+        return (new Response())->setData(['pet_sizes' => $this->apiPetService->getUserPetSizes()]);
+    }
+    
+    /**
+     * @Rest\Get("/calculate_size/")
+     * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
+     *
+     * @param Request $request
+     * @return Response
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function calculateSizeAction(Request $request)
+    {
+        $size = $this->apiPetService->calculateSize($request->get('back'), $request->get('neck'), $request->get('chest'));
+        
+        if (!$size) {
+            return (new Response())->setData(['size' => 'Скорее всего, у Вашего питомца нестандартный размер.']);
+        }
+        
+        return (new Response())->setData(['size' => $size]);
+    }
+    
     /**
      * @Rest\Post("/user_pets/")
      * @Rest\View()

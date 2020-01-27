@@ -34,7 +34,7 @@ $markup = PawsApplication::markup();
     <meta name="yandex-verification" content="d69492b0ac6396cf" />
     <meta name="google-site-verification" content="YhnMv-eup_rK_sqgNqgHc8UrWyWaZQ22m5z7xnokuNs" />
 
-    <meta property="og:title" content="Выиграй путешествие на 2-их в Таиланд!"/>
+    <meta property="og:title" content="Выиграй путешествие на 2-их в Лето!"/>
     <meta property="og:description" content=""/>
     <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/leto2020/img/leto2020-share.jpg'?>">
 
@@ -145,7 +145,7 @@ $markup = PawsApplication::markup();
             <div class="b-container">
                 <div class="main-banner-leto2020__inner">
                     <div class="main-banner-leto2020__title">
-                        Выиграй<br/> путешествие<br/> на&nbsp;<nobr>2-их</nobr> в&nbsp;Таиланд!
+                        Выиграй<br/> путешествие<br/> на&nbsp;<nobr>2-их</nobr> в&nbsp;Лето!
                     </div>
                     <div class="main-banner-leto2020__subtitle">
                         <p>+20 смартфонов</p>
@@ -178,7 +178,7 @@ $markup = PawsApplication::markup();
                             <div class="item-card__descr">
                                 Всего 200&nbsp;шт<br />
                                 Розыгрыш по&nbsp;50&nbsp;шт в&nbsp;неделю:<br />
-                                <b>13, 20, 27&nbsp;января и&nbsp;3&nbsp;февраля</b>
+                                <b>6,&nbsp;13,&nbsp;20 и&nbsp;27&nbsp;января</b>
                             </div>
                         </div>
                     </div>
@@ -191,7 +191,7 @@ $markup = PawsApplication::markup();
                             <div class="item-card__descr">
                                 Всего 20&nbsp;шт<br />
                                 Розыгрыши по&nbsp;5&nbsp;шт в&nbsp;неделю:<br/>
-                                <b>13, 20, 27&nbsp;января и&nbsp;3&nbsp;февраля</b>
+                                <b>6,&nbsp;13,&nbsp;20 и&nbsp;27&nbsp;января</b>
                             </div>
                         </div>
                     </div>
@@ -203,7 +203,7 @@ $markup = PawsApplication::markup();
                             <div class="item-card__title">Главный приз</div>
                             <div class="item-card__descr">
                                 Незабываемое путешествие<br />
-                                на&nbsp;<nobr>2-их</nobr> в&nbsp;Таиланд!<br />
+                                на&nbsp;<nobr>2-их</nobr> в&nbsp;Лето!<br />
                                 <b>Розыгрыш: 3&nbsp;февраля</b>
                             </div>
                         </div>
@@ -234,7 +234,7 @@ $markup = PawsApplication::markup();
                         <div class="item">
                             <div class="item__icon item__icon_blue"></div>
                             <div class="item__descr">
-                                Ищи себя в&nbsp;списках победителей на&nbsp;этом сайте каждый понедельник 13, 20, 27 января и&nbsp;3 февраля!
+                                Ищи себя в&nbsp;списках победителей на&nbsp;этом сайте каждый понедельник 6,&nbsp;13,&nbsp;20,&nbsp;27&nbsp;января и&nbsp;3&nbsp;февраля!
                             </div>
                         </div>
                     </div>
@@ -264,7 +264,7 @@ $markup = PawsApplication::markup();
                             <div class="item__title">шансы за&nbsp;покупки<br/> товаров брендов</div>
                             <div class="item__subtitle">
                                 GRANDIN, ROYAL CANIN, АВВА, MEALFEEL, FRESH STEP, MURMIX, EVER CLEAN, MONGE,
-                                UNOCAT, TREINER, WELLKISS, YUMMY, CHATELL, CHEWELL, MURMIX, НАГРАДА, ПАДОВАН
+                                UNOCAT, TRAINER, WELLKISS, YUMMY, CHATELL, CHEWELL, MURMIX, НАГРАДА, PADOVAN
                             </div>
                         </div>
                     </div>

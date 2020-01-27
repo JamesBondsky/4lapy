@@ -126,18 +126,18 @@ class OrderController extends BaseController
             $orderService         = $serviceContainer->get(OrderService::class);
             $mobileOrderService   = $serviceContainer->get(MobileOrderService::class);
             $number = $request->get('orderId');
-            
+        
             $orderId = $mobileOrderService->getOrderIdByNumber($number);
             $cancelResult = $orderService->cancelOrder($orderId);
         } catch (OrderCancelException | \FourPaws\SaleBundle\Exception\NotFoundException  $e) {
             $errors = new ArrayCollection([new Error(0, $e->getMessage())]);
-            
+        
             return (new Response())->setData([
                 'success' => 0,
             ])->setErrors($errors);
         } catch (\Exception $e) {
             $errors = new ArrayCollection([new Error(0, $e->getMessage())]);
-            
+        
             return (new Response())->setData([
                 'success' => 0,
             ])->setErrors($errors);
@@ -145,7 +145,7 @@ class OrderController extends BaseController
         
         if (!$cancelResult) {
             $errors = new ArrayCollection([new Error(0, 'При отмене заказа произошла ошибка. Повторите запрос позже.')]);
-            
+        
             return (new Response())->setData([
                 'success' => 0,
             ])->setErrors($errors);
@@ -158,7 +158,7 @@ class OrderController extends BaseController
                 'order' => $mobileOrderService->getOneByNumberForCurrentUser($number),
             ]))->setErrors($errors);
         }
-    
+        
         //APPTEKA захотела читать текст попапа из errors)
         $errors = new ArrayCollection([new Error(0, 'Ваш заказ отменён!')]);
         

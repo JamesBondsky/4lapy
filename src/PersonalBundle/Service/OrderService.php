@@ -105,6 +105,8 @@ class OrderService
         'K', // Отменен
     ];
 
+    public const STATUS_NEW = 'Q'; //Новый
+    public const STATUS_OTHER_NEW = 'N'; //??? Новый (еще один)
     public const STATUS_CANCELING = 'XX'; //Отменяется
 
     protected const MANZANA_FINAL_STATUS = 'G';
@@ -422,7 +424,7 @@ class OrderService
         App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
 
         // todo убрать после новго года
-        App::getInstance()->getContainer()->get(ChanceService::class)->updateUserChance($user->getId());
+//        App::getInstance()->getContainer()->get(ChanceService::class)->updateUserChance($user->getId());
         App::getInstance()->getContainer()->get(Chance2Service::class)->updateUserChance($user->getId());
     }
 
@@ -472,7 +474,7 @@ class OrderService
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function getUserOrderByNumber(User $user, int $orderNumber)
+    public function getUserOrderByNumber(User $user, $orderNumber)
     {
         return $this->orderRepository->getUserOrderByNumber($user->getId(), $orderNumber);
     }

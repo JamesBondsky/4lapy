@@ -16,6 +16,7 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Service\PetService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation\ExclusionPolicy;
 
 class Pet extends BaseEntity
 {
@@ -78,11 +79,10 @@ class Pet extends BaseEntity
     protected $breedId;
 
     /**
-     * @var Date|null
-     * @Serializer\Type("bitrix_date")
+     * @var Date|string
+     * @Serializer\Type("bitrix_date_ex")
      * @Serializer\SerializedName("UF_BIRTHDAY")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Serializer\SkipWhenEmpty()
      */
     protected $birthday;
 
@@ -365,7 +365,7 @@ class Pet extends BaseEntity
      */
     public function getAgeString(): string
     {
-        list($years, $months, $days) = $this->getAge();
+        [$years, $months, $days] = $this->getAge();
 
         $return = '';
         if($years > 0) {
@@ -418,7 +418,7 @@ class Pet extends BaseEntity
     }
 
     /**
-     * @return Date|null
+     * @return Date|string
      */
     public function getBirthday() : ?Date
     {
@@ -442,7 +442,7 @@ class Pet extends BaseEntity
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $this->birthday = new Date($birthday, 'd.m.Y');
         } else {
-            $this->birthday = null;
+            $this->birthday = '';
         }
 
         return $this;
