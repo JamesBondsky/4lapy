@@ -112,12 +112,12 @@ if ($arResult['BANNER_DESKTOP']) {
         $banner['src'] = $path;
         switch ($bannerKey) {
             case 'BANNER_DESKTOP':
-                $width  = 1280;
+                $width  = 1440;
                 $height = 300;
                 break;
             case 'BANNER_TABLET':
-                $width  = 940;
-                $height = 250;
+                $width  = 950;
+                $height = 450;
                 break;
             case 'BANNER_MOBILE':
                 $width  = 767;
