@@ -116,8 +116,8 @@ if ($arResult['BANNER_DESKTOP']) {
                 $height = 300;
                 break;
             case 'BANNER_TABLET':
-                $width  = 950;
-                $height = 450;
+                $width  = 940;
+                $height = 250;
                 break;
             case 'BANNER_MOBILE':
                 $width  = 767;

@@ -43,7 +43,7 @@ class AddBannerShareProperty20200123134931 extends \Adv\Bitrixtools\Migration\Sp
         ]);
     
         $helper->Iblock()->addPropertyIfNotExists($iblockId, [
-            'NAME'               => 'Баннер для планшета (950х450)',
+            'NAME'               => 'Баннер для планшета (940*250)',
             'ACTIVE'             => 'Y',
             'SORT'               => '500',
             'CODE'               => 'BANNER_TABLET',
