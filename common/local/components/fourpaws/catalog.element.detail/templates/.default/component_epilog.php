@@ -231,13 +231,13 @@ try {
 //        'category_sap_3_id'       => '', // type: string
         'category_1'              => $category1->getName(), // type: string
         'category_1_url'          => new FullHrefDecorator($category1->getSectionPageUrl()), // type: string, format: URL
-        'category_1_id'           => $category1->getId(), // type: string(int?)
+        'category_1_id'           => $category1->getCode(), // type: string
         'category_2'              => $category2->getName(), // type: string
         'category_2_url'          => new FullHrefDecorator($category2->getSectionPageUrl()), // type: string, format: URL
-        'category_2_id'           => $category2->getId(), // type: string(int?)
+        'category_2_id'           => $category2->getCode(), // type: string
         'category_3'              => $category3->getName(), // type: string
         'category_3_url'          => new FullHrefDecorator($category3->getSectionPageUrl()), // type: string, format: URL
-        'category_3_id'           => $category3->getId(), // type: string(int?)
+        'category_3_id'           => $category3->getCode(), // type: string
         'categories_path'         => implode(' > ', [$category1->getName(), $category2->getName(), $category3->getName()]), // type: string, format: list of categories concatenated with '>' (path)
         'category_id'             => $category1->getCode(), // type: string
         'categories_ids'          => [$category1->getCode(), $category2->getCode(), $category3->getCode()], // type: list, format: JSON (Array of Strings)
@@ -249,7 +249,7 @@ try {
         'pet_age'                 => $petAgeString, // type: string
         'pet_size'                => $petSizeString, // type: string
         'product_spec'            => $feedSpecificationString, // type: string
-        'product_farma_type'      => $productFormsString, // type: boolean, format: True/False //TODO exponea проверить, появятся ли новые формы
+        'product_farma_type'      => $productFormsString, // type: boolean, format: True/False //TODO exponea По каким правилам мапить значения справочника в булевые значения?
         'product_farma'           => $product->isLicenseRequired(), // type: boolean, format: True/False
         'product_stm'             => $product->getCtm(), // type: boolean, format: True/False //TODO exponea посмотреть, прилетят ли 25-го числа значения true/false (всего до исправления было 46 true)
         'product_food'            => $product->isFood(), // type: boolean, format: True/False
@@ -270,8 +270,8 @@ try {
     $exponeaDataEncoded = CUtil::PhpToJSObject($exponeaData);
     ?>
 	<script>
-        console.log('📊exponea(view_item)', <?= $exponeaDataEncoded ?>); //TODO exponea del
-        exponea.track("view_item", <?= $exponeaDataEncoded ?>);
+        console.log('📊exponea(view_item)', <?= $exponeaDataEncoded ?>); //TODO exponea comment
+        exponea.track('view_item', <?= $exponeaDataEncoded ?>);
 	</script>
     <?php
 } catch (Throwable $e) {
