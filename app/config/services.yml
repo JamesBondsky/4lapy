@@ -70,6 +70,9 @@ services:
     class: FourPaws\External\Push\Consumer\PushSendIosConsumer
     arguments: ['@jms_serializer', '@push.service']
 
+  order_subscription.creating:
+    class: FourPaws\PersonalBundle\Consumer\OrderSubscriptionCreatingConsumer
+
   search.service:
     class: FourPaws\Search\SearchService
     arguments:
@@ -170,6 +173,14 @@ services:
 
   order_subscribe.service:
     class: FourPaws\PersonalBundle\Service\OrderSubscribeService
+    public: true
+
+  order_subscribe_single.repository:
+    class: FourPaws\PersonalBundle\Repository\OrderSubscribeSingleRepository
+    public: true
+
+  coupon_pool.repository:
+    class: FourPaws\PersonalBundle\Repository\CouponPoolRepository
     public: true
 
   kkm.service:

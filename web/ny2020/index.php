@@ -38,28 +38,27 @@ $chanceService = Application::getInstance()->getContainer()->get(ChanceService::
         <?php $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD); ?>
 
         <input class="js-no-valid" type="hidden" name="<?= $token['field'] ?>" value="<?= $token['token'] ?>">
-        <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$mealfeelLanding ?>">
 
         <div class="form-group">
-          <input type="text" id="SURNAME_REG_CHECK_NY" class="js-small-input" name="lastname" value="<?= $arUser['LAST_NAME'] ?: '' ?>" placeholder="Фамилия" <?= (!empty($arUser['LAST_NAME'])) ? 'disabled="disabled"' : '' ?>>
+          <input type="isLetter" id="SURNAME_REG_CHECK_NY" name="lastname" value="<?= $arUser['LAST_NAME'] ?: '' ?>" placeholder="Фамилия">
           <div class="b-error">
             <span class="js-message"></span>
           </div>
         </div>
         <div class="form-group">
-          <input type="text" id="NAME_REG_CHECK_NY" class="js-small-input" name="name" value="<?= $arUser['NAME'] ?: '' ?>" placeholder="Имя" <?= (!empty($arUser['NAME'])) ? 'disabled="disabled"' : '' ?>>
+          <input type="isLetter" id="NAME_REG_CHECK_NY" name="name" value="<?= $arUser['NAME'] ?: '' ?>" placeholder="Имя">
           <div class="b-error">
             <span class="js-message"></span>
           </div>
         </div>
         <div class="form-group">
-          <input type="tel" id="PHONE_REG_CHECK_NY" name="phone" value="<?= $arUser['PERSONAL_PHONE'] ?: '' ?>" placeholder="Телефон" disabled="disabled" class="js-no-valid">
+          <input type="tel" id="PHONE_REG_CHECK_NY" name="phone" value="<?= $arUser['PERSONAL_PHONE'] ?: '' ?>" placeholder="Телефон" class="js-no-valid">
           <div class="b-error">
             <span class="js-message"></span>
           </div>
         </div>
         <div class="form-group">
-          <input type="emailLanding" id="EMAIL_REG_CHECK_NY" name="email" value="<?= $arUser['EMAIL'] ?: '' ?>" placeholder="E-mail" <?= (!empty($arUser['EMAIL'])) ? 'disabled="disabled"' : '' ?>>
+          <input type="emailLanding" id="EMAIL_REG_CHECK_NY" name="email" value="<?= $arUser['EMAIL'] ?: '' ?>" placeholder="E-mail">
           <div class="b-error">
             <span class="js-message"></span>
           </div>

@@ -31,7 +31,7 @@ $markup = PawsApplication::markup();
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="google" content="notranslate">
     <meta name="format-detection" content="telephone=no">
-    <meta name="yandex-verification" content="6266e34669b85ed6">
+    <meta name="yandex-verification" content="d69492b0ac6396cf" />
 
     <meta property="og:title" content="Как выиграть запас корма Grandin на год вперед?"/>
     <meta property="og:description" content="Для участия в акции купите любой корм Grandin на сумму от 1800 рублей и зарегистрируйте покупку  на сайте акции grandin.4lapy.ru."/>

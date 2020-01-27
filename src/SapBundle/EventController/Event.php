@@ -6,6 +6,7 @@
 
 namespace FourPaws\SapBundle\EventController;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
@@ -18,6 +19,7 @@ use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\SapBundle\Exception\LogicException;
@@ -81,7 +83,16 @@ class Event extends BaseServiceHandler
          * @var OrderService $orderService
          */
         $order = $event->getParameter('ENTITY');
+
+        $tempLogger = LoggerFactory::create('OrderSapExport', 'dev');
+        $tempLogger->info('consumeOrderAfterSaveOrder start', [
+            'orderId: ' . $order->getId(),
+        ]);
+
         if ($order->isCanceled()) {
+            $tempLogger->info('consumeOrderAfterSaveOrder order is canceled', [
+                'orderId: ' . $order->getId(),
+            ]);
             return;
         }
 
@@ -97,12 +108,20 @@ class Event extends BaseServiceHandler
          * Если заказ уже выгружен в SAP, оплата онлайн, пропускаем
          */
         if (
-            self::isOrderExported($order)
-            || self::isManzanaOrder($order)
-            || self::isDostavistaOrder($order)
-            || $orderService->isOnlinePayment($order) && !$isDostavistaDelivery
+            ($isOrderExported = self::isOrderExported($order))
+            || ($isManzanaOrder = self::isManzanaOrder($order))
+            || ($isDostavistaOrder = self::isDostavistaOrder($order))
+            || (($isOnlinePayment = $orderService->isOnlinePayment($order)) && !$isDostavistaDelivery)
             //|| $orderService->isSubscribe($order)
         ) {
+            $tempLogger->info('consumeOrderAfterSaveOrder order wasn\'t consumed', [
+                'orderId: ' . $order->getId(),
+                '$isOrderExported: ' . $isOrderExported,
+                '$isManzanaOrder: ' . ($isManzanaOrder ?? ''),
+                '$isDostavistaOrder: ' . ($isDostavistaOrder ?? ''),
+                '$isOnlinePayment: ' . ($isOnlinePayment ?? ''),
+                '$isDostavistaDelivery: ' . $isDostavistaDelivery,
+            ]);
             return;
         }
 
@@ -128,6 +147,19 @@ class Event extends BaseServiceHandler
         $oldFields = $event->getParameter('VALUES');
         $payment = $event->getParameter('ENTITY');
 
+        $tempLogger = LoggerFactory::create('OrderSapExport', 'dev');
+        $tempLogger->info('consumeOrderAfterSavePayment start', [
+            'paymentId: ' . $payment->getId(),
+        ]);
+
+        $tempLogger->info('consumeOrderAfterSavePayment params', [
+            'paymentId: ' . $payment->getId(),
+            '$oldFields[\'PAID\']: ' . $oldFields['PAID'],
+            'paymentSystemId: ' . (int)$payment->getPaymentSystemId(),
+            'orderId: ' . $payment->getOrderId(),
+            'isPaid: ' . $payment->isPaid(),
+        ]);
+
         if (
             $oldFields['PAID'] !== 'Y'
             && (int)$payment->getPaymentSystemId() === SapOrder::PAYMENT_SYSTEM_ONLINE_ID
@@ -142,6 +174,11 @@ class Event extends BaseServiceHandler
             $order = Order::load($payment->getOrderId());
 
             /** @noinspection NullPointerExceptionInspection */
+            $tempLogger->info('consumeOrderAfterSavePayment params2', [
+                'isOrderExported: ' . self::isOrderExported($order),
+                'isManzanaOrder: ' . self::isManzanaOrder($order),
+                'isDostavistaOrder: ' . self::isDostavistaOrder($order),
+            ]);
             if (!self::isOrderExported($order) && !self::isManzanaOrder($order) && !self::isDostavistaOrder($order)) {
                 self::getConsumerRegistry()->consume($order);
             }
@@ -201,23 +238,29 @@ class Event extends BaseServiceHandler
      */
     private static function isDostavistaOrder(Order $order): bool
     {
-        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-        $isDostavistaDelivery = $deliveryService->isDostavistaDeliveryCode($deliveryService->getDeliveryCodeById($order->getField('DELIVERY_ID')));
-        $propertyCollection = $order->getPropertyCollection();
-        $orderIdDostavista = BxCollection::getOrderPropertyByCode($propertyCollection, 'ORDER_ID_DOSTAVISTA')->getValue();
-        $commWay = BxCollection::getOrderPropertyByCode($propertyCollection, 'COM_WAY')->getValue();
-        switch (true) {
-            case !$isDostavistaDelivery:
-            case $isDostavistaDelivery && $orderIdDostavista != '' && $orderIdDostavista != 0:
-            case $isDostavistaDelivery &&
-                (
-                    $commWay == OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR ||
-                    $commWay == OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS_DOSTAVISTA_ERROR
-                ):
-                return false;
-                break;
-            default:
-                return true;
+        $statusId = $order->getField('STATUS_ID');
+
+        if ($statusId != PersonalOrderService::STATUS_CANCELING) {
+            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+            $isDostavistaDelivery = $deliveryService->isDostavistaDeliveryCode($deliveryService->getDeliveryCodeById($order->getField('DELIVERY_ID')));
+            $propertyCollection = $order->getPropertyCollection();
+            $orderIdDostavista = BxCollection::getOrderPropertyByCode($propertyCollection, 'ORDER_ID_DOSTAVISTA')->getValue();
+            $commWay = BxCollection::getOrderPropertyByCode($propertyCollection, 'COM_WAY')->getValue();
+            switch (true) {
+                case !$isDostavistaDelivery:
+                case $isDostavistaDelivery && $orderIdDostavista != '' && $orderIdDostavista != 0:
+                case $isDostavistaDelivery &&
+                    (
+                        $commWay == OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR ||
+                        $commWay == OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS_DOSTAVISTA_ERROR
+                    ):
+                    return false;
+                    break;
+                default:
+                    return true;
+            }
+        } else {
+            return false;
         }
     }
 }

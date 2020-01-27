@@ -11,6 +11,7 @@ use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\EventResult;
@@ -19,6 +20,7 @@ use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
@@ -37,8 +39,10 @@ use FourPaws\App\Tools\StaticLoggerTrait;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Exception\CouponNotFoundException;
+use FourPaws\PersonalBundle\Repository\Table\BasketsDiscountOfferTable;
 use FourPaws\PersonalBundle\Service\ChanceService;
 use FourPaws\PersonalBundle\Service\CouponService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
@@ -181,10 +185,6 @@ class Event extends BaseServiceHandler
         $module = 'sale';
         static::initHandler('OnOrderNewSendEmail', [self::class, 'cancelEventAddition'], $module);
         static::initHandler('OnOrderPaySendEmail', [self::class, 'cancelEventAddition'], $module);
-
-        /* Обновление шансов после оформления заказа */
-        static::initHandler('OnSaleOrderSaved', [self::class, 'updateUserChances'], $module);
-        static::initHandler('OnSaleStatusOrderChange', [self::class, 'updateUserChances'], $module);
     }
 
     /**
@@ -607,6 +607,10 @@ class Event extends BaseServiceHandler
             }
         }
 
+        if (OrderService::$isSubscription || OrderSubscribeService::$isSubscription) {
+            $result = 'p' . $result;
+        }
+
         return $result;
     }
 
@@ -670,8 +674,55 @@ class Event extends BaseServiceHandler
             $order = $event->getParameter('ENTITY');
             $propertyCollection = $order->getPropertyCollection();
             $promocode = BxCollection::getOrderPropertyByCode($propertyCollection, 'PROMOCODE');
-            if ($promocode && $promocodeValue = $promocode->getValue())
+            if ($promocode) {
+                $promocodeValue = $promocode->getValue();
+            }
+
+            // Отметка, что корзина по акции "20-20" использована. Следующие заказы пользователя в этот день снова начнут участвовать в розыгрыше купонов
+            if (PersonalOffersService::is20thBasketOfferActive()) {
+                $discountOfferQuery = BasketsDiscountOfferTable::query()
+                    ->where('date_insert', '>=', (new DateTime())->setTime(0, 0, 0))
+                    ->setSelect(['id'])
+                    //->setLimit(1) // для сохранения логики возобновления участия в розыгрыше купонов нужно отметить флагом order_created все записи за этот день
+                    ->setOrder(['id' => 'desc']);
+
+                //if (isset($promocodeValue) && $promocodeValue) {
+                    //$discountOfferQuery = $discountOfferQuery->where('promoCode', $promocodeValue);
+                //} else {
+                    //$discountOfferQuery = $discountOfferQuery->whereNull('promoCode');
+                //}
+
+                $userFilter = Query::filter()
+                    ->logic('or');
+
+                if ($fUserId = $order->getBasket()->getFUserId()) {
+                    $userFilter = $userFilter->where('fUserId', $fUserId);
+                }
+                if ($userId = $order->getUserId()) {
+                    $userFilter = $userFilter->where('userId', $userId);
+                }
+                if ($fUserId || $userId) {
+                    $discountOfferQuery = $discountOfferQuery->where($userFilter);
+
+                    $baskets20thOffer = $discountOfferQuery
+                        ->exec()
+                        ->fetchAll();
+                    $baskets20thOfferIds = array_column($baskets20thOffer, 'id');
+
+                    foreach ($baskets20thOfferIds as $baskets20thOfferId) {
+                        BasketsDiscountOfferTable::update($baskets20thOfferId, [
+                            'order_created' => 1,
+                            'date_update'   => new DateTime(),
+                        ]);
+                    }
+                    $logger = LoggerFactory::create('CouponPoolRepository', '20-20');
+                    $logger->info(__FUNCTION__ . '. На основании корзины по акции 20-20 создан заказ. BasketIds: ' . implode(', ', $baskets20thOfferIds) . '. Купон: ' . ($promocodeValue ?? ''));
+                }
+            }
+
+            if (isset($promocodeValue) && $promocodeValue)
             {
+                // Деактивация купона в таблице Битрикса
                 $bitrixCouponId = DiscountCouponTable::query()
                     ->setFilter([
                         'COUPON' => $promocodeValue,
@@ -694,6 +745,7 @@ class Event extends BaseServiceHandler
                         );
                 }
 
+                // Деактивация купона в HL-блоках
                 $isPromoCodeProcessed = false;
                 try {
                     /** @var CouponService $couponService */
@@ -1108,19 +1160,9 @@ class Event extends BaseServiceHandler
 
     public function cancelEventAddition($orderId, string $eventName)
     {
-        if (in_array($eventName, ['SALE_NEW_ORDER' , 'SALE_ORDER_PAID'])) // проверка избыточна, но на всякий случай сделана, чтобы не заблочили другие события
+        if (in_array($eventName, ['SALE_NEW_ORDER', 'SALE_ORDER_PAID'])) // проверка избыточна, но на всякий случай сделана, чтобы не заблочили другие события
         {
             return false;
         }
-    }
-
-    public function updateUserChances(BitrixEvent $event): void
-    {
-        /** @var Order $order */
-        $order = $event->getParameter('ENTITY');
-
-        /** @var ChanceService $chanceService */
-        $chanceService = Application::getInstance()->getContainer()->get(ChanceService::class);
-        $chanceService->updateUserChance($order->getUserId());
     }
 }

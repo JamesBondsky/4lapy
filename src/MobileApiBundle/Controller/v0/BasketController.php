@@ -134,27 +134,33 @@ class BasketController extends BaseController
     public function getUserCartAction(UserCartRequest $userCartRequest)
     {
         $promocodeForOldSupport = '';
-
+        $countCoupons = 0;
+        
         $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
 
         $storage = $this->orderStorageService->getStorage();
 
-        $promoCode = $userCartRequest->getPromoCode();
+        $personalOffersService = Application::getInstance()->getContainer()->get(PersonalOffersService::class);
+        if (!$promoCode = $personalOffersService->tryGet20thBasketOfferCoupon(true)) {
+            $promoCode = $userCartRequest->getPromoCode();
 
-        if (!$promoCode) {
-            $promoCode              = $couponStorage->getApplicableCoupon() ?: $storage->getPromoCode();
-            $promocodeForOldSupport = $promoCode;
+            if (!$promoCode) {
+                $promoCode = $couponStorage->getApplicableCoupon() ?: $storage->getPromoCode();
+                $promocodeForOldSupport = $promoCode;
+            }
         }
 
         if ($promoCode) {
             try {
+                $personalOffersService->checkCoupon($promoCode);
+
                 /** @see \FourPaws\SaleBundle\AjaxController\BasketController::applyPromoCodeAction */
                 $this->manzana->setPromocode($promoCode);
                 $this->manzana->calculate();
 
                 $storage->setPromoCode($promoCode);
                 $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
-            } catch (ManzanaPromocodeUnavailableException $e) {
+            } catch (ManzanaPromocodeUnavailableException|CouponIsNotAvailableForUseException $e) {
                 $promoCode = '';
             }
         }
@@ -164,17 +170,23 @@ class BasketController extends BaseController
         $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts);
 
         if ($storage->getUserId()) {
-            $personalOffers = Application::getInstance()->getContainer()->get(PersonalOffersService::class);
-            $coupons        = $personalOffers->getActiveUserCoupons($storage->getUserId())['coupons'];
+            $coupons = $personalOffersService->getActiveUserCoupons($storage->getUserId())['coupons'];
         }
-
+        
         if ($coupons) {
+            try {
+                $countCoupons = $coupons->count();
+            } catch (\Exception $e) {
+                $countCoupons = 0;
+            }
+        }
+        
+        if ($countCoupons > 0) {
             $orderCalculate->setHasCoupons(true);
         }
 
         if ($promoCode && $coupons && $promocodeForOldSupport) {
             foreach ($coupons as $coupon) {
-
                 if ($promoCode == $coupon['UF_PROMO_CODE']) {
                     $orderCalculate->setCoupon(
                         (new Coupon())->setId($coupon['ID'])
@@ -237,11 +249,15 @@ class BasketController extends BaseController
                 }
             }
         }
+
         if (!empty($gifts)) {
             /** @noinspection PhpUndefinedMethodInspection */
             $this->appBasketService->getAdder('gift')->selectGifts($gifts);
         }
-        return $this->getUserCartAction(new UserCartRequest());
+
+        $res = $this->getUserCartAction(new UserCartRequest());
+
+        return $res;
     }
 
     /**

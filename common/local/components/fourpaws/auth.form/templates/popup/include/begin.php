@@ -91,8 +91,8 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                 </div>
             </div>
             <?php
-//            if ($arResult['IS_SHOW_CAPTCHA'] && ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= $arResult['LIMIT_AUTH_ATTEMPT'])) { todo captcha.enable
-              if (true) { // todo captcha.enable
+//            if ($arResult['IS_SHOW_CAPTCHA'] && ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= $arResult['LIMIT_AUTH_ATTEMPT'])) {todo captch.enable
+              if (true) {
                 try {
                     $recaptchaService = App::getInstance()
                         ->getContainer()
@@ -104,7 +104,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
             } ?>
             <div>
                 <span class="b-registration__auth-error">
-<!--                    --><?//= ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= $arResult['LIMIT_AUTH_ATTEMPT']) ? 'Неверный логин или пароль' : '' todo captcha.enable ?>
+<!--                    --><?//= ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= $arResult['LIMIT_AUTH_ATTEMPT']) ? 'Неверный логин или пароль' : ''  todo captch.enable?>
                 </span>
             </div>
             <button class="b-button b-button--social b-button--full-width b-button--popup-authorization">

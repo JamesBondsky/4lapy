@@ -27,11 +27,13 @@ $APPLICATION->IncludeComponent('articul:stamps.progress.bar', 'personal', []);
     <h2 class="title-comfortable-living">Уютный интерьер со скидкой -30%</h2>
 </div>
 
-<?php
-$APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', [
-    'SECTION_CODE' => 'stamps'
-]);
-?>
+<div data-personal-marks-slider="true">
+    <?php
+    $APPLICATION->IncludeComponent('articul:catalog.section.slider', 'stamps', [
+        'SECTION_CODE' => 'stamps'
+    ]);
+    ?>
+</div>
 
 <section class="info-comfortable-living">
     <div class="b-container" style="max-width: 100%;">

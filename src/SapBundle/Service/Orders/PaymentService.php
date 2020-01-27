@@ -148,6 +148,11 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             throw new InvalidOrderNumberException('Order number is empty');
         }
         $order = SaleOrder::loadByAccountNumber($paymentTask->getBitrixOrderId());
+
+        if ($order === null) {
+            $order = SaleOrder::loadByAccountNumber('p' . $paymentTask->getBitrixOrderId());
+        }
+
         if (!$order) {
             throw new NotFoundOrderException(
                 sprintf('Order with number %s not found', $paymentTask->getBitrixOrderId())
@@ -179,6 +184,31 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             if ($fiscalization) {
                 $fiscal = $this->salePaymentService->fiscalToArray($fiscalization);
                 $amount = $this->salePaymentService->getFiscalTotal($fiscalization);
+            }
+
+            $diff = $amount - $orderInfo->getAmount();
+
+            if ($diff > 0 && $diff < 1000) {
+                $amount = $orderInfo->getAmount();
+
+                $cartItems = [];
+                foreach ($orderInfo->getOrderBundle()->getCartItems()->getItems() as $cartItem) {
+                    $cartItems[] = [
+                        'positionId' => (string)$cartItem->getPositionId(),
+                        'name' => $cartItem->getName(),
+                        'quantity' => [
+                            'value' => $cartItem->getQuantity()->getValue(),
+                            'measure' => $cartItem->getQuantity()->getMeasure(),
+                        ],
+                        'itemAmount' => (string)$cartItem->getItemAmount(),
+                        'itemCode' => $cartItem->getItemCode(),
+                        'itemPrice' => (string)($cartItem->getItemAmount()/$cartItem->getQuantity()->getValue()),
+                        'tax' => [
+                            'taxType' => 6
+                        ],
+                    ];
+                }
+                $fiscal['fiscal']['orderBundle']['cartItems']['items'] = $cartItems;
             }
 
             $this->salePaymentService->depositPayment($order, $amount, $fiscal);

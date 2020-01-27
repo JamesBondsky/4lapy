@@ -50,6 +50,7 @@ use FourPaws\DeliveryBundle\Exception\LocationNotFoundException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\DostavistaService;
+use FourPaws\External\Exception\DaDataQc;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
@@ -134,6 +135,8 @@ class OrderService implements LoggerAwareInterface
      * РЦ Склад
      */
     public const STORE = 'DC01';
+
+    public static $isSubscription = false;
 
     /**
      * @var AddressService
@@ -838,7 +841,7 @@ class OrderService implements LoggerAwareInterface
         }
 
         $address = null;
-        if ($storage->getAddressId()) {
+        if ($storage->getAddressId() && $selectedDelivery->getDeliveryCode() != '4lapy_pickup') {
             if ($storage->getCityCode() !== \FourPaws\DeliveryBundle\Service\DeliveryService::MOSCOW_LOCATION_CODE) {
                 $storage->updateAddressBySaveAddressByMoscowDistrict($this->addressService, $this->locationService);
             }
@@ -1226,11 +1229,10 @@ class OrderService implements LoggerAwareInterface
 //                if (($card = $contact->getCards()->first()) instanceof Card) {
 //                    $storage->setDiscountCardNumber($card->cardNumber);
 //                }
-
                 $contactId = $this->manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($storage->getPhone()));
                 $cards = $this->manzanaService->getCardsByContactId($contactId);
                 foreach ($cards as $cardItem) {
-                    if ($cardItem->isActive()) {
+                    if (isset($cardItem) && $cardItem->isActive()) {
                         $storage->setDiscountCardNumber($cardItem->cardNumber);
                         break;
                     }
@@ -1264,6 +1266,8 @@ class OrderService implements LoggerAwareInterface
                 'SUBSCRIBE_ID',
                 $storage->getSubscribeId()
             );
+
+            self::$isSubscription = true;
         }
 
         $shipmentPlaceCode = $this->getOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE')->getValue();
@@ -1343,6 +1347,8 @@ class OrderService implements LoggerAwareInterface
                         'STREET_PREFIX' => $address->getStreetPrefix(),
                         'ZIP_CODE' => $address->getZipCode(),
                     ]);
+                } catch (DaDataQc $exQC) {
+
                 } catch (AddressSplitException $e) {
                     $this->log()->error(sprintf('failed to split delivery address: %s', $e->getMessage()), [
                         'fuserId' => $storage->getFuserId(),
@@ -1391,7 +1397,12 @@ class OrderService implements LoggerAwareInterface
                             ->setStreet('Красный бор');
                     } else {
                         $addressString = $this->storeService->getStoreAddress($shop) . ', ' . $shop->getAddress();
-                        $address = $this->locationService->splitAddress($addressString, $shop->getLocation());
+                        try {
+                            $address = $this->locationService->splitAddress($addressString, $shop->getLocation());
+                        } catch (Exception $e) {
+                            $address = $this->storeService->getStoreAddress($shop);
+                            $address->setStreet($shop->getAddress());
+                        }
                     }
                     $this->setOrderAddress($order, $address);
                 } catch (AddressSplitException $e) {
@@ -2541,8 +2552,11 @@ class OrderService implements LoggerAwareInterface
      * @throws OrderCancelException
      * @throws SqlQueryException
      */
-    public function cancelOrder($orderId): bool
+    public function cancelOrder($orderId)
     {
+        $sendEmail = true;
+        $newStatus = '';
+
         // ищем заказ
         try {
             $order = $this->getOrderById($orderId);
@@ -2572,9 +2586,12 @@ class OrderService implements LoggerAwareInterface
             return false;
         }
 
-        $sendEmail = false;
         if (($statusId === OrderStatus::STATUS_IN_PROGRESS) || ($statusId === OrderStatus::STATUS_DELIVERING)) {
-            $sendEmail = true;
+            $user = \CUser::GetByID($userId)->Fetch();
+            \CEvent::Send('USER_WANNA_CANCEL_ORDER', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER'), 'NAME' => $user['NAME'], 'PHONE' => $user['PERSONAL_PHONE']]);
+            \CSaleOrder::StatusOrder($orderId, OrderStatus::STATUS_CANCELING);
+
+            return 'canceling';
         }
 
         // формируем новый статус в зависимости от службы доставки
@@ -2586,59 +2603,36 @@ class OrderService implements LoggerAwareInterface
 
         try {
             $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
-            if ($this->deliveryService->isDeliveryCode($deliveryCode)) {
+            if ($this->deliveryService->isDeliveryCode($deliveryCode) && !$newStatus) {
                 $newStatus = OrderStatus::STATUS_CANCEL_COURIER;
             } else if ($this->deliveryService->isPickupCode($deliveryCode)) {
                 $newStatus = OrderStatus::STATUS_CANCEL_PICKUP;
+            } else if ($deliveryCode = DeliveryService::DELIVERY_DOSTAVISTA_CODE || $deliveryCode = DeliveryService::DOBROLAP_DELIVERY_CODE || $deliveryCode = DeliveryService::EXPRESS_DELIVERY_CODE) {
+                $newStatus = OrderStatus::STATUS_CANCEL_COURIER;
             } else {
-                throw new OrderCancelException('Не найдена служба доставки для заказа');
+
             }
         } catch (\Exception $e) {
             throw new OrderCancelException('Не найдена служба доставки для заказа');
         }
 
-        $connection = BitrixApplication::getConnection();
-
-        $connection->startTransaction();
+        $this->cancelBitrixOrder($order, $orderId, $newStatus);
 
         try {
             // отменяем заказ в Sap'е
-            $orderNumber = $order->getField('ACCOUNT_NUMBER');
-            $sapStatus = StatusService::STATUS_CANCELED;
-            $setStatusResult = $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
+             $orderNumber = $order->getField('ACCOUNT_NUMBER');
+             $sapStatus = StatusService::STATUS_CANCELED;
+             $result = $this->sapOrderService->sendOrderStatus($orderNumber, $sapStatus);
 
-            if (!$setStatusResult) {
-                $connection->rollbackTransaction();
-                return false;
-            }
+             if (!$result) {
+                 $this->sendSapFailMail($userId, $order);
+             }
 
-            // отменяем заказ
-            $cancelResult = (new \CSaleOrder)->cancelOrder($orderId, BaseEntity::BITRIX_TRUE, '');
-
-            if ($cancelResult) {
-                $order->setField('STATUS_ID', $newStatus);
-                $saveResult = $order->save();
-            } else {
-                $connection->rollbackTransaction();
-                return false;
-            }
-
-            if (!$saveResult->isSuccess()) {
-                $connection->rollbackTransaction();
-                return false;
-            }
-
-            $connection->commitTransaction();
         } catch (\Exception $e) {
-            $connection->rollbackTransaction();
-            return false;
+            $this->sendSapFailMail($userId, $order);
         }
 
-        if ($sendEmail) {
-            \CEvent::Send('ADMIN_EMAIL_AFTER_ORDER_CANCEL', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER')]);
-        }
-
-        return true;
+        return 'cancel';
     }
 
     /**
@@ -2738,5 +2732,43 @@ class OrderService implements LoggerAwareInterface
         $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
 
         return $propertyValue ? ($propertyValue->getValue() ?? '') : '';
+    }
+
+    protected function cancelBitrixOrder($order, $orderId, $status)
+    {
+        $connection = BitrixApplication::getConnection();
+
+        $connection->startTransaction();
+
+        try {
+            // отменяем заказ
+            $cancelResult = (new \CSaleOrder)->cancelOrder($orderId, BaseEntity::BITRIX_TRUE, '');
+
+            if ($cancelResult) {
+                $order->setField('STATUS_ID', $status);
+                $saveResult = $order->save();
+            } else {
+                $connection->rollbackTransaction();
+                return false;
+            }
+
+            if (!$saveResult->isSuccess()) {
+                $connection->rollbackTransaction();
+                return false;
+            }
+
+            $connection->commitTransaction();
+        } catch (\Exception $e) {
+            $connection->rollbackTransaction();
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function sendSapFailMail($userId, $order)
+    {
+        $user = \CUser::GetByID($userId)->Fetch();
+        \CEvent::Send('USER_WANNA_CANCEL_ORDER', ['s1'], ['ORDER_NUMBER' => $order->getField('ACCOUNT_NUMBER'), 'NAME' => $user['NAME'], 'PHONE' => $user['PERSONAL_PHONE']]);
     }
 }

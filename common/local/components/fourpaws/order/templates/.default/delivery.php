@@ -238,11 +238,11 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                     <span class="b-choice-recovery__main-text">Самовывоз</span>
                                     <span class="b-choice-recovery__addition-text js-my-pickup js-pickup-tab">
                                         <?= /** @noinspection PhpUnhandledExceptionInspection */
-                                        DeliveryTimeHelper::showTime($pickup, ['SHOW_TIME' => !$deliveryService->isDpdPickup($pickup)]) ?>, <?= mb_strtolower(CurrencyHelper::formatPrice($pickup->getPrice(), true)) ?>
+                                        DeliveryTimeHelper::showTime($pickup, ['PICK_UP' => 'Y', 'SHOW_TIME' => !$deliveryService->isDpdPickup($pickup)]) ?>, <?= mb_strtolower(CurrencyHelper::formatPrice($pickup->getPrice(), true)) ?>
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-my-pickup js-pickup-tab">
                                         <?= /** @noinspection PhpUnhandledExceptionInspection */
-                                        DeliveryTimeHelper::showTime($pickup, ['SHORT' => true, 'SHOW_TIME' => !$deliveryService->isDpdPickup($pickup)]) ?>, <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
+                                        DeliveryTimeHelper::showTime($pickup, ['PICK_UP' => 'Y', 'SHORT' => true, 'SHOW_TIME' => !$deliveryService->isDpdPickup($pickup)]) ?>, <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
                                     </span>
                                 </label>
                             <?php } ?>

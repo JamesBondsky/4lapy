@@ -100,7 +100,6 @@ if ($orderSubscribe) {
     $attr .= ' data-interval="' . $orderSubscribe->getDeliveryTime() . '"';
     $attr .= ' data-frequency="' . $orderSubscribe->getFrequency() . '"';
 }
-
 ?>
     <li<?= $attr ?> class="b-accordion-order-item js-permutation-li js-item-content">
         <div>
@@ -175,7 +174,7 @@ if ($orderSubscribe) {
                             );
                             echo '</span>';
                         } else {
-                            echo $order->getStatus();
+                            echo '<b id="status_changer">' . $order->getStatus() . '</b>';
                             echo ' ';
                             echo '<span>';
                             echo ' ';
@@ -284,19 +283,15 @@ if ($orderSubscribe) {
                             </a>
                             <?php $isFirstButton = false; ?>
                         <?php } ?>
-                        <?php if ($USER->IsAdmin() && ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED'])) { ?>
+                        <?php if (($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) && !$arResult['CANCELING']) { ?>
+                            <?php if ($arResult['CAN_CANCEL']) { ?>
                             <div class="b-link b-link__button
                     <?= ($arResult['CAN_CANCEL']) ? 'js-cancel-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?><?= ($arResult['CANCELED']) ? 'b-link__canceled' : '' ?>" data-order-id="<?= $order->getId() ?>">
                         <span class="b-link__text js-link-text">
-                            <?php if ($arResult['CAN_CANCEL']) { ?>
                                 Отменить заказ
-                            <?php } else if ($arResult['CANCELED']) { ?>
-                                Отменен
-                            <?php } else if ($arResult['FINISHED']) { ?>
-                                Выполнен
-                            <?php } ?>
                         </span>
                             </div>
+                            <?php } ?>
                             <?php $isFirstButton = false; ?>
                         <?php } ?>
                         <?php /* if (!$arResult['FINISHED'] && ($arResult['CAN_EXTEND'] || $arResult['EXTENDED'])) { ?>
@@ -366,19 +361,15 @@ if ($orderSubscribe) {
                     </a>
                     <?php $isFirstButton = false; ?>
                 <?php } ?>
-                <?php if ($USER->IsAdmin() && ($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED'])) { ?>
+                <?php if (($arResult['CAN_CANCEL'] || $arResult['CANCELED'] || $arResult['FINISHED']) && !$arResult['CANCELING']) { ?>
+                    <?php if ($arResult['CAN_CANCEL']) { ?>
                     <div class="b-link b-link__button
                     <?= ($arResult['CAN_CANCEL']) ? 'js-cancel-order-popup' : '' ?> <?= ($isFirstButton) ? 'b-link__button-first' : '' ?><?= ($arResult['CANCELED']) ? 'b-link__canceled' : '' ?>" data-order-id="<?= $order->getId() ?>">
                         <span class="b-link__text js-link-text">
-                            <?php if ($arResult['CAN_CANCEL']) { ?>
                                 Отменить заказ
-                            <?php } else if ($arResult['CANCELED']) { ?>
-                                Отменен
-                            <?php } else if ($arResult['FINISHED']) { ?>
-                                Выполнен
-                            <?php } ?>
                         </span>
                     </div>
+                    <?php } ?>
                     <?php $isFirstButton = false; ?>
                 <?php } ?>
                 <?php /* if (!$arResult['FINISHED'] && ($arResult['CAN_EXTEND'] || $arResult['EXTENDED'])) { ?>

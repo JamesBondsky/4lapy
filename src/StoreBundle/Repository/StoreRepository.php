@@ -15,6 +15,7 @@ use Bitrix\Sale\Location\LocationTable;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\DeserializationContext;
+use Symfony\Component\Cache\Simple\FilesystemCache;
 
 class StoreRepository extends BaseRepository
 {
@@ -53,40 +54,55 @@ class StoreRepository extends BaseRepository
             'UF_*',
         ];
 
-        $query = StoreTable::query();
+        $args = array_merge($select, $criteria, $orderBy, ['limit' => $limit], ['offset' => $offset], ['useDefaultFilter' => $useDefaultFilter]);
 
-        $allKeys = array_unique(array_merge(array_keys($orderBy), array_keys($criteria)));
-        /** одноуровеневая проверка логики и вставка ключей */
-        if (\in_array(0, $allKeys, true)) {
-            unset($allKeys[\array_search(0, $allKeys, true)]);
-            foreach ($criteria as $key => $criterion) {
-                if (\is_array($criterion)) {
-                    /** @noinspection SlowArrayOperationsInLoopInspection */
-                    $allKeys = array_merge($allKeys, array_keys($criterion));
-                    unset($allKeys[\array_search('LOGIC', $allKeys, true)]);
+        $cacheKey = implode(', ', array_map(
+            function ($v, $k) { return sprintf("%s='%s'", $k, $v); },
+            $args,
+            array_keys($args)
+        ));
+
+        $cacheKey = md5($cacheKey);
+
+        $cache = new FilesystemCache('', 3600, getenv('CACHE_DIR') ?? null);
+
+        if ($cache->has($cacheKey) && false) {
+            $resultCollection = $cache->get($cacheKey);
+        } else {
+            $query = StoreTable::query();
+
+            $allKeys = array_unique(array_merge(array_keys($orderBy), array_keys($criteria)));
+            /** одноуровеневая проверка логики и вставка ключей */
+            if (\in_array(0, $allKeys, true)) {
+                unset($allKeys[\array_search(0, $allKeys, true)]);
+                foreach ($criteria as $key => $criterion) {
+                    if (\is_array($criterion)) {
+                        /** @noinspection SlowArrayOperationsInLoopInspection */
+                        $allKeys = array_merge($allKeys, array_keys($criterion));
+                        unset($allKeys[\array_search('LOGIC', $allKeys, true)]);
+                    }
                 }
             }
-        }
-        $allKeys = array_unique($allKeys);
+            $allKeys = array_unique($allKeys);
 
-        $haveDistance = false;
-        $haveLocation = false;
-        $haveMetro = false;
-        foreach ($allKeys as $key) {
-            if (!$haveDistance && strpos($key, 'DISTANCE') !== false) {
-                /**
-                 * Пример DISTANCE поля:
-                 * DISTANCE_55.821220_37.815770
-                 * где
-                 * $explode[0] - фраза "DISTANCE"
-                 * GPS_N - latitude - $explode[1] - широта
-                 * GPS_S - longitude - $explode[2] - долгота
-                 */
-                list($fieldName, $latitude, $longitude) = explode('_', $key);
-                $pi180 = pi() / 180;
+            $haveDistance = false;
+            $haveLocation = false;
+            $haveMetro = false;
+            foreach ($allKeys as $key) {
+                if (!$haveDistance && strpos($key, 'DISTANCE') !== false) {
+                    /**
+                     * Пример DISTANCE поля:
+                     * DISTANCE_55.821220_37.815770
+                     * где
+                     * $explode[0] - фраза "DISTANCE"
+                     * GPS_N - latitude - $explode[1] - широта
+                     * GPS_S - longitude - $explode[2] - долгота
+                     */
+                    list($fieldName, $latitude, $longitude) = explode('_', $key);
+                    $pi180 = pi() / 180;
 
-                $distanceExpression =
-                    static::RADIUS_EARTH_KM . "*2
+                    $distanceExpression =
+                        static::RADIUS_EARTH_KM . "*2
                     *ASIN(
                         SQRT(
                             POWER(
@@ -104,76 +120,81 @@ class StoreRepository extends BaseRepository
                         )
                     )";
 
-                if (isset($orderBy[$key])) {
-                    $orderBy['DISTANCE'] = $orderBy[$key];
-                    unset($orderBy[$key]);
+                    if (isset($orderBy[$key])) {
+                        $orderBy['DISTANCE'] = $orderBy[$key];
+                        unset($orderBy[$key]);
+                    }
+                    if (isset($criteria[$key])) {
+                        $criteria['DISTANCE'] = $criteria[$key];
+                        unset($criteria[$key]);
+                    }
+
+                    $query->registerRuntimeField(
+                        new ExpressionField(
+                            'DISTANCE', $distanceExpression,
+                            ['GPS_N', 'GPS_S']
+                        )
+                    );
+                    $select[] = 'DISTANCE';
+                    $haveDistance = true;
+                } elseif (!$haveLocation && strpos($key, 'LOCATION') !== false) {
+                    $query->registerRuntimeField(
+                        new ReferenceField(
+                            'LOCATION',
+                            LocationTable::getEntity(),
+                            ['=this.UF_LOCATION' => 'ref.CODE']
+                        )
+                    );
+                    $haveLocation = true;
+                } elseif (!$haveMetro && strpos($key, 'METRO') !== false) {
+                    $query->registerRuntimeField(
+                        new ReferenceField(
+                            'METRO',
+                            HLBlockFactory::createTableObject('MetroStations')::getEntity(),
+                            ['=this.UF_METRO' => 'ref.ID']
+                        )
+                    );
+                    $haveMetro = true;
                 }
-                if (isset($criteria[$key])) {
-                    $criteria['DISTANCE'] = $criteria[$key];
-                    unset($criteria[$key]);
+            }
+
+            $query->setSelect($select)
+                ->setFilter($criteria)
+                ->setOrder($orderBy)
+                ->setLimit($limit)
+                ->setOffset($offset);
+
+            $stores = $query->exec();
+
+            $result = [];
+            while ($store = $stores->fetch()) {
+                if (!isset($result[$store['ID']])) {
+                    $store['UF_SERVICES_SINGLE'] = [$store['UF_SERVICES_SINGLE']];
+                    $result[$store['ID']] = $store;
+                } else {
+                    $result[$store['ID']]['UF_SERVICES_SINGLE'][] = $store['UF_SERVICES_SINGLE'];
                 }
-
-                $query->registerRuntimeField(
-                    new ExpressionField(
-                        'DISTANCE', $distanceExpression,
-                        ['GPS_N', 'GPS_S']
-                    )
-                );
-                $select[] = 'DISTANCE';
-                $haveDistance = true;
-            } elseif (!$haveLocation && strpos($key, 'LOCATION') !== false) {
-                $query->registerRuntimeField(
-                    new ReferenceField(
-                        'LOCATION',
-                        LocationTable::getEntity(),
-                        ['=this.UF_LOCATION' => 'ref.CODE']
-                    )
-                );
-                $haveLocation = true;
-            } elseif (!$haveMetro && strpos($key, 'METRO') !== false) {
-                $query->registerRuntimeField(
-                    new ReferenceField(
-                        'METRO',
-                        HLBlockFactory::createTableObject('MetroStations')::getEntity(),
-                        ['=this.UF_METRO' => 'ref.ID']
-                    )
-                );
-                $haveMetro = true;
             }
-        }
 
-        $query->setSelect($select)
-            ->setFilter($criteria)
-            ->setOrder($orderBy)
-            ->setLimit($limit)
-            ->setOffset($offset);
+            $resultCollection = new StoreCollection();
 
-        $stores = $query->exec();
-
-        $result = [];
-        while ($store = $stores->fetch()) {
-            if (!isset($result[$store['ID']])) {
-                $store['UF_SERVICES_SINGLE'] = [$store['UF_SERVICES_SINGLE']];
-                $result[$store['ID']] = $store;
-            } else {
-                $result[$store['ID']]['UF_SERVICES_SINGLE'][] = $store['UF_SERVICES_SINGLE'];
+            /**
+             * todo change group name to constant
+             */
+            if (!empty($result)) {
+                $resultCollection = new StoreCollection(
+                    $this->arrayTransformer->fromArray(
+                        $result,
+                        sprintf('array<%s>', Store::class),
+                        DeserializationContext::create()->setGroups(['read'])
+                    )
+                );
             }
+
+            $cache->set($cacheKey, $resultCollection);
         }
 
-        /**
-         * todo change group name to constant
-         */
-        if (!empty($result)) {
-            return new StoreCollection(
-                $this->arrayTransformer->fromArray(
-                    $result,
-                    sprintf('array<%s>', Store::class),
-                    DeserializationContext::create()->setGroups(['read'])
-                )
-            );
-        }
-
-        return new StoreCollection();
+        return $resultCollection;
     }
 
     /**
@@ -192,7 +213,7 @@ class StoreRepository extends BaseRepository
      */
     protected function getDefaultFilter(): array
     {
-        return ['ACTIVE' => 'Y'];
+        return ['=ACTIVE' => 'Y'];
     }
 
     /**

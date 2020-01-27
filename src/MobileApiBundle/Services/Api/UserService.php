@@ -143,7 +143,7 @@ class UserService
             'a.vorobyev@articul.ru',
             '9051552482', // Андрей
             '9255025069',
-            '9139740008',
+            '9139740008', // Максим Апптека
             '9046656072', // Tarox25@gmail.com
             '9600401906',
             '9178445061',
@@ -526,5 +526,41 @@ class UserService
             ->setTempIncome(isset($bonusInfo) ? ($bonusInfo->getTemporaryBonus() ?? 0) : 0)
             ->setTotalOutgo(isset($bonusInfo) ? ($bonusInfo->getCredit() ?? 0) : 0)
             ->setNextStage(isset($bonusInfo) ? $bonusInfo->getSumToNext() : 0); //FIXME Это временное решение. Нужно сохранять все поля $bonusInfo на сайте и в случае, если манзана не отвечает, возвращать сохраненные значения
+    }
+    
+    public function getDisposableToken()
+    {
+        /**
+         * @var ApiToken $token | null
+         */
+        if (!$token = $this->tokenStorage->getToken()) {
+            throw new TokenNotFoundException();
+        }
+        if (!$session = $token->getApiUserSession()) {
+            throw new SessionUnavailableException();
+        }
+    
+        $currentUser = $this->userBundleService->getCurrentUser();
+        
+        $token = $this->createToken($currentUser->getId());
+        
+        $currentUser->setDisposableToken($token);
+        $this->userBundleService->getUserRepository()->update($currentUser);
+        
+        return $token;
+    }
+    
+    private function createToken($userId): string
+    {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $randstring = '';
+        
+        for ($i = 0; $i < 30; $i++) {
+            $randstring .= $characters[rand(0, strlen($characters))];
+        }
+        
+        $randstring .= $userId;
+        
+        return $randstring;
     }
 }

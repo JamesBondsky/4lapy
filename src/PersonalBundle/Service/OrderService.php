@@ -32,6 +32,7 @@ use Bitrix\Sale\Order as BitrixOrder;
 use Bitrix\Sale\PaySystem\Service;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Result;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
@@ -50,6 +51,7 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Cheque;
 use FourPaws\External\Manzana\Model\ChequeItem;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderDelivery;
 use FourPaws\PersonalBundle\Entity\OrderItem;
@@ -82,6 +84,7 @@ use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use function in_array;
 
 /**
  * Class OrderService
@@ -101,6 +104,10 @@ class OrderService
         'A', // Отменен
         'K', // Отменен
     ];
+
+    public const STATUS_NEW = 'Q'; //Новый
+    public const STATUS_OTHER_NEW = 'N'; //??? Новый (еще один)
+    public const STATUS_CANCELING = 'XX'; //Отменяется
 
     protected const MANZANA_FINAL_STATUS = 'G';
 
@@ -196,7 +203,7 @@ class OrderService
                     continue;
                 }
 
-                if (\in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
+                if (in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
                     continue;
                 }
 
@@ -204,7 +211,7 @@ class OrderService
                     continue;
                 }
 
-                /** @var \DateTimeImmutable $date */
+                /** @var DateTimeImmutable $date */
                 $date = $cheque->date;
                 $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
                 $order = (new Order())
@@ -242,15 +249,37 @@ class OrderService
         App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
     }
 
-	/**
-	 * @param User $user
-	 * @throws Exception
-	 */
-    public function importOrdersFromManzana(User $user): void
+    /**
+     * @param User $user
+     * @param bool $newAction
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws DeliveryNotFoundException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
+     * @throws LoaderException
+     * @throws ManzanaServiceContactSearchMoreOneException
+     * @throws ManzanaServiceContactSearchNullException
+     * @throws ManzanaServiceException
+     * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws WrongPhoneNumberException
+     */
+    public function importOrdersFromManzana(User $user, $newAction = true): void
     {
-        /** @var ChanceService $chanceServie */
-        $chanceService = Application::getInstance()->getContainer()->get(ChanceService::class);
+        if ($newAction) {
+            $chanceService = Application::getInstance()->getContainer()->get(Chance2Service::class);
+        } else {
+            $chanceService = Application::getInstance()->getContainer()->get(ChanceService::class);
+        }
 
+        /** @var ChanceService $chanceServie */
         $userIds = $chanceService->getAllUserIds();
 
         if (!in_array($user->getId(), $userIds, true)) {
@@ -309,8 +338,14 @@ class OrderService
             ];
         }
 
+        $startDateTimestamp = (\DateTime::createFromFormat('d.m.Y H:i:s', '1.12.2019 00:00:00'))->getTimestamp();
+
         /** @var Cheque $cheque */
         foreach ($cheques as $cheque) {
+            if ($startDateTimestamp > $cheque->date->getTimestamp()) {
+                continue;
+            }
+
             if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
                 continue;
             }
@@ -319,7 +354,7 @@ class OrderService
              * Прекращение обработки, если заказ уже был импортирован из Manzana (и старый вариант, когда
              * создавался дубликат заказа, и новый вариант, когда номер чека указывается в исходном заказе)
              */
-            if (\in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
+            if (in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
                 continue;
             }
 
@@ -348,7 +383,7 @@ class OrderService
             }
 
 
-            /** @var \DateTimeImmutable $date */
+            /** @var DateTimeImmutable $date */
             $date = $cheque->date;
             $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
             $currentDate = new DateTime();
@@ -387,6 +422,10 @@ class OrderService
         $user->setManzanaImportDateTime(new DateTime());
 
         App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
+
+        // todo убрать после новго года
+//        App::getInstance()->getContainer()->get(ChanceService::class)->updateUserChance($user->getId());
+        App::getInstance()->getContainer()->get(Chance2Service::class)->updateUserChance($user->getId());
     }
 
     /**
@@ -435,7 +474,7 @@ class OrderService
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function getUserOrderByNumber(User $user, int $orderNumber)
+    public function getUserOrderByNumber(User $user, $orderNumber)
     {
         return $this->orderRepository->getUserOrderByNumber($user->getId(), $orderNumber);
     }
@@ -545,7 +584,7 @@ class OrderService
             } catch (NotFoundException $e) {
             }
             /** если самовывоз */
-            if (\in_array($deliveryCode, DeliveryService::PICKUP_CODES, true)) {
+            if (in_array($deliveryCode, DeliveryService::PICKUP_CODES, true)) {
                 $dpdTerminal = $props->get('DPD_TERMINAL_CODE');
                 $cityCode = $props->get('CITY_CODE');
                 if ($cityCode instanceof OrderProp && $dpdTerminal instanceof OrderProp && $dpdTerminal->getValue() && $cityCode->getValue()) {
@@ -581,7 +620,7 @@ class OrderService
                         return null;
                     }
                 }
-            } elseif (\in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true)) {
+            } elseif (in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true)) {
                 /** если не самовывоз значит доставка */
 
                 $store = new Store();
@@ -927,7 +966,7 @@ class OrderService
             $order->setFieldNoDemand('DATE_UPDATE', new DateTime());
 
             if ($baseOrderStatus !== BitrixUtils::BX_BOOL_TRUE) {
-                /** @var \DateTimeImmutable $date */
+                /** @var DateTimeImmutable $date */
                 $date = $cheque->date;
                 $paymentDate = DateTime::createFromTimestamp($date->getTimestamp());
 

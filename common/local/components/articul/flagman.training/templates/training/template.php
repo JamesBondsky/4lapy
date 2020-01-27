@@ -8,10 +8,13 @@
             </div>
             <div class="service-flagship-store__content" data-content-service-flagship-store="true" style="display: block">
                 <div class="service-flagship-store__title">
-                    В тренировочном клубе вы можете пройти мастер-класс вместе со своей собакой
+                    В&nbsp;тренировочном клубе вы&nbsp;можете пройти занятия по&nbsp;послушанию вместе со&nbsp;своей собакой
                 </div>
                 <div class="service-flagship-store__descr">
-                    Запись на&nbsp;мастер класс по&nbsp;послушанию питомца. Вы&nbsp;сможете задать вопросы по&nbsp;правильному воспитанию вашей собаки опытному кинологу, а&nbsp;так&nbsp;же, разучить несколько команд.
+                    Занятия направлены на&nbsp;обучение хозяина питомца грамотно взаимодействовать с&nbsp;ним. Обучить питомца необходимым, элементарным командам
+                    (&laquo;рядом&raquo;, &laquo;ко&nbsp;мне&raquo;, &laquo;место&raquo;, &laquo;сидеть&raquo;, &laquo;лежать&raquo;, &laquo;стоять&raquo;, &laquo;фу&raquo;, &laquo;нет&raquo;)
+                    питомца. Занятия можно начинать с&nbsp;4&nbsp;месяцев. Время 1 занятия 60&nbsp;минут. Требуемое количество занятий 5&ndash;10.<br /><br />
+                    Возможно записаться как на&nbsp;групповое занятие (группа до&nbsp;5 человек), так и&nbsp;на&nbsp;индивидуальное.
                 </div>
                 <a class="link-walking-flagship-store" href="/events/Правила_тренировочного_клуба.pdf" target="_blank">Правила тренировочного клуба</a>
 

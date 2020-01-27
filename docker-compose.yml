@@ -1,0 +1,79 @@
+version: '3.4'
+
+services:
+  nginx:
+    build:
+      context: ./
+      target: nginx
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./vendor:/application/vendor
+      - ./common:/application/common
+      - ./web:/application/web
+      - ./public:/application/public
+
+  php:
+    build:
+      context: ./
+      target: php
+    volumes:
+      - ./vendor:/application/vendor:rw,cached
+      - ./app:/application/app:rw,cached
+      - ./bin:/application/bin:rw,cached
+      - ./common:/application/common:rw,cached
+      - ./src:/application/src:rw,cached
+      - ./web:/application/web:rw,cached
+      - ./var/logs:/adv/vhosts/4lapy/logs:rw
+      - ./var/sap-exchange:/home/sap-exchange:rw
+      - ./var/sap-exchange-prod:/home/sap-exchange-prod:rw
+      - ./docker/php/remote-xdebug.ini:/usr/local/etc/php/conf.d/remote-xdebug.ini
+      - ./.env.local:/application/.env.local
+      - ./composer.json:/application/composer.json
+      - ./composer.lock:/application/composer.lock
+
+  memcached:
+    image: memcached:latest
+    ports:
+      - 11211:11211
+    command: ["-m", "2048m"]
+
+  elasticsearch:
+    build:
+      context: ./
+      target: elasticsearch
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data:rw
+    ports:
+      - 9200:9200
+      - 9300:9300
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      memlock:
+        soft: -1
+        hard: -1
+
+  rabbitmq:
+    build:
+      context: ./
+      target: rabbitmq
+    ports:
+      - 15672:15672
+      - 5672:5672
+
+  redis:
+    build:
+      context: ./
+      target: redis
+    volumes:
+      - redis-data:/data:rw
+    ports:
+      - 6379:6379
+    command: redis-server /usr/local/etc/redis/redis.conf
+
+volumes:
+  redis-data: {}
+  elasticsearch-data: {}

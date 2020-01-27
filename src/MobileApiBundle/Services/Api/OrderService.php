@@ -98,7 +98,7 @@ use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use JMS\Serializer\Serializer;
-
+use FourPaws\SaleBundle\Enum\OrderStatus as Status;
 
 class OrderService implements LoggerAwareInterface
 {
@@ -159,6 +159,12 @@ class OrderService implements LoggerAwareInterface
 
     /** @var Manzana */
     private $manzana;
+
+    /** @var OrderParameter */
+    private $orderParameter;
+
+    /** @var orderCalculate */
+    private $orderCalculate;
 
     /** @var AddressService $addressService */
     private $addressService;
@@ -283,7 +289,7 @@ class OrderService implements LoggerAwareInterface
      * @throws ApplicationCreateException
      * @throws Exception
      */
-    public function getOneByNumberForCurrentUser(int $orderNumber)
+    public function getOneByNumberForCurrentUser($orderNumber)
     {
         $user = $this->appUserService->getCurrentUser();
         $order = $this->personalOrderService->getUserOrderByNumber($user, $orderNumber);
@@ -362,6 +368,9 @@ class OrderService implements LoggerAwareInterface
             $orderDateUpdate = \DateTime::createFromFormat('d.m.Y H:i:s', $order->getDateUpdate()->toString());
             $isCompleted = $orderDateUpdate < $currentMinusMonthDate || in_array($order->getStatusId(), $closedOrderStatuses, true);
 
+            $this->orderCalculate = $this->getOrderCalculate($basketProducts, false, 0, $order);
+            $this->orderParameter = $this->getOrderParameter($basketProducts, $order, $text, $icons);
+
             $response
                 ->setId($order->getAccountNumber())
                 ->setDateFormat($dateInsert)
@@ -369,8 +378,15 @@ class OrderService implements LoggerAwareInterface
                 ->setStatus($status)
                 ->setCompleted($isCompleted)
                 ->setPaid($order->isPayed())
-                ->setCartParam($this->getOrderParameter($basketProducts, $order, $text, $icons))
-                ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
+                ->setCartParam($this->orderParameter)
+                ->setCartCalc($this->orderCalculate);
+
+//            $statusCode = $status->getCode();
+//            if ($isCompleted || $statusCode == Status::STATUS_CANCELING || $statusCode == PersonalOrderService::STATUS_NEW || $statusCode == PersonalOrderService::STATUS_OTHER_NEW) {
+//                $response->setCanBeCanceled(false);
+//            }
+            //Вырубить возможность отмены для апи. Временно здесь
+            $response->setCanBeCanceled(false);
         }
 
         return $response;
@@ -568,7 +584,7 @@ class OrderService implements LoggerAwareInterface
             $orderParameter->setGoodsInfo($this->apiProductService::getGoodsTitleForCheckout(
                 $basketProducts->getTotalQuantity(),
                 $weight,
-                $basketProducts->getTotalPrice()->getActual()
+                $this->orderCalculate->getTotalPrice()->getActual()
             ));
 
         }
@@ -747,6 +763,16 @@ class OrderService implements LoggerAwareInterface
                 && ($currentDelivery && $currentDelivery->getStockResult()->getDelayed()->isEmpty())
             );
 
+        if (!(int) $bonusSubtractAmount) {
+            $bonusVulnerablePrice = ((90 * ($totalPrice->getActual() - $totalPrice->getCourierPrice())) / 100);
+        } else {
+            if ((int) $priceWithDiscount) {
+                $bonusVulnerablePrice = ((90 * (float) $priceWithDiscount) / 100) - $bonusSubtractAmount;
+            } else {
+                $bonusVulnerablePrice = ((90 * (float) $priceWithoutDiscount) / 100) - $bonusSubtractAmount;
+            }
+        }
+
         if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
             $orderCalculate
                 ->setStampsDetails([
@@ -759,6 +785,10 @@ class OrderService implements LoggerAwareInterface
                         ->setTitle('Списано марок')
                         ->setValue($stampsUsed),
                 ]);
+        }
+
+        if ($bonusVulnerablePrice) {
+            $orderCalculate->setBonusVulnerablePrice($bonusVulnerablePrice);
         }
 
         return $orderCalculate;
@@ -1160,8 +1190,16 @@ class OrderService implements LoggerAwareInterface
             $deliveryDate = $delivery->getDeliveryDate();
             $intervals = $delivery->getAvailableIntervals();
             $day = FormatDate('d.m.Y l', $delivery->getDeliveryDate()->getTimestamp());
+
+            if (FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '01.01.2020' || FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '02.01.2020') {
+                continue;
+            }
+
             if (!empty($intervals) && count($intervals)) {
                 foreach ($intervals as $deliveryIntervalIndex => $interval) {
+                    if (FormatDate('d.m.Y', $delivery->getDeliveryDate()->getTimestamp()) == '31.12.2019' && (($interval->getTo() > 18) || ($interval->getTo() == 0))) {
+                        continue;
+                    }
                     /** @var Interval $interval */
                     $dates[] = (new DeliveryTime())
                         ->setTitle($day . ' ' . $interval)
@@ -1200,6 +1238,11 @@ class OrderService implements LoggerAwareInterface
             $itemData,
             $totalWeight,
         ];
+    }
+
+    public function getOrderIdByNumber($number)
+    {
+        return \CSaleOrder::GetList([], ['ACCOUNT_NUMBER' => $number], false, false, ['ID'])->fetch()['ID'];
     }
 
     /**

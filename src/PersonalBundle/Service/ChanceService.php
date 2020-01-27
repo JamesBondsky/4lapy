@@ -12,6 +12,8 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Sale\OrderTable;
 use DateTime;
 use Exception;
+use FourPaws\App\Application;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
@@ -30,6 +32,8 @@ class ChanceService
     protected const CHANCE_RATE = 500;
 
     protected const HL_BLOCK_NAME = 'NewYearUserChance';
+
+    protected const CACHE_TAG = 'ny2020:user.chances';
 
     public const PERIODS = [
         [
@@ -68,7 +72,7 @@ class ChanceService
         $this->userService = $userService;
         $this->userRepository = $userRepository;
 
-        foreach (self::PERIODS as $period) {
+        foreach (static::PERIODS as $period) {
             $this->periods[] = [
                 'from' => DateTime::createFromFormat('d.m.Y H:i:s', $period['from']),
                 'to' => DateTime::createFromFormat('d.m.Y H:i:s', $period['to']),
@@ -107,14 +111,8 @@ class ChanceService
         }
 
         $data = [];
-        foreach ($this->periods as $period) {
-            $data[$period] = 0;
-        }
-
-        try {
-            $currentPeriod = $this->getCurrentPeriod();
-            $data[$currentPeriod] = $this->getUserPeriodChance($user->getId(), $currentPeriod);
-        } catch (Exception $e) {
+        foreach ($this->periods as $periodId => $period) {
+            $data[$periodId] = 0;
         }
 
         $addResult = $this->getDataManager()::add([
@@ -127,9 +125,13 @@ class ChanceService
             throw new RuntimeException('При регистрации произошла ошибка');
         }
 
-        TaggedCacheHelper::clearManagedCache(['ny2020:user.chances']);
+        TaggedCacheHelper::clearManagedCache([static::CACHE_TAG]);
 
-        return (isset($currentPeriod)) ? $data[$currentPeriod] : 0;
+        /** @var ManzanaService $manzanaService */
+        $manzanaService = Application::getInstance()->getContainer()->get('manzana.service');
+        $manzanaService->importUserOrdersAsync($user);
+
+        return 0;
     }
 
     /**
@@ -215,8 +217,8 @@ class ChanceService
         $res = OrderTable::query()
             ->setFilter([
                 'USER_ID' => $userId,
-                '>=DATE_INSERT' => self::PERIODS[$period]['from'],
-                '<=DATE_INSERT' => self::PERIODS[$period]['to'],
+                '>=DATE_INSERT' => static::PERIODS[$period]['from'],
+                '<=DATE_INSERT' => static::PERIODS[$period]['to'],
                 'STATUS_ID' => [
                     OrderStatus::STATUS_DELIVERED,
                     OrderStatus::STATUS_FINISHED,
@@ -229,7 +231,7 @@ class ChanceService
             $sum += (float)$order['PRICE'];
         }
 
-        return (int)floor($sum / self::CHANCE_RATE);
+        return (int)floor($sum / static::CHANCE_RATE);
     }
 
     public function updateUserChance($userId): void
@@ -239,8 +241,6 @@ class ChanceService
         }
 
         try {
-            $currentPeriod = $this->getCurrentPeriod();
-
             $userResult = $this->getDataManager()::query()
                 ->setFilter(['UF_USER_ID' => $userId])
                 ->setSelect(['ID', 'UF_DATA'])
@@ -252,14 +252,32 @@ class ChanceService
 
             $data = unserialize($userResult['UF_DATA']);
 
-            $data[$this->getCurrentPeriod()] = $this->getUserPeriodChance($userId, $currentPeriod);
+            foreach ($this->periods as $periodId => $currentPeriod) {
+                $data[$periodId] = $this->getUserPeriodChance($userId, $periodId);
+            }
 
             $this->getDataManager()::update(
                 $userResult['ID'],
                 ['UF_DATA' => serialize($data)]
             );
-
         } catch (Exception $e) {
+        }
+    }
+
+    /**
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws Exception
+     */
+    public function updateAllUserChance(): void
+    {
+        $res = $this->getDataManager()::query()
+            ->setSelect(['UF_USER_ID'])
+            ->exec();
+
+        while ($user = $res->fetch()) {
+            $this->updateUserChance($user['UF_USER_ID']);
         }
     }
 
@@ -273,7 +291,8 @@ class ChanceService
      */
     public function getAllUserIds(): array
     {
-        $doGetAllVariants = function () {
+//        $doGetAllVariants = function () {
+        try {
             $userIds = [];
             $res = $this->getDataManager()::query()
                 ->setSelect(['UF_USER_ID'])
@@ -284,18 +303,20 @@ class ChanceService
             }
 
             return $userIds;
-        };
-
-        try {
-            return (new BitrixCache())
-                ->withId(__METHOD__ . 'chance.users')
-                ->withClearCache(true)
-                ->withTime(36000)
-                ->withTag('ny2020:user.chances')
-                ->resultOf($doGetAllVariants);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [];
         }
+//        };
+//
+//        try {
+//            return (new BitrixCache())
+//                ->withId(__METHOD__ . 'chance.users')
+//                ->withTime(36000)
+//                ->withTag(static::CACHE_TAG)
+//                ->resultOf($doGetAllVariants);
+//        } catch (Exception $e) {
+//            return [];
+//        }
     }
 
     /**
@@ -387,7 +408,7 @@ class ChanceService
     protected function getDataManager(): DataManager
     {
         if ($this->dataManager === null) {
-            $this->dataManager = HLBlockFactory::createTableObject(self::HL_BLOCK_NAME);
+            $this->dataManager = HLBlockFactory::createTableObject(static::HL_BLOCK_NAME);
         }
 
         return $this->dataManager;

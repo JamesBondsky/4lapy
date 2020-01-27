@@ -8,6 +8,7 @@ use FourPaws\IblockProps\OfferRegionDiscountsProperty;
 use WebArch\BitrixIblockPropertyType\YesNoType;
 use FourPaws\IblockProps\BlocksShowSwitcher;
 use WebArch\BitrixNeverInclude\BitrixNeverInclude;
+use FourPaws\LandingBundle\Service\ActionLanding;
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/../vendor/autoload.php';
 
@@ -97,4 +98,12 @@ class CSocServHandlers
             ],
         ];
     }
+}
+
+AddEventHandler("main", "OnBeforeProlog", "authFromMobileApi", 50);
+
+function authFromMobileApi()
+{
+    $apiAuthAction = new ActionLanding;
+    $apiAuthAction->auth();
 }

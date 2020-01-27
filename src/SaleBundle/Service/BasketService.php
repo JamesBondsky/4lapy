@@ -21,6 +21,7 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\Result as MainResult;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
@@ -1487,7 +1488,7 @@ class BasketService implements LoggerAwareInterface
             ->registerRuntimeField(
                 new ReferenceField(
                     'ELEMENT', ElementTable::class,
-                    Query\Join::on('this.PRODUCT_ID', 'ref.ID')
+                    Join::on('this.PRODUCT_ID', 'ref.ID')
                         ->where('ref.ACTIVE', BitrixUtils::BX_BOOL_TRUE)
                         ->where('ref.IBLOCK_ID', $offersIblockId),
                     ['join_type' => 'INNER']
@@ -1496,7 +1497,7 @@ class BasketService implements LoggerAwareInterface
             ->registerRuntimeField(
                 new ReferenceField(
                     'CATALOG_PRICE', PriceTable::class,
-                    Query\Join::on('this.PRODUCT_ID', 'ref.PRODUCT_ID')->where('ref.CATALOG_GROUP_ID', 2),
+                    Join::on('this.PRODUCT_ID', 'ref.PRODUCT_ID')->where('ref.CATALOG_GROUP_ID', 2),
                     ['join_type' => 'INNER']
                 )
             )
@@ -1655,7 +1656,7 @@ class BasketService implements LoggerAwareInterface
             $tItems[$offer->getId()]['WEIGHT'] = $offer->getCatalogProduct()->getWeight();
             $tItems[$offer->getId()]['DETAIL_PAGE_URL'] = $offer->getDetailPageUrl();
             $tItems[$offer->getId()]['PRODUCT_XML_ID'] = $offer->getXmlId();
-            if($tItems[$offer->getId()]['QUANTITY'] > $offer->getQuantity()){
+            if($tItems[$offer->getId()]['QUANTITY'] > $offer->getQuantity() && $offer->getQuantity()){
                 $tItems[$offer->getId()]['QUANTITY'] = $offer->getQuantity();
             }
         }
