@@ -45,60 +45,7 @@ if ($template->hasMainWrapper()) { ?>
     </section>
 
     <section data-id-section-landing="photo-winners" class="photo-winners-leto2020">
-        <div class="b-container">
-            <div class="title-leto2020">Фото победителей</div>
-            <div class="photo-winners-leto2020__list-wrap">
-                <div class="photo-winners-leto2020__list" data-list-photo-winners-leto2020="true">
-                    <div class="item">
-                        <div class="item__top">
-                            <div class="item__photo" style="background-image: url('/leto2020/img/photo/1.png')">
-                                <img src="/leto2020/img/bg-photo.png" alt="" />
-                            </div>
-                            <div class="item__prizes item__prizes_tickets"></div>
-                        </div>
-                        <div class="item__name">КИРИЛОВ ОЛЕГ</div>
-                    </div>
-                    <div class="item">
-                        <div class="item__top">
-                            <div class="item__photo" style="background-image: url('/leto2020/img/photo/2.png')">
-                                <img src="/leto2020/img/bg-photo.png" alt="" />
-                            </div>
-                            <div class="item__prizes item__prizes_phone"></div>
-                        </div>
-                        <div class="item__name">МАРТЫНОВА ВИКТОРИЯ</div>
-                    </div>
-                    <div class="item">
-                        <div class="item__top">
-                            <div class="item__photo" style="background-image: url('/leto2020/img/photo/3.png')">
-                                <img src="/leto2020/img/bg-photo.png" alt="" />
-                            </div>
-                            <div class="item__prizes"></div>
-                        </div>
-                        <div class="item__name">Заседателева Светлана</div>
-                    </div>
-                    <div class="item">
-                        <div class="item__top">
-                            <div class="item__photo" style="background-image: url('/leto2020/img/photo/2.png')">
-                                <img src="/leto2020/img/bg-photo.png" alt="" />
-                            </div>
-                            <div class="item__prizes"></div>
-                        </div>
-                        <div class="item__name">Петров Петр</div>
-                    </div>
-                    <div class="item">
-                        <div class="item__top">
-                            <div class="item__photo" style="background-image: url('/leto2020/img/photo/1.png')">
-                                <img src="/leto2020/img/bg-photo.png" alt="" />
-                            </div>
-                            <div class="item__prizes"></div>
-                        </div>
-                        <div class="item__name">Какой-то человек</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="photo-winners-leto2020__branch-left"></div>
-        <div class="photo-winners-leto2020__branch-right"></div>
+        <?php $APPLICATION->IncludeComponent('articul:action.winners', 'withphoto', ['SECTION_CODE' => 'LETO2020']); ?>
     </section>
 
     <section class="questions-leto2020" data-id-section-landing="questions">
