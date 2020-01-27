@@ -34,7 +34,7 @@ $markup = PawsApplication::markup();
     <meta name="yandex-verification" content="d69492b0ac6396cf" />
     <meta name="google-site-verification" content="YhnMv-eup_rK_sqgNqgHc8UrWyWaZQ22m5z7xnokuNs" />
 
-    <meta property="og:title" content="Выиграй путешествие на 2-их в Таиланд!"/>
+    <meta property="og:title" content="Выиграй путешествие на 2-их в Лето!"/>
     <meta property="og:description" content=""/>
     <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/leto2020/img/leto2020-share.jpg'?>">
 
@@ -145,7 +145,7 @@ $markup = PawsApplication::markup();
             <div class="b-container">
                 <div class="main-banner-leto2020__inner">
                     <div class="main-banner-leto2020__title">
-                        Выиграй<br/> путешествие<br/> на&nbsp;<nobr>2-их</nobr> в&nbsp;Таиланд!
+                        Выиграй<br/> путешествие<br/> на&nbsp;<nobr>2-их</nobr> в&nbsp;Лето!
                     </div>
                     <div class="main-banner-leto2020__subtitle">
                         <p>+20 смартфонов</p>
@@ -203,7 +203,7 @@ $markup = PawsApplication::markup();
                             <div class="item-card__title">Главный приз</div>
                             <div class="item-card__descr">
                                 Незабываемое путешествие<br />
-                                на&nbsp;<nobr>2-их</nobr> в&nbsp;Таиланд!<br />
+                                на&nbsp;<nobr>2-их</nobr> в&nbsp;Лето!<br />
                                 <b>Розыгрыш: 3&nbsp;февраля</b>
                             </div>
                         </div>

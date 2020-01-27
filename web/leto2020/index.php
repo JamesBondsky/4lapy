@@ -8,9 +8,9 @@ use FourPaws\PersonalBundle\Service\Chance2Service;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
-$APPLICATION->SetPageProperty('title', 'Выиграй путешествие на 2-их в Таиланд!');
+$APPLICATION->SetPageProperty('title', 'Выиграй путешествие на 2-их в Лето!');
 $APPLICATION->SetPageProperty('description', '');
-$APPLICATION->SetTitle('Выиграй путешествие на 2-их в Таиланд!');
+$APPLICATION->SetTitle('Выиграй путешествие на 2-их в Лето!');
 
 $userChance = null;
 /** @var ChanceService $chaceService */
@@ -122,7 +122,7 @@ $chanceDeclension = new Declension('шанс', 'шанса', 'шансов');
                                 <span class="img">
                                     <img src="/leto2020/img/tickets_icon.png" alt="">
                                 </span>
-                                <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Таиланд</span>
+                                <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Лето</span>
                             </li>
                         </ul>
                     </div>
@@ -163,7 +163,7 @@ $chanceDeclension = new Declension('шанс', 'шанса', 'шансов');
                                 <span class="img">
                                     <img src="/leto2020/img/tickets_icon.png" alt="">
                                 </span>
-                      <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Таиланд</span>
+                      <span class="text"><b>Путешествие</b> на&nbsp;<nobr>2-х</nobr> в&nbsp;Лето</span>
                     </li>
                   </ul>
                 </div>

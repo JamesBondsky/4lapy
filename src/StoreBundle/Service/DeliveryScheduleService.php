@@ -26,6 +26,7 @@ use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Exception\ValidationException;
 use FourPaws\StoreBundle\Repository\DeliveryScheduleRepository;
 use Psr\Log\LoggerAwareInterface;
+use Symfony\Component\Cache\Simple\FilesystemCache;
 use WebArch\BitrixCache\BitrixCache;
 
 class DeliveryScheduleService implements LoggerAwareInterface
@@ -222,10 +223,22 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
         try {
             /** @var DeliveryScheduleCollection $schedules */
-            $schedules = (new BitrixCache())
-                ->withId(__METHOD__ . $sender->getXmlId() . $regularityId)
-                ->withTag('delivery_schedule')
-                ->resultOf($getSchedules)['result'];
+//            $schedules = (new BitrixCache())
+//                ->withId(__METHOD__ . $sender->getXmlId() . $regularityId)
+//                ->withTag('delivery_schedule')
+//                ->resultOf($getSchedules)['result'];
+
+            $cacheKey = explode('::', __METHOD__ )[1] . $sender->getXmlId() . $regularityId . 'ddd';
+            $cache = new FilesystemCache('', 3600, getenv('CACHE_DIR') ?? null);
+
+            if ($cache->has($cacheKey)) {
+                $schedules = $cache->get($cacheKey);
+            } else {
+                $cache->deleteItem($cacheKey);
+                $schedules = $this->repository->findBySenderAndRegularity($sender, $regularityId);
+                $cache->set($cacheKey, $schedules);
+            }
+
             if ($receivers && !$receivers->isEmpty()) {
                 $schedules = $schedules->filterByReceivers($receivers);
                 /** @var DeliverySchedule $item */
@@ -338,10 +351,19 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
         $result = [];
         try {
-            $result = (new BitrixCache())
-                ->withId(__METHOD__)
-                ->withTag('delivery_schedule')
-                ->resultOf($getTypes)['result'];
+            $result = $getTypes()['result'];
+//            $cacheKey = 'delivery_schedule';
+//            $cache = new FilesystemCache('', 3600);
+//            if ($cache->has($cacheKey)) {
+//                $result = $cache->get($cacheKey);
+//            } else {
+//                $result = $getTypes()['result'];
+//                $cache->set($cacheKey, $result);
+//            }
+//            $result = (new BitrixCache())
+//                ->withId(__METHOD__)
+//                ->withTag('delivery_schedule')
+//                ->resultOf($getTypes)['result'];
         } catch (\Exception $e) {
             $this->log()->error(sprintf('failed to get enum list: %s', $e->getMessage()));
         }

@@ -271,7 +271,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
         $_SESSION['COUNT_AUTH_AUTHORIZE']++;
 
-        if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > $this->getLimitAuthAuthorizeAttempts($rawLogin)) {
+//        if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > $this->getLimitAuthAuthorizeAttempts($rawLogin)) { todo captcha enable
             try {
                 if ($this->showBitrixCaptcha($rawLogin)) {
                     $recaptchaService = $container->get(ReCaptchaInterface::class);
@@ -298,7 +298,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             } catch (Exception $e) {
                 return $this->ajaxMess->getSystemError()->extendData($newTokenResponse);
             }
-        }
+//        }
 
         $needConfirmBasket = false;
         try {
