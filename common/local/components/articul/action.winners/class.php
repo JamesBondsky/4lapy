@@ -68,6 +68,7 @@ class ActionWinners extends CBitrixComponent
                     'IBLOCK_SECTION_ID',
                     'PROPERTY_PHONE',
                     'PROPERTY_ICON',
+                    'PROPERTY_SLIDER',
                 ]
             );
             
