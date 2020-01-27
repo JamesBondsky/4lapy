@@ -413,7 +413,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         }
 
         $cacheKey = $store->getXmlId() . '_' . implode('_', array_keys($stockResult->toArray()));
-        $cache = new FilesystemCache('', 3600 * 2);
+        $cache = new FilesystemCache('', 3600 * 2, getenv('CACHE_DIR') ?? null);
         if ($cache->has($cacheKey)) {
             $date = $cache->get($cacheKey);
         } else {

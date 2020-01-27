@@ -146,7 +146,7 @@ class InnerPickupHandler extends DeliveryHandlerBase
 
         $cacheKey = implode('_', $cacheKeyArr);
 
-        $cache = new FilesystemCache('', 3600 * 2);
+        $cache = new FilesystemCache('', 3600 * 2, getenv('CACHE_DIR') ?? null);
 
         if ($cache->has($cacheKey)) {
             $stockResult = $cache->get($cacheKey);
