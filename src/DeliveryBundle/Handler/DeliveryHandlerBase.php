@@ -313,7 +313,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             );
         }
 
-//        return $result;
+        return $result;
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
