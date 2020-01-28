@@ -210,9 +210,13 @@ class UserService implements
                         'OATOKEN' => $data['token'],
                     ];
 
-                    $result = \Bitrix\Socialservices\UserTable::add($fieldsUserTable);
+                    try {
+                        $result = \Bitrix\Socialservices\UserTable::add($fieldsUserTable);
 
-                    if ($result) {
+                        if ($result) {
+                            unset($_SESSION['socServiceParams']);
+                        }
+                    } catch (Exception $e) {
                         unset($_SESSION['socServiceParams']);
                     }
                 }

@@ -76,23 +76,25 @@ class CSocServOK2 extends \CSocServOdnoklassniki
 
 //                    $bSuccess = $this->AuthorizeUser($arFields);
                     $checkUser = $this->checkUser($arFields);
+
+                    $exAuthId = $xmlId = '';
+
+                    if (strripos($arFields['LOGIN'], 'VK') !== false) {
+                        $exAuthId = CSocServVK2::ID;
+                        [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
+                    } else if (strripos($arFields['LOGIN'], 'OK') !== false) {
+                        $exAuthId = CSocServOK2::ID;
+                        [,$xmlId] = explode('OKuser', $arFields['LOGIN']);
+                    } else if (strripos($arFields['LOGIN'], 'FB') !== false) {
+                        $exAuthId = CSocServFB2::ID;
+                        [,$xmlId] = explode('FB_', $arFields['LOGIN']);
+                    }
+
                     if ($checkUser) {
                         $paramsProfile = [];
                         $bSuccess = $this->AuthorizeUser($arFields);
 
                         if ($bSuccess) {
-                            $exAuthId = $xmlId = '';
-
-                            if (strripos($arFields['LOGIN'], 'VK') !== false) {
-                                $exAuthId = CSocServVK2::ID;
-                                [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
-                            } else if (strripos($arFields['LOGIN'], 'OK') !== false) {
-                                $exAuthId = CSocServOK2::ID;
-                                [,$xmlId] = explode('OKuser', $arFields['LOGIN']);
-                            } else if (strripos($arFields['LOGIN'], 'FB') !== false) {
-                                $exAuthId = CSocServFB2::ID;
-                                [,$xmlId] = explode('FB_', $arFields['LOGIN']);
-                            }
                             $user = new \CUser();
                             $user->Update($checkUser['USER_ID'], [
                                 'EXTERNAL_AUTH_ID' => $exAuthId,
@@ -123,7 +125,7 @@ class CSocServOK2 extends \CSocServOdnoklassniki
                                 'last_name' => $arFields['LAST_NAME'],
                                 'gender' => $arFields['PERSONAL_GENDER'],
                                 'birthday' => $arFields['PERSONAL_BIRTHDAY'],
-                                'ex_id' => static::LOGIN_PREFIX . $arFBUser["id"],
+                                'ex_id' => 'VKuser' . $arOdnoklUser['uid'],
                                 'token' => $this->getEntityOAuth()->getToken()
                             ];
 
