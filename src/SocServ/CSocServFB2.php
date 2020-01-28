@@ -231,18 +231,18 @@ class CSocServFB2 extends \CSocServFacebook
                             ];
 
                             $result = \Bitrix\Socialservices\UserTable::add($fieldsUserTable);
+                        } else {
+                            $paramsProfile = [
+                                'name' => $arFields['NAME'],
+                                'last_name' => $arFields['LAST_NAME'],
+                                'gender' => $arFields['PERSONAL_GENDER'],
+                                'birthday' => $arFields['PERSONAL_BIRTHDAY'],
+                                'ex_id' => static::LOGIN_PREFIX . $arFBUser["id"],
+                                'token' => $this->getEntityOAuth()->getToken()
+                            ];
+
+                            $_SESSION['socServiceParams'] = $paramsProfile;
                         }
-
-                        $paramsProfile = [
-                            'name' => $arFields['NAME'],
-                            'last_name' => $arFields['LAST_NAME'],
-                            'gender' => $arFields['PERSONAL_GENDER'],
-                            'birthday' => $arFields['PERSONAL_BIRTHDAY'],
-                            'ex_id' => static::LOGIN_PREFIX.$arFBUser["id"],
-                            'token' => $this->getEntityOAuth()->getToken()
-                        ];
-
-                        $_SESSION['socServiceParams'] = $paramsProfile;
                     }
 //                    $authError = $this->AuthorizeUser($arFields);
                 }

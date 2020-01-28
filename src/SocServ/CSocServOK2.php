@@ -102,16 +102,33 @@ class CSocServOK2 extends \CSocServOdnoklassniki
                             unset($_SESSION['socServiceParams']);
                         }
                     } else {
-                        $paramsProfile = [
-                            'name' => $arFields['NAME'],
-                            'last_name' => $arFields['LAST_NAME'],
-                            'gender' => $arFields['PERSONAL_GENDER'],
-                            'birthday' => $arFields['PERSONAL_BIRTHDAY'],
-                            'ex_id' => "OKuser".$uid,
-                            'token' => $this->getEntityOAuth()->getToken()
-                        ];
 
-                        $_SESSION['socServiceParams'] = $paramsProfile;
+                        global $USER;
+                        if ($USER->IsAuthorized()) {
+                            $fieldsUserTable = [
+                                'LOGIN' => $USER->GetID(),
+                                'EXTERNAL_AUTH_ID' => $exAuthId,
+                                'USER_ID' => $USER->GetID(),
+                                'XML_ID' => $xmlId,
+                                'NAME' => $arFields['NAME'],
+                                'LAST_NAME' => $arFields['LAST_NAME'],
+                                'EMAIL' => '',
+                                'OATOKEN' => $this->getEntityOAuth()->getToken(),
+                            ];
+
+                            $result = \Bitrix\Socialservices\UserTable::add($fieldsUserTable);
+                        } else {
+                            $paramsProfile = [
+                                'name' => $arFields['NAME'],
+                                'last_name' => $arFields['LAST_NAME'],
+                                'gender' => $arFields['PERSONAL_GENDER'],
+                                'birthday' => $arFields['PERSONAL_BIRTHDAY'],
+                                'ex_id' => static::LOGIN_PREFIX . $arFBUser["id"],
+                                'token' => $this->getEntityOAuth()->getToken()
+                            ];
+
+                            $_SESSION['socServiceParams'] = $paramsProfile;
+                        }
                     }
                 }
             }
