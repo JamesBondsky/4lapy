@@ -7,6 +7,8 @@ use CFacebookInterface;
 
 class CSocServFB2 extends \CSocServFacebook
 {
+    use SocServiceHelper;
+
     const ID = 'FB2';
     public function prepareUser($arFBUser, $short = false)
     {
@@ -152,5 +154,186 @@ class CSocServFB2 extends \CSocServFacebook
         }
 
         return $res;
+    }
+
+    public function Authorize()
+    {
+        global $APPLICATION;
+        $APPLICATION->RestartBuffer();
+
+        $authError = SOCSERV_AUTHORISATION_ERROR;
+        $paramsProfile = [];
+
+        if(
+            isset($_REQUEST["code"]) && $_REQUEST["code"] <> ''
+            && \CSocServAuthManager::CheckUniqueKey()
+        )
+        {
+            if(IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+            {
+                $redirect_uri = static::CONTROLLER_URL."/redirect.php";
+            }
+            else
+            {
+                $redirect_uri = $this->getEntityOAuth()->GetRedirectURI();
+            }
+
+            $this->entityOAuth = $this->getEntityOAuth($_REQUEST['code']);
+            if($this->entityOAuth->GetAccessToken($redirect_uri) !== false)
+            {
+                $arFBUser = $this->entityOAuth->GetCurrentUser();
+                if(is_array($arFBUser) && isset($arFBUser["id"]))
+                {
+//                    $arFields = self::prepareUser($arFBUser);
+                    $arFields = $this->prepareUser($arFBUser);
+                    $checkUser = $this->checkUser($arFields);
+
+                    $exAuthId = $xmlId = '';
+
+                    if (strripos($arFields['LOGIN'], 'VK') !== false) {
+                        $exAuthId = CSocServVK2::ID;
+                        [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
+                    } else if (strripos($arFields['LOGIN'], 'OK') !== false) {
+                        $exAuthId = CSocServOK2::ID;
+                        [,$xmlId] = explode('OKuser', $arFields['LOGIN']);
+                    } else if (strripos($arFields['LOGIN'], 'FB') !== false) {
+                        $exAuthId = CSocServFB2::ID;
+                        [,$xmlId] = explode('FB_', $arFields['LOGIN']);
+                    }
+
+                    if ($checkUser) {
+                        $paramsProfile = [];
+                        $authError = $this->AuthorizeUser($arFields);
+
+                        if ($authError) {
+                            $user = new \CUser();
+                            $user->Update($checkUser['USER_ID'], [
+                                'EXTERNAL_AUTH_ID' => $exAuthId,
+                                'XML_ID' => $xmlId,
+                            ]);
+
+                            $user->Authorize($checkUser['USER_ID']);
+                            unset($_SESSION['socServiceParams']);
+                        }
+                    } else {
+
+                        global $USER;
+                        if ($USER->IsAuthorized()) {
+                            $fieldsUserTable = [
+                                'LOGIN' => $USER->GetID(),
+                                'EXTERNAL_AUTH_ID' => $exAuthId,
+                                'USER_ID' => $USER->GetID(),
+                                'XML_ID' => $xmlId,
+                                'NAME' => $arFields['NAME'],
+                                'LAST_NAME' => $arFields['LAST_NAME'],
+                                'EMAIL' => '',
+                                'OATOKEN' => $this->getEntityOAuth()->getToken(),
+                            ];
+
+                            $result = \Bitrix\Socialservices\UserTable::add($fieldsUserTable);
+                        } else {
+                            $paramsProfile = [
+                                'name' => $arFields['NAME'],
+                                'last_name' => $arFields['LAST_NAME'],
+                                'gender' => $arFields['PERSONAL_GENDER'],
+                                'birthday' => $arFields['PERSONAL_BIRTHDAY'],
+                                'ex_id' => static::LOGIN_PREFIX . $arFBUser["id"],
+                                'token' => $this->getEntityOAuth()->getToken()
+                            ];
+
+                            $_SESSION['socServiceParams'] = $paramsProfile;
+                        }
+                    }
+//                    $authError = $this->AuthorizeUser($arFields);
+                }
+            }
+        }
+
+        $bSuccess = $authError === true;
+
+        $url = ($APPLICATION->GetCurDir() == "/login/") ? "" : $APPLICATION->GetCurDir();
+        $aRemove = array("logout", "auth_service_error", "auth_service_id", "code", "error_reason", "error", "error_description", "check_key", "current_fieldset");
+
+        if(isset($_REQUEST["state"]))
+        {
+            $arState = array();
+            parse_str($_REQUEST["state"], $arState);
+
+            if(isset($arState['backurl']) || isset($arState['redirect_url']))
+            {
+                $url = !empty($arState['redirect_url']) ? $arState['redirect_url'] : $arState['backurl'];
+                if(substr($url, 0, 1) !== "#")
+                {
+                    $parseUrl = parse_url($url);
+
+                    $urlPath = $parseUrl["path"];
+                    $arUrlQuery = explode('&', $parseUrl["query"]);
+
+                    foreach($arUrlQuery as $key => $value)
+                    {
+                        foreach($aRemove as $param)
+                        {
+                            if(strpos($value, $param."=") === 0)
+                            {
+                                unset($arUrlQuery[$key]);
+                                break;
+                            }
+                        }
+                    }
+
+                    $url = (!empty($arUrlQuery)) ? $urlPath.'?'.implode("&", $arUrlQuery) : $urlPath;
+                }
+            }
+        }
+
+        if($authError === SOCSERV_REGISTRATION_DENY)
+        {
+            $url = (preg_match("/\?/", $url)) ? $url.'&' : $url.'?';
+            $url .= 'auth_service_id='.self::ID.'&auth_service_error='.$authError;
+        }
+        elseif($bSuccess !== true)
+        {
+            $backUrl = $url;
+            $url = (isset($urlPath)) ? $urlPath.'?auth_service_id='.self::ID.'&auth_service_error='.$authError : $GLOBALS['APPLICATION']->GetCurPageParam(('auth_service_id='.self::ID.'&auth_service_error='.$authError), $aRemove);
+        }
+
+        if(\CModule::IncludeModule("socialnetwork") && strpos($url, "current_fieldset=") === false)
+        {
+            $url .= ((strpos($url, "?") === false) ? '?' : '&')."current_fieldset=SOCSERV";
+        }
+
+
+        if (count($paramsProfile) > 0) {
+            $url = '/personal/register/?backurl=' . ($backUrl ?? '/');
+        }
+        ?>
+        <script type="text/javascript">
+            if(window.opener)
+                window.opener.location = '<?=\CUtil::JSEscape($url)?>';
+            window.close();
+        </script>
+        <?
+        die();
+    }
+
+    public function getUrl($arParams)
+    {
+        global $APPLICATION;
+
+        \CSocServAuthManager::SetUniqueKey();
+        if(IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+        {
+            $redirect_uri = static::CONTROLLER_URL."/redirect.php";
+            $state = $this->getEntityOAuth()->GetRedirectURI()."?check_key=".$_SESSION["UNIQUE_KEY"]."&state=";
+            $backurl = $APPLICATION->GetCurPageParam('', array("logout", "auth_service_error", "auth_service_id", "backurl"));
+            $state .= urlencode("state=".urlencode("backurl=".urlencode($backurl).(isset($arParams['BACKURL']) ? '&redirect_url='.urlencode($arParams['BACKURL']) : '')));
+        }
+        else
+        {
+            $state = 'site_id='.SITE_ID.'&backurl='.urlencode($APPLICATION->GetCurPageParam('check_key='.$_SESSION["UNIQUE_KEY"], array("logout", "auth_service_error", "auth_service_id", "backurl"))).(isset($arParams['BACKURL']) ? '&redirect_url='.urlencode($arParams['BACKURL']) : '');
+            $redirect_uri = $this->getEntityOAuth()->GetRedirectURI();
+        }
+
+        return $this->getEntityOAuth()->GetAuthUrl($redirect_uri, $state);
     }
 }
