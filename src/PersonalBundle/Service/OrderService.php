@@ -326,6 +326,10 @@ class OrderService
 
         /** @var Cheque $cheque */
         foreach ($cheques as $cheque) {
+            if ($cheque->chequeId === null) {
+                continue;
+            }
+
             if ($startDateTimestamp > $cheque->date->getTimestamp()) {
                 continue;
             }
