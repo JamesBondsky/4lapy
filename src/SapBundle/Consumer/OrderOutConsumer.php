@@ -23,7 +23,7 @@ class OrderOutConsumer extends SapConsumerBase
      * @var OrderService
      */
     private $orderService;
-    
+
     /**
      * OrderStatusConsumer constructor.
      *
@@ -64,7 +64,21 @@ class OrderOutConsumer extends SapConsumerBase
             }
         } catch (\Exception $e) {
             $success = false;
-            
+
+            mail(implode(', ', [
+                'a.vorobyev@articul.ru',
+                'm.balezin@articul.ru',
+                'mporotikov@4lapy.ru'
+            ]),
+                'Ошибка экспорта в SAP заказа #' . $order->getId() . ' (' . $order->getField('ACCOUNT_NUMBER') . ') на 4lapy.ru',
+                sprintf(
+                    'Ошибка экспорта в SAP заказа #%s (%s): %s. Trace: %s',
+                    $order->getId(),
+                    $order->getField('ACCOUNT_NUMBER'),
+                    $e->getMessage(),
+                    $e->getTraceAsString()
+                )
+            );
             $this->log()->log(
                 LogLevel::CRITICAL,
                 sprintf(
@@ -75,10 +89,10 @@ class OrderOutConsumer extends SapConsumerBase
                 )
             );
         }
-        
+
         return $success;
     }
-    
+
     /**
      * @param $data
      *
