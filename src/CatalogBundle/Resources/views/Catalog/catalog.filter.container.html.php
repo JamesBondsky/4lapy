@@ -341,7 +341,7 @@ if (!$catalogRequest->isLanding()) { ?>
 	        $exponeaDataEncoded = CUtil::PhpToJSObject($exponeaData);
 	        ?>
 	        <script>
-	            console.log('📊exponea(view_category)', <?= $exponeaDataEncoded ?>); //TODO exponea comment
+	            //console.log('📊exponea(view_category)', <?//= $exponeaDataEncoded ?>);
 	            exponea.track('view_category', <?= $exponeaDataEncoded ?>);
 	        </script>
 	        <?php

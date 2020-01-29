@@ -270,7 +270,7 @@ try {
     $exponeaDataEncoded = CUtil::PhpToJSObject($exponeaData);
     ?>
 	<script>
-        console.log('📊exponea(view_item)', <?= $exponeaDataEncoded ?>); //TODO exponea comment
+        //console.log('📊exponea(view_item)', <?//= $exponeaDataEncoded ?>);
         exponea.track('view_item', <?= $exponeaDataEncoded ?>);
 	</script>
     <?php
