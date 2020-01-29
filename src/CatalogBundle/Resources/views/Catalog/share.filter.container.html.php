@@ -3,24 +3,25 @@
 use Bitrix\Main\Grid\Declension;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
-use FourPaws\CatalogBundle\Dto\CatalogBrandRequest;
+use FourPaws\CatalogBundle\Dto\CatalogShareRequest;
+use FourPaws\CatalogBundle\Service\FilterHelper;
 use FourPaws\Decorators\SvgDecorator;
-use FourPaws\EcommerceBundle\Service\DataLayerService;
-use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
+use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 
 /**
  * @var Request                $request
- * @var CatalogBrandRequest    $catalogRequest
+ * @var CatalogShareRequest    $catalogRequest
  * @var SearchService          $searchService
- * @var DataLayerService       $dataLayerService
- * @var GoogleEcommerceService $ecommerceService
  * @var ProductSearchResult    $productSearchResult
  * @var PhpEngine              $view
+ * @var DataLayerService       $dataLayerService
+ * @var GoogleEcommerceService $ecommerceService
  * @var CMain                  $APPLICATION
  * @var Category               $category
  */
@@ -30,7 +31,7 @@ global $APPLICATION;
 $category = $catalogRequest->getCategory();
 
 $filterCollection = $catalogRequest->getCategory()->getFilters();
-$count = $productSearchResult->getResultSet()->getTotalHits(); ?>
+$count            = $productSearchResult->getResultSet()->getTotalHits(); ?>
 <aside class="b-filter b-filter--popup js-filter-popup">
     <div class="b-filter__top">
         <a class="b-filter__close js-close-filter" href="javascript:void(0);" title=""></a>
@@ -39,8 +40,8 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         </div>
     </div>
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
-        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>"
-              data-url="/ajax/catalog/product-info/count-by-filter-brand/">
+        <form class="b-form js-filter-form" action="<?=$APPLICATION->GetCurDir()?>"
+              data-url="/ajax/catalog/product-info/count-by-filter-share/">
             <div class="b-filter__block" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
                 <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox"
                     style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
@@ -48,8 +49,8 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                         style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
                         <label class="b-filter-link-list__label"
                                style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
-                            <input type="checkbox" name="brand_code"
-                                   value="<?= $catalogRequest->getBrand()->getCode() ?>" checked="checked"
+                            <input type="checkbox" name="share_code"
+                                   value="<?=$catalogRequest->getShare()->getCode()?>" checked="checked"
                                    class="b-filter-link-list__checkbox js-filter-control js-checkbox-change"
                                    style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
                         </label>
@@ -57,29 +58,29 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 </ul>
             </div>
             <div class="b-filter__block b-filter__block--reset js-reset-link-block"
-                <?= $filterCollection->hasCheckedFilterBrand() ? 'style="display:block"' : '' ?>>
+                 <?=$filterCollection->hasCheckedFilterBrand() ? 'style="display:block"' : ''?>>
                 <div class="b-link b-link--reset b-link--brand-reset js-reset-top-filter">Сбросить фильтры</div>
             </div>
-            <?= $view->render(
+            <?=$view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
                 [
                     'category'       => $category,
                     'searchService'  => $searchService,
                     'catalogRequest' => $catalogRequest,
-                    'brand'          => $brand,
-                    'isBrand'        => true,
+                    'isShare'        => true,
                 ]
-            ) ?>
-            <?php $filterToShow = $filterCollection->getFiltersToShow();
-            $filterActions = $filterCollection->getActionsFilter(); ?>
-            <?= $view->render(
+            );
+            ?>
+            <?php
+            $filterToShow = $filterCollection->getFiltersToShow();
+            $filterActions      = $filterCollection->getActionsFilter(); ?>
+            <?=$view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
-                    'filters' => $filterToShow,
-                    'isBrand' => true,
+                    'filters'        => $filterToShow,
                     'catalogRequest' => $catalogRequest,
                 ]
-            ) ?>
+            );?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
                 <?php
                 /**
@@ -90,23 +91,23 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                         <?php foreach ($filter->getAvailableVariants() as $id => $variant) { ?>
                             <li class="b-filter-link-list__item">
                                 <label class="b-filter-link-list__label"
-                                    <?= $variant->getOnclick()
-                                        ? \sprintf(
-                                            'onclick="%s"',
-                                            $variant->getOnclick()
-                                        )
-                                        : ''
-                                    ?>>
+                                       <?=$variant->getOnclick()
+                                           ? \sprintf(
+                                               'onclick="%s"',
+                                               $variant->getOnclick()
+                                           )
+                                           : ''
+                                       ?>>
                                     <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
                                            type="checkbox"
-                                           name="<?= $filter->getFilterCode() ?>"
-                                           value="<?= $variant->getValue() ?>"
-                                           id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
-                                        <?= $variant->isChecked() ? 'checked' : '' ?>/>
+                                           name="<?=$filter->getFilterCode()?>"
+                                           value="<?=$variant->getValue()?>"
+                                           id="<?=$filter->getFilterCode()?>-<?=$id?>"
+                                           <?=$variant->isChecked() ? 'checked' : ''?>/>
                                     <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
                                        href="javascript:void(0);"
-                                       title="<?= $filter->getName() ?>">
-                                        <?= $filter->getName() ?>
+                                       title="<?=$filter->getName()?>">
+                                        <?=$filter->getName()?>
                                     </a>
                                 </label>
                             </li>
@@ -117,11 +118,11 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         </form>
     </div>
     <div class="b-filter__bottom"><a class="b-filter__button" href="javascript:void(0);" title="">
-            Показать <?= $count . ' ' . WordHelper::declension($count, [
+            Показать <?=$count . ' ' . WordHelper::declension($count, [
                 'товар',
                 'товара',
-                'товаров'
-            ]) ?>
+                'товаров',
+            ])?>
         </a>
     </div>
 </aside>
@@ -135,19 +136,19 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                        href="javascript:void(0);"
                        title="Открыть фильтры">
                         <span class="b-icon b-icon--open-filter">
-                            <?= new SvgDecorator('icon-open-filter', 19, 14) ?>
+                            <?=new SvgDecorator('icon-open-filter', 19, 14)?>
                         </span>
                     </a>
-                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count
-                                                                                              . (new Declension(' товар',
-                            ' товара', ' товаров'))->get($count) ?></span>
-                    <?= $view->render(
+                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?=$count
+                        . (new Declension(' товар',
+                            ' товара', ' товаров'))->get($count)?></span>
+                    <?=$view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
                         [
                             'sorts'            => $catalogRequest->getSorts(),
                             'dataLayerService' => $dataLayerService,
                         ]
-                    ) ?>
+                    )?>
                     <?php
                     /**
                      * @var FilterBase $filter
@@ -159,23 +160,23 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                                     ?>
                                     <li class="b-filter-link-list__item">
                                         <label class="b-filter-link-list__label"
-                                            <?= $variant->getOnclick()
-                                                ? \sprintf(
-                                                    'onclick="%s"',
-                                                    $variant->getOnclick()
-                                                )
-                                                : ''
-                                            ?>>
+                                               <?=$variant->getOnclick()
+                                                   ? \sprintf(
+                                                       'onclick="%s"',
+                                                       $variant->getOnclick()
+                                                   )
+                                                   : ''
+                                               ?>>
                                             <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
                                                    type="checkbox"
-                                                   name="<?= $filter->getFilterCode() ?>"
-                                                   value="<?= $variant->getValue() ?>"
-                                                   id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
-                                                <?= $variant->isChecked() ? 'checked' : '' ?>/>
+                                                   name="<?=$filter->getFilterCode()?>"
+                                                   value="<?=$variant->getValue()?>"
+                                                   id="<?=$filter->getFilterCode()?>-<?=$id?>"
+                                                   <?=$variant->isChecked() ? 'checked' : ''?>/>
                                             <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
                                                href="javascript:void(0);"
-                                               title="<?= $filter->getName() ?>">
-                                                <?= $filter->getName() ?>
+                                               title="<?=$filter->getName()?>">
+                                                <?=$filter->getName()?>
                                             </a>
                                         </label>
                                     </li>
@@ -190,12 +191,12 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     <a class="b-link b-link--type active js-link-type-normal"
                        href="javascript:void(0);" title="">
                             <span class="b-icon b-icon--type">
-                                <?= new SvgDecorator('icon-catalog-normal', 20, 20) ?>
+                                <?=new SvgDecorator('icon-catalog-normal', 20, 20)?>
                             </span>
                     </a>
                     <a class="b-link b-link--type js-link-type-line" href="javascript:void(0);" title="">
                             <span class="b-icon b-icon--type">
-                                <?= new SvgDecorator('icon-catalog-line', 20, 20) ?>
+                                <?=new SvgDecorator('icon-catalog-line', 20, 20)?>
                             </span>
                     </a>
                 </div>
@@ -207,48 +208,26 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
     <div class="b-common-wrapper b-common-wrapper--visible b-common-wrapper--brands js-catalog-wrapper">
         <?php
         $productCollection = $productSearchResult->getProductCollection();
-
-        echo $ecommerceService->renderScript(
-            $ecommerceService->buildImpressionsFromProductCollection($productSearchResult->getProductCollection(), 'Каталог по бренду'),
-            true
-        );
-
+        
+        // echo $ecommerceService->renderScript(
+        //     $ecommerceService->buildImpressionsFromProductCollection($productSearchResult->getProductCollection(), 'Каталог по бренду'),
+        //     true
+        // );
+        
         $i = 1;
-        $catalogInnerBanner = $catalogRequest->getBrand()->getCatalogInnerBanner();
         foreach ($productCollection as $product) {
             $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.element.snippet',
                 '',
                 [
                     'PRODUCT' => $product,
-                    'GOOGLE_ECOMMERCE_TYPE' => 'Каталог по бренду'
+                    // 'GOOGLE_ECOMMERCE_TYPE' => 'Каталог по бренду',
                 ],
                 null,
                 [
                     'HIDE_ICONS' => 'Y',
                 ]
             );
-            if ($catalogInnerBanner != null && $catalogInnerBanner['TEXT'] != '') {
-                if ($i == 4) {
-                    ?>
-                    <div class="b-fleas-protection-banner b-mobile b-fleas-brand">
-                        <?= htmlspecialcharsback($catalogInnerBanner['TEXT']) ?>
-                    </div>
-                    <?
-                } elseif ($i == 6) {
-                    ?>
-                    <div class="b-fleas-protection-banner b-tablet b-fleas-brand">
-                        <?= htmlspecialcharsback($catalogInnerBanner['TEXT']) ?>
-                    </div>
-                    <?
-                } elseif ($i == 8) {
-                    ?>
-                    <div class="b-fleas-protection-banner b-desktop b-fleas-brand">
-                        <?= htmlspecialcharsback($catalogInnerBanner['TEXT']) ?>
-                    </div>
-                    <?
-                }
-            }
             $i++;
         }
         ?>
@@ -268,11 +247,4 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             'HIDE_ICONS' => 'Y',
         ]
     ); ?>
-    <?php
-    $catalogUnderBanner = $catalogRequest->getBrand()->getCatalogUnderBanner();
-    if ($catalogUnderBanner != null && $catalogUnderBanner['TEXT'] != '') { ?>
-        <div class="b-brand-text">
-            <?= htmlspecialcharsback($catalogUnderBanner['TEXT'])?>
-        </div>
-    <? } ?>
 </main>

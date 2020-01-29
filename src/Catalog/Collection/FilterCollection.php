@@ -13,6 +13,7 @@ use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\ActionsFilter;
 use FourPaws\Catalog\Model\Filter\BrandFilter;
+use FourPaws\Catalog\Model\Filter\ShareFilter;
 use FourPaws\Catalog\Model\Filter\DeliveryAvailabilityFilter;
 use FourPaws\Catalog\Model\Filter\ClothingSizeFilter;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
@@ -60,6 +61,7 @@ class FilterCollection extends ObjectArrayCollection
             if (
                 !($filter instanceof Category)
                 && !($filter instanceof InternalFilter)
+                && !($filter instanceof ShareFilter)
                 && !($filter instanceof BrandFilter)
                 && $filter->hasCheckedVariants()
             ) {
