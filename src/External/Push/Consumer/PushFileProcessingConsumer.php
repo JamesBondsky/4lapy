@@ -39,6 +39,7 @@ class PushFileProcessingConsumer extends PushBase
             if (!empty($sessions)) {
                 foreach ($sessions as $session) {
                     $pushEvent = $pushEventService->convertToPushEvent($pushMessage, $session);
+                    
                     $res = $pushEventService->apiPushEventRepository->createEvent($pushEvent);
 
                     if ($res->isSuccess() && $pushEvent->getPlatform() == 'ios') {
