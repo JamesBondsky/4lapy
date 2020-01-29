@@ -23,10 +23,10 @@ if (!\is_array($arResult['items']) || empty($arResult['items'])) {
   <div class="b-container">
     <div class="b-promo-banner__list js-promo-banner">
         <?php foreach ($arResult['items'] as $key => $item) { ?>
-          <div class="b-promo-banner-item<?= $item['additionalClasses'] ?> <?= ($item['externalId'] === 'festival') ? 'b-promo-banner-item--festival' : '' ?> <?= $item['link'] ?> <?= $item['hideLogoMobile'] ? 'b-promo-banner-item--no-mobile-logo' : '' ?><?= ($item['leftColor']) ? ' custom-banner-item-' . $item['leftColor'] : '' ?>">
+          <div class="b-promo-banner-item<?= $item['additionalClasses'] ?> <?= ($item['externalId'] === 'festival') ? 'b-promo-banner-item--festival' : '' ?> <?= $item['hideLogoMobile'] ? 'b-promo-banner-item--no-mobile-logo' : '' ?><?= ($item['leftColor']) ? ' custom-banner-item-' . $item['leftColor'] : '' ?>">
             <div class="b-promo-banner-item__content">
               <div class="b-promo-banner-item__left">
-                <div class="b-promo-banner-item__logo" <?php if (!empty($item['leftSvg'])) { ?>style="background: url(<?= $arResult['files'][$item['leftSvg']] ?>) no-repeat center; background-size: 92%; height: 62px;<?php } ?>"></div><?php // костыль для баннера "новая коллекция" ?>
+                <div class="b-promo-banner-item__logo" <?php if (!empty($item['leftSvg'])) { ?>style="background: url(<?= $arResult['files'][$item['leftSvg']] ?>) no-repeat center; background-size: 92%; height: 62px;"<?php } ?>></div><?php // костыль для баннера "новая коллекция" ?>
                   <?php if ($item['leftColor']) { ?>
                     <style>
                       .custom-banner-item-<?= $item['leftColor'] ?>:before {

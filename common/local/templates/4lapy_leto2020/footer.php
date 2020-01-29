@@ -44,6 +44,10 @@ if ($template->hasMainWrapper()) { ?>
         <?php $APPLICATION->IncludeComponent('articul:action.winners', 'leto2020', ['SECTION_CODE' => 'LETO2020']); ?>
     </section>
 
+    <section data-id-section-landing="photo-winners" class="photo-winners-leto2020">
+        <?php $APPLICATION->IncludeComponent('articul:action.winners', 'withphoto', ['SECTION_CODE' => 'LETO2020']); ?>
+    </section>
+
     <section class="questions-leto2020" data-id-section-landing="questions">
         <?php $APPLICATION->IncludeComponent('articul:leto2020.questions', ''); ?>
     </section>

@@ -122,6 +122,8 @@ class UserService implements
      */
     private $personalOffersService;
 
+    private $selectedCity;
+
     /**
      * UserService constructor.
      *
@@ -184,6 +186,42 @@ class UserService implements
         if ($this->bitrixUserService !== null) {
             $result = $this->bitrixUserService->Login($login, $password);
             if ($result === true) {
+                if (isset($_SESSION['socServiceParams'])) {
+                    $data = $_SESSION['socServiceParams'];
+                    $exAuthId = $xmlId = '';
+
+                    if (strripos($data['ex_id'], 'VK') !== false) {
+                        $exAuthId = \FourPaws\SocServ\CSocServVK2::ID;
+                        [,$xmlId] = explode('VKuser', $data['ex_id']);
+                    } else if (strripos($data['ex_id'], 'OK') !== false) {
+                        $exAuthId = \FourPaws\SocServ\CSocServOK2::ID;
+                        [,$xmlId] = explode('VKuser', $data['ex_id']);
+                    } else if (strripos($data['ex_id'], 'FB') !== false) {
+                        $exAuthId = \FourPaws\SocServ\CSocServFB2::ID;
+                        [,$xmlId] = explode('FB_', $data['ex_id']);
+                    }
+
+                    $fieldsUserTable = [
+                        'LOGIN' => $rawLogin,
+                        'EXTERNAL_AUTH_ID' => $exAuthId,
+                        'USER_ID' => $this->bitrixUserService->GetID(),
+                        'XML_ID' => $xmlId,
+                        'NAME' => $data['NAME'],
+                        'LAST_NAME' => $data['LAST_NAME'],
+                        'EMAIL' => '',
+                        'OATOKEN' => $data['token'],
+                    ];
+
+                    try {
+                        $result = \Bitrix\Socialservices\UserTable::add($fieldsUserTable);
+
+                        if ($result) {
+                            unset($_SESSION['socServiceParams']);
+                        }
+                    } catch (Exception $e) {
+                        unset($_SESSION['socServiceParams']);
+                    }
+                }
                 return true;
             }
 
@@ -374,6 +412,7 @@ class UserService implements
     }
 
     /**
+     * Не привязано к $this->selectedCity, т.к. неизвестно, сохранится ли тогда логика работы
      * @param string            $code
      * @param string            $name
      * @param string|array|null $parentName
@@ -422,41 +461,43 @@ class UserService implements
      */
     public function getSelectedCity(): array
     {
-        $cityCode = null;
+        if (!$this->selectedCity) {
+            $cityCode = null;
 
-        if ($_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE]) {
-            $cityCode = $_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE];
-        } elseif ($this->isAuthorized()) {
-            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            if (($user = $this->getCurrentUser()) && $user->getLocation()) {
-                $cityCode = $user->getLocation();
+            if ($_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE]) {
+                $cityCode = $_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE];
+            } elseif ($this->isAuthorized()) {
+                /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+                if (($user = $this->getCurrentUser()) && $user->getLocation()) {
+                    $cityCode = $user->getLocation();
+                }
             }
+
+            $this->selectedCity = (new BitrixCache())
+                ->withId(\sprintf(
+                    'location:%s',
+                    $cityCode ?? '-1'
+                ))
+                ->withTime(864000)
+                ->resultOf(function () use ($cityCode) {
+                    $city = null;
+
+                    if ($cityCode) {
+                        try {
+                            $city = $this->locationService->findLocationCityByCode($cityCode);
+                        } catch (CityNotFoundException $e) {
+                        }
+                    }
+
+                    if (null === $city) {
+                        $city = $this->locationService->getDefaultLocation();
+                    }
+
+                    return $city;
+                });
         }
 
-        $city = (new BitrixCache())
-            ->withId(\sprintf(
-                'location:%s',
-                $cityCode ?? '-1'
-            ))
-            ->withTime(864000)
-            ->resultOf(function () use ($cityCode) {
-                $city = null;
-
-                if ($cityCode) {
-                    try {
-                        $city = $this->locationService->findLocationCityByCode($cityCode);
-                    } catch (CityNotFoundException $e) {
-                    }
-                }
-
-                if (null === $city) {
-                    $city = $this->locationService->getDefaultLocation();
-                }
-
-                return $city;
-            });
-
-        return $city;
+        return $this->selectedCity;
     }
 
     /**
