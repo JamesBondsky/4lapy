@@ -17,7 +17,7 @@ class AddAddressUserFieldForLections20200124162359 extends \Adv\Bitrixtools\Migr
         $helper = new HelperManager();
         $iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::FLAGMAN_LECTIONS);
         
-        $helper->UserTypeEntity()->addUserTypeEntityIfNotExists('IBLOCK_41_SECTION', 'UF_LECTION_ADDRESS', [
+        $helper->UserTypeEntity()->addUserTypeEntityIfNotExists('IBLOCK_' . $iblockId . '_SECTION', 'UF_LECTION_ADDRESS', [
             'ENTITY_ID'         => 'IBLOCK_' . $iblockId . '_SECTION',
             'FIELD_NAME'        => 'UF_LECTION_ADDRESS',
             'USER_TYPE_ID'      => 'string',

@@ -23,9 +23,9 @@ if (!empty($arResult['ITEMS'])) : ?>
                                 <div class="item" data-item-lectures-flagship-store="<?=$key?>">
                                     <div class="item__img" style="background-image: url('<?=($item['PICTURE']) ? ($item['PICTURE']) : "/static/build/images/inhtml/no_image_flagship.jpg"?>')"></div>
                                     <form class="item__content js-form-validation" data-form-signup-grooming-flagship="true">
-                                        <div class="item__info">
+                                        <div class="item__info <?php if ($item['ADDRESS']) : ?>item__info_top<?php endif; ?>">
                                             <?php if ($item['ADDRESS']) : ?><div class="item__city orange"><?=$item['ADDRESS'] ?></div><?php endif; ?>
-                                            <div class="item__title" data-name-lectures-flagship="<?=$item['MAIN_SECTION_NAME']?>">
+                                            <div class="item__title <?php if ($item['DESCRIPTION']) : ?>link<?php endif; ?>" data-name-lectures-flagship="<?=$item['MAIN_SECTION_NAME']?>">
                                                 <span><?=$item['MAIN_SECTION_NAME']?></span>
                                             </div>
                                         </div>
