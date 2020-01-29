@@ -64,11 +64,16 @@ class ActionWinners extends CBitrixComponent
                 [
                     'NAME',
                     'CODE',
+                    'PREVIEW_PICTURE',
                     'IBLOCK_SECTION_ID',
-                    'PROPERTY_PHONE'
+                    'PROPERTY_PHONE',
+                    'PROPERTY_ICON',
+                    'PROPERTY_SLIDER',
                 ]
             );
+            
             while ($element = $elements->Fetch()) {
+                $element['PREVIEW_PICTURE'] = $img_path = \CFile::GetPath($element['PREVIEW_PICTURE']);
                 $arSections[$arSectionsMap[$element['IBLOCK_SECTION_ID']]]['WINNERS'][] = $element;
             }
         }
