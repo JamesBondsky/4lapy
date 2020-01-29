@@ -3,6 +3,10 @@
 namespace Sprint\Migration;
 
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
+
 class AddAddressUserFieldForLections20200124162359 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
 {
     
@@ -11,9 +15,10 @@ class AddAddressUserFieldForLections20200124162359 extends \Adv\Bitrixtools\Migr
     public function up()
     {
         $helper = new HelperManager();
+        $iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::FLAGMAN_LECTIONS);
         
         $helper->UserTypeEntity()->addUserTypeEntityIfNotExists('IBLOCK_41_SECTION', 'UF_LECTION_ADDRESS', [
-            'ENTITY_ID'         => 'IBLOCK_41_SECTION',
+            'ENTITY_ID'         => 'IBLOCK_' . $iblockId . '_SECTION',
             'FIELD_NAME'        => 'UF_LECTION_ADDRESS',
             'USER_TYPE_ID'      => 'string',
             'XML_ID'            => '',
@@ -59,8 +64,9 @@ class AddAddressUserFieldForLections20200124162359 extends \Adv\Bitrixtools\Migr
     public function down()
     {
         $helper = new HelperManager();
-    
-        $helper->UserTypeEntity()->deleteUserTypeEntityIfExists('IBLOCK_41_SECTION', 'UF_LECTION_ADDRESS');
+        $iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::FLAGMAN_LECTIONS);
+        
+        $helper->UserTypeEntity()->deleteUserTypeEntityIfExists('IBLOCK_' . $iblockId . '_SECTION', 'UF_LECTION_ADDRESS');
     }
     
 }
