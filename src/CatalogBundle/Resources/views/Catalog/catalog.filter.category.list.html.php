@@ -9,7 +9,6 @@
  * @var Category                              $category
  * @var CMain                                 $APPLICATION
  * @var bool                                  $isBrand
- * @var bool                                  $isShare
  * @var ArrayCollection                       $sectionIds
  */
 
@@ -106,8 +105,6 @@ if ($isBrand && !empty($brand)) {
             $cache->endDataCache(['childs' => $childs]);
         }
     }
-} elseif($isShare) {
-
 } else {
     $childs = $category->getChild();
 }
