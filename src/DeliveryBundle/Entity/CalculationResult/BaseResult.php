@@ -31,6 +31,7 @@ use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\ScheduleResultService;
 use DateTime;
 use Exception;
+use Symfony\Component\Cache\Simple\FilesystemCache;
 
 abstract class BaseResult extends CalculationResult implements CalculationResultInterface
 {
@@ -411,97 +412,116 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             static::$scheduleResults = new DeliveryScheduleResultCollection();
         }
 
-        /** @var DeliveryScheduleResultService $scheduleResultService */
-        $scheduleResultService = Application::getInstance()->getContainer()->get(DeliveryScheduleResultService::class);
-
-        $date = clone $this->getCurrentDate();
-
-        $delayed = $stockResult->getDelayed();
-        /** @var StockCollection[] $stocksByStore */
-        $stocksByStore = [];
-        $stores = [];
-
-        $offers = $delayed->getOffers();
-        /** @var Offer $offer */
-        foreach ($offers as $offer) {
-            /** @var Stock $stock */
-            foreach ($offer->getAllStocks() as $stock) {
-                $storeXmlId = $stock->getStore()->getXmlId();
-                if (!isset($stores[$storeXmlId])) {
-                    $stores[$storeXmlId] = $stock->getStore();
-                }
-
-                if (!isset($stocksByStore[$storeXmlId])) {
-                    $stocksByStore[$storeXmlId] = new StockCollection();
-                }
-                $stocksByStore[$storeXmlId][$offer->getId()] = $stock;
-            }
-        }
-
-        /**
-         * @var string $storeXmlId
-         * @var StockCollection $stocks
-         */
-        $resultCollection = new DeliveryScheduleResultCollection();
-        foreach ($stocksByStore as $storeXmlId => $stocks) {
-            foreach ($this->getScheduleResults($stores[$storeXmlId], $store, $stocks, $delayed, $date) as $scheduleResult) {
-                $resultCollection->add($scheduleResult);
-            }
-        }
-
-        if ($resultCollection->isEmpty()) {
-            if ($stockResult->getAvailable()->isEmpty()) {
-                $this->addError(new Error('Нет доступных товаров и не найдено графиков поставок для недоступных'));
-            } else {
-                $delayed->setType(StockResult::TYPE_UNAVAILABLE);
-            }
+        $cacheKey = $store->getXmlId() . '_' . implode('_', array_keys($stockResult->toArray()));
+        $cache = new FilesystemCache('', 3600 * 2, getenv('CACHE_DIR') ?? null);
+        if ($cache->has($cacheKey)) {
+            $date = $cache->get($cacheKey);
         } else {
-            $this->shipmentResults = $scheduleResultService->getFastest($resultCollection, $this->getCurrentDate());
 
-            $date->modify(sprintf('+%s days', $this->shipmentResults->getDays($this->getCurrentDate())));
+            /** @var DeliveryScheduleResultService $scheduleResultService */
+            $scheduleResultService = Application::getInstance()->getContainer()->get(DeliveryScheduleResultService::class);
+
+            $date = clone $this->getCurrentDate();
+
+            $delayed = $stockResult->getDelayed();
+            /** @var StockCollection[] $stocksByStore */
+            $stocksByStore = [];
+            $stores = [];
+
+            $offers = $delayed->getOffers();
+            /** @var Offer $offer */
             foreach ($offers as $offer) {
-                $amount = $this->shipmentResults->getAmountByOffer($offer);
-                /** @var StockResult $stockResultForOffer */
-                $stockResultForOffer = $delayed->filterByOffer($offer)->first();
-                if ($amount) {
-                    $diff = $stockResultForOffer->getAmount() - $amount;
-                    if ($diff > 0) {
-                        /**
-                         * Если может быть поставлено меньшее, чем нужно, количество
-                         */
-                        $unavailableStockResultForOffer = $stockResultForOffer->splitByAmount($amount);
-
-                        $this->stockResult->add(
-                            $unavailableStockResultForOffer->setType(StockResult::TYPE_UNAVAILABLE)
-                        );
+                /** @var Stock $stock */
+                foreach ($offer->getAllStocks() as $stock) {
+                    $storeXmlId = $stock->getStore()->getXmlId();
+                    if (!isset($stores[$storeXmlId])) {
+                        $stores[$storeXmlId] = $stock->getStore();
                     }
-                } else {
-                    /**
-                     * Если для этого оффера нет графиков
-                     */
-                    $stockResultForOffer->setType(StockResult::TYPE_UNAVAILABLE);
+
+                    if (!isset($stocksByStore[$storeXmlId])) {
+                        $stocksByStore[$storeXmlId] = new StockCollection();
+                    }
+                    $stocksByStore[$storeXmlId][$offer->getId()] = $stock;
                 }
             }
-        }
 
-
-        if ($store->isShop() && !$scheduleResultService->isIrregularTypeCollection($resultCollection, $this->getCurrentDate())) {
             /**
-             * Добавляем "срок поставки" к дате доставки
-             * (он должен быть не менее 1 дня)
+             * @var string $storeXmlId
+             * @var StockCollection $stocks
              */
-            $modifier = $store->getDeliveryTime();
-            if ($store->getDeliveryTime() < 1) {
-                $modifier = 1;
+            $resultCollection = new DeliveryScheduleResultCollection();
+
+            $filter = [];
+
+            foreach ($stocksByStore as $storeXmlId => $stocks) {
+                $filter[] = [
+                    'sender' => $stores[$storeXmlId]->getXmlId(),
+                    'received' => $store->getXmlId()
+                ];
             }
-            $date->modify(sprintf('+%s days', $modifier));
-        }
 
-        if ($this->shipmentResults) {
-            /**
-             * Устанавливаем время доставки 9 утра
-             */
-            $date->setTime(9, 0, 0, 0);
+            foreach ($stocksByStore as $storeXmlId => $stocks) {
+                foreach ($this->getScheduleResults($stores[$storeXmlId], $store, $stocks, $delayed, $date) as $scheduleResult) {
+                    $resultCollection->add($scheduleResult);
+                }
+            }
+
+            if ($resultCollection->isEmpty()) {
+                if ($stockResult->getAvailable()->isEmpty()) {
+                    $this->addError(new Error('Нет доступных товаров и не найдено графиков поставок для недоступных'));
+                } else {
+                    $delayed->setType(StockResult::TYPE_UNAVAILABLE);
+                }
+            } else {
+                $this->shipmentResults = $scheduleResultService->getFastest($resultCollection, $this->getCurrentDate());
+
+                $date->modify(sprintf('+%s days', $this->shipmentResults->getDays($this->getCurrentDate())));
+                foreach ($offers as $offer) {
+                    $amount = $this->shipmentResults->getAmountByOffer($offer);
+                    /** @var StockResult $stockResultForOffer */
+                    $stockResultForOffer = $delayed->filterByOffer($offer)->first();
+                    if ($amount) {
+                        $diff = $stockResultForOffer->getAmount() - $amount;
+                        if ($diff > 0) {
+                            /**
+                             * Если может быть поставлено меньшее, чем нужно, количество
+                             */
+                            $unavailableStockResultForOffer = $stockResultForOffer->splitByAmount($amount);
+
+                            $this->stockResult->add(
+                                $unavailableStockResultForOffer->setType(StockResult::TYPE_UNAVAILABLE)
+                            );
+                        }
+                    } else {
+                        /**
+                         * Если для этого оффера нет графиков
+                         */
+                        $stockResultForOffer->setType(StockResult::TYPE_UNAVAILABLE);
+                    }
+                }
+            }
+
+
+            if ($store->isShop() && !$scheduleResultService->isIrregularTypeCollection($resultCollection, $this->getCurrentDate())) {
+                /**
+                 * Добавляем "срок поставки" к дате доставки
+                 * (он должен быть не менее 1 дня)
+                 */
+                $modifier = $store->getDeliveryTime();
+                if ($store->getDeliveryTime() < 1) {
+                    $modifier = 1;
+                }
+                $date->modify(sprintf('+%s days', $modifier));
+            }
+
+            if ($this->shipmentResults) {
+                /**
+                 * Устанавливаем время доставки 9 утра
+                 */
+                $date->setTime(9, 0, 0, 0);
+            }
+
+            $cache->set($cacheKey, $date);
         }
 
         return $date;
@@ -721,7 +741,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $result1 = $storeData1['RESULT'];
             /** @var PickupResult $result2 */
             $result2 = $storeData2['RESULT'];
-            
+
             /** в киоске первым идёт магазин, в котором он стоит */
             if (KioskService::isKioskMode() && !$result2->getErrors()) {
                 /** @var KioskService $kioskService */

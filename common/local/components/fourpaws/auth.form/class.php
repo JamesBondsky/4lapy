@@ -35,6 +35,9 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\Model\City;
+use FourPaws\SocServ\CSocServFB2;
+use FourPaws\SocServ\CSocServOK2;
+use FourPaws\SocServ\CSocServVK2;
 use FourPaws\UserBundle\Service\UserService;
 use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
@@ -453,6 +456,19 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
             return $this->ajaxMess->getWrongPasswordError($newTokenResponse);
         } catch (InvalidCredentialException $e) {
+            /** @var UserRepository $userRepository */
+            $userRepository = $container->get(UserRepository::class);
+
+            $searchUser = $userRepository->findOneByPhone($rawLogin);
+
+            if (count($searchUser) > 0) {
+                $currUesr = current($searchUser);
+
+                if ($currUesr->getExternalAuthId()) {
+                    return $this->ajaxMess->getWrongAuthError($currUesr->getExternalAuthId());
+                }
+            }
+
             if (($_SESSION['COUNT_AUTH_AUTHORIZE'] >= $this->getLimitAuthAuthorizeAttempts($rawLogin)) && $this->showBitrixCaptcha($rawLogin)) {
                 try {
                     $this->setSocial();

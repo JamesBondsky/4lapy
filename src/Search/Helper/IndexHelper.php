@@ -487,7 +487,7 @@ class IndexHelper implements LoggerAwareInterface
         if (!$products) {
             return true;
         }
-       
+
         $responseSet = $this->getCatalogIndex()->addDocuments($documents);
 
         if (!$responseSet->isOk()) {
@@ -583,7 +583,7 @@ class IndexHelper implements LoggerAwareInterface
         if ($flushBaseFilter) {
             $query->withFilter([]);
         }
-    
+
         // $query->withFilter(['ID' => [86097]]);
         $allProducts = $query->exec();
         $this->__indexAll(Product::class, $allProducts, $batchSize);
@@ -667,7 +667,7 @@ class IndexHelper implements LoggerAwareInterface
              * @see indexProducts for Product::class
              * @see indexBrands for Brand::class
              */
-            
+
             if (call_user_func([$this, $method], $allItemChunk)) {
                 $indexOk += \count($allItemChunk);
             } else {

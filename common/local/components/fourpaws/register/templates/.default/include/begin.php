@@ -12,12 +12,22 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $request = Application::getInstance()->getContext()->getRequest();
 $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
+
+$userData = $_SESSION['socServiceParams'];
+
+$regParam = [
+    'name' => $userData['name'],
+    'last_name' => $userData['last_name'],
+    'gender' => $userData['gender'],
+    'birthday' => $userData['birthday'],
+    'ex_id' => $userData['ex_id'],
+];
 ?>
 <div class="b-registration__content b-registration__content--moiety">
     <a class="b-button b-button--social b-button--full-width js-reg-by-phone"
        href="javascript:void(0)"
        title="Регистрация по телефону"
-       data-url="/ajax/user/auth/register-r/"
+       data-url="/ajax/user/auth/register-r/?<?= http_build_query($regParam) ?>"
        data-method="post"
        data-action="get"
        data-backurl="<?=$backUrl?>"

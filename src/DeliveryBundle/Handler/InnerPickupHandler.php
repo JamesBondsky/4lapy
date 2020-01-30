@@ -21,6 +21,7 @@ use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
+use Symfony\Component\Cache\Simple\FilesystemCache;
 
 class InnerPickupHandler extends DeliveryHandlerBase
 {
@@ -134,7 +135,25 @@ class InnerPickupHandler extends DeliveryHandlerBase
             return $result;
         }
 
-        $stockResult = static::getStocks($basket, $offers, $shops);
+        $cacheKeyArr = [];
+        foreach ($basket->getIterator() as $basketItem) {
+            $cacheKeyArr[] = $basketItem->getField('ID');
+        }
+
+        foreach ($shops as $shopItem) {
+            $cacheKeyArr[] = $shopItem->getXmlId();
+        }
+
+        $cacheKey = implode('_', $cacheKeyArr);
+
+        $cache = new FilesystemCache('', 3600 * 2, getenv('CACHE_DIR') ?? null);
+
+        if ($cache->has($cacheKey)) {
+            $stockResult = $cache->get($cacheKey);
+        } else {
+            $stockResult = static::getStocks($basket, $offers, $shops);
+            $cache->set($cacheKey, $stockResult);
+        }
         if ($stockResult->getAvailable()->isEmpty() && $stockResult->getDelayed()->isEmpty()) {
             $result->addError(new Error('Товары не в наличии'));
 

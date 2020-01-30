@@ -1,10 +1,12 @@
 <?php
 
 use Bitrix\Sale\BasketItem;
+use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Components\CatalogElementDetailComponent;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\WordHelper;
 
@@ -16,10 +18,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array $arResult
  * @var Offer $currentOffer
  * @var Product $product
+ * @var \FourPaws\Catalog\Model\Brand $brand
  * @var CatalogElementDetailComponent $this
  */
 $currentOffer = $arResult['CURRENT_OFFER'];
 $product = $arResult['PRODUCT'];
+$brand = $arResult['BRAND'];
 
 $userService = $this->getCurrentUserService();
 $basketService = $this->getBasketService();
@@ -189,4 +193,88 @@ foreach ($product->getOffers() as $offer) {
         <meta itemprop="availability" content="http://schema.org/<?= $availabilityValue ?>">
     </span>
     <?php
+}
+
+try {
+    $category3 = $product->getSection();
+    $category2 = $category3->getParent();
+    $category1 = $category2->getParent();
+
+    $forWhoString = array_reduce($product->getForWho()->toArray(), static function($carry, HlbReferenceItem $item) {
+    	return $carry ? implode(', ', [$carry, $item->getName()]) : $item->getName();
+    });
+    $petAgeString = array_reduce($product->getPetAge()->toArray(), static function($carry, HlbReferenceItem $item) {
+        return $carry ? implode(', ', [$carry, $item->getName()]) : $item->getName();
+    });
+    $petSizeString = array_reduce($product->getPetSize()->toArray(), static function($carry, HlbReferenceItem $item) {
+        return $carry ? implode(', ', [$carry, $item->getName()]) : $item->getName();
+    });
+    $productFormsString = array_reduce($product->getProductForms()->toArray(), static function($carry, HlbReferenceItem $item) {
+        return $carry ? implode(', ', [$carry, $item->getName()]) : $item->getName();
+    });
+    $feedSpecification = $product->getFeedSpecification();
+    $feedSpecificationString = '';
+    if ($feedSpecification) {
+        $feedSpecificationString = $feedSpecification->getName();
+    }
+
+	//TODO exponea dto?
+    $exponeaData = [
+        'product_id'              => $currentOffer->getXmlId() ?: '', // type: string
+        'title'                   => $currentOffer->getName(), // type: string, format: trimmed
+        'brand'                   => $brand->getName(), // type: string, format: trimmed
+//        'category_sap_1'          => '', // type: string //FIXME exponea оставляем на конец работ, надо импортировать привязку товаров к разделам sap и информацию по ним в БД
+//        'category_sap_1_id'       => '', // type: string
+//        'category_sap_2'          => '', // type: string
+//        'category_sap_2_id'       => '', // type: string
+//        'category_sap_3'          => '', // type: string
+//        'category_sap_3_id'       => '', // type: string
+        'category_1'              => $category1->getName(), // type: string
+        'category_1_url'          => new FullHrefDecorator($category1->getSectionPageUrl()), // type: string, format: URL
+        'category_1_id'           => $category1->getCode(), // type: string
+        'category_2'              => $category2->getName(), // type: string
+        'category_2_url'          => new FullHrefDecorator($category2->getSectionPageUrl()), // type: string, format: URL
+        'category_2_id'           => $category2->getCode(), // type: string
+        'category_3'              => $category3->getName(), // type: string
+        'category_3_url'          => new FullHrefDecorator($category3->getSectionPageUrl()), // type: string, format: URL
+        'category_3_id'           => $category3->getCode(), // type: string
+        'categories_path'         => implode(' > ', [$category1->getName(), $category2->getName(), $category3->getName()]), // type: string, format: list of categories concatenated with '>' (path)
+        'category_id'             => $category1->getCode(), // type: string
+        'categories_ids'          => [$category1->getCode(), $category2->getCode(), $category3->getCode()], // type: list, format: JSON (Array of Strings)
+        'price'                   => $currentOffer->getPrice(), // type: number(float?)
+        'stock_level'             => $currentOffer->getQuantity(), // type: number, format: integer
+        //'location'                => new FullHrefDecorator('/'), // type: string, format: URL. будет тречиться автоматически, не обязательно вставлять в код
+        'domain'                  => SITE_SERVER_NAME, // type: string, format: domain
+        'pet_type'                => $forWhoString, // type: string
+        'pet_age'                 => $petAgeString, // type: string
+        'pet_size'                => $petSizeString, // type: string
+        'product_spec'            => $feedSpecificationString, // type: string
+        'product_farma_type'      => $productFormsString, // type: boolean, format: True/False //TODO exponea По каким правилам мапить значения справочника в булевые значения?
+        'product_farma'           => $product->isLicenseRequired(), // type: boolean, format: True/False
+        'product_stm'             => $product->getCtm(), // type: boolean, format: True/False //TODO exponea посмотреть, прилетят ли 25-го числа значения true/false (всего до исправления было 46 true)
+        'product_food'            => $product->isFood(), // type: boolean, format: True/False
+        'product_weight'          => $currentOffer->getCatalogProduct()->getWeight(), // type: number(float?)
+        //'product_wear_size'       => '', // type: string //TODO exponea change
+        //'rating'                  => 0, // type: number //TODO exponea change
+        //'ratings_count'           => 0, // type: number //TODO exponea change
+        'product_subscribe_price' => $currentOffer->getSubscribePrice(), // type: string(float)
+        'product_available'       => $currentOffer->isAvailable(), // type: bool
+        //'delivery_date'           => 1234567890 // type: number //TODO exponea отправлять всё событие батчами через API: https://docs.exponea.com/reference#batch-commands ?
+    ];
+    if ($discount = $currentOffer->getDiscount()) {
+        $exponeaData['discount_percentage'] = $discount; // type: number(float?)
+        $exponeaData['discount_value'] = $currentOffer->getDiscountPrice(); // type: number(float?)
+        $exponeaData['original_price'] = $currentOffer->getOldPrice() ?: $currentOffer->getBasePrice(); // type: number(float?)
+    }
+
+    $exponeaDataEncoded = CUtil::PhpToJSObject($exponeaData);
+    ?>
+	<script>
+        //console.log('📊exponea(view_item)', <?//= $exponeaDataEncoded ?>);
+        exponea.track('view_item', <?= $exponeaDataEncoded ?>);
+	</script>
+    <?php
+} catch (Throwable $e) {
+	dump($e); //TODO exponea del
+	//TODO exponea log critical
 }
