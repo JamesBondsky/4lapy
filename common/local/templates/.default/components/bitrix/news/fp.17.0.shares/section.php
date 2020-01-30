@@ -17,12 +17,6 @@ $arParams['RESIZE_WIDTH'] = $arParams['RESIZE_WIDTH'] ?? '305';
 $arParams['RESIZE_HEIGHT'] = $arParams['RESIZE_HEIGHT'] ?? '160';
 $arParams['RESIZE_TYPE'] = $arParams['RESIZE_TYPE'] ?? 'BX_RESIZE_IMAGE_EXACT';
 
-$request = \Bitrix\Main\Context::getCurrent()->getRequest();
-
-if ($request->get('filter')) {
-    $arResult['VARIABLES']['SECTION_CODE'] = $request->get('filter');
-}
-
 if (isset($arParams['USE_FILTER']) && $arParams['USE_FILTER'] === 'Y') {
     $arParams['FILTER_NAME'] = 'arSharesFilterExt';
     // фильтр по видам питомцев

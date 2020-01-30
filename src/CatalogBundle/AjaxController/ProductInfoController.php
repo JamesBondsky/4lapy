@@ -22,13 +22,11 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Dto\CatalogBrandFilterRequest;
-use FourPaws\CatalogBundle\Dto\CatalogShareFilterRequest;
 use FourPaws\CatalogBundle\Dto\ChildCategoryFilterRequest;
 use FourPaws\CatalogBundle\Dto\ProductListRequest;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
-use FourPaws\MobileApiBundle\Services\Api\ProductService;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SapBundle\Repository\BasketRulesRepository;
 use FourPaws\Search\Model\ProductSearchResult;
@@ -78,12 +76,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
      * @var BasketRulesRepository
      */
     protected $basketRulesRepository;
-    
-    /**
-     * @var ProductService
-     */
-    private $productService;
-    
+
     /**
      * ProductInfoController constructor.
      *
@@ -98,15 +91,13 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
         SearchService $searchService,
         LocationService $locationService,
         BasketService $basketService,
-        BasketRulesRepository $basketRulesRepository,
-        ProductService $productService
+        BasketRulesRepository $basketRulesRepository
     ) {
         $this->validator = $validator;
         $this->searchService = $searchService;
         $this->locationService = $locationService;
         $this->basketService = $basketService;
         $this->basketRulesRepository = $basketRulesRepository;
-        $this->productService = $productService;
     }
 
     /**
@@ -498,38 +489,6 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                 $catalogBrandRequest->getSorts()->getSelected(),
                 $catalogBrandRequest->getNavigation(),
                 $catalogBrandRequest->getSearchString()
-            );
-            $count = $productSearchResult->getResultSet()->getTotalHits();
-        } catch (Exception $e) {
-            $logger->error('Ошибка подгрузки количества итемов в фильтре ' . $e->getMessage());
-        }
-        return JsonSuccessResponse::createWithData('подгрузка количества успешна',
-            [
-                'filterButtonText' => 'Показать ' . $count . ' ' . WordHelper::declension($count,
-                        ['товар', 'товара', 'товаров']),
-            ]);
-    }
-    
-    /**
-     * @Route("/count-by-filter-share/", methods={"GET", "POST"})
-     *
-     * @param CatalogShareFilterRequest $catalogShareRequest
-     *
-     * @return JsonResponse
-     */
-    public function getCountItemsByFilterShare(CatalogShareFilterRequest $catalogShareRequest): JsonResponse
-    {
-        $count = 0;
-        $logger = LoggerFactory::create('ajaxFilter');
-    
-        $searchQuery = $this->productService->getProductXmlIdsByShareId($catalogShareRequest->getShare()->getId());
-        
-        try {
-            $productSearchResult = $this->searchService->searchProducts(
-                $catalogShareRequest->getCategory()->getFilters(),
-                $catalogShareRequest->getSorts()->getSelected(),
-                $catalogShareRequest->getNavigation(),
-                $searchQuery
             );
             $count = $productSearchResult->getResultSet()->getTotalHits();
         } catch (Exception $e) {

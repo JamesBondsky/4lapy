@@ -114,8 +114,11 @@ class ProductSearchResult implements ProductResultInterface
     {
         return $this->resultSet;
     }
-    
-    public function getQuery()
+
+    /**
+     * @return string
+     */
+    public function getQuery(): string
     {
         return $this->query;
     }
