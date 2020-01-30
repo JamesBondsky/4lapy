@@ -17,7 +17,7 @@ if (!empty($arResult['ITEMS'])) : ?>
                 </div>
 
                 <div class="lectures-flagship-store">
-                    <div class="lectures-flagship-store__list">
+                    <div class="lectures-flagship-store__list" data-list-lectures-flagship-store="true">
                         <?php foreach ($arResult['ITEMS'] as $key => $item) : ?>
                             <div class="item-wrap" data-wrap-item-lectures-flagship-store="true">
                                 <div class="item" data-item-lectures-flagship-store="<?=$key?>">
@@ -29,6 +29,13 @@ if (!empty($arResult['ITEMS'])) : ?>
                                                 <span><?=$item['MAIN_SECTION_NAME']?></span>
                                             </div>
                                         </div>
+
+                                        <?php if ($item['DESCRIPTION']) : ?>
+                                            <div class="item__mobile-descr" data-mobile-descr-lectures-flagship-store="true">
+                                                <?=$item['DESCRIPTION']?>
+                                            </div>
+                                        <?php endif; ?>
+
                                         <div class="item__datetime">
                                             <div class="item__col-date">
                                                 <div class="item__subtitle">Дата</div>
@@ -67,7 +74,6 @@ if (!empty($arResult['ITEMS'])) : ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
-                    <div class="lectures-flagship-store__mobile-descr" data-mobile-descr-lectures-flagship-store="true"></div>
                 </div>
             </div>
         </div>
