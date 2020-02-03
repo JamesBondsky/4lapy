@@ -465,7 +465,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $currUesr = current($searchUser);
 
                 if ($currUesr->getExternalAuthId()) {
-                    return $this->ajaxMess->getWrongAuthError($currUesr->getExternalAuthId());
+                    return $this->ajaxMess->getWrongAuthError();
                 }
             }
 
