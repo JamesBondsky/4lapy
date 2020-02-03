@@ -7,7 +7,6 @@ use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\FilterSet;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
-use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
@@ -306,49 +305,6 @@ if (!$catalogRequest->isLanding()) { ?>
             $ecommerceService->buildImpressionsFromProductCollection($collection, 'Каталог по питомцу'),
             true
         );
-        try {
-	        $category2 = $category->getParent();
-	        $category1 = $category2->getParent();
-	        $offersXmlIds = [];
-	        foreach ($collection->toArray() as $product) {
-				$offers = $product->getOffers()->toArray();
-	            foreach ($offers as $offer) {
-	                $offersXmlIds[] = $offer->getXmlId();
-	            }
-	        }
-	        $exponeaData = [
-				'category_id' => $category->getCode(), // type: string
-				'category_name' => $category->getName(), // type: string
-				'category_listed_products' => $offersXmlIds, // type: list, format: JSON (Array of Strings)
-				//'location' => 'http://www.webshop.com/cart', // type: string, format: URL. будет тречиться автоматически, не обязательно вставлять в код
-				'domain' => new FullHrefDecorator('/'), // type: string, format: domain
-	//			'category_sap_1' => '', // type: string //TODO exponea категории из sap
-	//			'category_sap_1_id' => '', // type: string
-	//			'category_sap_2' => '', // type: string
-	//			'category_sap_2_id' => '', // type: string
-	//			'category_sap_3' => '', // type: string
-	//			'category_sap_3_id' => '', // type: string
-				'category_1' => $category1->getName(), // type: string
-				'category_1_url' => new FullHrefDecorator($category1->getSectionPageUrl()), // type: string, format: URL
-				'category_1_id' => $category1->getCode(), // type: string
-				'category_2' => $category2->getName(), // type: string
-				'category_2_url' => new FullHrefDecorator($category2->getSectionPageUrl()), // type: string, format: URL
-				'category_2_id' => $category2->getCode(), // type: string
-				'category_3' => $category->getName(), // type: string
-				'category_3_url' => $category->getSectionPageUrl(), // type: string, format: URL
-				'category_3_id' => $category->getCode(), // type: string
-	        ];
-	        $exponeaDataEncoded = CUtil::PhpToJSObject($exponeaData);
-	        ?>
-	        <script>
-	            //console.log('📊exponea(view_category)', <?//= $exponeaDataEncoded ?>);
-	            exponea.track('view_category', <?= $exponeaDataEncoded ?>);
-	        </script>
-	        <?php
-        } catch (Throwable $e) {
-            dump($e); //TODO exponea del
-            //TODO exponea log critical
-        }
 
         echo $landingService->replaceLinksToLanding($view->render('FourPawsCatalogBundle:Catalog:catalog.snippet.list.html.php', \compact('collection', 'catalogRequest')), $request); ?>
     </div>
