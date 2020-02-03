@@ -2,16 +2,11 @@
 namespace FourPaws\SocServ;
 
 
-use Bitrix\Main\Config\Option;
-use Bitrix\Socialservices\UserTable;
 use CModule;
 use CSocServAuthManager;
 use CVKontakteOAuthInterface;
 
 class CSocServVK2 extends \CSocServVKontakte {
-
-    use SocServiceHelper;
-
     const ID = "VK2";
     const CONTROLLER_URL = "https://www.bitrix24.ru/controller";
 
@@ -60,7 +55,7 @@ class CSocServVK2 extends \CSocServVKontakte {
         }
         else
         {
-            //$redirect_uri = CSocServUtil::GetCurUrl('auth_service_id='.parent::ID);
+            //$redirect_uri = CSocServUtil::GetCurUrl('auth_service_id='.self::ID);
             $redirect_uri = \CHTTP::URN2URI($APPLICATION->GetCurPage()) . '?auth_service_id=' . self::ID;
 
             $backurl = $APPLICATION->GetCurPageParam(
@@ -68,7 +63,7 @@ class CSocServVK2 extends \CSocServVKontakte {
                 array("logout", "auth_service_error", "auth_service_id", "backurl")
             );
 
-            $state = 'site_id=' . SITE_ID . '&backurl=' . $backurl . (isset($arParams['BACKURL']) ? '&redirect_url=/personal/register/' . urlencode($arParams['BACKURL']) : '');
+            $state = 'site_id=' . SITE_ID . '&backurl=' . urlencode('/personal/register' . $backurl) . (isset($arParams['BACKURL']) ? '&redirect_url=/personal/register/' . urlencode($arParams['BACKURL']) : '');
         }
 
         return $gAuth->GetAuthUrl($redirect_uri, $state);
@@ -115,6 +110,7 @@ class CSocServVK2 extends \CSocServVKontakte {
 			'EXTERNAL_AUTH_ID' => self::ID,
             'XML_ID' => $arVkUser['response']['0']['id'],
 			'LOGIN' => "VKuser" . $arVkUser['response']['0']['id'],
+//            'LOGIN' => $phone ?? "VKuser" . $arVkUser['response']['0']['id'],
             'EMAIL' => $this->entityOAuth->GetCurrentUserEmail(),
             'NAME' => $first_name,
             'LAST_NAME' => $last_name,
@@ -157,7 +153,6 @@ class CSocServVK2 extends \CSocServVKontakte {
     {
         $GLOBALS["APPLICATION"]->RestartBuffer();
         $bSuccess = SOCSERV_AUTHORISATION_ERROR;
-//        $paramsProfile = [];
 
         if ((isset($_REQUEST["code"]) && $_REQUEST["code"] <> '') && CSocServAuthManager::CheckUniqueKey())
         {
@@ -173,72 +168,7 @@ class CSocServVK2 extends \CSocServVKontakte {
                 if (is_array($arVkUser) && ($arVkUser['response']['0']['id'] <> ''))
                 {
                     $arFields = $this->prepareUser($arVkUser);
-                    $checkUser = $this->checkUser($arFields);
-
-                    $exAuthId = $xmlId = '';
-
-                    if (strripos($arFields['LOGIN'], 'VK') !== false) {
-                        $exAuthId = CSocServVK2::ID;
-                        [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
-                    } else if (strripos($arFields['LOGIN'], 'OK') !== false) {
-                        $exAuthId = CSocServOK2::ID;
-                        [,$xmlId] = explode('OKuser', $arFields['LOGIN']);
-                    } else if (strripos($arFields['LOGIN'], 'FB') !== false) {
-                        $exAuthId = CSocServFB2::ID;
-                        [,$xmlId] = explode('FB_', $arFields['LOGIN']);
-                    }
-
-                    if ($checkUser) {
-                        $paramsProfile = [
-                            'name' => $arFields['NAME'],
-                            'last_name' => $arFields['LAST_NAME'],
-                            'gender' => $arFields['PERSONAL_GENDER'],
-                            'birthday' => $arFields['PERSONAL_BIRTHDAY'],
-                            'ex_id' => 'VKuser' . $arVkUser['response']['0']['id'],
-                            'token' => $this->getEntityOAuth()->getToken()
-                        ];
-
-                        $_SESSION['socServiceParams'] = $paramsProfile;
-                        $bSuccess = $this->AuthorizeUser($arFields);
-
-                        if ($bSuccess) {
-                            $user = new \CUser();
-                            $user->Update($checkUser['USER_ID'], [
-                                'EXTERNAL_AUTH_ID' => $exAuthId,
-                                'XML_ID' => $xmlId,
-                            ]);
-                            $user->Authorize($checkUser['USER_ID']);
-                            unset($_SESSION['socServiceParams']);
-                        }
-                    } else {
-
-                        global $USER;
-                        if ($USER->IsAuthorized()) {
-                            $fieldsUserTable = [
-                                'LOGIN' => $USER->GetID(),
-                                'EXTERNAL_AUTH_ID' => $exAuthId,
-                                'USER_ID' => $USER->GetID(),
-                                'XML_ID' => $xmlId,
-                                'NAME' => $arVkUser['response'][0]['first_name'],
-                                'LAST_NAME' => $arVkUser['response'][0]['last_name'],
-                                'EMAIL' => '',
-                                'OATOKEN' => $this->getEntityOAuth()->getToken(),
-                            ];
-
-                            $result = \Bitrix\Socialservices\UserTable::add($fieldsUserTable);
-                        } else {
-                            $paramsProfile = [
-                                'name' => $arFields['NAME'],
-                                'last_name' => $arFields['LAST_NAME'],
-                                'gender' => $arFields['PERSONAL_GENDER'],
-                                'birthday' => $arFields['PERSONAL_BIRTHDAY'],
-                                'ex_id' => 'VKuser' . $arVkUser['response']['0']['id'],
-                                'token' => $this->getEntityOAuth()->getToken()
-                            ];
-
-                            $_SESSION['socServiceParams'] = $paramsProfile;
-                        }
-                    }
+                    $bSuccess = $this->AuthorizeUser($arFields);
                 }
             }
         }
@@ -275,17 +205,12 @@ class CSocServVK2 extends \CSocServVKontakte {
         }
         elseif ($bSuccess !== true)
         {
-            $backUrl = $url;
             $url = (isset($urlPath)) ? $urlPath . '?auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess : $GLOBALS['APPLICATION']->GetCurPageParam(('auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess), $aRemove);
         }
 
         if (CModule::IncludeModule("socialnetwork") && strpos($url, "current_fieldset=") === false)
         {
             $url = (preg_match("/\?/", $url)) ? $url . "&current_fieldset=SOCSERV" : $url . "?current_fieldset=SOCSERV";
-        }
-
-        if (count($paramsProfile) > 0) {
-            $url = '/personal/register/?backurl=' . ($backUrl ?? '/');
         }
 
         echo '

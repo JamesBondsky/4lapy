@@ -2,12 +2,8 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-use Bitrix\Main\Application;
-use FourPaws\App\Application as App;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\KioskBundle\Service\KioskService;
-use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 
 /** @var string $phone */ ?>
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step">
@@ -19,7 +15,6 @@ use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
           method="post">
         <?= bitrix_sessid_post() ?>
         <input type="hidden" name="action" value="login">
-        <input type="hidden" name="backurl" value="<?= $backUrl ?>">
         <div class="b-input-line b-input-line--phone-two js-phone-mask">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="mobile-number-2">Мобильный телефон</label>
@@ -53,21 +48,11 @@ use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
-            <a class="b-link-gray" href="/personal/forgot-password/?backurl=/personal/register" title="Забыли пароль?">Забыли пароль?</a>
-        </div>
-
-        <?php
-        try {
-            $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
-            echo $recaptchaService->getCaptcha('', true);
-        } catch (ApplicationCreateException $e) {
-        }
-        ?>
-
+            <a class="b-link-gray" href="/personal/forgot-password/?backurl=/personal/register" title="Забыли пароль?">Забыли пароль?</a></div>
         <button class="b-button b-button--social b-button--full-width">Далее</button>
 
-        <?php $token = $arResult['token'] ?? $this->getTokenProvider()->getToken(ProtectorHelper::TYPE_AUTH)->getValue() ?>
-        <input type="hidden" name="_csrf" value="<?= $token ?>">
+        <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_AUTH); ?>
+	    <input type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
     </form>
 </div>
 <section class="b-registration__additional-info b-registration__additional-info--step">

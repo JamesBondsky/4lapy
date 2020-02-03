@@ -387,13 +387,9 @@ class Event extends BaseServiceHandler
         /** @var UserService $userService */
         $userService = $container->get(CurrentUserProviderInterface::class);
         try {
-            $userId = (int)$fields['ID'];
+            $user = $userService->getUserRepository()->find((int)$fields['ID']);
 
-            if ($userId) {
-                $user = $userService->getUserRepository()->find($userId);
-
-                $userService->refreshUserCard($user);
-            }
+            $userService->refreshUserCard($user);
         } catch (\Exception $e) {}
 
         return true;

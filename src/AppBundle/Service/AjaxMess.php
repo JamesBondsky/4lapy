@@ -472,17 +472,6 @@ class AjaxMess
     }
 
     /**
-     * @param array $additionalData
-     *
-     * @return JsonResponse
-     */
-    public function getWrongAuthError(array $additionalData = []): JsonResponse
-    {
-        //wrongPassword
-        return $this->getJsonError('wrongAuth', 'Ошибка авторизации - авторизуйтесь через соцсеть или восстановите пароль', $additionalData);
-    }
-
-    /**
      * @param string $code
      * @param string $mes
      *

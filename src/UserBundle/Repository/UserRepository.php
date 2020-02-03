@@ -436,11 +436,6 @@ class UserRepository
         return $this->updateData($id, ['UF_DISCOUNT_CARD' => $discountCardNumber]);
     }
 
-    public function updateExternalAuthId(int $id, string $exId): bool
-    {
-        return $this->updateData($id, ['EXTERNAL_AUTH_ID' => $exId]);
-    }
-
     /**
      * @param int $id
      *

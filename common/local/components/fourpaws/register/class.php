@@ -61,7 +61,6 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\AppBundle\AjaxController\LandingController;
-use Symfony\Component\Security\Csrf\CsrfTokenManager;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsRegisterComponent extends \CBitrixComponent
@@ -94,10 +93,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @var DataLayerService
      */
     private $dataLayerService;
-    /**
-     * @var CsrfTokenManager
-     */
-    private $tokenProvider;
 
     /**
      * FourPawsAuthFormComponent constructor.
@@ -244,10 +239,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 $this->setSocial();
             }
 
-            if (isset($_SESSION['socServiceParams']['ex_id'])) {
-                $this->arResult['STEP'] = 'step1';
-            }
-
             $this->includeComponentTemplate();
         } catch (\Exception $e) {
             try {
@@ -348,8 +339,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $userRepository = $this->currentUserProvider->getUserRepository();
         $haveUsers = $userRepository->havePhoneAndEmailByUsers(
             [
-                '=PERSONAL_PHONE' => $data['PERSONAL_PHONE'],
-                '=EMAIL'          => $data['EMAIL'],
+                'PERSONAL_PHONE' => $data['PERSONAL_PHONE'],
+                'EMAIL'          => $data['EMAIL'],
             ]
         );
 
@@ -406,33 +397,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 $regUser = $userEntity;
             } else {
                 $regUser = $this->userRegistrationService->register($userEntity, true);
-                if ($regUser instanceof User && $regUser->getId() > 0 && isset($data['ex_id'])) {
-                    $exAuthId = $xmlId = '';
-
-                    if (strripos($data['ex_id'], 'VK') !== false) {
-                        $exAuthId = \FourPaws\SocServ\CSocServVK2::ID;
-                        [,$xmlId] = explode('VKuser', $data['ex_id']);
-                    } else if (strripos($data['ex_id'], 'OK') !== false) {
-                        $exAuthId = \FourPaws\SocServ\CSocServOK2::ID;
-                        [,$xmlId] = explode('VKuser', $data['ex_id']);
-                    } else if (strripos($data['ex_id'], 'FB') !== false) {
-                        $exAuthId = \FourPaws\SocServ\CSocServFB2::ID;
-                        [,$xmlId] = explode('FB_', $data['ex_id']);
-                    }
-
-                    $fieldsUserTable = [
-                        'LOGIN' => $regUser->getLogin(),
-                        'EXTERNAL_AUTH_ID' => $exAuthId,
-                        'USER_ID' => $regUser->getId(),
-                        'XML_ID' => $xmlId,
-                        'NAME' => $data['NAME'],
-                        'LAST_NAME' => $data['LAST_NAME'],
-                        'EMAIL' => '',
-                        'OATOKEN' => $data['token'],
-                    ];
-
-                    $result = \Bitrix\Socialservices\UserTable::add($fieldsUserTable);
-                }
             }
             if ($regUser instanceof User && $regUser->getId() > 0) {
                 $this->userAuthorizationService->authorize($regUser->getId());
@@ -706,42 +670,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         switch ($step) {
             case 'step2':
                 $res = $this->ajaxGetStep2($request->get('confirmCode', ''), $phone);
-
-                $userData = $_SESSION['socServiceParams'] ?? [];
-
-                if ($userData) {
-                    $exAuthId = $xmlId = '';
-
-                    if (strripos($userData['ex_id'], 'VK') !== false) {
-                        $exAuthId = \FourPaws\SocServ\CSocServVK2::ID;
-                        [,$xmlId] = explode('VKuser', $userData['ex_id']);
-                    } else if (strripos($userData['ex_id'], 'OK') !== false) {
-                        $exAuthId = \FourPaws\SocServ\CSocServOK2::ID;
-                        [,$xmlId] = explode('OKuser', $userData['ex_id']);
-                    } else if (strripos($userData['ex_id'], 'FB') !== false) {
-                        $exAuthId = \FourPaws\SocServ\CSocServFB2::ID;
-                        [,$xmlId] = explode('FB_', $userData['ex_id']);
-                    }
-
-                    $res = $this->ajaxRegister([
-                        'PERSONAL_PHONE' => $phone,
-                        'backurl' => $request->get('backurl'),
-                        'ex_id' => $userData['ex_id'],
-                        'NAME' => $userData['name'],
-                        'LAST_NAME' => $userData['last_name'],
-                        'PERSONAL_BIRTHDAY' => $userData['birthday'],
-                        'PERSONAL_GENDER' => $userData['gender'],
-                        'EXTERNAL_AUTH_ID' => $exAuthId,
-                        'XML_ID' => $xmlId,
-                        'PASSWORD' => randString(30),
-                        'token' => $userData['token']
-                    ]);
-
-                    if ($res instanceof JsonSuccessResponse) {
-                        unset($_SESSION['socServiceParams']);
-                    }
-                }
-
                 if ($res instanceof JsonResponse) {
                     return $res;
                 }
@@ -799,7 +727,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         );
 
         $phone = PhoneHelper::formatPhone($phone, PhoneHelper::FORMAT_FULL);
-        $backUrl = $request->get('backurl', '');
         ob_start(); ?>
         <header class="b-registration__header">
             <div class="b-title b-title--h1 b-title--registration"><?= $title ?></div>
@@ -1145,17 +1072,5 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                      . '/local/components/fourpaws/register/templates/.default/include/' . $page . '.php';
 
         return ob_get_clean();
-    }
-
-    /**
-     * @return CsrfTokenManager
-     */
-    public function getTokenProvider(): CsrfTokenManager
-    {
-        if ($this->tokenProvider === null) {
-            $this->tokenProvider = App::getInstance()->getContainer()->get('security.csrf.token_manager');
-        }
-
-        return $this->tokenProvider;
     }
 }
