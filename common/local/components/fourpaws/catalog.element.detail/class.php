@@ -221,18 +221,6 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 }
             }
 
-            try {
-                // Кешируется, чтобы использовать потом в component_epilog.php
-                $product->getForWho()->toArray();
-                $product->getPetAge()->toArray();
-                $product->getPetSize()->toArray();
-                $feedSpecification = $product->getFeedSpecification();
-                if ($feedSpecification) {
-                    $feedSpecification->toArray();
-                }
-                $product->getProductForms()->toArray();
-            } catch (ApplicationCreateException $e) {
-            }
             $this->setResultCacheKeys([
                 'PRODUCT',
                 'CURRENT_OFFER',

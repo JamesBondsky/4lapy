@@ -122,8 +122,6 @@ class UserService implements
      */
     private $personalOffersService;
 
-    private $selectedCity;
-
     /**
      * UserService constructor.
      *
@@ -376,7 +374,6 @@ class UserService implements
     }
 
     /**
-     * Не привязано к $this->selectedCity, т.к. неизвестно, сохранится ли тогда логика работы
      * @param string            $code
      * @param string            $name
      * @param string|array|null $parentName
@@ -425,43 +422,41 @@ class UserService implements
      */
     public function getSelectedCity(): array
     {
-        if (!$this->selectedCity) {
-            $cityCode = null;
+        $cityCode = null;
 
-            if ($_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE]) {
-                $cityCode = $_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE];
-            } elseif ($this->isAuthorized()) {
-                /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-                if (($user = $this->getCurrentUser()) && $user->getLocation()) {
-                    $cityCode = $user->getLocation();
-                }
+        if ($_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE]) {
+            $cityCode = $_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE];
+        } elseif ($this->isAuthorized()) {
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            if (($user = $this->getCurrentUser()) && $user->getLocation()) {
+                $cityCode = $user->getLocation();
             }
-
-            $this->selectedCity = (new BitrixCache())
-                ->withId(\sprintf(
-                    'location:%s',
-                    $cityCode ?? '-1'
-                ))
-                ->withTime(864000)
-                ->resultOf(function () use ($cityCode) {
-                    $city = null;
-
-                    if ($cityCode) {
-                        try {
-                            $city = $this->locationService->findLocationCityByCode($cityCode);
-                        } catch (CityNotFoundException $e) {
-                        }
-                    }
-
-                    if (null === $city) {
-                        $city = $this->locationService->getDefaultLocation();
-                    }
-
-                    return $city;
-                });
         }
 
-        return $this->selectedCity;
+        $city = (new BitrixCache())
+            ->withId(\sprintf(
+                'location:%s',
+                $cityCode ?? '-1'
+            ))
+            ->withTime(864000)
+            ->resultOf(function () use ($cityCode) {
+                $city = null;
+
+                if ($cityCode) {
+                    try {
+                        $city = $this->locationService->findLocationCityByCode($cityCode);
+                    } catch (CityNotFoundException $e) {
+                    }
+                }
+
+                if (null === $city) {
+                    $city = $this->locationService->getDefaultLocation();
+                }
+
+                return $city;
+            });
+
+        return $city;
     }
 
     /**
