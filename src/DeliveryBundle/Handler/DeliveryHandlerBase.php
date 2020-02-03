@@ -168,12 +168,9 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     {
         $stockResultCollection = new StockResultCollection();
 
-        foreach (static::getBasketPrices($basket, true) as $offerId => $priceForAmountCollection) {
-            $offerId = $priceForAmountCollection['id'];
-            $priceForAmountCollectionTmp = (new PriceForAmountCollection());
-            $priceForAmountCollectionTmp->add($priceForAmountCollection['price']);
+        $offerData = static::getBasketPrices($basket);
 
-            $priceForAmountCollection = $priceForAmountCollectionTmp;
+        foreach ($offerData as $offerId => $priceForAmountCollection) {
             /**
              * Если такое произошло, значит оффер был подарком и был удален из корзины
              */
@@ -212,15 +209,15 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     ): StockResultCollection
     {
         $stockResultCollection = new StockResultCollection();
-//        $offerData = static::getBasketPrices($basket);
+        $offerData = static::getBasketPrices($basket);
         /** @var array $marksIds */
         $marksIds = $this->piggyBankService->getMarksIds();
 
-//        foreach ($offerData as $key => $offer) {
-//            if (in_array($key, $marksIds, false)) {
-//                unset($offerData[$key]);
-//            }
-//        }
+        foreach ($offerData as $key => $offer) {
+            if (in_array($key, $marksIds, false)) {
+                unset($offerData[$key]);
+            }
+        }
 
         if (null === $stockResultCollection) {
             $stockResultCollection = new StockResultCollection();
@@ -233,16 +230,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             }
             $allOfferAvailable = true;
             $stockResultCollectionTmp = new StockResultCollection();
-            foreach (static::getBasketPrices($basket) as $offerId => $priceForAmountCollection) {
-                $offerId = $priceForAmountCollection['id'];
-                $priceForAmountCollectionTmp = (new PriceForAmountCollection());
-                $priceForAmountCollectionTmp->add($priceForAmountCollection['price']);
-
-                $priceForAmountCollection = $priceForAmountCollectionTmp;
-
-                if (in_array($offerId, $marksIds, false)) {
-                    continue;
-                }
+            foreach ($offerData as $offerId => $priceForAmountCollection) {
                 /** @var Offer $offer */
                 $offer = $offers[$offerId];
                 /**
@@ -287,7 +275,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @return PriceForAmountCollection[]
      * @throws ArgumentNullException
      */
-    public static function getBasketPrices(Basket $basket, bool $generator = false)
+    public static function getBasketPrices(Basket $basket): array
     {
         /** @var BasketService $basketService */
         $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
@@ -298,27 +286,15 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             if (null === $result[$item->getProductId()]) {
                 $result[$item->getProductId()] = new PriceForAmountCollection();
             }
-            if ($generator) {
-                yield [
-                    'id' => $item->getProductId(),
-                    'price' => (new PriceForAmount())
-                        ->setPrice($item->getPrice())
-                        ->setAmount($item->getQuantity())
-                        ->setBasketCode($item->getBasketCode())
-                        ->setGift($basketService->isGiftProduct($item))];
-            } else {
-                $result[$item->getProductId()]->add((new PriceForAmount())
-                    ->setPrice($item->getPrice())
-                    ->setAmount($item->getQuantity())
-                    ->setBasketCode($item->getBasketCode())
-                    ->setGift($basketService->isGiftProduct($item))
-                );
-            }
+            $result[$item->getProductId()]->add((new PriceForAmount())
+                ->setPrice($item->getPrice())
+                ->setAmount($item->getQuantity())
+                ->setBasketCode($item->getBasketCode())
+                ->setGift($basketService->isGiftProduct($item))
+            );
         }
 
-        if (!$generator) {
-            return $result;
-        }
+        return $result;
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
