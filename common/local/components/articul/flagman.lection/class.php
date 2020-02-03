@@ -20,6 +20,7 @@ class FlagmanLection extends \CBitrixComponent
         try {
             $iblockId = $this->getIblockId();
             $items    = $this->getItems($iblockId);
+            
             $this->groupItems($items);
             $this->sortItems();
         } catch (\Exception $e) {
@@ -54,8 +55,6 @@ class FlagmanLection extends \CBitrixComponent
                 'MAIN_SECTION_NAME' => 'MAIN_SECTION.NAME',
                 'MAIN_SECTION_SORT' => 'MAIN_SECTION.SORT',
                 'PICTURE'           => 'MAIN_SECTION.PICTURE',
-                'DESCRIPTION'       => 'MAIN_SECTION.DESCRIPTION',
-                'ADDRESS'           => 'UF.UF_LECTION_ADDRESS',
             ])
             ->setFilter(['=IBLOCK_ID' => $iblockId, '=ACTIVE' => 'Y'])
             ->registerRuntimeField(new ReferenceField(
@@ -67,11 +66,6 @@ class FlagmanLection extends \CBitrixComponent
                 'MAIN_SECTION',
                 'Bitrix\Iblock\SectionTable',
                 ['=this.SECTION.IBLOCK_SECTION_ID' => 'ref.ID']
-            ))
-            ->registerRuntimeField(new ReferenceField(
-                'UF',
-                '\Articul\Landing\Orm\UtsLectionsSectionsTable',
-                ['=this.SECTION.IBLOCK_SECTION_ID' => 'ref.VALUE_ID']
             ))
             ->setOrder(['SORT' => 'ASC'])
             ->exec()
@@ -86,10 +80,8 @@ class FlagmanLection extends \CBitrixComponent
         foreach ($items as $key => $item) {
             $this->arResult['ITEMS'][$item['SECTION_ID']]['SECTION_NAME']      = $item['SECTION_NAME'];
             $this->arResult['ITEMS'][$item['SECTION_ID']]['PICTURE']           = \CFile::GetPath($item['PICTURE']);
-            $this->arResult['ITEMS'][$item['SECTION_ID']]['DESCRIPTION']       = $item['DESCRIPTION'];
             $this->arResult['ITEMS'][$item['SECTION_ID']]['MAIN_SECTION_NAME'] = $item['MAIN_SECTION_NAME'];
             $this->arResult['ITEMS'][$item['SECTION_ID']]['MAIN_SECTION_SORT'] = $item['MAIN_SECTION_SORT'];
-            $this->arResult['ITEMS'][$item['SECTION_ID']]['ADDRESS']           = $item['ADDRESS'];
             if ($item['FREE_SITS'] <= 0) {
                 continue;
             }
