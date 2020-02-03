@@ -381,10 +381,12 @@ class OrderService implements LoggerAwareInterface
                 ->setCartParam($this->orderParameter)
                 ->setCartCalc($this->orderCalculate);
 
-           $statusCode = $status->getCode();
-           if ($isCompleted || $statusCode == Status::STATUS_CANCELING || $statusCode == PersonalOrderService::STATUS_NEW || $statusCode == PersonalOrderService::STATUS_OTHER_NEW) {
-               $response->setCanBeCanceled(false);
-           }
+//            $statusCode = $status->getCode();
+//            if ($isCompleted || $statusCode == Status::STATUS_CANCELING || $statusCode == PersonalOrderService::STATUS_NEW || $statusCode == PersonalOrderService::STATUS_OTHER_NEW) {
+//                $response->setCanBeCanceled(false);
+//            }
+            //Вырубить возможность отмены для апи. Временно здесь
+            $response->setCanBeCanceled(false);
         }
 
         return $response;
