@@ -124,6 +124,8 @@ class PushEventService
 
         $dataFetch = $res->fetchAll();
 
+        $dataFetch = $this->modifyDataFetch($dataFetch);
+
         $pushMessages = $this->transformer->fromArray(
             $dataFetch,
             'array<' . ApiPushMessage::class . '>'
@@ -207,6 +209,8 @@ class PushEventService
             ->exec();
 
         $dataFetch = $res->fetchAll();
+
+        $dataFetch = $this->modifyDataFetch($dataFetch);
 
         /** @var ApiPushMessage[] $pushMessages */
         $pushMessages = $this->transformer->fromArray(
@@ -507,30 +511,16 @@ class PushEventService
     /**
      * @param ApiPushMessage $pushMessage
      * @param ApiUserSession $session
-     * @return ApiPushEvent|bool
+     * @return ApiPushEvent
      */
     public function convertToPushEvent(ApiPushMessage $pushMessage, ApiUserSession $session)
     {
-        $user = $this->userRepository
-            ->findBy([
-                '=ID' => $session->getUserId(),
-            ])[0];
-    
-        $typeCode = $pushMessage->getTypeEntity()->getXmlId();
-    
-        $apiPushEvent =  (new ApiPushEvent())
+        return (new ApiPushEvent())
             ->setPlatform($session->getPlatform())
             ->setPushToken($session->getPushToken())
             ->setUserId($session->getUserId() ?: 0)
             ->setMessageId($pushMessage->getId())
             ->setDateTimeExec($pushMessage->getStartSend());
-        
-        /** @var User $user */
-        if (!$this->shouldSendPushMessage($user, $typeCode)) {
-            $apiPushEvent->setSuccessExec(ApiPushEvent::EXEC_SUCCESS_CODE);
-        }
-        
-        return $apiPushEvent;
     }
 
     /**
@@ -617,7 +607,7 @@ class PushEventService
         $foundPhoneNumbers = [];
         /** @var User $user */
         foreach ($users as $user) {
-            if ($this->canSendPushMessage($user, $typeCode, true)) {
+            if ($this->canSendPushMessage($user, $typeCode, true) && $this->shouldSendPushMessage($user, $typeCode)) {
                 $foundPhoneNumbers[] = $user->getPersonalPhone();
                 $userIds[]           = $user->getId();
             }
@@ -700,6 +690,42 @@ class PushEventService
         } catch (\Exception $e) {
 
         }
+    }
+
+    protected function modifyDataFetch($dataFetch)
+    {
+        try {
+            $typeCodes = $this->getTypeCodes();
+
+            foreach ($dataFetch as &$prePushItem) {
+                if ($prePushItem['UF_USERS']) {
+                    $usersNeededToBeDelete = [];
+
+                    $users = $this->userRepository
+                        ->findBy([
+                            '=ID' => $prePushItem['UF_USERS'],
+                        ]);
+
+                    $typeCode = $typeCodes[$prePushItem['UF_TYPE']];
+
+                    foreach ($users as $user) {
+                        if (!$this->shouldSendPushMessage($user, $typeCode)) {
+                            $usersNeededToBeDelete[] = $user->getId();
+                        }
+                    }
+
+                    foreach ($prePushItem['UF_USERS'] as $pushUserKey => $pushUser) {
+                        if (in_array($pushUser, $usersNeededToBeDelete)) {
+                            unset($prePushItem['UF_USERS'][$pushUserKey]);
+                        }
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+
+        }
+
+        return $dataFetch;
     }
 
     protected function getEventId(ApiPushEvent $pushEvent)
