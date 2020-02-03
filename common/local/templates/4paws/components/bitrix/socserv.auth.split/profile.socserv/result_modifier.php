@@ -53,7 +53,6 @@ foreach ($arResult['AUTH_SERVICES'] as &$service) {
     }
 
     switch ($service['SOCSERV_CODE']) {
-        case 'vk2':
         case 'vkontakte':
             $service['ICON'] = 'vk';
             $service['ICON_DECORATOR'] = [
@@ -62,7 +61,6 @@ foreach ($arResult['AUTH_SERVICES'] as &$service) {
                 'HEIGHT' => 17,
             ];
             break;
-        case 'ok2':
         case 'odnoklassniki':
             $service['ICON'] = 'ok';
             $service['ICON_DECORATOR'] = [
@@ -71,7 +69,6 @@ foreach ($arResult['AUTH_SERVICES'] as &$service) {
                 'HEIGHT' => 23,
             ];
             break;
-        case 'fb2':
         case 'facebook':
             $service['ICON'] = 'facebook';
             $service['ICON_DECORATOR'] = [

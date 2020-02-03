@@ -4,8 +4,6 @@ namespace FourPaws\SocServ;
 
 class CSocServOK2 extends \CSocServOdnoklassniki
 {
-    use SocServiceHelper;
-
     const ID = 'OK2';
     public function Authorize()
     {
@@ -14,7 +12,6 @@ class CSocServOK2 extends \CSocServOdnoklassniki
         $APPLICATION->RestartBuffer();
         $bSuccess = SOCSERV_AUTHORISATION_ERROR;
         $bProcessState = false;
-        $paramsProfile = [];
 
         if((isset($_REQUEST["code"]) && $_REQUEST["code"] <> '') && \CSocServAuthManager::CheckUniqueKey())
         {
@@ -53,7 +50,7 @@ class CSocServOK2 extends \CSocServOdnoklassniki
 
                     $arFields = array(
 						'EXTERNAL_AUTH_ID' => self::ID,
-                        'XML_ID' => $uid,
+                        'XML_ID' => "OK".$uid,
                         'LOGIN' => "OKuser".$uid,
                         'NAME'=> $first_name,
                         'LAST_NAME'=> $last_name,
@@ -74,64 +71,7 @@ class CSocServOK2 extends \CSocServOdnoklassniki
                     if(strlen(SITE_ID) > 0)
                         $arFields["SITE_ID"] = SITE_ID;
 
-//                    $bSuccess = $this->AuthorizeUser($arFields);
-                    $checkUser = $this->checkUser($arFields);
-
-                    $exAuthId = $xmlId = '';
-
-                    if (strripos($arFields['LOGIN'], 'VK') !== false) {
-                        $exAuthId = CSocServVK2::ID;
-                        [,$xmlId] = explode('VKuser', $arFields['LOGIN']);
-                    } else if (strripos($arFields['LOGIN'], 'OK') !== false) {
-                        $exAuthId = CSocServOK2::ID;
-                        [,$xmlId] = explode('OKuser', $arFields['LOGIN']);
-                    } else if (strripos($arFields['LOGIN'], 'FB') !== false) {
-                        $exAuthId = CSocServFB2::ID;
-                        [,$xmlId] = explode('FB_', $arFields['LOGIN']);
-                    }
-
-                    if ($checkUser) {
-                        $paramsProfile = [];
-                        $bSuccess = $this->AuthorizeUser($arFields);
-
-                        if ($bSuccess) {
-                            $user = new \CUser();
-                            $user->Update($checkUser['USER_ID'], [
-                                'EXTERNAL_AUTH_ID' => $exAuthId,
-                                'XML_ID' => $xmlId,
-                            ]);
-                            $user->Authorize($checkUser['USER_ID']);
-                            unset($_SESSION['socServiceParams']);
-                        }
-                    } else {
-
-                        global $USER;
-                        if ($USER->IsAuthorized()) {
-                            $fieldsUserTable = [
-                                'LOGIN' => $USER->GetID(),
-                                'EXTERNAL_AUTH_ID' => $exAuthId,
-                                'USER_ID' => $USER->GetID(),
-                                'XML_ID' => $xmlId,
-                                'NAME' => $arFields['NAME'],
-                                'LAST_NAME' => $arFields['LAST_NAME'],
-                                'EMAIL' => '',
-                                'OATOKEN' => $this->getEntityOAuth()->getToken(),
-                            ];
-
-                            $result = \Bitrix\Socialservices\UserTable::add($fieldsUserTable);
-                        } else {
-                            $paramsProfile = [
-                                'name' => $arFields['NAME'],
-                                'last_name' => $arFields['LAST_NAME'],
-                                'gender' => $arFields['PERSONAL_GENDER'],
-                                'birthday' => $arFields['PERSONAL_BIRTHDAY'],
-                                'ex_id' => 'VKuser' . $arOdnoklUser['uid'],
-                                'token' => $this->getEntityOAuth()->getToken()
-                            ];
-
-                            $_SESSION['socServiceParams'] = $paramsProfile;
-                        }
-                    }
+                    $bSuccess = $this->AuthorizeUser($arFields);
                 }
             }
         }
@@ -183,7 +123,6 @@ class CSocServOK2 extends \CSocServOdnoklassniki
         }
         elseif($bSuccess !== true)
         {
-            $backUrl = $url;
             $url = (isset($parseUrl))
                 ? $urlPath.'?auth_service_id='.self::ID.'&auth_service_error='.$bSuccess
                 : $APPLICATION->GetCurPageParam(('auth_service_id='.self::ID.'&auth_service_error='.$bSuccess), $aRemove);
@@ -193,11 +132,6 @@ class CSocServOK2 extends \CSocServOdnoklassniki
             $url = (preg_match("/\?/", $url)) ? $url."&current_fieldset=SOCSERV" : $url."?current_fieldset=SOCSERV";
 
         $url = \CUtil::JSEscape($url);
-
-        if (count($paramsProfile) > 0) {
-            $url = '/personal/register/?backurl=' . ($backUrl ?? '/');
-        }
-
         $location = ($mode == "opener") ? 'if(window.opener) window.opener.location = \''.$url.'\'; window.close();' : ' window.location = \''.$url.'\';';
 
         $JSScript = '

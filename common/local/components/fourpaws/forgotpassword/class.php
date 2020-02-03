@@ -242,6 +242,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         }
 
         $user = $this->currentUserProvider->getUserRepository()->find($userId);
+        if ($login)
 
         if (empty($password) || empty($confirm_password)) {
             return $this->ajaxMess->getEmptyDataError();
@@ -258,11 +259,6 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $res = $this->currentUserProvider->getUserRepository()->updatePassword($userId, $password);
-
-            if ($user->getExternalAuthId()) {
-                $this->currentUserProvider->getUserRepository()->updateExternalAuthId($userId, '');
-            }
-
             if (!$res) {
                 return $this->ajaxMess->getUpdateError();
             }

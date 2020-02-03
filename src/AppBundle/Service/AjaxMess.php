@@ -7,9 +7,6 @@ use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
-use FourPaws\SocServ\CSocServFB2;
-use FourPaws\SocServ\CSocServOK2;
-use FourPaws\SocServ\CSocServVK2;
 
 /**
  * Class AjaxMess
@@ -472,32 +469,6 @@ class AjaxMess
     public function setReloadRecaptcha(bool $reloadRecaptcha): void
     {
         $this->reloadRecaptcha = $reloadRecaptcha;
-    }
-
-    /**
-     * @param string $type
-     * @param array $additionalData
-     *
-     * @return JsonResponse
-     */
-    public function getWrongAuthError(string $type, array $additionalData = []): JsonResponse
-    {
-        switch ($type) {
-            case CSocServVK2::ID:
-                $type = 'Вконтакте';
-                break;
-            case CSocServOK2::ID:
-                $type = 'Одноклассники';
-                break;
-            case CSocServFB2::ID:
-                $type = 'Facebook';
-                break;
-            default:
-                $type = 'соцсеть';
-                break;
-        }
-        //wrongPassword
-        return $this->getJsonError('wrongAuth', 'Ошибка авторизации - авторизуйтесь через ' . $type . ' или восстановите пароль', $additionalData);
     }
 
     /**
