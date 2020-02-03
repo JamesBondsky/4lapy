@@ -251,7 +251,6 @@ class OrderService
 
     /**
      * @param User $user
-     * @param bool $newAction
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -271,23 +270,8 @@ class OrderService
      * @throws SystemException
      * @throws WrongPhoneNumberException
      */
-    public function importOrdersFromManzana(User $user, $newAction = true): void
+    public function importOrdersFromManzana(User $user): void
     {
-        if ($newAction) {
-            $chanceService = Application::getInstance()->getContainer()->get(Chance2Service::class);
-        } else {
-            $chanceService = Application::getInstance()->getContainer()->get(ChanceService::class);
-        }
-
-        /** @var ChanceService $chanceServie */
-        $userIds = $chanceService->getAllUserIds();
-
-        if (!in_array($user->getId(), $userIds, true)) {
-            return;
-        }
-
-        // todo удалить после новго года начало функции
-
         $contactId = $this->manzanaService->getContactIdByPhone($user->getManzanaNormalizePersonalPhone());
 
         $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
@@ -342,6 +326,10 @@ class OrderService
 
         /** @var Cheque $cheque */
         foreach ($cheques as $cheque) {
+            if ($cheque->chequeId === null) {
+                continue;
+            }
+
             if ($startDateTimestamp > $cheque->date->getTimestamp()) {
                 continue;
             }
