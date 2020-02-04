@@ -89,7 +89,6 @@ class ChanceService
 
     /**
      * @param Request $request
-     * @return int
      * @throws ArgumentException
      * @throws ObjectException
      * @throws ObjectPropertyException
@@ -97,6 +96,7 @@ class ChanceService
      * @throws InvalidArgumentException
      * @throws SystemException
      * @throws Exception
+     * @return int
      */
     public function registerUser(Request $request): int
     {
@@ -135,12 +135,12 @@ class ChanceService
     }
 
     /**
-     * @return int
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws RuntimeException
      * @throws SystemException
      * @throws Exception
+     * @return int
      */
     public function getCurrentUserChances(): int
     {
@@ -165,8 +165,8 @@ class ChanceService
     /**
      * @param Request $request
      * @param User $user
-     * @return bool
      * @throws InvalidArgumentException
+     * @return bool
      */
     protected function updateUserFields(Request $request, User $user): bool
     {
@@ -190,8 +190,8 @@ class ChanceService
     }
 
     /**
-     * @return int
      * @throws NotFoundException
+     * @return int
      */
     public function getCurrentPeriod(): int
     {
@@ -205,10 +205,10 @@ class ChanceService
     /**
      * @param $userId
      * @param $period
-     * @return int
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
+     * @return int
      */
     public function getUserPeriodChance($userId, $period): int
     {
@@ -288,14 +288,20 @@ class ChanceService
 
     /**
      * Нужно, чтобы импорт заказов из манзаны работал только для пользователей акции
+     * @param int $offset
+     * @param int $limit
+     * @return array
      */
-    public function getAllUserIds(): array
+    public function getAllUserIds($offset = 0, $limit = 1): array
     {
 //        $doGetAllVariants = function () {
         try {
             $userIds = [];
             $res = $this->getDataManager()::query()
+                ->setOrder(['UF_USER_ID' => 'ASC'])
                 ->setSelect(['UF_USER_ID'])
+                ->setOffset($offset)
+                ->setLimit($limit)
                 ->exec();
 
             while ($userResult = $res->fetch()) {
@@ -348,10 +354,6 @@ class ChanceService
      */
     public function getExportData(): array
     {
-        $userIds = [];
-        /** @var User[] $users */
-        $users = [];
-
         $userResults = [];
         $res = $this->getDataManager()::query()
             ->setSelect(['UF_USER_ID', 'UF_DATA', 'UF_DATE_CREATE'])
@@ -363,24 +365,20 @@ class ChanceService
                 'data' => unserialize($userResult['UF_DATA']),
                 'date' => $userResult['UF_DATE_CREATE'],
             ];
-            $userIds[] = (int)$userResult['UF_USER_ID'];
-        }
-
-        /** @var User $user */
-        foreach ($this->userRepository->findBy(['=ID' => $userIds]) as $user) {
-            $users[$user->getId()] = $user;
         }
 
         $result = [];
 
         foreach ($userResults as $userResult) {
-            $user = $users[$userResult['userId']];
+            $users = $this->userRepository->findBy(['=ID' => $userResult['userId']]);
+
+            $user = (count($users) > 0) ? current($users) : null;
 
             $tmpResult = [];
             $tmpResult[] = $userResult['date'];
-            $tmpResult[] = $user->getFullName();
-            $tmpResult[] = $user->getPersonalPhone();
-            $tmpResult[] = $user->getEmail();
+            $tmpResult[] = ($user !== null) ? $user->getFullName() : 'user not found';
+            $tmpResult[] = ($user !== null) ? $user->getPersonalPhone() : 'user not found';
+            $tmpResult[] = ($user !== null) ? $user->getEmail() : 'user not found';
 
             $totalChances = 0;
 
@@ -402,8 +400,8 @@ class ChanceService
     }
 
     /**
-     * @return DataManager
      * @throws Exception
+     * @return DataManager
      */
     protected function getDataManager(): DataManager
     {
