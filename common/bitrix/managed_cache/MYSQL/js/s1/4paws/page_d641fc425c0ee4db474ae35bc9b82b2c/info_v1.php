@@ -1,0 +1,1 @@
+<? $filesInfo = array("/local/components/fourpaws/city.delivery.info/templates/catalog.detail.tab/script.js" => "1571388299354","/local/templates/.default/components/fourpaws/catalog.products.recommendations/fp.17.0.similar/script.js" => "15713883004582",); ?>

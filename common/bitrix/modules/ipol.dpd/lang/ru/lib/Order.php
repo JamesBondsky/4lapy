@@ -1,0 +1,20 @@
+<?php
+$MESS['IPOLH_DPD_ORDER_CHECK_STATUS_ERROR']        = 'Не удалось получить данные о статусе заказа';
+$MESS['IPOLH_DPD_ORDER_GET_FILE_ERROR_EMPTY_NUM']  = 'Нельзя напечатать наклейки. Заказ не создан в системе DPD!';
+$MESS['IPOLH_DPD_ORDER_GET_FILE_ERROR_EMPTY_FILE'] = 'Не удалось получить файл';
+$MESS['IPOLH_DPD_ORDER_GET_FILE_ERROR_MKDIR']      = 'Не удалось получить директорию для записи!';
+$MESS['IPOLH_DPD_ORDER_GET_FILE_ERROR_WRITE_FILE'] = 'Не удалось записать файл';
+$MESS['IPOLH_DPD_ORDER_OPT_ESD']                   = 'ЭСД';
+$MESS['IPOLH_DPD_ORDER_OPT_ESZ']                   = 'ЭСЗ';
+$MESS['IPOLH_DPD_ORDER_OPT_POD']                   = 'ПОД';
+$MESS['IPOLH_DPD_ORDER_OPT_NPP']                   = 'НПП';
+$MESS['IPOLH_DPD_ORDER_OPT_DVD']                   = 'ДВД';
+$MESS['IPOLH_DPD_ORDER_OPT_TRM']                   = 'ТРМ';
+$MESS['IPOLH_DPD_ORDER_OPT_PRD']                   = 'ПРД';
+$MESS['IPOLH_DPD_ORDER_OPT_VDO']                   = 'ВДО';
+$MESS['IPOLH_DPD_ORDER_OPT_OGD']                   = 'ОЖД'; 
+$MESS['IPOLH_DPD_ORDER_WITHOUT_VAT']               = 'Без НДС';
+$MESS['IPOLH_DPD_TERMINAL_NOT_FOUND_ERROR']        = 'Терминал назначения не найден';
+$MESS['IPOLH_DPD_TERMINAL_NPP_ERROR']              = 'Терминал назначения не может принять наложенный платеж';
+$MESS['IPOLH_DPD_ORDER_PAYMENT_TYPE_OUP']          = 'ОУП';
+$MESS['IPOLH_DPD_ORDER_PAYMENT_TYPE_OUO']          = 'ОУО';

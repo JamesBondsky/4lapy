@@ -1,0 +1,22 @@
+<?php
+$MESS['DPD_ORDER_STATUS_NEW']              = 'Новый заказ, еще не отправлялся в DPD';
+$MESS['DPD_ORDER_STATUS_OK']               = 'Успешно создан';
+$MESS['DPD_ORDER_STATUS_PENDING']          = 'Принят, но нуждается в ручной доработке сотрудником DPD';
+$MESS['DPD_ORDER_STATUS_ERROR']            = 'Не принят, ошибка';
+$MESS['DPD_ORDER_STATUS_CANCEL']           = 'Заказ отменен';
+$MESS['DPD_ORDER_STATUS_CANCEL_PREV']      = 'Заказ отменен ранее';
+$MESS['DPD_ORDER_STATUS_NOT_DONE']         = 'Заказ отменен в процессе доставки';
+$MESS['DPD_ORDER_STATUS_DEPARTURE']        = 'Посылка находится на терминале приема отправления';
+$MESS['DPD_ORDER_STATUS_TRANSIT']          = 'Посылка находится в пути (внутренняя перевозка DPD)';
+$MESS['DPD_ORDER_STATUS_TRANSIT_TERMINAL'] = 'Посылка находится на транзитном терминале';
+$MESS['DPD_ORDER_STATUS_ARRIVE']           = 'Посылка находится на терминале доставки';
+$MESS['DPD_ORDER_STATUS_COURIER']          = 'Посылка выведена на доставку';
+$MESS['DPD_ORDER_STATUS_DELIVERED']        = 'Посылка доставлена получателю';
+$MESS['DPD_ORDER_STATUS_LOST']             = 'Посылка утеряна';
+$MESS['DPD_ORDER_STATUS_PROBLEM']          = 'C посылкой возникла проблемная ситуация';
+$MESS['DPD_ORDER_STATUS_RETURNED']         = 'Посылка возвращена с курьерской доставки';
+$MESS['DPD_ORDER_STATUS_NEW_DPD']          = 'Оформлен новый заказ по инициативе DPD';
+$MESS['DPD_ORDER_STATUS_NEW_CLIENT']       = 'Оформлен новый заказ по инициативе клиента';
+$MESS['DPD_ORDER_SERVICE_VARIANT_T']       = 'Т';
+$MESS['DPD_ORDER_SERVICE_VARIANT_D']       = 'Д';
+$MESS['IPOLH_DPD_ORDER_GET_TARIFF_ERROR'] = 'Не удалось получить информацию по тарифу';

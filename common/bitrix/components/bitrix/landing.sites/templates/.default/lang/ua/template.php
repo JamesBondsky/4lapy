@@ -1,0 +1,33 @@
+<?
+$MESS["LANDING_TPL_TTL_DELETE"] = "До остаточного видалення";
+$MESS["LANDING_TPL_TTL_DELETE_D"] = "д.";
+$MESS["LANDING_TPL_ACTION_DELETE_CONFIRM"] = "Дійсно видалити?";
+$MESS["LANDING_TPL_ACTION_UNDELETE"] = "Відновити сайт";
+$MESS["LANDING_TPL_DELETED"] = "Видалений";
+$MESS["LANDING_TPL_ACTION_PUBLIC"] = "Опублікувати";
+$MESS["LANDING_TPL_ACTION_UNPUBLIC"] = "Зняти з публікації";
+$MESS["LANDING_TPL_PUBLIC"] = "Опублікований";
+$MESS["LANDING_TPL_UNPUBLIC"] = "Не опублікований";
+$MESS["LANDING_TPL_TITLE"] = "Сайти";
+$MESS["LANDING_TPL_COL_ACTIVE"] = "Акт.";
+$MESS["LANDING_TPL_COL_ACT_Y"] = "Так";
+$MESS["LANDING_TPL_COL_ACT_N"] = "Ні";
+$MESS["LANDING_TPL_COL_TITLE"] = "Назва";
+$MESS["LANDING_TPL_COL_CREATED"] = "Створено";
+$MESS["LANDING_TPL_COL_MODIFIED"] = "Змінено";
+$MESS["LANDING_TPL_ACTION_EDIT"] = "Налаштувати сайт";
+$MESS["LANDING_TPL_ACTION_DELETE"] = "Видалити сайт";
+$MESS["LANDING_TPL_ACTION_ADD"] = "Новий сайт";
+$MESS["LANDING_TPL_ACTION_ADDPAGE"] = "Створити сторінку";
+$MESS["LANDING_TPL_ACTION_VIEW"] = "Подивитися сторінки";
+$MESS["LANDING_TPL_ACTION_COPYLINK"] = "Копіювати посилання";
+$MESS["LANDING_TPL_ACTION_COPY"] = "Копіювати сайт";
+$MESS["LANDING_TPL_ACTIONS"] = "Дії";
+$MESS["LANDING_TPL_TITLE_PAGE"] = "Сайти";
+$MESS["LANDING_TPL_TITLE_STORE"] = "Магазини";
+$MESS["LANDING_TPL_ACTION_ADD_PAGE"] = "Новий сайт";
+$MESS["LANDING_TPL_ACTION_ADD_STORE"] = "Новий магазин";
+$MESS["LANDING_TPL_ACTION_GOTO"] = "Перейти на сайт";
+$MESS["LANDING_TPL_ACTION_EDIT_PAGE"] = "Налаштувати сайт";
+$MESS["LANDING_TPL_ACTION_EDIT_STORE"] = "Налаштувати магазин";
+?>

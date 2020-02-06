@@ -1,0 +1,1869 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<yml_catalog date="2018-08-17 13:18">
+  <shop>
+    <name>Четыре Лапы</name>
+    <company>Четыре Лапы</company>
+    <url>https://4lapy.ru/</url>
+    <currencies>
+      <currency id="RUB" rate="1"/>
+    </currencies>
+    <categories>
+      <category id="14" parentId="7">Кошки - Лакомства, витамины, добавки - Витамины и минералы</category>
+      <category id="263" parentId="164">Собаки - Игрушки</category>
+      <category id="642" parentId="263">Собаки - Игрушки - Винил и латекс</category>
+      <category id="640" parentId="263">Собаки - Игрушки - Грейфер</category>
+      <category id="641" parentId="263">Собаки - Игрушки - Кольцо</category>
+      <category id="639" parentId="263">Собаки - Игрушки - Фрисби</category>
+      <category id="264" parentId="263">Собаки - Игрушки - Мячи</category>
+      <category id="265" parentId="263">Собаки - Игрушки - Игрушки с чипом</category>
+      <category id="266" parentId="263">Собаки - Игрушки - Косточки</category>
+      <category id="269" parentId="263">Собаки - Игрушки - Развивающие</category>
+      <category id="270" parentId="263">Собаки - Игрушки - Гантели</category>
+      <category id="271" parentId="263">Собаки - Игрушки - Натуральные</category>
+      <category id="272" parentId="263">Собаки - Игрушки - Палки</category>
+      <category id="273" parentId="263">Собаки - Игрушки - Текстильные</category>
+      <category id="422" parentId="421">Птицы - Корм</category>
+      <category id="423" parentId="422">Птицы - Корм - Основной</category>
+      <category id="424" parentId="422">Птицы - Корм - Дополнительный</category>
+      <category id="425" parentId="422">Птицы - Корм - Подкормка витаминная</category>
+      <category id="426" parentId="422">Птицы - Корм - Подкормка минеральная</category>
+      <category id="427" parentId="422">Птицы - Корм - Песок</category>
+    </categories>
+    <delivery-options>
+      <option cost="200" days="1" order-before="13"/>
+    </delivery-options>
+    <offers>
+      <offer id="1007504" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_srednih_popugaev_up__0_5kg_1007504.html?offer=31190&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>99</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/d88/d88864e7d004607b3fe7a3204a48b381.png</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Корм для средних попугаев 500г</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[Корм РИО для средних попугаев – отличный выбор для тех, кто любит радовать своего пернатого друга правильным питанием. Высокое качество смеси и оптимальное содержание микроэлементов и витаминов обеспечат попугаю крепкое здоровье и нормальную жизненную активность. С таким кормом ваш питомец сохранит отличный аппетит и будет всегда радовать вас!]]></description>
+        <vendorCode>4602533781782</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1007508" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_krupnyh_popugaev_500g_1007508.html?offer=31192&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>139</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/5f2/5f2bd5222c97ad16681898b17ece260d.png</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Корм для крупных попугаев 500г</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[РИО корм для крупных попугаев - отличное соотношение высокого качества и доступной цены. Всего 40-50 грамм смеси в день отлично сбалансируют ежедневную потребность в питательных веществах. Для того чтобы ни один из попугаев не смог устоять перед вкусной едой, в корм добавлены лакомства – кусочки сухих фруктов и овощей. Абсолютный баланс витаминно-минеральных добавок достаточен для ежедневной порции.]]></description>
+        <vendorCode>4602533781843</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1015933" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/RIO_Korm_dlya_krupnyh_popugaev_1_kg_1015933.html?offer=31194&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>265</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/31c/31c40db2bf144ae4647fbc49cfb6df3c.png</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Корм для крупных попугаев 1 кг</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[Рио корм для крупных попугаев специально разработан с учетом больших потребностей пернатых. Для поддержания хорошего здоровья они нуждаются в повышенном содержании полезных элементов. Особую радость доставят включенные в состав любимые сушеные фрукты, овощи и воздушные зерна. Корм дополнен необходимыми для поддержания отличной формы и самочувствия пробиотиками и водорослями.]]></description>
+        <vendorCode>4602533784219</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1019148" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/RIO_Korm_dlya_srednih_popugaev_linka_500_g_1019148.html?offer=31196&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>109</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/cc1/cc1ae8ad05104554c72bab58fa094515.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Корм для ср попугаев линька 500 г</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[RIO корм для средних попугаев идеально подходит для правильного питания и улучшения физического состояния птиц во время линьки. Этот продукт отличается высоким соотношением белков и жиров, что очень важно для пернатых. 14 сортов злаков, ягоды, водоросли, богатые витаминами, овощи, в короткие сроки помогут восстановиться вашему питомцу. Выбирайте для своего любимца только лучшее, и тем самым вы обеспечите его полноценным питанием и подарите заряд хорошего настроения!]]></description>
+        <vendorCode>4602533781799</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1019150" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/RIO_Korm_dlya_lesnyh_ptits_500_g_1019150.html?offer=31198&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>135</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/640/64050036e987fab4288c1afb20ccc724.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Корм для лесных птиц 500 г</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[В корме RIO для лесных птиц наряду с семенами редких в нашей стране растений, таких как Пайза, Перилла, Нуг абиссинский, входят 10 видов зерен, которые издавна произрастают на наших территориях. Данный продукт очень питателен, в нем высокое содержание белка более 13% и много жиров – 8%. В сутки певчим птицам достаточно 10 граммов корма, чтобы гарантировать полноценное питание.]]></description>
+        <vendorCode>4602533781867</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1016563" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/VERSELELAGA_korm_dlya_volnistyh_popugaev_Prestige_Budgies_500_g_1016563.html?offer=31200&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>169</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/298/298308d6b16b88e2006bfffb71d94574.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga Versele Laga Prestige Budgie корм для волнистых попугаев 500 г</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[VerseleLaga корм для волнистых попугаев престиж – достойный выбор для любимых питомцев. Традиционный продукт максимально приближен к естественному питанию. Высококачественное свежайшее сырье обработано с применением современных технологий. Для разнообразия корм дополнен масличным нугом, любимым и полезным зерном, обогащенным белками и жирами. Кроме целого комплекса питательных компонентов, так необходимых для попугайчика, он хорошо поддерживает иммунную систему пернатых.]]></description>
+        <vendorCode>15410340216177</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1018512" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/VERSELELAGA_korm_dlya_krupnyh_popugaev_Prestige_PREMIUM_Amazone_ParrotLoro_Parque_Mix_1_kg_1018512.html?offer=31202&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>615</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/afb/afb34cf1d1e3c4ceecc6309c7f988c68.jpg</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA корм для крупных попугаев Prestige PREMIUM Amazone ParrotLoro Parque Mix 1 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[Смесь, предлагаемая фирмой Amazon Parrot, рекомендована орнитологами для кормления экзотических попугаев, таких как ара, белоголовые пионусы, солнечные аратинги и тп. Это обогащенное всеми необходимыми веществами высококачественное низкокалорийное питание непременно придется по вкусу вашему любимцу (количество жира составляет всего 8%). В сборе присутствуют более 20 наименований семян растений, произрастающих на привычной для экзотических птиц территории. Именно поэтому попугаи с большим удовольствием едят корм, пополняя свой организм ценными и питательными веществами!]]></description>
+        <vendorCode>15410340219307</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1001706" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_volnistyh_popugaev_Vitakraft_Menyu__Vital_Kompleks_osnovnoy_pak__1_kg_1001706.html?offer=31206&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>349</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/34f/34f2b3b361b48b9bd7d63f6d18a36f88.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vitacraft Menu + Vital Complex Корм для волнистых попугаев основной, пак. 1 кг</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[Корм для волнистых попугаев Меню Витал в упаковке 1 кг от Витакрафт - отличный способ сделать рацион своего питомца разнообразным и сбалансированным. Такая смесь состоит из зерновых культур, семян и сушеных фруктов, которые насыщают на долгий срок и обладают уникальным вкусом. Такое меню точно не сможет оставить домашнего любимца равнодушным.]]></description>
+        <vendorCode>4008239602282</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1001708" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_srednih_popugaev_Vitakraft_Menyu_Vital_osnovnoy_pak__1_kg_1001708.html?offer=31208&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>419</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/245/2457fa26c6d1ac4c61a2e39221fa79b9.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vitacraft Menu Vital Корм для средних попугаев основной, пак. 1 кг</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[Корм для средних попугаев Меню Витал в упаковке 1 кг от Витакрафт по праву может считаться одним из лучших способов обеспечить пернатому другу правильную и сбалансированную диету. Высокое содержание клетчатки, растительного белка и прочих важных питательных веществ поспособствуют нормальному развитию организма и строению всех клеток.]]></description>
+        <vendorCode>4008239603098</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1000887" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_melkih_i_srednih_popugaev_Vaka_plyus_up__500_g_1000887.html?offer=31210&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>49</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/660/660fe2a1f7642ea27b48175fd9033b36.png</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Вака Вака+ Корм для мелких и средних попугаев 500г</name>
+        <vendor>Вака</vendor>
+        <description><![CDATA[Вака+ корм для мелких и средних попугаев – это отличный выбор для тех, кто заботится о здоровье своего питомца. Сбалансированный корм содержит семена луговых трав и морскую капусту, что делает его пригодным в качестве ежедневного рациона. Корм продается в упаковке 500 гр., и этого вполне хватит вашему попугаю надолго, даже если он обладает отменным аппетитом!]]></description>
+        <vendorCode>4607057116485</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1001709" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_volnistyh_popugaev_Vitakraft_Menyu_Vital_osnovnoy_pak__500_g_1001709.html?offer=31212&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>199</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/f39/f39e581097f9c745969a9e9e3e486060.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vitacraft Menu Vital Корм для волнистых попугаев основной, пак. 500 г</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[Корм для волнистых попугаев Меню Витал в упаковке 500 гр от Витакрафт - отличный способ сделать рацион своего питомца разнообразным и сбалансированным. Такая смесь состоит из зерновых культур, семян и сушеных фруктов, которые насыщают на долгий срок и обладают уникальным вкусом. Такое меню точно не сможет оставить домашнего любимца равнодушным.]]></description>
+        <vendorCode>4008239603074</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1001710" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_kanareek_Vitakraft_Menyu_Vital_osnovnoy_pak__500_g_1001710.html?offer=31214&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>259</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/265/2653a5c8b2c2901c42795172f8285d55.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vitacraft Menu Vital Корм для канареек основной, пак. 500 г</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[Корм для канареек Меню Витал в упаковке 500 гр от Витакрафт - отличный способ сделать рацион пернатого любимца разнообразнее и полезнее. Эта пища состоит из множества разных зерновых культур, полезных добавок и вкусных компонентов, благодаря чему польза от такого приема пищи лишь усиливается за счет невероятного вкуса. Такой корм непременно способствует насыщению и улучшению работы органов.]]></description>
+        <vendorCode>4008239603081</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1005100" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_ptentsov_volnistyh_popugaev_Vitakraft_Menyu_pak__500g_1005100.html?offer=31216&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>289</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/889/889c4a4963df5208575d104884aa6328.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vitakraft Menu Корм для птенцов волнистых попугаев, пак. 500г</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[Корм для птенцов волнистых попугаев Меню от Витакрафт - лояльная смесь, которая включает в себя измельченные зерновые культуры и прочие полезные компоненты, которые богаты белком и клетчаткой. Это позволяет обеспечить максимально безопасный прикорм, который поспособствует укреплению иммунитета любимца. Упаковки в 500 гр точно хватит надолго!]]></description>
+        <vendorCode>4008239615503</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1002511" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_volnistyh_popugaev_Padovan_Grandmiks_up__400_g_1002511.html?offer=31218&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>189</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/c60/c602ee431d85bd679db15ab21ff42e47.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Padovan PADOVAN Grandmix Cocorite Корм для волнистых попугаев, уп. 400 г</name>
+        <vendor>Padovan</vendor>
+        <description><![CDATA[Проявить заботу о здоровье вашего любимца – просто! Выбирайте вкусный и полезный корм, и ваш попугай будет доволен. Составляющие компоненты в виде фруктов и бисквитной крошки позволяют обеспечить полный рацион. Минеральные добавки и витаминный комплекс создают необходимую защиту от неблагоприятных воздействий окружающей среды. Натуральные ингредиенты оказывают положительное влияние на оперение попугая.]]></description>
+        <vendorCode>08001254102764</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1002512" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_kanareek_Padovan_Grandmiks_up__400_g_1002512.html?offer=31220&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>209</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/35d/35de7198d7d0bc642ccfd553557460fc.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Padovan PADOVAN Grandmix Canarini Корм для канареек, уп. 400 г</name>
+        <vendor>Padovan</vendor>
+        <description><![CDATA[Каждый день обеспечивать сбалансированным питанием канарейку можно с кормом Падован. Уникальные составляющие насытят питомца витаминным комплексом и станут любимым лакомством пернатого. Незаменимый корм в рационе имеет массу полезных свойств! Обогащение организма птицы силой и здоровьем происходит за счет злаковых культур, семян и минералов.]]></description>
+        <vendorCode>8001254102757</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1002513" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_srednih_popugaev_Padovan_Grandmiks_up__400_g_1002513.html?offer=31222&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>189</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/1c9/1c9b5a115a4896ec941ab08fcaad059d.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Padovan PADOVAN Grandmix Parrocchetti Корм для средних попугаев, уп. 400 г</name>
+        <vendor>Padovan</vendor>
+        <description><![CDATA[Основным рационом в комплексном питании для средних попугаев стал Падован. Этот вкусный корм состоит из смеси натуральных компонентов, обеспечивающих питомцу витаминизированную диету. Минеральные добавки благотворно влияют на состояние здоровья и развитие пернатого. Изготавливается корм с учетом правильных пропорций злаковых культур и семян высокого качества.]]></description>
+        <vendorCode>8001254102788</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1002514" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_ekzoticheskih_ptits_Padovan_Grandmiks_up__400_g_1002514.html?offer=31224&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>199</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/9b6/9b6dad363c3048453d1b181a8bac39f5.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Padovan PADOVAN Grandmix Esotici Корм для экзотических птиц, уп. 400 г</name>
+        <vendor>Padovan</vendor>
+        <description><![CDATA[Витаминизированный комплексный рацион фирмы Падован станет незаменимым для экзотических видов птиц. В состав входят необходимые минеральные вещества, которые обеспечат домашнему любимцу крепкое здоровье. Сбалансированное питание, в котором содержатся злаковые и зерновые культуры, подойдет для ежедневного применения. Фруктовые добавки и дрожжи придадут сил и энергии пернатому.]]></description>
+        <vendorCode>8001254102771</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1002515" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_krupnyh_popugaev_Padovan_Grandmiks_up__600_g_1002515.html?offer=31226&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>349</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/bc2/bc22b31cd8a1a8d769197b0b5c415d86.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Padovan PADOVAN Grandmix Pappagalli Корм для крупных попугаев, уп. 600 г</name>
+        <vendor>Padovan</vendor>
+        <description><![CDATA[Любимым лакомством крупных попугаев станет корм бренда Падован. Оптимальные пропорции зерновых и злаковых культур в составе смеси располагают к ежедневному применению. Натуральные витаминизированные и минеральные добавки обеспечивают птице комплексный рацион, а сбалансированное питание благоприятно влияет на здоровье домашнего питомца!]]></description>
+        <vendorCode>8001254101866</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1019137" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/_%23_Padovan_Korm_GRANP%C3%82T%C3%89E_Universelle_kompleksnyyuniversalnyydnasekomoyadnyh_ptits_1019137.html?offer=31228&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>329</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/bbc/bbc85f3e0c58a7be7c640ef1a3ba9d11.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Padovan  # Padovan Корм GRANPÂTÉE Universelle комплексный/универсальныйд/насекомоядных птиц</name>
+        <vendor>Padovan</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>8001254001913</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1004423" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_krupnyh_popugaev_Fiori_Smes_kormovaya_up__700_g_1004423.html?offer=31230&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>415</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/362/3628000aa9c0ae3692da7423eebd4718.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Fiory Fiory для крупных попугаев смесь кормовая 700г</name>
+        <vendor>Fiory</vendor>
+        <description><![CDATA[Обеспечить пернатого питомца сбалансированным питанием можно с помощью кормовой смеси бренда Фиори. В состав входят полезные вещества, благотворно влияющие на жизнедеятельность попугая. Натуральные зерновые и злаковые компоненты смешиваются в оптимальных пропорциях, создавая благоприятную диету для укрепления иммунитета и придания сил домашнему любимцу.]]></description>
+        <vendorCode>2421000032507</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1019155" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-vitaminnaya-ptitsy/RIO_Vitaminnomineralnaya_smes_dlya_vseh_vidov_ptits_1019155.html?offer=31232&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>155</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>425</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/8f6/8f6397a52c5893e54bd6388f5fb84140.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Витаминно-минеральная смесь</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[Витаминно-минеральная смесь от бренда RIO предусмотрена для насыщения пернатого достаточным комплексом необходимых веществ. Содержит качественные натуральные компоненты, которые улучшают общее состояние питомца, укрепляет иммунную систему. Предназначается для ежедневного применения, является дополнительной подкормкой к сбалансированному рациону.]]></description>
+        <vendorCode>4602533781881</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1007507" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/Mineralnaya_smes_dptits_0_6kg_1007507.html?offer=31234&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>89</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/3c6/3c60416fb86616204e271131878b80bc.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO минеральная смесь для всех видов птиц 0,6 кг</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[Состав корма:  Крупнозернистый речной песок, ракушечник, кембрийская глина, мел, кедровая скорлупа, древесный уголь.  Все владельцы птиц знают, что кроме базового питания их домашним любимцам необходимо постоянное наличие в клетке минералов и смеси песка, что обусловлено физиологическими особенностями пищеварения. Действие смеси:   При употреблении в пищу крупнозернистого речного песка процесс расщепления корма происходит в мускульном желудке птицы, где накапливаются мелкие камушки, которые, в свою очередь, выполняют функцию гастролитов, помогая «перемалывать» твердые семена посредством сокращения мышечных стенок желудка.  Дробленые раковины устриц (ракушечник), входящие в состав корма, растворяются в кислой среде желудка и легко усваиваются организмом.  Кембрийская глина в натуральной среде используется птицами для нейтрализации ядов, которые могут содержаться в пище, выступая в роли «антиокислителя». Кроме того, глина содержит минералы, органические соединения, окислы железа и другие полезные вещества.  В связи с частым дефицитом кальция, необходимого для правильного развития костной системы и здоровья птицы в продукции RIO особое внимание уделено мелу.Измельченная кедровая скорлупа – богатый источник минералов – обладает также адсорбирующей активностью, оказывает вяжущее, противомикробное и противовоспалительное действие.  Древесный уголь улучшает пищеварение, обладает большой пористостью и способен задерживать и выводить токсичные вещества из организма, а также регулирует уровень кислотности в желудке птиц и эффективен для предотвращения желудочно-кишечных расстройств.]]></description>
+        <vendorCode>4602533781874</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1001705" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/Kamen_dlya_ptits_Vitakraft_Sepiya_SHale_dlya_zatochki_klyuva_up__2_sht__1001705.html?offer=31236&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>199</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/5af/5af0df3c7d5367c980a0dbd2519d19c2.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vitakraft Sepia Schale Камень для птиц для заточки клюва, уп. 2 шт.</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[Кормовая добавка в виде камня для птиц Vitakraft Sepia Shale — необходимый компонент ежедневного рациона любого попугая, канарейки или другой птицы. Камень из натурального ракушечника для заточки клюва канареек, экзотических и волнистых попугаев.  ]]></description>
+        <vendorCode>4008239681416</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1001722" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/Pesok_dlya_ptits_Vitakraft_Vita_Grit_Nature_up__200_g_1001722.html?offer=31238&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>109</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>422</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/99b/99bddd669aeefd88d60ae95b75c0bb74.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vitakraft Vita Grit Nature Песок для птиц, уп. 200 г</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[Песок для птиц Витакрафт Вита Грит Натуре - натуральный песок высшего качества с добавлением аниса и цитруса гарантирует отличное впитывание жидкости, улучшает пищеварение, регулирует обмен веществ, улучшает рост перьев, укрепляет костную структуру. ]]></description>
+        <vendorCode>4008239682451</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1001723" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/Pesok_dlya_ptits_vseh_vidov_Vitakraft_up__2_kg_1001723.html?offer=31240&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>159</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>422</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/363/36320afed9c03be3cffc1419d17d9806.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vitakraft Песок для птиц всех видов, уп. 2 кг</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[Bio Sandy песок для всех видов птиц от марки Vitakraft 2 кг. Высококлассный продукт, отличного качества, который является катализатором для роста перьев и нормализации пищеварения. Кроме того, он обладает абсорбирующими и противомикробными свойствами. Благодаря уникальному составу, регулирует естественный обмен веществ и усиливает структуру костей птицы.]]></description>
+        <vendorCode>4008239681584</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1001725" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-vitaminnaya-ptitsy/Podkormka_dlya_volnistyh_popugaev_dlya_zoba_Vitakraft_s_yodom_up__20_g_1001725.html?offer=31242&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>49</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>425</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/b4f/b4fc75ba19e6c6c950164244f4a012ea.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vitakraft Jod-Rapid-Perlen Подкормка для волнистых попугаев для зоба с йодом, уп. 20 г</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[Биодобавка Vitakraft для попугаев для зоба 20 г. Данная подкормка вобрала в себя полезные натуральные компоненты с высоким содержанием йода, минерального и витаминного комплекса. Данные вещества имеют критическое значение для функционирования щитовидной железы, жизнедеятельности птиц и применяется в профилактических целях. Качественные добавки укрепляют здоровье попугаев и стимулируют природные инстинкты.]]></description>
+        <vendorCode>4008239681263</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1001727" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-vitaminnaya-ptitsy/Podkormka_dlya_volnistyh_popugaev_dlya_ukrepleniya_immuniteta_Vitakraft_up__20_g_1001727.html?offer=31244&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>49</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>425</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/75f/75f9b5ab3fbb00c31ee2ce2650667c55.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vitakraft Lebertran Perlen Подкормка для волнистых попугаев для укрепления иммунитета, уп. 20 г</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[Биодобавка Lebertran Perlen 20 гр, для волнистых попугаев от Vitakraft. Чистый минеральный продукт на пшеничной основе, обогащенный витаминами С, йодом, фосфорной кислотой и карбонатом кальция. Создан для стимулирования иммунитета птиц, в частности в холодное время года. Также нормализует работу пищеварительной системы и метаболизма попугаев, улучшает усвоение полезных веществ и устойчивость перед инфекциями.]]></description>
+        <vendorCode>4008239681232</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1001728" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/Podkormka_dlya_kanareek_Vitakraft_mineralnaya_up__30_g_1001728.html?offer=31246&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>79</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/0ba/0bafba2c92bcfa6197ee87a92cd8c6b6.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vitakraft Подкормка для канареек минеральная, уп. 30 г</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[ Подкормка для канареек Витакрафт минеральная - дополнительное питание для канареек, поддерживает здоровье и иммунитет, способствует улучшению качества оперения слабых и апатичных животных. Продукт содержит ценные витамины и микроэлементы, которые укрепляют иммунную систему питомца. С вкусными семенами, орехами и фруктамиСпециальная формула без сахара Без консервантов ]]></description>
+        <vendorCode>4008239680846</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1018502" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/Padovan_Mineralnaya_dobavka_BIOGRIT_biopesok_ddekorativnyh_ptits_700_g_1018502.html?offer=31248&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>239</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>422</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/fc4/fc47def65d45c97fd3085db9a9eb4432.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Padovan PADOVAN BIOGRIT Минеральная добавка био-песок для декоративных птиц 700 г</name>
+        <vendor>Padovan</vendor>
+        <description><![CDATA[Песок BIOGRIT для декоративных птиц 700 г от торговой марки Падован является подкормкой, в состав которой входит полный комплекс минеральных веществ и витаминов. Укрепляет иммунную систему и повышает уровень активности. Стабилизирует процесс пищеварения и активизирует подвижность любимца. Не содержит фосфатов и токсинов. Подходит для всех разновидностей домашних пернатых.]]></description>
+        <vendorCode>8001254101194</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1018503" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/Padovan_Mineralnaya_dobavka_MINERALBLOCK_Birdy_mineralnyy_blokddekorativnyh_ptits_20_g_1018503.html?offer=31250&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>169</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/b3c/b3cd5375ae23e1c1e800c6f98e3d1246.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Padovan PADOVAN MINERALBLOCK Birdy минеральная добавка для декоративных птиц 20 г</name>
+        <vendor>Padovan</vendor>
+        <description><![CDATA[MINERALBLOCK Birdy для птиц от торговой марки Падован изготавливается из качественных ингредиентов. Применяется для всех видов пернатых и служит для обогащения организма необходимыми веществами. Полноценный витаминизированный комплекс способствует укреплению иммунитета. Улучшает общее состояние любимца и повышает уровень активности.]]></description>
+        <vendorCode>8001254002927</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1002518" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/Biopesok_dlya_ptits_Padovan_Okean_fresh_eir_pak__1_kg_1002518.html?offer=31252&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>119</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>422</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/f1d/f1d6450d8a1b8dbb726f45c2df78d84a.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Padovan PADOVAN Ocean Fresh Air Био-песок для птиц, пак. 1 кг</name>
+        <vendor>Padovan</vendor>
+        <description><![CDATA[Падован био-песок для птиц океан 1 кг изготавливается из качественных компонентов. Способствует активации пищеварительного процесса. Насыщает организм пернатых необходимым количеством кальция, укрепляя позвоночные отделы. Семена аниса являются приятным ароматизатором. Уникальный наполнитель не содержит вредных веществ и полностью безопасен для здоровья.]]></description>
+        <vendorCode>2421000028609</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1004424" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/Podkormka_dlya_ptits_Fiori_Biokamen_up__55_g_1004424.html?offer=31254&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>163</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/fd0/fd06c453c64df851e5e348a9b73975e6.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Fiory Fiory био-камень для птиц 55г</name>
+        <vendor>Fiory</vendor>
+        <description><![CDATA[Био-камень Фиори станет замечательной минеральной добавкой к основному рациону птиц, проживающих в клетке. Камень в форме сердца станет отличным инструментом заточки клюва для вашего пернатого друга. Подкормка также оказывает антибактериальное действие, за счет наличия в составе цветов лаванды.]]></description>
+        <vendorCode>2421000032484</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1004427" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/Pesok_dlya_ptits_Fiori_limon_up__1_kg_1004427.html?offer=31256&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>159</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>422</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/710/710365fff91b1ef0fadb7a8917389b73.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Fiory Fiory песок для птиц лимон 1кг</name>
+        <vendor>Fiory</vendor>
+        <description><![CDATA[Бренд Фиори представляет песок для клеток птиц с экстрактом лимона. За счет тщательной предварительной обработки, подстилка абсолютно безопасна для питомца, не содержит никаких вредоносных бактерий. Она обеспечит максимальную чистоту клетки, а аромат лимона придаст ей свежести. Содержащиеся в песке минералы укрепят клюв и когти вашего пернатого друга. Вес упаковки – 1 кг.]]></description>
+        <vendorCode>2421000032927</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1005745" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/Podkormka_dlya_ptits_Fiori_biokamen_up__100g_1005745.html?offer=31258&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>225</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/40f/40fa096731bf2f47728730cc6b2b2741.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Fiory Fiory био-камень для птиц 100г</name>
+        <vendor>Fiory</vendor>
+        <description><![CDATA[Био-камень Фиори станет замечательной минеральной добавкой к основному рациону птиц, проживающих в клетке. Камень в форме сердца станет отличным инструментом заточки клюва для вашего пернатого друга. Подкормка также оказывает антибактериальное действие, за счет наличия в составе цветов лаванды.]]></description>
+        <vendorCode>2421000032408</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1014474" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/PennPlax_KAMEN_dlya_ptits_mineralnyy_GRAPE_1014474.html?offer=31261&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>99</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/b3e/b3e6195a494508aba53127dd325da363.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Penn Plax Penn-Plax КАМЕНЬ для птиц минеральный GRAPE</name>
+        <vendor>Penn Plax</vendor>
+        <description><![CDATA[Penn-Plax КАМЕНЬ для птиц минеральный GRAPE предназначен для подвешивания в клетку. Обогащает рацион птиц минералами, необходимыми для активной и полноценной жизни. Оригинальный яркий камень послужи ярким украшением для клетки.]]></description>
+        <vendorCode>20030172005644</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Китай</country_of_origin>
+      </offer>
+      <offer id="1016596" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/VERSELELAGA_kost_karakatitsy_dlya_popugaev_Prestige_Sepia_Mineral_12_sm_1016596.html?offer=31267&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>139</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/39d/39d7079816c6ccff4880603b4ece5cf5.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga Versele Laga Кость каракатицы для попугаев 12 см</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[Кость каракатицы Prestige Sepia Mineral от компании Versele-Laga послужит замечательным натуральным источником минеральных веществ для вашего попугая. Продукт можно использовать в качестве поощрительного лакомства или кормовой добавки к основному рациону пернатого питомца. Он обогатит организм животного кальцием и прочими витаминами. Размер кости составляет 12 см.]]></description>
+        <vendorCode>5410340513385</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1016597" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/VERSELELAGA_kost_karakatitsy_dlya_popugaev_Prestige_Sepia_Mineral_16_sm_1016597.html?offer=31269&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>209</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/336/336fa94cfdf049dacca02fd0cc830cfd.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga Versele Laga Кость каракатицы для попугаев 16 см</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[Кость каракатицы Prestige Sepia Mineral от компании Versele-Laga послужит замечательным натуральным источником минеральных веществ для вашего попугая. Продукт можно использовать в качестве поощрительного лакомства или кормовой добавки к основному рациону пернатого питомца. Он обогатит организм животного кальцием и прочими витаминами.]]></description>
+        <vendorCode>5410340513392</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1018183" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/Zoomir_Mineralnyy_kamen_dlya_popugaev_Veselyy_popugay_s_vitaminami_1018183.html?offer=31271&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>55</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/aff/affd8e49025a235e9269810852cf10fb.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Зоомир Зоомир лакомство Минеральный камень для попугаев Веселый попугай с витаминами</name>
+        <vendor>Зоомир</vendor>
+        <description><![CDATA[Минеральный камень Зверюшки - это лакомство для попугаев, обогащенное целым комплексом витаминов и минералов. Блок помогает птицам регулярно стачивать клюв, а входящие в состав компоненты поддержат здоровье вашего питомца. Лакомство способствует хорошему настроению и правильной работе желудка. ]]></description>
+        <vendorCode>14607072123441</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1018184" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/Zoomir_Mineralnyy_kamen_dlya_ptits_s_yodom_1018184.html?offer=31273&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>69</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/051/05187c83b20f80b2a0963ce2c8ad49e1.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Зоомир Зоомир лакомство Минеральный камень для птиц с йодом</name>
+        <vendor>Зоомир</vendor>
+        <description><![CDATA[Минеральный камень Зверюшки - это лакомство для попугаев, обогащенное целым комплексом витаминов и минералов, которые поддержат здоровье вашего питомца. Лакомство способствует хорошему настроению и порадует вашего любимца приятным вкусом. ]]></description>
+        <vendorCode>14607072123465</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1001724" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/Pesok_dlya_ptits_Vitakraft_Vita_Grit_Nature_up__50_g_1001724.html?offer=40452&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>59</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>422</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/2fb/2fbf0b167a175b4955bea8fa8624bf30.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vita Gtit Nature Песок для птиц</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[Vita Grit Nature песок для птиц от марки Vitakraft 50 гр - это минеральный продукт, насыщенный компонентами известняковой природы, а так же комплексом витаминов, которые взаимодействуют непосредственно с пищеварительной системой птицы, улучшая усвоение пищи и образование новых перьев. Песок имеет противомикробное воздействие, что положительным образом стимулирует иммунитет.]]></description>
+        <vendorCode>4008239681140</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1022106" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/pesok--ptitsy/RIO_Gigienicheskiy_pesok_dlya_ptits_2kg_1022106.html?offer=41331&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>223</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>427</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/0db/0dbca3a328cdc491a5a63695735aac79.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Гигиенический песок для птиц 2кг</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[ RIO Гигиенический песок для птиц стерилизованный при температуре свыше 1200 С песок RIO является прекрасным средством для поддержания чистоты и свежести в клетке. Дополнительный гигиенический эффект придает экстракт эвкалипта, который благодаря своим целебным свойствам оказывает противовоспалительное, противомикробное, дезинфицирующее действие. Эффективен для профилактики развития бактерий и паразитов на теле птиц: клещей, пухо- и пероедов. Нейтрализует неприятные запахи. Белый цвет песка способствует сохранению естественного окраса птицы. Вкрапления ракушечника являются источником кальция и других минеральных веществ. ]]></description>
+        <vendorCode>4602533784288</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1022105" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/dopolnitelnyy--ptitsy/RIO_Pitatelnyy_sharik__dlya_podkarmlivaniya_i_privlecheniya_ptits_v_prirode_12_sht_1022105.html?offer=41344&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>415</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>424</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/d79/d7949596cd44d5f776c18febc7968d4f.png</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Питательный шарик (для подкармливания и привлечения птиц в природе)12 шт</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[RIO Питательный шарик (для подкармливания и привлечения птиц в природе) или «Fat balls» стали традиционным во всем мире способом поддержать птиц, испытывающих недостаток питания круглый год. Животный жир, составляющий значительную часть такого шарика, является источником энергии, необходимой для поддержания птиц в природе. Питательные шарики RIO изготовлены на основе животного жира с добавлением зерен, семян и орехов. Идеальный способ подкармливания синиц, зябликов, поползней и других видов птиц. ]]></description>
+        <vendorCode>1000000032215</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1001707" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_krupnyh_popugaev_Vitakraft_Menyu_osnovnoy_s_medom_pak__1_kg_1001707.html?offer=43222&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>369</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/690/69037cf68dfe8db0c355083508394512.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vitakraft Menu Корм для крупных попугаев основной с медом, пак. 1 кг</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[Корм для крупных попугаев Меню Витал в упаковке 1 кг от Витакрафт является отличным примером полезного и сбалансированного рациона, который отличается большим количеством полезных питательных веществ и уникальным вкусом. За счет этого любой прием пищи будет сопровождаться не только приятными ощущениями, но и оказывать благотворный эффект на организм питомца.]]></description>
+        <vendorCode>4008239602916</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1001711" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_ekzoticheskih_ptits_Vitakraft_Ekzotik_Komplit_osnovnoy_pak__500_g_1001711.html?offer=43224&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>239</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/214/214d0fdb88a2da7f56192c67efcfbaab.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vitakraft Exotic Complete Корм для экзотических птиц основной, пак. 500 г</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[Корм для экзотических птиц Комплит от Витакрафт 500 гр - чудесный способ обеспечить своему неординарному другу сбалансированный и правильный рацион, который будет способен насытить организм всеми необходимыми питательными веществами, витаминами и минералами. Они способствуют росту и развитию систем организма, а отличный вкус смеси становится очередным преимуществом.]]></description>
+        <vendorCode>4008239602442</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1014473" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/PennPlax_KAMEN_dlya_ptits_mineralnyy_BANANA_1014473.html?offer=43238&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>98</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/a8e/a8ed16c118a59170df62c1f1bca06a7e.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Penn Plax Penn-Plax КАМЕНЬ для птиц минеральный BANANA</name>
+        <vendor>Penn Plax</vendor>
+        <description><![CDATA[Penn-Plax КАМЕНЬ для птиц минеральный BANANA станет отличным источником витаминов и минералов для вашего пернатого питомца. Оригинальное изделие в форме грозди бананов будет оригинально смотреться в клетке и не портить интерьер. Минеральный камень удовлетворит естественную потребность птиц клевать и подтачивать клюв, обогатит рацион необходимыми минеральными веществами. ]]></description>
+        <vendorCode>20030172002469</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Китай</country_of_origin>
+      </offer>
+      <offer id="1002516" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_srednih_popugaev_Padovan_Grandmiks_up__850_g_1002516.html?offer=43491&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>339</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/a20/a209cec9358dcc632418c30d42efaaf7.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Padovan PADOVAN Grandmix Parrocchetti Корм для средних попугаев, уп. 850 г</name>
+        <vendor>Padovan</vendor>
+        <description><![CDATA[Обеспечить любимцу крепкое здоровье и правильный сбалансированный рацион можно при помощи кормовой смеси Падован. Любимые зерновые культуры незаменимы в ежедневном прикорме! Бисквитные крошки, злаковые, полный комплекс витаминов и минералов придадут пернатым сил и здоровья. Обогащенный натуральными компонентами корм изготавливается в оптимальных пропорциях.]]></description>
+        <vendorCode>8001254101859</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1004422" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_popugaev_Fiori_Smes_kormovaya_up__400_g_1004422.html?offer=43500&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>185</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/30d/30d8af0350d50c022f9f941c0b806151.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Fiory Fiory для попугаев смесь кормовая 400г</name>
+        <vendor>Fiory</vendor>
+        <description><![CDATA[Бренд Фиори изготавливает кормовые смеси для попугаев на основе комплекса зерновых и злаковых культур. Содержание различных видов семян обеспечивает пернатым полный разнообразный и сбалансированный рацион. Качественные натуральные компоненты благотворно влияют на повышение иммунитета и укрепление оперения. Домашний любимец непременно полюбит смесь и станет энергичным!]]></description>
+        <vendorCode>2421000032439</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1005752" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_ekzoticheskih_ptits_Fiori_smes_up__400g_1005752.html?offer=43502&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>199</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/228/228ce544d68c993bcf34a0c700c63f8b.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Fiory Fiory для экзотических птиц смесь кормовая 400г</name>
+        <vendor>Fiory</vendor>
+        <description><![CDATA[Владельцам домашних экзотических птиц стоит выбрать в качестве лучшего питания кормовую смесь Фиори 400 г. В его составе содержатся все необходимые витамины и минералы, чтобы питомец чувствовал себя здоровым и сытым. Благодаря вакуумной упаковке вы без труда сохраните корм свежим как можно дольше, а доступная цена позволит экономно расходовать свои средства.]]></description>
+        <vendorCode>2421000032453</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1004867" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_srednih_popugaev_Fiori_smes_pak__800_g_1004867.html?offer=43504&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>465</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/95a/95ac33ab660159026b0d9f42e7c219a2.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Fiory Fiory для средних попугаев смесь кормовая 800г</name>
+        <vendor>Fiory</vendor>
+        <description><![CDATA[Владельцам домашних попугаев среднего размера стоит присмотреться к кормовой смеси марки Фиори. В составе данного корма содержатся овес и подсолнечник, гречиха, кукуруза и другие компоненты, позволяющие обеспечить требуемую норму витаминов и минералов. Упаковки вакуумного типа объемом 800 г хватит надолго, а смесь будет оставаться свежей и чистой.]]></description>
+        <vendorCode>2421000032514</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1002517" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_ekzoticheskih_ptits_Padovan_Naturalmiks_up__1_kg_1002517.html?offer=43506&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>229</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/10a/10aa704c33139f2677a173f2f6b032b3.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Padovan PADOVAN NaturalMix Esotici Корм для экзотических птиц, уп. 1 кг</name>
+        <vendor>Padovan</vendor>
+        <description><![CDATA[Для ежедневного рациона и сбалансированного питания экзотических птиц разработан корм фирмы Падован. В состав входят компоненты, которые обеспечивают любимца нужным витаминизированным комплексом. Натуральные злаки и канареечное семя станут любимой едой для пернатых! Минеральные вещества придадут домашнему питомцу сил, здоровья и энергии.]]></description>
+        <vendorCode>2421000028616</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1007506" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dekzoticheskih_ptits_0_5kg_1007506.html?offer=43880&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>143</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/cc3/cc32be98f67c77513c7b693d5dbcad61.png</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Корм для экзотических птиц 500г</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[Рио корм для экзотических птиц станет тем самым вкусным пунктом в меню, перед которым не устоит никто из удивительных пернатых! Состав подобран производителем из высококачественных злаков мелкой фракции. Он восполнит ежедневную потребность вашего друга в витаминах и минералах. В качестве той самой изюминки, которая станет главным преимуществом корма, выступают редкое просо чумизы и пайзы, любимое лакомство могар, богатый белками абиссинский нуг.]]></description>
+        <vendorCode>4602533781850</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1007503" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_volnistyh_popugaev_up__0_5kg_1007503.html?offer=43882&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>89</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/95e/95e4e9a95eae9e6003b2fa51b8082003.png</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Корм для мелких попугаев 500г</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[Корм РИО для мелких попугаев позволит вам баловать своего питомца лучшим лакомством. Обогащенный витаминами состав поддержит в норме здоровье пернатого друга, а его аппетит всегда будет оставаться отменным. Вам надолго хватит практичной упаковки весом 500 г, в которой корм как можно дольше сохраняется свежим и вкусным, неизменно радуя вашего попугая.]]></description>
+        <vendorCode>4602533781768</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1007505" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dkanareek_up__0_5kg_1007505.html?offer=43884&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>113</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/fcd/fcdbd4344cdff9a450eb26ea8f1358e0.png</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Корм для канареек 500г</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[Рио корм для канареек – идеальное питание для Вашего питомца. Добавив его в ежедневный рацион, вы будете наслаждаться пением – чистым и беспечным! Путем многочисленных исследований производитель сумел подобрать правильные пропорции из 10 видов зерна. Главное достоинство корма – питательный абиссинский нуг, необходимый для ежедневного питания. Кроме того, входящие в состав пробиотики улучшат пищеварение пернатого друга.]]></description>
+        <vendorCode>4602533781812</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1002510" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_volnistyh_popugaev_Padovan_Grandmiks_up__1_kg_1002510.html?offer=43894&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>339</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/e4c/e4c032e9207581ce42797c12deb850ce.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Padovan PADOVAN Grandmix Cocorite Корм для волнистых попугаев, уп. 1 кг</name>
+        <vendor>Padovan</vendor>
+        <description><![CDATA[Проявить заботу о здоровье вашего любимца – просто! Выбирайте вкусный и полезный корм, и ваш попугай будет доволен. Составляющие компоненты в виде фруктов и бисквитной крошки позволяют обеспечить полный рацион. Минеральные добавки и витаминный комплекс создают необходимую защиту от неблагоприятных воздействий окружающей среды. Натуральные ингредиенты оказывают положительное влияние на оперение попугая.]]></description>
+        <vendorCode>8001254101835</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1000884" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_melkih_i_srednih_popugaev_Vaka_Lyuks_bn__1_kg_1000884.html?offer=43896&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>185</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/776/7768a4a323413c515fdd76f166dcbf48.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Вака Вака Люкс Корм для мелких и средних попугаев 1кг</name>
+        <vendor>Вака</vendor>
+        <description><![CDATA[Корм для мелких и средних попугаев Вака ЛЮКС позволит без проблем утолить аппетит вашего питомца. Благодаря обогащенному витаминами и минералами составу данного корма ваш попугай получит все самое необходимое для крепкого здоровья. Упаковки весом 1 кг хватит надолго, а значит, вы сможете баловать своего домашнего питомца отменным угощением каждый день!]]></description>
+        <vendorCode>2421000025042</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1016882" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/Triksi_Pantsir_karakatitsy_s_dergatelem_dlya_ptits_12sm_1016882.html?offer=44084&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>95</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/02d/02db2658650f73ad609764773289c33b.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Trixie Trixie Панцирь каракатицы с держателем для птиц, 12см</name>
+        <vendor>Trixie</vendor>
+        <description><![CDATA[Панцирь каракатицы Трикси 12см, известный также как Сепия, мел – естественный и природный продукт, богатый кальцием. Сепия с держателем для птичьей клетки идеально подходит в качестве источника кальция для мелких и крупных домашних декоративных птиц. Питомцы самостоятельно регулируют потребление кальция, укрепляя клювы и когти в зависимости от природных потребностей.]]></description>
+        <vendorCode>4011905050508</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Китай</country_of_origin>
+      </offer>
+      <offer id="1017783" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/RIO_Korm_dlya_volnistyh_popugaychikov_v_period_linki_500_g_1017783.html?offer=44106&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>99</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/c88/c8834d51371d00ecb3c1e8475b20da0b.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Корм для волнистых попугаев при линьке 500 гр</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[Корм RIO для волнистых попугайчиков в период линьки – оптимальное решение. Рацион пернатых в этот период должен отличаться от основного питания. Важно, чтобы еда была более насыщена белками и жирами. Семена зерновых культур тщательно подбирают для того чтобы удовлетворить все потребности птиц. Пропорции зерновых и овощей сбалансированы таким образом, чтобы процесс линьки прошел быстро и без боли. В смесь включены зернышки кунжута, которые восстанавливают запасы кальция в организме птиц.]]></description>
+        <vendorCode>4602533781775</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1018511" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/VERSELELAGA_korm_dlya_krupnyh_popugaev_Prestige_PREMIUM_African_ParrotLoro_Parque_Mix_1_kg_1018511.html?offer=44151&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>565</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/dc2/dc2c1dec188fe2305878b88a738ecc3e.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga Versele Laga African Parrot Loro Parque Mix корм для крупных попугаев 1 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[Корм, производимый компанией VERSELE-LAGA, считается одним из эффективных для попугаев большого размера. African Parrot Loro Parque выпускается в небольших пачках по 1 кг. Зерна, фрукты и ягоды подобраны в нужном соотношении для ежедневного питания, в сбор включены все необходимые вещества. Подходит для пород больших размеров, например, таких, как африканский серый или сенегальский попугай, а также для других крупных птиц.]]></description>
+        <vendorCode>15410340219208</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1018513" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/VERSELELAGA_korm_dlya_srednih_popugaev_Prestige_PREMIUM_AustralianParakeet_Loro_Parque_Mix_1_kg_1018513.html?offer=44153&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>459</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/f34/f34e77430df8c722cc36c9d9964a2272.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga Versele Laga AustralianParakeet Loro Parque Mix корм для средних попугаев 1кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[Корм Australian Parakeet Loro Parque Mix отличается высоким качеством. Он собран из семян, которыми любят лакомиться австралийские попугаи в естественных зонах обитания. В продукт предлагаемый производителем Australian Parakeet Loro Parque Mix входят гранулы ВАМ, 15 видов семян, сырые белки, клетчатка и жиры, витамины А,Д,Е, и ракушечник. Такое сбалансированное питание станет оптимальным выбором для вашего крылатого друга!]]></description>
+        <vendorCode>15410340219703</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1019149" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/RIO_Korm_dlya_Volnistyh_popugaychikov_1_kg_1019149.html?offer=44172&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>163</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/5e8/5e822ec34c89cb9218ba24323facfa02.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Корм для волнистых попугайчиков 1 кг</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[Корм от RIO – это великолепное лакомство для волнистых попугайчиков, которое включает в свой состав, как семена редких растений, так и привычные злаковые. 10 видов зерен, водоросли способствует полноценному питанию. Пищевая ценность продукта очень высокая, количество белков и клетчатки более 10%, а жиров свыше 6%. Для данного вида попугаев в сутки достаточно давать 7-10 граммов корма, чтобы обеспечить нужное количество минералов и йода.]]></description>
+        <vendorCode>4602533784172</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1019151" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/dopolnitelnyy--ptitsy/RIO_Korm_dlya_prorashchivaniya__Ratsion_dlya_popugaev_i_ekzoticheskih_ptits_500g_1019151.html?offer=44174&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>89</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>424</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/581/58196e03c071d8fd07d4c7319e90ba0e.jpg</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Проращивание волнистые и экзоты 500г</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[Компания РИО разработала корм для проращивания 500 г, который послужит идеальным полнорационным питанием для волнистых попугаев и других экзотических птиц. Зерна, содержащие большое количество витаминов и полезных микроэлементов, поспособствуют наполнению организма пернатого питомца жизненной энергией и силами.]]></description>
+        <vendorCode>4602533781805</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1022103" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/dopolnitelnyy--ptitsy/RIO_YAichnyy_korm_dlya_vseh_vidov_ptits_350_g_1022103.html?offer=44372&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>179</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>424</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/b4a/b4a3121d481ad0ba4b59eb84d112d0d6.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Rio RIO Яичный корм для всех видов птиц 350 г</name>
+        <vendor>Rio</vendor>
+        <description><![CDATA[RIO Яичный корм для всех видов птиц. Для обеспечения птицы всеми питательными веществами и витаминами необходимо регулярно добавлять дополнительный яичный корм к ежедневной зерновой смеси. Яичный корм RIO произведен из цельных яиц с добавлением меда, витаминов и минеральных веществ. Дополнительный комплекс аминокислот, в том числе лизина и метионина, обеспечит здоровье перьев и их рост. Добавка йода — здоровье щитовидной железы, а включение в состав корма дрожжей — поступление витаминов группы В. Богатый белками и другими питательными веществами. Яичный корм RIO является незаменимой добавкой во время роста, периода линьки, сезона размножения, а также для укрепления ослабленных птиц.]]></description>
+        <vendorCode>4602533784240</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+      <offer id="1002735" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_volnistyh_popugaev_Versel_Lada_Premium_Badgis_vitaminyaminokislotymineraly_pak__1_1002735.html?offer=46738&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>429</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/bd6/bd6f040c425003cf58bfcdbed77ddce1.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga Versele Laga Premium Budgie корм для волнистых попугаев 1кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[Корм для волнистых попугаев Versele–Laga Преиум Багдис – лучшее решение для ежедневного рациона вашего питомца. Упаковки весом 1 кг хватит надолго, при этом ваш попугай получит все необходимые витамины и питательные вещества. Так например, в составе содержатся полезные семена льна и масличный нуг. Побалуйте питомца отменным кормом для крепкого здоровья!]]></description>
+        <vendorCode>15410340216887</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1002734" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_volnistyh_popugaev_Versel_Laga_Bugis_pak__1_kg_1002734.html?offer=46762&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>249</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/0e2/0e2f39303b2a3b8f235b1477b81da0dd.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga Versele Laga Budgie корм для волнистых попугаев 1кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[Корм для волнистых попугаев Versele–Laga Бугис станет лучшим выбором для ежедневного рациона вашего питомца. В его составе содержатся исключительно полезные компоненты. Питание на основе овса, семян льна и сафлора поможет расти попугаю здоровым, крепким и активным. Удобной упаковки корма весом 1 кг хватит надолго, и ваш питомец однозначно будет доволен!]]></description>
+        <vendorCode>15410340216207</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1002736" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_dlinnohvostyh_popugaev_Versel_Lada_Big_Parakeyts_pak__1_kg_1002736.html?offer=46764&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>275</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/b91/b914fa9908d332bf73d880a34fccb738.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga Versele Laga Big Parakeets корм для средних попугаев 1кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[Versele–Laga Биг Паракейтс корм для длиннохвостых попугаев поможет утолять ежедневный аппетит вашего питомца. Благодаря содержанию в составе минералов и многочисленных витаминов длиннохвостый попугай сможет расти крепким, активным и здоровым. Покупая вакуумную упаковку весом 1 кг, вы надолго обеспечите своего питомца полезным, свежим и вкусным угощением!]]></description>
+        <vendorCode>15410340218805</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1002737" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Korm_dlya_krupnyh_popugaev_Versel_Lada_Perrots_pak__1_kg_1002737.html?offer=46766&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>369</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/f3b/f3bd341a4c54ce3b5b1de421e68022e1.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga Versele Laga Prestige Premium Parrots корм для крупных попугаев 1кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[Корм для крупных попугаев Пэрротс Versele–Laga – лучшее решение для вашего питомца. Питательные компоненты, содержащиеся в составе корма, помогут вашему попугаю расти и развиваться без проблем. Овес, семена льна, кукуруза - такой состав наверняка порадует вашего попугая. Благодаря удобной упаковке корм будет сохранять свежесть и вкусовые качества как можно дольше!]]></description>
+        <vendorCode>15410340217846</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1018510" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/VERSELELAGA_korm_dlya_krupnyh_popugaev_Prestige_Parrots_3_kg_1018510.html?offer=47257&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>1049</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/391/391a55b637ffbbaf7b68d7a3f2927b7d.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga Versele Laga Prestige Parrots корм для крупных попугаев 3кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[Для крупных пернатых оптимально питание, предлагаемое компанией VERSELE-LAGA Parrots производства Бельгии, оно расфасовано в пакеты объемом 3 кг. Это один из самых идеальных сборов для птиц большого размера. В него входит комплекс разнообразных по составу и назначению витаминов, минералов и микроэлементов, требующихся для активной жизни питомца. Содержит значительный ассортимент злаков и семян различных растений, поэтому рекомендуется специалистами для ежедневного питания, как основной корм.]]></description>
+        <vendorCode>15410340217969</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1001729" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/Podkormka_dlya_ptits_Vitakraft_Vogel_Kohl_drevesnyy_ugol_up__10_g_1001729.html?offer=48348&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>59</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/399/39976bd7abacd646bf4261bf1f60fba7.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Vitakraft Vogel Kohle Подкормка для птиц древесный уголь, уп. 10 г</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[ Подкормка для птиц Витакрафт Вогел Кохл древесный уголь используется для улучшения пищеварения птиц. Древесный уголь известен своими абсорбирующими и очищающими свойствами, в естественных условиях питание птиц более разнообразно за счет того, что им доступны множество природных веществ. ]]></description>
+        <vendorCode>4008239681164</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+      <offer id="1018501" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/Padovan_Korm_GRANDMIX_Pappagalli_kompleksnyyosnovnoy_dkrupnyh_popugaev2_kg_1018501.html?offer=48669&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>859</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/592/5921f69c96ae72cd786740ac1d33338c.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Padovan Grandmix Pappagalli комплексный, основной для крупных попугаев 2 кг</name>
+        <vendor>Padovan</vendor>
+        <description><![CDATA[Питательная смесь марки Padovan GrandMix Pappagalli в упаковке для крупных попугаев поддержит в тонусе здоровье вашего друга. Благодаря содержанию в составе ячменя, орехов и различных фруктов и плодов данный корм обеспечит ежедневную норму микроэлементов и минералов для вашего питомца. Удобная упаковка вакуумного типа поможет сохранять корм свежим как можно дольше!]]></description>
+        <vendorCode>8001254106533</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Италия</country_of_origin>
+      </offer>
+      <offer id="1023664" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_granulirovannyy_korm_dlya_mayn_nutribird_beo_komplet_500_g.html?offer=70058&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>479</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/8fc/8fcd7cefdf035c21c702d58ef2c6b7c3.jpg</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA гранулированный корм для майн NutriBird Beo Komplet 500 г</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340220634</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023665" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_korm_dlya_krupnyh_i_srednih_popugaev_oblegchennyy_prestigepremium_exotic_light_750_g.html?offer=70060&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>542</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/6ef/6ef47fcace106f4531bb17685a57266c.jpg</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA корм для крупных и средних попугаев облегченный PrestigePremium Exotic Light 750 г</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340217832</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023666" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_oblegchennaya_smes_dlya_krupnyh_popugaev_prestige_parrotssuper_diet_20_kg.html?offer=70062&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>5247</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/02b/02bb0fcc45e477631eb4a208ca3a6fe7.JPG</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA облегченная смесь для крупных попугаев Prestige ParrotsSuper Diet 20 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340218280</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023669" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_granulirovannyy_korm_dlya_krupnyh_popugaev_nutribird_p15original_1_kg.html?offer=70068&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>932</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/fc1/fc18420fdc1fd12b5bb15f1274fca5fc.png</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA гранулированный корм для крупных попугаев NutriBird P15Original 1 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340220603</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023670" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_granulirovannyy_korm_dlya_krupnyh_popugaev_nutribird_p15original_10_kg.html?offer=70070&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>6215</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/b50/b50718af5cfdcb6992de52183a192f6a.png</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA гранулированный корм для крупных попугаев NutriBird P15Original 10 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340220030</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023672" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_granulirovannyy_korm_dlya_krupnyh_popugaev_nutribird_p15tropical_10_kg.html?offer=70074&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>6505</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/17e/17e9b5c9f1e7f89461bb412314534814.png</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA гранулированный корм для крупных попугаев NutriBird P15Tropical 10 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340220382</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023674" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_granulirovannyy_korm_dlya_tukanov_nutribird_t16_10_kg.html?offer=70078&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>6449</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/97a/97a22fcf7de3d51130bc2d44c7ce25ba.png</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA гранулированный корм для туканов NutriBird T16 10 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340220351</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023683" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_korm_dlya_krupnyh_popugaev_prestige_premium_african_parrotloro_parque_mix_2_5_kg.html?offer=70096&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>1419</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/18c/18cabd88f3acbc2ee6edf593d952ed57.png</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA корм для крупных попугаев Prestige PREMIUM African ParrotLoro Parque Mix 2,5 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340219225</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023686" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_korm_dlya_krupnyh_popugaev_prestige_premium_ara_parrot_loroparque_mix_2_5_kg.html?offer=70102&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>1415</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/ca5/ca5de02247a8465633ee5e4e3e9e16a3.png</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA корм для крупных попугаев Prestige PREMIUM Ara Parrot LoroParque Mix 2,5 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340219591</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023688" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_korm_dlya_krupnyh_popugaev_prestige_premium_australianparrot_loro_parque_mix_15_kg.html?offer=70106&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>5795</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/ec0/ec0a15c629c2e8b5bcf9cdef358909c9.png</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA корм для крупных попугаев Prestige PREMIUM AustralianParrot Loro Parque Mix 15 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340219959</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023692" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_korm_dlya_ruchnogo_vskarmlivaniya_vseh_ptencov_nutribird_a21800_g.html?offer=70112&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>1399</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/2f2/2f208d87b8eb8862271ed1bf8688a347.jpg</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA корм для ручного вскармливания всех птенцов NutriBird A21800 г</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340220108</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023695" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_korm_dlya_ruchnogo_vskarmlivaniya_ptencov_krupnyh_popugaevnutribird_a19_3_kg.html?offer=70118&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>4157</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/e1e/e1e4b5d3d80d44f23d40e07538e702e4.png</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA корм для ручного вскармливания птенцов крупных попугаевNutriBird A19 3 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340220146</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023697" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_korm_dlya_ruchnogo_vskarmlivaniya_ptencov_lori_i_popugaevnutribird_a18_lori_800_g.html?offer=70122&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>1470</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/b07/b0791c11c199f57ebd2c5f839b7134cf.png</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA корм для ручного вскармливания птенцов лори и попугаевNutriBird A18 Lori 800 г</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340220979</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023698" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_korm_dlya_srednih_popugaev_classic_big_parakeet_20_kg.html?offer=70124&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>3819</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/b7e/b7ee2e7f413f8d731d8753202e7270de.jpg</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA корм для средних попугаев Classic Big Parakeet 20 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340218976</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023705" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_korm_dlya_chizhey_prestige_siskin_1a_4_kg.html?offer=70134&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>3835</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/static/src/images/inhtml/no_image.png</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA корм для чижей Prestige Siskin 1A 4 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340213056</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023706" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_korm_dlya_shcheglov_prestige_blattner_goldfinch_4_kg.html?offer=70136&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>3445</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/static/src/images/inhtml/no_image.png</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA корм для щеглов Prestige Blattner Goldfinch 4 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340213001</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023713" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/osnovnoy-ptitsy/versele_laga_korm_dlya_ekzoticheskih_ptic_prestige_premium_tropicalfinches_1_kg.html?offer=70138&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>457</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>423</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/9b0/9b07e0ef13c0ed3e4861465d425c2a51.jpg</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA корм для экзотических птиц Prestige PREMIUM TropicalFinches 1 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>15410340215385</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023718" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/dopolnitelnyy--ptitsy/versele_laga_dopolnitelnoe_pitanie_dlya_krupnyh_popugaev_prestigeparrots_dinner_mix_20_kg.html?offer=70198&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>5769</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>424</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/275/2756118e1ab2b7f978345c53d0fe6655.png</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA дополнительное питание для крупных попугаев PrestigeParrots Dinner Mix 20 кг</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340218174</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023720" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/dopolnitelnyy--ptitsy/versele_laga_semena_dlya_prorashchivaniya_dlya_krupnyh_popugaev_prestigegermination_seeds_parrots_20.html?offer=70200&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>5138</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>424</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/832/832ec33fcb0b795c49900b3d0ab3b257.jpg</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA семена для проращивания для крупных попугаев PrestigeGermination seeds parrots 20</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340218303</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1023721" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/dopolnitelnyy--ptitsy/versele_laga_mineralnyy_blok_dlya_krupnyh_popugaev_orlux_clay_blocamazon_river_s_glinoy_550_g.html?offer=70202&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>276</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>424</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/a4b/a4bef195fbdc6499864e40290a785a82.png</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>Versele-Laga VERSELE-LAGA минеральный блок для крупных попугаев Orlux Clay BlocAmazon River с глиной 550 г</name>
+        <vendor>Versele-Laga</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>5410340240571</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Бельгия</country_of_origin>
+      </offer>
+      <offer id="1024503" available="true">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/8in1-graviy-dlya-zapolneniya-zoba-ptic-bird-gravel-dlya-kanareek-i-amadin680-g.html?offer=71698&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>117</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>422</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/b8f/b8f6f2336c56b7f2dcc9a3fc0b0a3eed.jpg</picture>
+        <store>true</store>
+        <pickup>true</pickup>
+        <name>8in1 8in1 гравий для заполнения зоба птиц Bird Gravel для канареек и амадин680 г</name>
+        <vendor>8in1</vendor>
+        <description><![CDATA[
+	8in1 Bird Grave гравий для заполнения зоба птиц (канарейки и амадины). 
+	 Идеально промытый и обработанный гравий является природным заменителем зубов птицы и способствует улучшению ее пищеварительных процессов и поддержанию гигиены.
+ 
+
+
+	Древесный уголь, содержащийся в смеси, регулирует кислотность в желудке пернатого питомца. 
+	Гравий – необходимое средство для ухода за Вашей птицей, размер его зерен подобран в соответствии с размером птицы.
+	Насыпьте небольшое количество гравия в отдельную емкость, не перемешивайте с кормом. Заменяйте гравий по мере необходимости.
+
+
+]]></description>
+        <vendorCode>026851002109</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>США</country_of_origin>
+      </offer>
+      <offer id="1026450" available="false">
+        <url>https://4lapy.ru/catalog/ptitsy/korm/podkormka-mineralnaya-ptitsy/kamen-dlya-zatochki-klyuva-ptic-vitakraft-sepia-plus-20-g.html?offer=76548&amp;utm_source=market.yandex.ru&amp;utm_term=4386079&amp;utm_medium=cpc&amp;utm_campaign=main</url>
+        <price>233</price>
+        <cpa>0</cpa>
+        <delivery>true</delivery>
+        <delivery-options>
+          <option cost="0" days="1" order-before="13"/>
+        </delivery-options>
+        <currencyId>RUB</currencyId>
+        <categoryId>426</categoryId>
+        <picture>https://4lapy.ru/upload/iblock/ac9/ac94b179180355ed4459673de28cfe1d.jpg</picture>
+        <store>false</store>
+        <pickup>true</pickup>
+        <name>Vitakraft Камень для заточки клюва птиц Vitakraft Sepia Plus, 20 г</name>
+        <vendor>Vitakraft</vendor>
+        <description><![CDATA[]]></description>
+        <vendorCode>4008239110459</vendorCode>
+        <manufacturer_warranty>true</manufacturer_warranty>
+        <country_of_origin>Германия</country_of_origin>
+      </offer>
+    </offers>
+  </shop>
+</yml_catalog>

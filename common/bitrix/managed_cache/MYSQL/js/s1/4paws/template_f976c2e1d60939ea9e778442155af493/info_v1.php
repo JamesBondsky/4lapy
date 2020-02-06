@@ -1,0 +1,1 @@
+<? $filesInfo = array("/local/components/fourpaws/information.popup/templates/.default/script.js" => "1571388299710",); ?>

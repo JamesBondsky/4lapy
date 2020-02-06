@@ -1,0 +1,173 @@
+2018-Jul-03 19:47:15 Наличие необходимых модулей php (check_php_modules): Ok
+Все необходимые модули установлены
+2018-Jul-03 19:47:15 Обязательные параметры PHP (check_php_settings): Ok
+Настройки правильные
+2018-Jul-03 19:47:15 Модули веб-сервера (check_security): Ok
+Конфликтов не выявлено
+2018-Jul-03 19:47:15 Значения переменных сервера (check_server_vars): Ok
+Корректные
+2018-Jul-03 19:47:15 Сохранение сессии (check_session): Ok
+50% done
+2018-Jul-03 19:47:15 Сохранение сессии (check_session): Ok
+Успешно
+2018-Jul-03 19:47:15 Параметры настройки UTF (mbstring и константа BX_UTF) (check_mbstring): Ok
+Правильные. Сайт работает в UTF кодировке
+2018-Jul-03 19:47:15 Служебные скрипты в корне сайта (check_install_scripts): Ok
+Отсутствуют
+2018-Jul-03 19:47:15 Работа с сокетами (check_socket): Ok
+Connection to ssl://4lapy.ru:443	Success
+
+Успешно
+2018-Jul-03 19:47:16 Выполнение агентов на cron (check_bx_crontab): Ok
+Успешно
+2018-Jul-03 19:47:16 Параметры подключения к базе данных (check_dbconn_settings): Ok
+Успешно
+2018-Jul-03 19:47:16 Лишний вывод в файлах конфигурации (check_dbconn): Ok
+Connection to ssl://4lapy.ru:443	Success
+
+Успешно
+2018-Jul-03 19:47:16 Сохранение сессии без UserAgent (check_session_ua): Ok
+50% done
+Connection to ssl://4lapy.ru:443	Success
+
+2018-Jul-03 19:47:16 Сохранение сессии без UserAgent (check_session_ua): Ok
+Connection to ssl://4lapy.ru:443	Success
+
+Успешно
+2018-Jul-03 19:47:16 Настройки сайтов (check_sites): Ok
+Правильные
+2018-Jul-03 19:47:16 Передача объектов по ссылке (check_clone): Ok
+Успешно
+2018-Jul-03 19:47:16 Размер стека и pcre.recursion_limit (check_pcre_recursion): Warning
+Connection to ssl://4lapy.ru:443	Success
+
+Замечание. Возможны проблемы в работе с длинными строками из-за системных ограничений
+2018-Jul-03 19:47:16 Загрузка файла (check_upload): Ok
+Connection to ssl://4lapy.ru:443	Success
+
+Успешно
+2018-Jul-03 19:47:16 Загрузка файла больше 4Мб (check_upload_big): Ok
+Connection to ssl://4lapy.ru:443	Success
+
+Успешно
+2018-Jul-03 19:47:17 Загрузка файла через php://input (check_upload_raw): Ok
+Connection to ssl://4lapy.ru:443	Success
+
+Успешно
+2018-Jul-03 19:47:17 Передача POST запроса с большим числом параметров (check_post): Ok
+Connection to ssl://4lapy.ru:443	Success
+
+Успешно
+2018-Jul-03 19:47:17 Отправка почты (check_mail): Ok
+Успешно
+2018-Jul-03 19:47:18 Отправка почтового сообщения больше 64Кб (check_mail_big): Ok
+Успешно
+2018-Jul-03 19:47:18 Проверка на наличие неотправленных сообщений (check_mail_b_event): Fail
+Ошибка! Есть ошибки при отправке системных почтовых сообщений, число неотправленных сообщений: 1 Определена константа BX_CRONTAB_SUPPORT в /bitrix/php_interface/dbconn.php, при этом должен быть настроен вызов агентов на cron.
+2018-Jul-03 19:47:18 Внутреннее перенаправление (функция LocalRedirect) (check_localredirect): Ok
+50% done
+Connection to ssl://4lapy.ru:443	Success
+
+2018-Jul-03 19:47:18 Внутреннее перенаправление (функция LocalRedirect) (check_localredirect): Fail
+Connection to 4lapy.ru:80	Success
+== Request ==
+GET /bitrix/admin/site_checker.php?test_type=redirect_test&unique_id=aed86c8cd7f413ed02e82c2df00371f8&SERVER_PORT=80&HTTPS=&FCGI_ROLE=RESPONDER&HTTP_HOST=4lapy.ru&SERVER_PROTOCOL=HTTP%2F1.0&done=Y HTTP/1.1
+Host: 4lapy.ru
+
+
+== Response ==
+HTTP/1.1 301 Moved Permanently
+Server: nginx
+Date: Tue, 03 Jul 2018 16:47:18 GMT
+Content-Type: text/html
+Content-Length: 178
+Connection: keep-alive
+Location: https://4lapy.ru/bitrix/admin/site_checker.php?test_type=redirect_test&unique_id=aed86c8cd7f413ed02e82c2df00371f8&SERVER_PORT=80&HTTPS=&FCGI_ROLE=RESPONDER&HTTP_HOST=4lapy.ru&SERVER_PROTOCOL=HTTP%2F1.0&done=Y
+X-Content-Type-Options: nosniff
+
+== Body ==
+<html>
+<head><title>301 Moved Permanently</title></head>
+<body bgcolor="white">
+<center><h1>301 Moved Permanently</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+
+==========
+
+Ошибка! Не работает
+2018-Jul-03 19:47:18 Фактическое ограничение памяти (check_memory_limit): Ok
+20% done
+Connection to ssl://4lapy.ru:443	Success
+
+2018-Jul-03 19:47:18 Фактическое ограничение памяти (check_memory_limit): Ok
+40% done
+Connection to ssl://4lapy.ru:443	Success
+
+2018-Jul-03 19:47:18 Фактическое ограничение памяти (check_memory_limit): Ok
+60% done
+Connection to ssl://4lapy.ru:443	Success
+
+2018-Jul-03 19:47:18 Фактическое ограничение памяти (check_memory_limit): Ok
+80% done
+Connection to ssl://4lapy.ru:443	Success
+
+2018-Jul-03 19:47:19 Фактическое ограничение памяти (check_memory_limit): Ok
+Connection to ssl://4lapy.ru:443	Success
+
+Не менее 256 М
+2018-Jul-03 19:47:19 Работа с файлами кеша (check_cache): Ok
+Успешно
+2018-Jul-03 19:47:19 Доступ к серверу обновлений (check_update): Ok
+Успешно
+2018-Jul-03 19:47:19 HTTP авторизация (check_http_auth): Ok
+Connection to ssl://4lapy.ru:443	Success
+
+Успешно
+2018-Jul-03 19:47:19 Создание и запуск файла (check_exec): Ok
+Connection to ssl://4lapy.ru:443	Success
+
+Успешно
+2018-Jul-03 19:47:19 Функция getimagesize для swf (check_getimagesize): Ok
+Успешно
+2018-Jul-03 19:47:19 Версия MySQL-сервера (check_mysql_bug_version): Ok
+Успешно
+2018-Jul-03 19:47:20 Время на БД и веб-сервере (check_mysql_time): Ok
+Успешно
+2018-Jul-03 19:47:20 Режим работы MySQL (check_mysql_mode): Fail
+Ошибка! Переменная sql_mode в MySQL должна быть пустая, текущее значение: NO_ENGINE_SUBSTITUTION
+2018-Jul-03 19:47:20 Кодировка соединения (check_mysql_connection_charset): Ok
+character_set_connection=utf8, collation_connection=utf8_unicode_ci, character_set_results=utf8
+Успешно
+2018-Jul-03 19:47:20 Кодировка базы данных (check_mysql_db_charset): Ok
+CHARSET=utf8, COLLATION=utf8_unicode_ci
+Успешно
+2018-Jul-03 19:47:21 Кодировки таблиц в БД (check_mysql_table_charset): Ok
+Успешно
+2018-Jul-03 19:47:21 Структура базы данных (check_mysql_table_structure): Ok
+0% done
+2018-Jul-03 19:47:21 Структура базы данных (check_mysql_table_structure): Ok
+2% done
+2018-Jul-03 19:47:21 Структура базы данных (check_mysql_table_structure): Ok
+4% done
+2018-Jul-03 19:47:21 Структура базы данных (check_mysql_table_structure): Ok
+6% done
+2018-Jul-03 19:47:22 Структура базы данных (check_mysql_table_structure): Ok
+8% done
+2018-Jul-03 19:47:22 Структура базы данных (check_mysql_table_structure): Ok
+10% done
+2018-Jul-03 19:47:22 Структура базы данных (check_mysql_table_structure): Ok
+12% done
+2018-Jul-03 19:47:22 Структура базы данных (check_mysql_table_structure): Ok
+14% done
+2018-Jul-03 19:47:22 Структура базы данных (check_mysql_table_structure): Ok
+16% done
+2018-Jul-03 19:47:22 Структура базы данных (check_mysql_table_structure): Ok
+18% done
+2018-Jul-03 19:47:24 Структура базы данных (check_mysql_table_structure): Ok
+20% done
+2018-Jul-03 19:47:24 Структура базы данных (check_mysql_table_structure): Ok
+22% done
+2018-Jul-03 19:47:26 Структура базы данных (check_mysql_table_structure): Ok
+24% done

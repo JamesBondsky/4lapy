@@ -1,0 +1,396 @@
+#DPD_pvz{
+	background-color : white;
+	padding          : 10px;
+	overflow         : hidden;
+	font-family      : Arial;
+	height           : 586px;
+	position         : relative;
+}
+
+#DPD_pvz_popup {
+	padding-top: 20px;
+}
+
+#DPD_pvz_popup_window #DPD_pvz {
+	width: 100%;
+}
+
+
+#DPD_mask{
+	width            : 100%;
+	height           : 100%;
+	opacity          : 0.8;
+	position         : absolute;
+	z-index          : 2000;
+	background-color : black;
+	display          : none;
+	top              : 0px;
+	padding          : 5px
+}
+#DPD_head{
+	height:35px;
+	clear: both;
+	padding-top: 7px;
+	position: relative;
+	top: -480px;
+}
+#DPD_logo{
+	background  : url('/bitrix/images/ipol.dpd/widget/logo.png') no-repeat transparent;
+	width       : 169px;
+	height      : 11px;
+}
+#DPD_logo:hover{
+	background-position: 0px -12px;
+}
+#DPD_logo a{
+	text-decoration : none;
+	width           : 100%;
+	height          : 100%;
+	display         : block;
+}
+#DPD_closer{
+	position   : absolute;
+	background : url('/bitrix/images/ipol.dpd/widget/close.png') no-repeat transparent;
+	height     : 22px;
+	width      : 22px;
+	right      : 15px;
+	top        : 18px;
+	z-index    : 1000;
+	cursor     : pointer;
+}
+#DPD_closer:hover{
+	background-position: 0px -22px;
+}
+#DPD_map{
+	float: left;
+	height: 500px;
+	width: 100%;
+}
+#DPD_info{
+	float:left;
+	position:relative;
+	height: 480px;
+	overflow: hidden;
+	width: 245px;
+	color: black;
+	top: -490px;
+	left: 10px;
+	background-color: white;
+	border-radius: 5px;
+	box-shadow: 0 0 5px #5D5D5D;
+}
+#DPD_sign{
+	height: 38px;
+	line-height: 38px;
+	font-size: 14px;
+	padding-left: 98px;
+	background: url(./images/logo.png) 12px 4px no-repeat;
+	background-size: auto 80%;
+	// background: url('/bitrix/images/ipol.dpd/widget/widgetLogo.png') no-repeat;
+	overflow: hidden;
+}
+#DPD_delivInfo_PVZ, #DPD_delivInfo_POSTOMAT{
+	height: 30px;
+	/* font-weight: bold; */
+	font-size: 12px;
+	/* border-bottom: 1px dashed #e3e3e3; */
+	line-height: 35px;
+	padding: 0px 9px;
+	background-color: #fafafa;
+	color: #808080;
+	border-top: 1px solid #e3e3e3;
+	font-weight: bold;
+	color: #040101;
+	// border-bottom: 1px dashed #aba7a7;
+}
+#DPD_wrapper{
+	height: 400px;
+	overflow: auto;
+	border: none;
+	outline: none;
+	background-color: #fafafa;
+}
+#DPD_wrapper p{
+	cursor : pointer;
+	padding: 5px 6px;
+	margin:  5px 6px;
+	font-size: 12px;
+}
+#DPD_wrapper p span{
+	font-size: 12px;
+	white-space: nowrap;
+	display: inline-block;
+	line-height: 10px;
+}
+#DPD_wrapper p .IPOLDPD_subPunct{
+	width: 130px;
+	overflow: hidden;
+}
+.IPOLDPD_subPunct_detail_PVZ, .IPOLDPD_subPunct_detail_POSTOMAT{
+	color: #bfbfbf;
+}
+.DPD_chosen{
+	background-color : #ebebeb;
+}
+#DPD_ten{
+	position: relative;
+	top: -5px;
+	background-color: white;
+	height: 10px;
+	box-shadow: 0 0 5px 5px white;
+	width: 235px;
+
+	opacity: 0.7;
+	filter:progid:DXImageTransform.Microsoft.Alpha(opacity=70);
+    -moz-opacity: 0.7;
+    -khtml-opacity: 0.7;
+}
+/*Переключатель режимов*/
+#DPD_modController{
+	margin: 10px 0;
+	padding: 0px 10px;
+	overflow: hidden;
+}
+
+	#DPD_modController.dpd-hidden {
+		display: block;
+		margin: 5px 0;
+		border-top: 1px dashed #aba7a7;
+	}
+
+		#DPD_modController.dpd-hidden .DPD_mC_block {
+			display: none;
+		}
+
+.DPD_mC_block {
+	float: left;
+	height: 30px;
+	font-size: 13px;
+	line-height: 28px;
+	text-align: center;
+	border: 1px solid #e3e3e3;
+	cursor: pointer;
+}
+.DPD_mC_block.active{
+	border: 1px solid #DC0032;
+	background-color: #f8ece1;
+	color: #DC0032;
+}
+#DPD_mC_ALL{
+	border-radius: 5px 0px 0px 5px;
+	width: 34px;
+}
+#DPD_mC_PVZ{
+	width: 105px;
+}
+#DPD_mC_POSTOMAT{
+	border-radius: 0px 5px 5px 0px;
+	width: 80px;
+}
+
+/*балун*/
+.DPD_baloon {
+	background-color:white;
+	/* width: 258px; */
+	font-family: Arial;
+	font-size: 12px;
+}
+
+.DPD_baloon > div {
+	margin: 10px 0px;
+}
+
+.DPD_baloonInfo a {
+	color: #666666;
+	text-decoration: none;
+	border-bottom:1px dashed #666666;
+}
+
+.DPD_baloonDiv {
+	max-width: 235px;
+	padding-left:8px;
+	float:left;
+}
+
+.DPD_baloonPrice {
+	height: 20px;
+	text-align: center;
+}
+
+.DPD_icon{
+	float:left;
+	width:12px;
+	min-height: 12px;
+}
+
+.DPD_iName {
+	font-weight: bold;
+	font-size: 14px;
+}
+
+.DPD_iAdress{
+	font-size: 12px;
+}
+
+.DPD_iTelephone{background: url('/bitrix/images/ipol.dpd/widget/phone.png') no-repeat;}
+.DPD_iTime{background: url('/bitrix/images/ipol.dpd/widget/clock.png') no-repeat;}
+.DPD_iSchedule {
+	width: 49%;
+	display: inline-block;
+	vertical-align: top;
+}
+.DPD_iSchedule > div {
+	margin-bottom: 10px;
+}
+
+.DPD_button {
+	width:130px;
+	height:25px;
+	background: url('/bitrix/images/ipol.dpd/widget/chooze.png') no-repeat;
+	display: block;
+	margin: auto;
+	text-decoration:none;
+}
+
+.DPD_button:hover {
+	background-position: 0px -25px;
+}
+
+#DPD_title{
+	padding-bottom: 12px;
+	border-bottom: 1px solid #e5e5e5;
+}
+#DPD_title > div, #DPD_cityPicker > div{
+	font-size: 12px;
+	font-family: Arial;
+	float:left;
+}
+#DPD_cityPicker > div:first-child{
+	padding-top:9px;
+	margin-bottom: 10px;
+}
+#DPD_cityPicker{
+	width: 300px;
+}
+#DPD_citySel{
+	display:none;
+}
+#DPD_cityName{
+	text-decoration:none;
+	border-bottom:1px dotted #007ACF;
+}
+#DPD_cityLabel{
+	padding: 9px 12px 0px 12px;
+}
+#DPD_cityLabel a{
+	margin-bottom: 9px;
+	color: #3366CC;
+	display:block;
+	cursor: pointer;
+}
+#DPD_cityLabel a:hover{
+	color: #24478F;
+	text-decoration: none !important;
+}
+#DPD_cityLabel:hover {
+	background: #FFFFFF;
+	box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.506);
+	position: absolute;
+	z-index: 100;
+}
+#DPD_cityLabel:hover > #DPD_citySel{
+	display: block;
+	max-width: 200px;
+	max-height: 400px;
+	overflow: auto;
+}
+#DPD_cityLabel:hover > #DPD_cityName{
+	text-decoration:underline;
+	border-bottom:none;
+}
+#DPD_mark{
+	float: right !important;
+	height: 32px;
+	line-height: 20px;
+	cursor: default;
+	text-align: right;
+}
+#DPD_mark .DPD_courierInfo{
+	float: left;
+	padding: 0px 2px;
+}
+#DPD_logoPlace{
+	width: 300px;
+	height: 38px;
+	background-image: url("/bitrix/images/ipol.dpd/DPDogo.png");
+	background-repeat:no-repeat;
+	background-position: 241px 2px;
+}
+#DPD_separator{
+	background-color: #e3e3e3;
+	width: 1px;
+	height: 38px;
+}
+#DPD_citySearcher{
+	margin-bottom: 5px;
+}
+.DPD_baloonDiv a{
+	cursor: help;
+}
+.dpd-hidden {
+	display: none;
+}
+
+.DPD_arrow{
+	width: 23px;
+	height: 14px;
+	/*background: #000 none repeat scroll 0% 0%;*/
+	background: url("/bitrix/images/ipol.dpd/arr.png") no-repeat bottom left;
+	display: block;
+	float: right;
+	margin-top: 12px;
+	/* margin-right: 5px; */
+	display: none;
+}
+
+.DPD_arrow:hover{
+	background-position: bottom right;
+}
+
+.DPD_arrow.up{
+	background-position: top left;
+
+}
+
+@media screen and (max-width: 919px) {
+	.DPD_arrow {
+		display: block;
+	}
+
+	#DPD_wrapper {
+		display: none;
+	}
+
+	#DPD_wrapper.show {
+		display: block;
+	}
+
+	#DPD_info {
+		width: calc(100% - 20px);
+		height: auto;
+	}
+
+	.DPD_iSchedule {
+		display: block;
+		width: auto;
+	}
+}
+
+@media screen and (max-width: 480px) {
+	#DPD_delivInfo_PVZ, #DPD_delivInfo_POSTOMAT {
+		line-height: 1.33;
+		padding-top: 5px;
+		padding-bottom: 5px;
+		height: auto;
+	}
+}

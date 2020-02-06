@@ -1,0 +1,147 @@
+Ipolh\DPD\Shipment Object
+(
+    [api:protected] => Ipolh\DPD\API\User Object
+        (
+            [clientNumber:protected] => 1001027795
+            [secretKey:protected] => 182A17BD6FC5557D1FCA30FA1D56593EB21AEF88
+            [testMode:protected] => 1
+            [currency:protected] => RUB
+        )
+
+    [selfPickup:protected] => 1
+    [selfDelivery:protected] => 1
+    [declaredValue:protected] => 1
+    [orderItems:protected] => Array
+        (
+            [0] => Array
+                (
+                    [QUANTITY] => 1
+                    [WEIGHT] => 0.00
+                    [PRICE] => 1999.0000
+                    [CURRENCY] => RUB
+                    [NAME] => Штаны Полосатый Рейс
+                    [DIMENSIONS] => Array
+                        (
+                            [WIDTH] => 0
+                            [HEIGHT] => 0
+                            [LENGTH] => 0
+                        )
+
+                )
+
+        )
+
+    [orderItemsPrice:protected] => 1999
+    [dimensions:protected] => Array
+        (
+            [WIDTH] => 10
+            [HEIGHT] => 20
+            [LENGTH] => 20
+            [WEIGHT] => 1
+        )
+
+    [paymentMethod:protected] => Array
+        (
+        )
+
+    [locationFrom] => Array
+        (
+            [ID] => 107
+            [COUNTRY_CODE] => RU
+            [COUNTRY_NAME] => Россия
+            [REGION_CODE] => 77
+            [REGION_NAME] => Москва
+            [CITY_ID] => 49694102
+            [CITY_CODE] => 77000000000
+            [CITY_NAME] => Москва
+            [IS_CASH_PAY] => Y
+        )
+
+    [locationTo] => Array
+        (
+            [ID] => 24007
+            [COUNTRY_CODE] => KZ
+            [COUNTRY_NAME] => Казахстан
+            [REGION_CODE] => 
+            [REGION_NAME] => Алматинская
+            [CITY_ID] => 1033210055
+            [CITY_CODE] => 03050000000
+            [CITY_NAME] => Алматы
+            [IS_CASH_PAY] => N
+        )
+
+)
+Array
+(
+    [PRICE] => 1999
+    [WEIGHT] => 0
+    [LOCATION_FROM] => 0000073738
+    [SITE_ID] => s1
+    [PERSON_TYPE_ID] => 1
+    [CURRENCY] => RUB
+    [LOCATION_TO] => 0000000278
+    [LOCATION_ZIP] => 115211
+    [ITEMS] => Array
+        (
+            [0] => Array
+                (
+                    [MODULE] => catalog
+                    [PRODUCT_ID] => 58
+                    [ID] => 101
+                    [LID] => s1
+                    [QUANTITY] => 1
+                    [WEIGHT] => 0.00
+                    [DELAY] => N
+                    [CAN_BUY] => Y
+                    [PRICE] => 1999.0000
+                    [CUSTOM_PRICE] => N
+                    [BASE_PRICE] => 1999.0000
+                    [PRODUCT_PRICE_ID] => 17
+                    [CURRENCY] => RUB
+                    [BARCODE_MULTI] => N
+                    [RESERVED] => N
+                    [RESERVE_QUANTITY] => 
+                    [NAME] => Штаны Полосатый Рейс
+                    [CATALOG_XML_ID] => clothes_offers_s1
+                    [VAT_RATE] => 0.0000
+                    [NOTES] => Розничная цена
+                    [DISCOUNT_PRICE] => 0.0000
+                    [PRODUCT_PROVIDER_CLASS] => CCatalogProductProvider
+                    [CALLBACK_FUNC] => 
+                    [ORDER_CALLBACK_FUNC] => 
+                    [PAY_CALLBACK_FUNC] => 
+                    [CANCEL_CALLBACK_FUNC] => 
+                    [DIMENSIONS] => Array
+                        (
+                            [WIDTH] => 0
+                            [HEIGHT] => 0
+                            [LENGTH] => 0
+                        )
+
+                    [TYPE] => 
+                    [SET_PARENT_ID] => 
+                    [DETAIL_PAGE_URL] => /catalog/pants/pants-striped-flight/
+                    [FUSER_ID] => 56
+                    [MEASURE_CODE] => 796
+                    [MEASURE_NAME] => шт
+                    [ORDER_ID] => 
+                    [PRODUCT_XML_ID] => 177#202
+                    [SUBSCRIBE] => N
+                    [RECOMMENDATION] => 
+                    [VAT_INCLUDED] => Y
+                    [SORT] => 100
+                    [DISCOUNT_NAME] => 
+                    [DISCOUNT_COUPON] => 
+                    [DISCOUNT_VALUE] => 0
+                )
+
+        )
+
+    [MAX_DIMENSIONS] => Array
+        (
+            [0] => 0
+            [1] => 0
+            [2] => 0
+        )
+
+)

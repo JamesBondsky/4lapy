@@ -1,0 +1,80 @@
+[10:28:12] PROCESS STARTED, STAGE CLEANUP
+[10:28:13] ### NEXT STAGE >>> CREATE_DICTIONARY in 426055:28:13, mem peak = 0 mb
+HIT ENDED [10:28:13]
+#############################
+HIT STARTED [10:28:16]
+HIT ENDED [10:28:39]
+#############################
+HIT STARTED [10:28:40]
+HIT ENDED [10:29:04]
+#############################
+HIT STARTED [10:29:04]
+HIT ENDED [10:29:27]
+#############################
+HIT STARTED [10:29:27]
+HIT ENDED [10:29:50]
+#############################
+HIT STARTED [10:29:50]
+HIT ENDED [10:30:16]
+#############################
+HIT STARTED [10:30:17]
+HIT ENDED [10:30:40]
+#############################
+HIT STARTED [10:30:41]
+HIT ENDED [10:31:06]
+#############################
+HIT STARTED [10:31:07]
+[10:31:14] ### NEXT STAGE >>> RESORT_DICTIONARY in 0:02:58, mem peak = 8.7063293457031 mb
+HIT ENDED [10:31:14]
+#############################
+HIT STARTED [10:31:15]
+[10:31:21] ### NEXT STAGE >>> CREATE_SEARCH_INDEX in 0:03:05, mem peak = 8.7063293457031 mb
+HIT ENDED [10:31:21]
+#############################
+HIT STARTED [10:31:22]
+HIT ENDED [10:31:44]
+#############################
+HIT STARTED [10:31:45]
+HIT ENDED [10:32:07]
+#############################
+HIT STARTED [10:32:07]
+HIT ENDED [10:32:29]
+#############################
+HIT STARTED [10:32:30]
+HIT ENDED [10:32:50]
+#############################
+HIT STARTED [10:32:51]
+HIT ENDED [10:33:16]
+#############################
+HIT STARTED [10:33:16]
+HIT ENDED [10:33:36]
+#############################
+HIT STARTED [10:33:37]
+HIT ENDED [10:33:59]
+#############################
+HIT STARTED [10:34:00]
+HIT ENDED [10:34:23]
+#############################
+HIT STARTED [10:34:24]
+HIT ENDED [10:34:44]
+#############################
+HIT STARTED [10:34:45]
+HIT ENDED [10:35:07]
+#############################
+HIT STARTED [10:35:08]
+[10:35:26] ### NEXT STAGE >>> CREATE_SITE2LOCATION_INDEX in 0:07:10, mem peak = 8.9614105224609 mb
+HIT ENDED [10:35:26]
+#############################
+HIT STARTED [10:35:27]
+[10:35:27] ### NEXT STAGE >>> RESTORE_DB_INDEXES in 0:07:11, mem peak = 8.9614105224609 mb
+HIT ENDED [10:35:27]
+#############################
+HIT STARTED [10:35:28]
+HIT ENDED [10:35:29]
+#############################
+HIT STARTED [10:35:30]
+HIT ENDED [10:35:34]
+#############################
+HIT STARTED [10:35:35]
+[10:35:35] ### NEXT STAGE >>>  in 0:07:19, mem peak = 8.9614105224609 mb
+HIT ENDED [10:35:35]

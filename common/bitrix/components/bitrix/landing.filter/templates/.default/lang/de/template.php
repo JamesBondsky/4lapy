@@ -1,0 +1,8 @@
+<?
+$MESS["LANDING_TPL_RECYCLE_BIN"] = "Papierkorb";
+$MESS["LANDING_TPL_FLT_DELETED"] = "Im Papierkorb";
+$MESS["LANDING_TPL_FLT_Y"] = "Ja";
+$MESS["LANDING_TPL_FLT_N"] = "Nein";
+$MESS["LANDING_TPL_CREATE_FOLDER"] = "Ordner erstellen";
+$MESS["LANDING_TPL_CREATE_FOLDER_ACTION"] = "Erstellen";
+?>

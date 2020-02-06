@@ -1,0 +1,55 @@
+Host: stage.4lapy.adv.ru
+Date: 2018-03-07 15:09:14
+Module: sberbank.ecom
+RBS PAYMENT https://3dsec.sberbank.ru/payment/rest/registerPreAuth.do REQUEST: {"orderNumber":"5_0","amount":340012,"returnUrl":"http:\/\/stage.4lapy.adv.ru\/sale\/payment\/result.php?ORDER_ID=5","description":"\u0442\u0435\u0441\u0442","currency":"643","userName":"4lapy-api","password":"4lapy","CMS":"Bitrix","jsonParams":"{\"CMS\":\"Bitrix\",\"Module-Version\":\"2.18.7\"}"} RESPONSE: {"errorCode":"1","errorMessage":"\u0417\u0430\u043a\u0430\u0437 \u0441 \u0442\u0430\u043a\u0438\u043c \u043d\u043e\u043c\u0435\u0440\u043e\u043c \u0443\u0436\u0435 \u043e\u0431\u0440\u0430\u0431\u043e\u0442\u0430\u043d"}
+    RBS::logger < RBS::gateway < RBS::register_order < require < Bitrix\Sale\PaySystem\CompatibilityHandler::includeFile
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sberbank.ecom/payment/rbs.php:185
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sberbank.ecom/payment/rbs.php:247
+	/adv/vhosts/4lapy-stage/deploy/releases/37/common/local/php_interface/include/sale_payment/payment/payment.php:225
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sale/lib/paysystem/compatibilityhandler.php:205
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sale/lib/paysystem/compatibilityhandler.php:56
+----------
+Host: stage.4lapy.adv.ru
+Date: 2018-03-07 15:09:14
+Module: sberbank.ecom
+RBS PAYMENT https://3dsec.sberbank.ru/payment/rest/registerPreAuth.do REQUEST: {"orderNumber":"5_1","amount":340012,"returnUrl":"http:\/\/stage.4lapy.adv.ru\/sale\/payment\/result.php?ORDER_ID=5","description":"\u0442\u0435\u0441\u0442","currency":"643","userName":"4lapy-api","password":"4lapy","CMS":"Bitrix","jsonParams":"{\"CMS\":\"Bitrix\",\"Module-Version\":\"2.18.7\"}"} RESPONSE: {"errorCode":"1","errorMessage":"\u0417\u0430\u043a\u0430\u0437 \u0441 \u0442\u0430\u043a\u0438\u043c \u043d\u043e\u043c\u0435\u0440\u043e\u043c \u0443\u0436\u0435 \u043e\u0431\u0440\u0430\u0431\u043e\u0442\u0430\u043d"}
+    RBS::logger < RBS::gateway < RBS::register_order < require < Bitrix\Sale\PaySystem\CompatibilityHandler::includeFile
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sberbank.ecom/payment/rbs.php:185
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sberbank.ecom/payment/rbs.php:247
+	/adv/vhosts/4lapy-stage/deploy/releases/37/common/local/php_interface/include/sale_payment/payment/payment.php:225
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sale/lib/paysystem/compatibilityhandler.php:205
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sale/lib/paysystem/compatibilityhandler.php:56
+----------
+Host: stage.4lapy.adv.ru
+Date: 2018-03-07 15:09:15
+Module: sberbank.ecom
+RBS PAYMENT https://3dsec.sberbank.ru/payment/rest/registerPreAuth.do REQUEST: {"orderNumber":"5_2","amount":340012,"returnUrl":"http:\/\/stage.4lapy.adv.ru\/sale\/payment\/result.php?ORDER_ID=5","description":"\u0442\u0435\u0441\u0442","currency":"643","userName":"4lapy-api","password":"4lapy","CMS":"Bitrix","jsonParams":"{\"CMS\":\"Bitrix\",\"Module-Version\":\"2.18.7\"}"} RESPONSE: {"errorCode":"1","errorMessage":"\u0417\u0430\u043a\u0430\u0437 \u0441 \u0442\u0430\u043a\u0438\u043c \u043d\u043e\u043c\u0435\u0440\u043e\u043c \u0443\u0436\u0435 \u043e\u0431\u0440\u0430\u0431\u043e\u0442\u0430\u043d"}
+    RBS::logger < RBS::gateway < RBS::register_order < require < Bitrix\Sale\PaySystem\CompatibilityHandler::includeFile
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sberbank.ecom/payment/rbs.php:185
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sberbank.ecom/payment/rbs.php:247
+	/adv/vhosts/4lapy-stage/deploy/releases/37/common/local/php_interface/include/sale_payment/payment/payment.php:225
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sale/lib/paysystem/compatibilityhandler.php:205
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sale/lib/paysystem/compatibilityhandler.php:56
+----------
+Host: stage.4lapy.adv.ru
+Date: 2018-03-07 15:09:15
+Module: sberbank.ecom
+RBS PAYMENT https://3dsec.sberbank.ru/payment/rest/registerPreAuth.do REQUEST: {"orderNumber":"5_3","amount":340012,"returnUrl":"http:\/\/stage.4lapy.adv.ru\/sale\/payment\/result.php?ORDER_ID=5","description":"\u0442\u0435\u0441\u0442","currency":"643","userName":"4lapy-api","password":"4lapy","CMS":"Bitrix","jsonParams":"{\"CMS\":\"Bitrix\",\"Module-Version\":\"2.18.7\"}"} RESPONSE: {"orderId":"ede638bf-4564-796b-ede6-38bf0000078d","formUrl":"https:\/\/3dsec.sberbank.ru\/payment\/merchants\/4lapy\/payment_ru.html?mdOrder=ede638bf-4564-796b-ede6-38bf0000078d"}
+    RBS::logger < RBS::gateway < RBS::register_order < require < Bitrix\Sale\PaySystem\CompatibilityHandler::includeFile
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sberbank.ecom/payment/rbs.php:185
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sberbank.ecom/payment/rbs.php:247
+	/adv/vhosts/4lapy-stage/deploy/releases/37/common/local/php_interface/include/sale_payment/payment/payment.php:225
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sale/lib/paysystem/compatibilityhandler.php:205
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sale/lib/paysystem/compatibilityhandler.php:56
+----------
+Host: stage.4lapy.adv.ru
+Date: 2018-03-07 15:10:18
+Module: sberbank.ecom
+RBS PAYMENT https://3dsec.sberbank.ru/payment/rest/getOrderStatusExtended.do REQUEST: {"orderId":"ede638bf-4564-796b-ede6-38bf0000078d","userName":"4lapy-api","password":"4lapy","CMS":"Bitrix","jsonParams":"{\"CMS\":\"Bitrix\",\"Module-Version\":\"2.18.7\"}"} RESPONSE: {"errorCode":"0","errorMessage":"\u0423\u0441\u043f\u0435\u0448\u043d\u043e","orderNumber":"5_3","orderStatus":1,"actionCode":0,"actionCodeDescription":"","amount":340012,"currency":"643","date":1520424555463,"orderDescription":"\u0442\u0435\u0441\u0442","ip":"10.77.5.245","merchantOrderParams":[{"name":"CMS","value":"Bitrix"},{"name":"Module-Version","value":"2.18.7"}],"attributes":[{"name":"mdOrder","value":"ede638bf-4564-796b-ede6-38bf0000078d"}],"cardAuthInfo":{"expiration":"201912","cardholderName":"dfvxvxcv","approvalCode":"123456","pan":"411111**1111"},"authDateTime":1520424616589,"terminalId":"12345678","authRefNum":"111111111111","paymentAmountInfo":{"paymentState":"APPROVED","approvedAmount":340012,"depositedAmount":0,"refundedAmount":0},"bankInfo":{"bankName":"TEST CARD","bankCountryCode":"RU","bankCountryName":"\u0420\u043e\u0441\u0441\u0438\u044f"}}
+    RBS::logger < RBS::gateway < RBS::get_order_status_by_orderId < require < FourPawsOrderPaymentResultComponent::includeResultFile
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sberbank.ecom/payment/rbs.php:185
+	/adv/vhosts/4lapy-stage/deploy/shared/common/bitrix/modules/sberbank.ecom/payment/rbs.php:262
+	/adv/vhosts/4lapy-stage/deploy/releases/37/common/local/php_interface/include/sale_payment/payment/result.php:55
+	/adv/vhosts/4lapy-stage/deploy/releases/37/common/local/components/fourpaws/order.payment.result/class.php:131
+	/adv/vhosts/4lapy-stage/deploy/releases/37/common/local/components/fourpaws/order.payment.result/class.php:96
+----------
